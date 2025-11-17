@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f47b24254ca3fb46875eb1e66f34883, type: 3}
+  m_Name: 1.1_1
+  m_EditorClassIdentifier: 
+  questID: "Nh\u1EB7t C\u1EE7i Kh\xF4"
+  questName: "Nh\u1EB7t C\u1EE7i Kh\xF4"
+  questTitle: 
+  questObjects:
+  - objectID: 54
+    objectTitle: "\u0110\u1EBFn g\u1EA7n khu r\u1EEBng sau nh\xE0 nh\u1EB7t \xEDt
+      c\u1EE7i kh\xF4 cho m\u1EB9 n\u1EA5u \u0103n."
+    objectType: 0
+    requiredAmount: 3
+    currentAmount: 0
+  questRewards:
+  - rewardType: 3
+    rewardID: 0
+    amount: 50

@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f2a72aeb33766d42868f6d9de333142, type: 3}
+  m_Name: "Ph\xF9 th\u1EE7y"
+  m_EditorClassIdentifier: 
+  npcName: Eleonore
+  npcPortrait: {fileID: -2140286675, guid: 3b7aeac552bdafa409971924974b5952, type: 3}
+  dialogueLines:
+  - "Xin ch\xE0o, \u1EDF \u0111\xE2y c\xF3 c\xE1c lo\u1EA1i thu\u1ED1c qu\xFD v\xE0
+    th\u1EA3o d\u01B0\u1EE3c!"
+  - "Ch\xE0o b\u1EA1n! L\xE0ng Kh\u1EDFi \u0110\u1EA7u n\xE0y g\u1EA7n nh\u01B0 l\xE0
+    n\u01A1i an to\xE0n nh\u1EA5t tr\xEAn l\u1EE5c \u0111\u1ECBa r\u1ED3i \u0111\u1EA5y."
+  - "Ngay ph\xEDa t\xE2y l\xE0ng m\xECnh th\xF4i l\xE0 khu r\u1EEBng Slime, n\u01A1i
+    t\u1EADp trung r\u1EA5t nhi\u1EC1u qu\xE1i v\u1EADt c\u1EA5p th\u1EA5p, b\u1EA1n
+    c\xF3 th\u1EC3 gh\xE9 qua \u0111\xF3 n\u1EBFu mu\u1ED1n."
+  - "\u0110i v\u1EC1 h\u01B0\u1EDBng b\u1EAFc m\u1ED9t qu\xE3ng \u0111\u01B0\u1EDDng
+    d\xE0i l\xE0 b\u1EA1n s\u1EBD t\u1EDBi \u0111\u01B0\u1EE3c \u0110\u1EBF \u0111\xF4."
+  - "C\xF2n \u1EDF ph\xEDa \u0111\xF4ng c\u1EE7a l\xE0ng c\xF3 m\u1ED9t m\xEA cung
+    kh\xE1 th\xFA v\u1ECB, n\u1EBFu b\u1EA1n mu\u1ED1n t\xECm ki\u1EBFm trang b\u1ECB
+    v\xE0 nguy\xEAn li\u1EC7u th\xEC c\xF3 th\u1EC3 th\u1EED kh\xE1m ph\xE1 n\u01A1i
+    \u0111\xF3."
+  - "Tuy nhi\xEAn, \u1EDF t\u1EADn s\xE2u v\u1EC1 ph\xEDa nam l\u1EA1i l\xE0 m\u1ED9t
+    khu v\u1EF1c v\xF4 c\xF9ng nguy hi\u1EC3m, v\u1EDBi r\u1EA5t nhi\u1EC1u qu\xE1i
+    v\u1EADt v\xE0 boss c\u1EA5p cao sinh s\u1ED1ng."
+  - "B\u1EA1n c\xF2n \u0111i\u1EC1u g\xEC mu\u1ED1n h\u1ECFi n\u1EEFa kh\xF4ng?"
+  - "V\u1EADy th\xEC ch\xFAc b\u1EA1n th\u01B0\u1EE3ng l\u1ED9 b\xECnh an tr\xEAn
+    h\xE0nh tr\xECnh kh\xE1m ph\xE1 th\u1EBF gi\u1EDBi n\xE0y nh\xE9!"
+  autoProgressLines: 0101010101010101
+  endDialogueLines: 0000000000000001
+  autoProgressDelay: 1
+  typingSpeed: 0.05
+  choices:
+  - dialogueIndex: 0
+    choices:
+    - "\"H\xE3y cho t\xF4i xem \u1EDF \u0111\xE2y c\xF3 b\xE1n nh\u1EEFng g\xEC!\""
+    - "\"V\u1EC1 ng\xF4i l\xE0ng Kh\u1EDFi \u0110\u1EA7u.\""
+    - "\"Kh\xF4ng c\xF3 g\xEC! T\xF4i ch\u1EC9 t\xECnh c\u1EDD \u0111i ngang.\""
+    nextDialogueIndexes: 000000000100000007000000
+    endDialogues: 010000
+    specialActions: 01000000
+    specialTargetNames:
+    - Eleonore
+    giveQuest: 
+  - dialogueIndex: 6
+    choices:
+    - "\"Kh\xF4ng c\xF2n, c\u1EA3m \u01A1n ch\u1ECB.\""
+    nextDialogueIndexes: 07000000
+    endDialogues: 00
+    specialActions: 00000000
+    specialTargetNames:
+    - 
+    giveQuest: 
+  questInProgressIndex: 0
+  questCompletedIndex: 0
+  quest: {fileID: 0}

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f2a72aeb33766d42868f6d9de333142, type: 3}
+  m_Name: "Th\u1EE3 r\xE8n"
+  m_EditorClassIdentifier: 
+  npcName: Silas Blackwood
+  npcPortrait: {fileID: 3466882613496013670, guid: 7fd8ec4ea9b50df408be50e35d5c6b8d, type: 3}
+  dialogueLines:
+  - "Xin ch\xE0o Hi\u1EC7p s\u0129! B\u1EA1n c\u1EA7n g\xEC?"
+  - "T\u1EA1m bi\u1EC7t! Ch\xFAc b\u1EA1n c\xF3 m\u1ED9t h\xE0nh tr\xECnh tuy\u1EC7t
+    v\u1EDDi c\xF9ng nh\u1EEFng thanh ki\u1EBFm."
+  autoProgressLines: 0101
+  endDialogueLines: 0001
+  autoProgressDelay: 1.5
+  typingSpeed: 0.05
+  choices:
+  - dialogueIndex: 0
+    choices:
+    - "\u1EDE \u0111\xE2y c\xF3 b\xE1n nh\u1EEFng g\xEC?"
+    - "Kh\xF4ng c\xF3 g\xEC, t\xF4i ch\u1EC9 \u0111i ngang!"
+    nextDialogueIndexes: 0000000001000000
+    endDialogues: 01
+    specialActions: 01000000
+    specialTargetNames:
+    - Silas Blackwood
+    giveQuest: 
+  questInProgressIndex: 0
+  questCompletedIndex: 0
+  quest: {fileID: 0}
