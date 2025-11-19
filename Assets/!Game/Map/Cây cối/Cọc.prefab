@@ -164,7 +164,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1926694469
-  m_SortingLayer: 7
+  m_SortingLayer: 8
   m_SortingOrder: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
@@ -633,8 +633,8 @@ MonoBehaviour:
   inFrontLayer: Walk in front
   behindLayer: Walk behind
   yOffset: 0
-  behindRenderer: {fileID: 0}
-  frontRenderer: {fileID: 0}
+  behindRenderer: {fileID: 4080489768927131680}
+  frontRenderer: {fileID: 727730344761707334}
   sortingPrecision: 100
 --- !u!114 &8956931874911792974
 MonoBehaviour:

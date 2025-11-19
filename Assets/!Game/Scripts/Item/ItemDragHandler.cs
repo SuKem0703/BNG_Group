@@ -277,9 +277,18 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                     return;
                 }
 
+                // Nếu là quest item => không cho vứt
                 if (draggedItem.itemType == ItemType.QuestItem)
                 {
                     ShowDropErrorMessage("Không thể vứt bỏ vật phẩm nhiệm vụ!");
+                    SnapBack();
+                    return;
+                }
+
+                // Kiểm tra nếu item đang cần cho nhiệm vụ
+                if (IsItemNeededForActiveQuest(draggedItem.ID))
+                {
+                    ShowDropErrorMessage($"<color=yellow>{draggedItem.Name}</color> đang cần cho nhiệm vụ. Không thể vứt bỏ!");
                     SnapBack();
                     return;
                 }
@@ -291,6 +300,8 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         TooltipManager.Instance.gameObject.SetActive(true);
     }
 
+
+    // ========== CONFIRMATION & NOTIFY UI ==========
     private void ShowDropErrorMessage(string message)
     {
         if (notifyUIPrefab == null)
@@ -370,6 +381,37 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             SnapBack();
         }
     }
+
+    private bool IsItemNeededForActiveQuest(int itemID)
+    {
+        if (QuestController.Instance == null) return false;
+
+        // Duyệt qua tất cả các Quest đang kích hoạt (active)
+        foreach (QuestProgress quest in QuestController.Instance.activeQuests)
+        {
+            foreach (QuestObject obj in quest.questObjects)
+            {
+                // Nếu nhiệm vụ là CollectItem
+                if (obj.objectType == ObjectType.CollectItem)
+                {
+                    // Parse ID từ string sang int để so sánh
+                    if (int.TryParse(obj.objectID, out int questItemID))
+                    {
+                        if (questItemID == itemID)
+                        {
+                            // Nếu tìm thấy item này trong 1 quest đang active
+                            // Bạn có thể check thêm điều kiện obj.IsCompleted nếu muốn cho phép vứt khi đã gom đủ
+                            // Nhưng an toàn nhất là không cho vứt khi chưa trả quest.
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // ========== HELPER METHODS ==========
     private void SnapBack()
     {
         transform.SetParent(originalParent);

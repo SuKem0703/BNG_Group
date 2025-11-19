@@ -264,6 +264,8 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
         IsDialogueActive = true;
 
+        OnQuestStateUpdated?.Invoke(CurrentQuestState);
+
         MenuController.CanOpenMenu = false;
 
         CommonUIController.Instance?.SetUIVisible(false);

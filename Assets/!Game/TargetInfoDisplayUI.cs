@@ -17,6 +17,10 @@ public class TargetInfoDisplayUI : MonoBehaviour
     [Tooltip("Image hiển thị Portrait/Icon")]
     public Image portraitImage;
 
+    [Header("Rarity Frames")]
+    [Tooltip("Image cho khung icon (vuông, giống ItemIconCard)")]
+    public Image iconCard;
+
     private void Awake()
     {
         if (infoPanel == null)
@@ -34,6 +38,10 @@ public class TargetInfoDisplayUI : MonoBehaviour
         if (portraitImage == null)
         {
             portraitImage = transform.FindDeepChild("PortraitImage")?.GetComponent<Image>();
+        }
+        if (iconCard == null)
+        {
+            iconCard = transform.FindDeepChild("ItemIconCard")?.GetComponent<Image>();
         }
     }
     private void OnEnable()
@@ -61,6 +69,7 @@ public class TargetInfoDisplayUI : MonoBehaviour
             if (nameText != null)
             {
                 nameText.text = info.name;
+                nameText.color = RarityColorHelper.GetColorByRarity(info.rarity);
             }
 
             if (portraitImage != null)
@@ -73,6 +82,24 @@ public class TargetInfoDisplayUI : MonoBehaviour
                 else
                 {
                     portraitImage.gameObject.SetActive(false);
+                }
+            }
+
+            string rarityNameStr = info.rarity.ToString();
+
+            if (iconCard != null)
+            {
+                string cardPath = $"Square Card/{rarityNameStr}";
+                Sprite iconSprite = Resources.Load<Sprite>(cardPath);
+                if (iconSprite != null)
+                {
+                    iconCard.sprite = iconSprite;
+                    iconCard.gameObject.SetActive(true); // Bật lên
+                }
+                else
+                {
+                    Debug.LogWarning($"[TargetInfoDisplayUI] Không tìm thấy sprite cho item icon tại đường dẫn: {cardPath}");
+                    iconCard.gameObject.SetActive(false); // Ẩn đi nếu không tìm thấy
                 }
             }
 

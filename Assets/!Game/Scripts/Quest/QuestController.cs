@@ -59,6 +59,8 @@ public class QuestController : MonoBehaviour
         activeQuests.Add(newQuest);
 
         CheckInventoryForQuest();
+
+        OnQuestStatusUpdated?.Invoke(quest.questID);
     }
 
     public bool IsQuestActive(string questID) => activeQuests.Exists(q => q.quest.questID == questID);
@@ -128,6 +130,8 @@ public class QuestController : MonoBehaviour
             handInQuestIDs.Add(questID);
             activeQuests.Remove(quest);
             questUI.UpdateQuestUI();
+
+            OnQuestStatusUpdated?.Invoke(questID);
         }
     }
     public bool IsQuestHandedIn(string questID)

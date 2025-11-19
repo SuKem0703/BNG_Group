@@ -15,9 +15,9 @@ MonoBehaviour:
   npcName: Martha
   npcPortrait: {fileID: 222144225264086075, guid: 546d5a915985c3349a0997bfff98b79e, type: 3}
   dialogueLines:
-  - Quest Started
-  - In Progress
-  - Complete
+  - "Con h\xE3y \u0111i nh\u1EB7t c\xE0 r\u1ED1t"
+  - "Nh\u1EB7t \u0111\xE3 \u0111\u1EE7 ch\u01B0a"
+  - "Nh\u1EB7t ho\xE0n th\xE0nh"
   - No More Quest
   autoProgressLines: 00010101
   endDialogueLines: 00010101
@@ -35,7 +35,7 @@ MonoBehaviour:
   questInProgressIndex: 1
   questCompletedIndex: 2
   noMoreQuestsIndex: 3
-  quest: {fileID: 11400000, guid: b8c3688ac369f1746bf33127297995b1, type: 2}
+  quest: {fileID: 11400000, guid: 50fd270389fe2cc49acb4214c9a886ee, type: 2}
   hideWhenInProgress: 0
   hideWhenCompleted: 0
   hideWhenHandedIn: 0
