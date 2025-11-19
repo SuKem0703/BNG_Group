@@ -53,10 +53,10 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        if (parentSlot != null && parentSlot.isHotBarSlot) 
-        { 
-            return; 
-        }
+        //if (parentSlot != null && parentSlot.isHotBarSlot) 
+        //{ 
+        //    return; 
+        //}
 
         originalParent = transform.parent; // Save OG parent
         transform.SetParent(transform.root); // Above other canvas'
@@ -80,10 +80,10 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        if (parentSlot != null && parentSlot.isHotBarSlot == true) 
-        { 
-            return;
-        }
+        //if (parentSlot != null && parentSlot.isHotBarSlot == true) 
+        //{ 
+        //    return;
+        //}
 
         transform.position = eventData.position; // Follow the mouse
     }
@@ -101,10 +101,10 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        if (parentSlot != null && parentSlot.isHotBarSlot == true)
-        {
-            return;
-        }
+        //if (parentSlot != null && parentSlot.isHotBarSlot == true)
+        //{
+        //    return;
+        //}
 
         canvasGroup.blocksRaycasts = true;
         canvasGroup.alpha = 1f;
@@ -270,6 +270,16 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             // Nếu thả ra ngoài slot
             if (!IsWithinInventory(eventData.position))
             {
+                // Thử gieo hạt nếu có thể
+                FarmPlot plot = GetFarmPlotAtMouse(eventData);
+
+                if (plot != null && draggedItem.itemType == ItemType.Seed)
+                {
+                    FarmController.Instance.TryPlantSeed(plot, (SeedItem)draggedItem);
+                    SnapBack();
+                    return;
+                }
+
                 // Nếu là item đang equipped => không cho vứt
                 if (draggedItem.isEquipped)
                 {
@@ -300,6 +310,14 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         TooltipManager.Instance.gameObject.SetActive(true);
     }
 
+    private FarmPlot GetFarmPlotAtMouse(PointerEventData eventData)
+    {
+        Vector2 worldPos = Camera.main.ScreenToWorldPoint(eventData.position);
+        RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
+
+        if (hit.collider == null) return null;
+        return hit.collider.GetComponent<FarmPlot>();
+    }
 
     // ========== CONFIRMATION & NOTIFY UI ==========
     private void ShowDropErrorMessage(string message)

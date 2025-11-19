@@ -11,7 +11,7 @@ PrefabInstance:
     - target: {fileID: 1302886529531070897, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 2374206263240977441, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
+      objectReference: {fileID: -1483848513177272139, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
     - target: {fileID: 5427477551062617347, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -95,7 +95,7 @@ PrefabInstance:
     - target: {fileID: 6104595344313738716, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 2374206263240977441, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
+      objectReference: {fileID: -1483848513177272139, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
     - target: {fileID: 8582904347883955771, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
       propertyPath: ID
       value: 61
@@ -108,12 +108,71 @@ PrefabInstance:
       propertyPath: icon
       value: 
       objectReference: {fileID: 2374206263240977441, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
+    - target: {fileID: 8582904347883955771, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
+      propertyPath: itemType
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 9179164393373267961, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
       propertyPath: m_Name
       value: Carrot
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 8582904347883955771, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9179164393373267961, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1009763311550534419}
   m_SourcePrefab: {fileID: 100100000, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
+--- !u!1 &5133012181627827295 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9179164393373267961, guid: 2b368b229a08cbd4f8dcdbe9ddc1033d, type: 3}
+  m_PrefabInstance: {fileID: 4061945613946749862}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1009763311550534419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5133012181627827295}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52997838a71f858478f6748f3193f75c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SeedItem
+  isDisplayOnly: 0
+  isEquipped: 0
+  sourceItem: {fileID: 0}
+  ID: 61
+  Name: "H\u1EA1t gi\u1ED1ng"
+  description: 
+  icon: {fileID: -1483848513177272139, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
+  quantity: 1
+  itemType: 3
+  strBase: 0
+  dexBase: 0
+  conBase: 0
+  intBase: 0
+  requiredLevel: 0
+  physDamageBase: 0
+  magicDamageBase: 0
+  defenseBase: 0
+  hpKnightBase: 0
+  hpMageBase: 0
+  mpKnightBase: 0
+  mpMageBase: 0
+  hpRegenBase: 0
+  mpRegenBase: 0
+  critRateBase: 0
+  moveSpeedBase: 0
+  staminaRegenBase: 0
+  damageReduction: 0
+  qualityFactor: 1
+  equipSlot: 0
+  classRestriction: 0
+  rarity: 1
+  quantityTextOnUI: {fileID: 0}
+  quantityTextOnWorld: {fileID: 0}
+  cropPrefab: {fileID: 6141773907202939665, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}

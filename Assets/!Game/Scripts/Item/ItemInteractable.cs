@@ -94,7 +94,7 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
             return new TargetInfoData(
                 itemData.Name,
                 itemData.icon,
-                "Thu hoạch",
+                "Nhặt",
                 TargetType.Item,
                 itemData.rarity
             );

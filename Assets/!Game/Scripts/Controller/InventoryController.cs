@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class InventoryController : MonoBehaviour
 {
-    private ItemDictionary itemDictionary;
+    public ItemDictionary itemDictionary;
 
     public GameObject inventoryPanel;
     public GameObject slotPrefab;

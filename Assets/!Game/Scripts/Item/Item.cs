@@ -5,7 +5,9 @@ public enum ItemType
 {
     QuestItem,
     Equipment,
-    Consumable
+    Consumable,
+    Seed,
+    Material,
 }
 public enum CurrencyType
 {
