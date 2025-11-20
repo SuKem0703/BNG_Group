@@ -11,6 +11,8 @@ using UnityEngine.UI;
 
 public class SaveController : MonoBehaviour
 {
+    public static SaveController Instance { get; private set; }
+
     public static event System.Action OnDataLoaded;
     public static bool IsDataLoaded { get; private set; } = false;
 
@@ -30,12 +32,23 @@ public class SaveController : MonoBehaviour
     public static string pendingSceneName = null;
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
         IsDataLoaded = false;
 
         loadingCanvas = GameObject.Find("LoadingCanvas");
         uidText = GameObject.Find("UIDText").GetComponent<TextMeshProUGUI>();
     }
-
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
     void Start()
     {
         PauseController.SetPause(true);

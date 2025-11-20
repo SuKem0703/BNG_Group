@@ -3,10 +3,12 @@
 public class FarmController : MonoBehaviour
 {
     public static FarmController Instance;
-
+    SaveController saveController;
     private void Awake()
     {
         Instance = this;
+
+        saveController = FindFirstObjectByType<SaveController>();
     }
 
     public void TryPlantSeed(FarmPlot plot, SeedItem seed)
@@ -25,6 +27,8 @@ public class FarmController : MonoBehaviour
         crop.plot = plot;
         plot.currentCrop = crop;
         plot.isPlanted = true;
+
+        SoundEffectManager.Play("Seeding", true);
 
         seed.RemoveFromStack(1);
     }
@@ -54,6 +58,9 @@ public class FarmController : MonoBehaviour
                 InventoryController.Instance.AddItem(itemPrefab);
             }
         }
+
+        SoundEffectManager.Play("Harvesting", true);
+        saveController.SaveGame();
 
         // 3. DỌN DẸP CROP
         Destroy(crop.gameObject);

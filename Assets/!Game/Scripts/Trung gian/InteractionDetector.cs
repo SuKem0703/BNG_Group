@@ -7,6 +7,11 @@ using System;
 
 public class InteractionDetector : MonoBehaviour
 {
+    public static InteractionDetector Instance { get; private set; }
+
+    // Quét Farm Plot gần đó để ưu tiên tương tác
+    private HashSet<FarmPlot> nearbyPlots = new HashSet<FarmPlot>();
+
     public static event Action<IInteractable> OnTargetChanged;
     PlayerMovement playerMovement => GetComponentInParent<PlayerMovement>();
 
@@ -21,18 +26,28 @@ public class InteractionDetector : MonoBehaviour
     private List<IInteractable> interactablesInRange = new List<IInteractable>();
 
     [Header("Cài đặt hiệu ứng đung đưa")]
-    [Tooltip("Biên độ (khoảng cách) di chuyển lên xuống")]
     public float floatAmplitude = 0.02f;
-    [Tooltip("Tốc độ di chuyển lên xuống")]
     public float floatSpeed = 5f;
+
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
         if (targetIndicatorPrefab == null)
         {
             targetIndicatorPrefab = Resources.Load<GameObject>("UI/TargetIndicator_Prefab");
         }
     }
-
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
     void Start()
     {
         mainCamera = Camera.main;
@@ -41,7 +56,6 @@ public class InteractionDetector : MonoBehaviour
     void Update()
     {
         HandleIndicatorPosition();
-
         HandleTargetingLogic();
     }
 
@@ -52,6 +66,7 @@ public class InteractionDetector : MonoBehaviour
 
         if (currentTarget == null) return;
 
+        // Quay mặt về phía đối tượng
         if (playerMovement != null)
         {
             Transform interactableTransform = (currentTarget as MonoBehaviour)?.transform;
@@ -61,37 +76,41 @@ public class InteractionDetector : MonoBehaviour
             }
         }
 
+        // Thực hiện tương tác
         currentTarget.Interact();
 
+        // Sau khi tương tác xong, kiểm tra lại trạng thái
         if (currentTarget != null)
         {
             MonoBehaviour mb = currentTarget as MonoBehaviour;
 
             if (mb != null && mb.TryGetComponent<NPC>(out NPC npc))
             {
-                if (npc.IsDialogueActive)
-                    return;
+                if (npc.IsDialogueActive) return;
             }
 
             if (!currentTarget.CanInteract())
             {
-                interactablesInRange.Remove(currentTarget);
                 ClearTarget();
             }
         }
-
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (PlayerStats.IsOnBattle) return;
 
-        if (collision.TryGetComponent(out IInteractable interactable) && interactable.CanInteract())
+        if (collision.TryGetComponent(out IInteractable interactable))
         {
             if (!interactablesInRange.Contains(interactable))
             {
                 interactablesInRange.Add(interactable);
             }
+        }
+
+        if (collision.TryGetComponent(out FarmPlot plot))
+        {
+            nearbyPlots.Add(plot);
         }
     }
 
@@ -109,15 +128,29 @@ public class InteractionDetector : MonoBehaviour
                 ClearTarget();
             }
         }
+
+        if (collision.TryGetComponent(out FarmPlot plot))
+        {
+            nearbyPlots.Remove(plot);
+        }
+    }
+
+    public bool IsPlotInRange(FarmPlot plot)
+    {
+        return plot != null && nearbyPlots.Contains(plot);
+    }
+
+    public FarmPlot GetNearestPlotInRange()
+    {
+        if (nearbyPlots.Count == 0) return null;
+        return nearbyPlots.OrderBy(p => Vector2.Distance(transform.position, p.transform.position)).FirstOrDefault();
     }
 
     private void HandleTargetingLogic()
     {
-        // Không xử lý click nếu game paused hoặc đang battle
         if (PauseController.IsGamePause || PlayerStats.IsOnBattle)
             return;
 
-        // Nếu target hiện tại là NPC đang mở hội thoại thì giữ nguyên, không auto-switch
         if (currentTarget is NPC npc && npc.IsDialogueActive)
         {
             return;
@@ -126,10 +159,15 @@ public class InteractionDetector : MonoBehaviour
         if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
         {
             Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero);
 
-            if (hit.collider != null)
+            RaycastHit2D[] hits = Physics2D.RaycastAll(mousePosition, Vector2.zero);
+
+            foreach (var hit in hits)
             {
+                if (hit.collider == null) continue;
+
+                if (hit.collider.CompareTag("Player")) continue;
+
                 if (hit.collider.TryGetComponent(out IInteractable hitTarget) && hitTarget.CanInteract())
                 {
                     if (interactablesInRange.Contains(hitTarget))
@@ -139,29 +177,44 @@ public class InteractionDetector : MonoBehaviour
                     }
                 }
             }
-
-            ClearTarget();
-            return;
         }
 
-        interactablesInRange.RemoveAll(item => item == null || !(item as MonoBehaviour) || !(item as MonoBehaviour).gameObject.activeInHierarchy || !item.CanInteract());
+        interactablesInRange.RemoveAll(item => item == null || item.Equals(null));
 
-        if (currentTarget != null && interactablesInRange.Contains(currentTarget))
+        // Loại bỏ object bị disable (SetActive false)
+        interactablesInRange.RemoveAll(item =>
+            (item as MonoBehaviour).gameObject.activeInHierarchy == false);
+
+        // Nếu target hiện tại vẫn hợp lệ thì giữ nguyên
+        if (currentTarget != null && currentTarget.CanInteract() && interactablesInRange.Contains(currentTarget))
         {
             return;
         }
 
+        if (currentTarget != null && !currentTarget.CanInteract())
+        {
+            ClearTarget();
+        }
+
+        // --- Tự động tìm mục tiêu gần nhất ---
         if (interactablesInRange.Count > 0)
         {
             IInteractable closest = interactablesInRange
+                .Where(i => i.CanInteract()) // Quan trọng: Chỉ chọn cái nào đang sẵn sàng
                 .OrderBy(i => Vector2.Distance(transform.position, (i as MonoBehaviour).transform.position))
                 .FirstOrDefault();
 
-            SetTarget(closest);
+            if (closest != null)
+            {
+                SetTarget(closest);
+            }
+            else
+            {
+                ClearTarget(); // Không có gì sẵn sàng thì bỏ target
+            }
         }
         else
         {
-            // Không còn gì trong tầm
             ClearTarget();
         }
     }
@@ -171,11 +224,8 @@ public class InteractionDetector : MonoBehaviour
         if (currentIndicatorInstance != null && currentTarget != null)
         {
             Transform targetTransform = (currentTarget as MonoBehaviour).transform;
-
             float dynamicYOffset = targetYOffset + (Mathf.Sin(Time.time * floatSpeed) * floatAmplitude);
-
             Vector3 indicatorPos = targetTransform.position + new Vector3(0, dynamicYOffset, 0);
-
             currentIndicatorInstance.transform.position = indicatorPos;
         }
     }
@@ -184,9 +234,7 @@ public class InteractionDetector : MonoBehaviour
     {
         if (currentTarget == newTarget) return;
 
-        // Xóa indicator cũ
-        if (currentIndicatorInstance != null)
-            Destroy(currentIndicatorInstance);
+        if (currentIndicatorInstance != null) Destroy(currentIndicatorInstance);
 
         currentTarget = newTarget;
 
@@ -194,11 +242,7 @@ public class InteractionDetector : MonoBehaviour
         {
             Transform targetTransform = (currentTarget as MonoBehaviour).transform;
             Vector3 indicatorPos = targetTransform.position + new Vector3(0, targetYOffset, 0);
-
             currentIndicatorInstance = Instantiate(targetIndicatorPrefab, indicatorPos, Quaternion.identity);
-
-            // (Tùy chọn: Làm indicator con của target để di chuyển theo nếu target là NPC động)
-            // currentIndicatorInstance.transform.SetParent(targetTransform); 
         }
 
         OnTargetChanged?.Invoke(currentTarget);
@@ -207,21 +251,19 @@ public class InteractionDetector : MonoBehaviour
     private void ClearTarget()
     {
         if (currentTarget == null) return;
-
         currentTarget = null;
-
         if (currentIndicatorInstance != null)
         {
             Destroy(currentIndicatorInstance);
             currentIndicatorInstance = null;
         }
-
         OnTargetChanged?.Invoke(null);
     }
 
     private void OnDisable()
     {
         interactablesInRange.Clear();
+        nearbyPlots.Clear();
         ClearTarget();
     }
 }

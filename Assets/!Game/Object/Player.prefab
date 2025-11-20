@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3017137090346428454}
   m_Layer: 3
   m_Name: InteractionDetector
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -83,9 +83,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 462d93079ed8341419175dac9d8e04a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  interactionIcon: {fileID: 9080872992370843947}
   targetIndicatorPrefab: {fileID: 984118000735452077, guid: cac8db452cec35643829dad2fb5ee4e6, type: 3}
   targetYOffset: 1.1
+  floatAmplitude: 0.02
+  floatSpeed: 5
 --- !u!1 &933796726173745479
 GameObject:
   m_ObjectHideFlags: 0
@@ -765,7 +766,7 @@ GameObject:
   - component: {fileID: 4549446673033622176}
   m_Layer: 3
   m_Name: InteractionDetector
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -835,9 +836,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 462d93079ed8341419175dac9d8e04a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  interactionIcon: {fileID: 6774530177061298786}
   targetIndicatorPrefab: {fileID: 984118000735452077, guid: cac8db452cec35643829dad2fb5ee4e6, type: 3}
   targetYOffset: 1.1
+  floatAmplitude: 0.02
+  floatSpeed: 5
 --- !u!1 &6742275830012487082
 GameObject:
   m_ObjectHideFlags: 0

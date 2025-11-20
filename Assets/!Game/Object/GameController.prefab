@@ -105,6 +105,51 @@ MonoBehaviour:
   - {fileID: 830664853362561958, guid: 62fc143381aa0064da91d6418cd2231e, type: 3}
   - {fileID: 830664853362561958, guid: e3476fee3ffd8fd44bea61b247cbba11, type: 3}
   - {fileID: 830664853362561958, guid: dbef9023097c7334fb457ef691cf33b4, type: 3}
+  - {fileID: 1009763311550534419, guid: 48099bf317ba14a47945c678d7fd758c, type: 3}
+--- !u!1 &843113747814734008
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8265038007158148835}
+  - component: {fileID: 1646683385122541739}
+  m_Layer: 0
+  m_Name: FarmController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8265038007158148835
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843113747814734008}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7867389363985881547}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1646683385122541739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843113747814734008}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d47a43c5ccca35d498c26ce24eb7b91a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FarmController
 --- !u!1 &2830932009588460990
 GameObject:
   m_ObjectHideFlags: 0
@@ -243,6 +288,7 @@ Transform:
   - {fileID: 4171168528621876830}
   - {fileID: 5870356453793218608}
   - {fileID: 6457707702815514800}
+  - {fileID: 8265038007158148835}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4801625066842432741
@@ -284,6 +330,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79cf7c7350024bf48a3a067c68533e27, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  itemDictionary: {fileID: 0}
   inventoryPanel: {fileID: 0}
   slotPrefab: {fileID: 480783112922435392, guid: cd7cdb39d80fc0742bea59cf64228937, type: 3}
   slotCount: 0
@@ -348,6 +395,7 @@ MonoBehaviour:
   - {fileID: 286389992014070372, guid: 62fc143381aa0064da91d6418cd2231e, type: 3}
   - {fileID: 286389992014070372, guid: e3476fee3ffd8fd44bea61b247cbba11, type: 3}
   - {fileID: 286389992014070372, guid: dbef9023097c7334fb457ef691cf33b4, type: 3}
+  - {fileID: 5133012181627827295, guid: 48099bf317ba14a47945c678d7fd758c, type: 3}
 --- !u!114 &5701751990449015104
 MonoBehaviour:
   m_ObjectHideFlags: 0

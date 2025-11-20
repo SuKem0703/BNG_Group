@@ -28,6 +28,11 @@ public class InventoryController : MonoBehaviour
 
         Instance = this;
     }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
     void Start()
     {
         if (inventoryPanel == null)

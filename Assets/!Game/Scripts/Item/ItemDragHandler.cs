@@ -275,9 +275,26 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
                 if (plot != null && draggedItem.itemType == ItemType.Seed)
                 {
-                    FarmController.Instance.TryPlantSeed(plot, (SeedItem)draggedItem);
-                    SnapBack();
-                    return;
+                    if (InteractionDetector.Instance != null && InteractionDetector.Instance.IsPlotInRange(plot))
+                    {
+                        FarmController.Instance.TryPlantSeed(plot, (SeedItem)draggedItem);
+                        if (draggedItem.quantity <= 0)
+                        {
+                            originalSlot.currentItem = null;
+                            Destroy(gameObject);
+                        }
+                        else
+                        {
+                            SnapBack();
+                        }
+                        return;
+                    }
+                    else
+                    {
+                        //ShowDropErrorMessage("Hãy lại gần hơn để gieo hạt!");
+                        SnapBack();
+                        return;
+                    }
                 }
 
                 // Nếu là item đang equipped => không cho vứt
@@ -313,10 +330,24 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private FarmPlot GetFarmPlotAtMouse(PointerEventData eventData)
     {
         Vector2 worldPos = Camera.main.ScreenToWorldPoint(eventData.position);
-        RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
 
-        if (hit.collider == null) return null;
-        return hit.collider.GetComponent<FarmPlot>();
+        RaycastHit2D[] hits = Physics2D.RaycastAll(worldPos, Vector2.zero);
+
+        foreach (var hit in hits)
+        {
+            if (hit.collider == null) continue;
+
+            if (hit.collider.CompareTag("Player")) continue;
+
+            FarmPlot plot = hit.collider.GetComponent<FarmPlot>();
+
+            if (plot != null)
+            {
+                return plot;
+            }
+        }
+
+        return null;
     }
 
     // ========== CONFIRMATION & NOTIFY UI ==========
