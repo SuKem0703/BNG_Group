@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+
 public class PlayerStats : MonoBehaviour
 {
     public static PlayerStats Instance { get; private set; }
@@ -13,7 +14,8 @@ public class PlayerStats : MonoBehaviour
     public int level = 1;
     public int exp;
     public int potentialPoints;
-    public int expToNextLevel {
+    public int expToNextLevel
+    {
         get
         {
             if (level < 100)
@@ -107,6 +109,27 @@ public class PlayerStats : MonoBehaviour
 
     public static bool IsOnBattle = false;
 
+    // Biến kiểm tra điều kiện tấn công tổng hợp
+    public bool CanAttack
+    {
+        get
+        {
+            if (PauseController.IsGamePause) return false;
+
+            if (MapController.Instance != null && MapController.Instance.IsSafeZone()) return false;
+
+            ClassController classController = GetComponent<ClassController>();
+            if (classController.knightObject.activeSelf)
+            {
+                return KnightEquipmentPanel.HasWeaponEquipped;
+            }
+            else
+            {
+                return MageEquipmentPanel.HasWeaponEquipped;
+            }
+        }
+    }
+
     public Slot[] equipmentKnightSlots;
     public Slot[] equipmentMageSlots;
 
@@ -126,6 +149,8 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float potionCooldownTimer;
 
     public CapsuleCollider2D playerCollider;
+
+    // Singleton Init
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -135,7 +160,6 @@ public class PlayerStats : MonoBehaviour
         }
         Instance = this;
 
-        // Ensure the game keeps running when window loses focus in builds
         Application.runInBackground = true;
 
         if (knightRenderer == null)
@@ -145,10 +169,14 @@ public class PlayerStats : MonoBehaviour
 
         if (playerCollider == null) playerCollider = GetComponent<CapsuleCollider2D>();
     }
+
+    // Singleton cleanup
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
     }
+
+    // Init Logic
     void Start()
     {
         PauseController.SetPause(false);
@@ -175,6 +203,8 @@ public class PlayerStats : MonoBehaviour
         mpRegenCooldown = mpRegenDelay;
         staminaRegenCooldown = staminaRegenDelay;
     }
+
+    // Loop
     void Update()
     {
         if (PauseController.IsGamePause)
@@ -188,9 +218,11 @@ public class PlayerStats : MonoBehaviour
 
         if (potionCooldownTimer > 0)
         {
-            potionCooldownTimer -= Time.unscaledDeltaTime; // use unscaled time to be consistent with built behaviour
+            potionCooldownTimer -= Time.unscaledDeltaTime;
         }
     }
+
+    // Logic hồi phục theo thời gian
     void HandleRegen()
     {
         ClassController classController = GetComponent<ClassController>();
@@ -264,17 +296,17 @@ public class PlayerStats : MonoBehaviour
             }
         }
     }
+
+    // Tính chỉ số từ trang bị
     public void ApplyEquippedItems()
     {
         var classController = GetComponent<ClassController>();
 
-        // ✅ Lưu lại finalMax của class inactive
         int cachedKnightFinalMaxHP = finalKnightMaxHP;
         int cachedKnightFinalMaxMP = finalKnightMaxMP;
         int cachedMageFinalMaxHP = finalMageMaxHP;
         int cachedMageFinalMaxMP = finalMageMaxMP;
 
-        // 🔁 Reset bonus
         bonusSTR = bonusDEX = bonusCON = bonusINT = 0;
         bonusPhysicalAttack = 0;
         bonusMagicAttack = 0;
@@ -290,7 +322,6 @@ public class PlayerStats : MonoBehaviour
         bonusStaminaRegen = 0;
         damageReduction = 0;
 
-        // ⚔️ Tính lại bonus của class đang active
         if (classController.knightObject.activeSelf)
         {
             foreach (Slot slot in equipmentKnightSlots)
@@ -317,7 +348,6 @@ public class PlayerStats : MonoBehaviour
                 damageReduction += item.damageReduction;
             }
 
-            // Giữ nguyên Mage bonus
             bonusMageMaxHP = cachedMageFinalMaxHP - baseMaxHP;
             bonusMageMaxMP = cachedMageFinalMaxMP - baseMaxMP;
         }
@@ -347,24 +377,22 @@ public class PlayerStats : MonoBehaviour
                 damageReduction += item.damageReduction;
             }
 
-            // Giữ nguyên Knight bonus
             bonusKnightMaxHP = cachedKnightFinalMaxHP - baseMaxHP;
             bonusKnightMaxMP = cachedKnightFinalMaxMP - baseMaxMP;
         }
 
-        // --- Clamp current HP/MP ---
         knightHealth = Mathf.Min(knightHealth, finalKnightMaxHP);
         knightMP = Mathf.Min(knightMP, finalKnightMaxMP);
         mageHealth = Mathf.Min(mageHealth, finalMageMaxHP);
         mageMP = Mathf.Min(mageMP, finalMageMaxMP);
     }
+
+    // Tính chỉ số cho cả 2 class (dùng khi load game)
     public void ApplyAllClassEquippedItems()
     {
-        // Backup class đang active
         var classController = GetComponent<ClassController>();
         bool wasKnightActive = classController.knightObject.activeSelf;
 
-        // 1️⃣ Tính Knight
         classController.knightObject.SetActive(true);
         classController.mageObject.SetActive(false);
         ApplyEquippedItems();
@@ -372,7 +400,6 @@ public class PlayerStats : MonoBehaviour
         int savedKnightHP = finalKnightMaxHP;
         int savedKnightMP = finalKnightMaxMP;
 
-        // 2️⃣ Tính Mage
         classController.knightObject.SetActive(false);
         classController.mageObject.SetActive(true);
         ApplyEquippedItems();
@@ -380,23 +407,21 @@ public class PlayerStats : MonoBehaviour
         int savedMageHP = finalMageMaxHP;
         int savedMageMP = finalMageMaxMP;
 
-        // 3️⃣ Phục hồi trạng thái ban đầu
         classController.knightObject.SetActive(wasKnightActive);
         classController.mageObject.SetActive(!wasKnightActive);
 
-        // 4️⃣ Gán lại kết quả vào bonus để cả hai class đều có chỉ số đúng
         bonusKnightMaxHP = savedKnightHP - baseMaxHP;
         bonusKnightMaxMP = savedKnightMP - baseMaxMP;
         bonusMageMaxHP = savedMageHP - baseMaxHP;
         bonusMageMaxMP = savedMageMP - baseMaxMP;
 
-        // Clamp lại current HP/MP
         knightHealth = Mathf.Min(knightHealth, finalKnightMaxHP);
         knightMP = Mathf.Min(knightMP, finalKnightMaxMP);
         mageHealth = Mathf.Min(mageHealth, finalMageMaxHP);
         mageMP = Mathf.Min(mageMP, finalMageMaxMP);
     }
 
+    // Làm mới full máu/mana
     public void RefreshStats()
     {
         knightHealth = finalKnightMaxHP;
@@ -408,6 +433,7 @@ public class PlayerStats : MonoBehaviour
         currentStamina = finalStamina;
     }
 
+    // Cộng EXP
     public void AddEXP(int amount)
     {
         exp += amount;
@@ -418,6 +444,8 @@ public class PlayerStats : MonoBehaviour
             LevelUp();
         }
     }
+
+    // Lên cấp
     private void LevelUp()
     {
         level++;
@@ -427,6 +455,8 @@ public class PlayerStats : MonoBehaviour
 
         Debug.Log($"Level Up! New level: {level}, EXP to next: {expToNextLevel}, Potential Points: {potentialPoints}");
     }
+
+    // Nhận sát thương
     public void TakeDamage(int damage)
     {
         if (isInvincible) return;
@@ -441,12 +471,8 @@ public class PlayerStats : MonoBehaviour
         int maxHP = isKnight ? finalKnightMaxHP : finalMageMaxHP;
         int currentHP = isKnight ? knightHealth : mageHealth;
 
-        // Gây sát thương
         currentHP -= dmgTaken;
-        //healthRegenCooldown = healthRegenDelay;
-        //healthRegenTimer = 0f;
 
-        // Gán lại
         if (isKnight) knightHealth = currentHP;
         else mageHealth = currentHP;
 
@@ -457,10 +483,13 @@ public class PlayerStats : MonoBehaviour
             HandleDeath(isKnight ? "Knight" : "Mage");
     }
 
+    // Set trạng thái bất tử
     public void SetInvincible(bool value)
     {
         isInvincible = value;
     }
+
+    // Xử lý khi chết
     private void HandleDeath(string who)
     {
         Debug.Log($"{who} has fallen!");
@@ -495,6 +524,8 @@ public class PlayerStats : MonoBehaviour
             }
         }
     }
+
+    // Sử dụng MP
     public void UseMP(int amount, bool isKnight)
     {
         if (isKnight)
@@ -506,6 +537,7 @@ public class PlayerStats : MonoBehaviour
         mpRegenTimer = 0f;
     }
 
+    // Hồi MP
     public void RecoverMP(int amount, bool isKnight)
     {
         if (isKnight)
@@ -514,6 +546,7 @@ public class PlayerStats : MonoBehaviour
             mageMP = Mathf.Min(mageMP + amount, finalMageMaxMP);
     }
 
+    // Sử dụng Stamina
     public void UseStamina(int amount)
     {
         currentStamina = Mathf.Max(currentStamina - amount, 0);
@@ -521,6 +554,7 @@ public class PlayerStats : MonoBehaviour
         staminaRegenTimer = 0f;
     }
 
+    // Hồi HP
     public void Heal(int amount, bool isKnight)
     {
         if (isKnight)
@@ -542,28 +576,31 @@ public class PlayerStats : MonoBehaviour
                 ShowRecoveryPopup(actualHeal, DamageSourceType.Heal);
         }
     }
+
+    // Hồi Stamina
     public void RecoverStamina(int amount)
     {
         currentStamina = Mathf.Min(currentStamina + amount, finalStamina);
     }
 
-    // Currency
+    // Currency helpers
     public void AddCoin(int amount) => coin += amount;
     public void SpendCoin(int amount) => coin = Mathf.Max(coin - amount, 0);
     public void AddGem(int amount) => gem += amount;
     public void SpendGem(int amount) => gem = Mathf.Max(gem - amount, 0);
 
+    // Tìm Slot UI theo tên
     Slot[] FindSlotsByName(string parentName)
     {
         var allTransforms = Object.FindObjectsByType<Transform>(
-    FindObjectsInactive.Include,
-    FindObjectsSortMode.None
-);
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
 
         Transform parent = allTransforms.FirstOrDefault(t =>
-    t.name == parentName &&
-    t.gameObject.scene.isLoaded
-);
+            t.name == parentName &&
+            t.gameObject.scene.isLoaded
+        );
 
         if (parent == null)
         {
@@ -573,6 +610,8 @@ public class PlayerStats : MonoBehaviour
 
         return parent.GetComponentsInChildren<Slot>(includeInactive: true);
     }
+
+    // Reset điểm tiềm năng
     public void ResetPotential()
     {
         int basePoints = 5;
@@ -587,6 +626,8 @@ public class PlayerStats : MonoBehaviour
 
         potentialPoints = totalPoints;
     }
+
+    // Game Over Logic
     private void GameOver()
     {
         if (PauseController.IsGamePause) return;
@@ -602,10 +643,11 @@ public class PlayerStats : MonoBehaviour
         }
         else
         {
-            // Nếu không có UI, có thể load scene
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameOverScene");
         }
     }
+
+    // Hiệu ứng nhấp nháy khi trúng đòn
     private IEnumerator FlashCharacter(SpriteRenderer renderer)
     {
         if (renderer == null) yield break;
@@ -613,14 +655,14 @@ public class PlayerStats : MonoBehaviour
 
         for (int i = 0; i < flashCount; i++)
         {
-            renderer.color = new Color(1f, 0.3f, 0.3f); // đỏ nhạt
+            renderer.color = new Color(1f, 0.3f, 0.3f);
             yield return new WaitForSeconds(flashDuration);
             renderer.color = originalColor;
             yield return new WaitForSeconds(flashDuration);
         }
     }
-    // Xử lý hồi máu/MP cho nhân vật đang active
 
+    // Hồi máu cho nhân vật đang active
     public void HealActiveCharacter(int amount)
     {
         ClassController classController = GetComponent<ClassController>();
@@ -630,27 +672,17 @@ public class PlayerStats : MonoBehaviour
 
         if (isKnightActive)
         {
-            if (knightHealth >= finalKnightMaxHP)
-            {
-                Heal(amount, false);
-            }
-            else
-            {
-                Heal(amount, true);
-            }
+            if (knightHealth >= finalKnightMaxHP) Heal(amount, false);
+            else Heal(amount, true);
         }
         else
         {
-            if (mageHealth >= finalMageMaxHP)
-            {
-                Heal(amount, true);
-            }
-            else
-            {
-                Heal(amount, false);
-            }
+            if (mageHealth >= finalMageMaxHP) Heal(amount, true);
+            else Heal(amount, false);
         }
     }
+
+    // Hồi MP cho nhân vật đang active
     public void RecoverMPActiveCharacter(int amount)
     {
         ClassController classController = GetComponent<ClassController>();
@@ -660,27 +692,17 @@ public class PlayerStats : MonoBehaviour
 
         if (isKnightActive)
         {
-            if (knightMP >= finalKnightMaxMP)
-            {
-                RecoverMP(amount, false);
-            }
-            else
-            {
-                RecoverMP(amount, true);
-            }
+            if (knightMP >= finalKnightMaxMP) RecoverMP(amount, false);
+            else RecoverMP(amount, true);
         }
         else
         {
-            if (mageMP >= finalMageMaxMP)
-            {
-                RecoverMP(amount, true);
-            }
-            else
-            {
-                RecoverMP(amount, false);
-            }
+            if (mageMP >= finalMageMaxMP) RecoverMP(amount, true);
+            else RecoverMP(amount, false);
         }
     }
+
+    // Potion Cooldown helpers
     public bool IsPotionOnCooldown()
     {
         return potionCooldownTimer > 0;
@@ -693,6 +715,8 @@ public class PlayerStats : MonoBehaviour
     {
         return potionCooldownTimer;
     }
+
+    // Kiểm tra có cần hồi máu không
     public bool CanHeal()
     {
         bool knightCanHeal = knightHealth < finalKnightMaxHP;
@@ -700,31 +724,30 @@ public class PlayerStats : MonoBehaviour
         return knightCanHeal || mageCanHeal;
     }
 
+    // Kiểm tra có cần hồi MP không
     public bool CanRecoverMP()
     {
         bool knightCanRecover = knightMP < finalKnightMaxMP;
         bool mageCanRecover = mageMP < finalMageMaxMP;
         return knightCanRecover || mageCanRecover;
     }
-    // HÀM HELPER NÀY ĐỂ TẠO POPUP HIỂN THỊ SỐ LƯỢNG HỒI MÁU/MP
+
+    // Hiển thị Popup số damage/heal
     private void ShowRecoveryPopup(int amount, DamageSourceType type)
     {
         GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
 
-        // Kiểm tra null
         if (popupPrefab == null || amount <= 0)
         {
             Debug.LogWarning("Cannot show recovery popup: Prefab is null or amount is <= 0");
             return;
         }
 
-        // Lấy transform của nhân vật đang active
         var classController = GetComponent<ClassController>();
         Transform activeCharacterTransform = classController.knightObject.activeSelf
             ? classController.knightObject.transform
             : classController.mageObject.transform;
 
-        // Vị trí xuất hiện (trên đầu nhân vật)
         Vector3 spawnPosition = activeCharacterTransform.position + new Vector3(0, 1.5f, 0);
 
         GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);

@@ -1,13 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class SaveController : MonoBehaviour
 {
@@ -29,11 +27,16 @@ public class SaveController : MonoBehaviour
     private KnightEquipmentPanel knightEquipmentPanel;
     private MageEquipmentPanel mageEquipmentPanel;
     private SharedEquipmentPanel sharedEquipmentPanel;
-
     private FarmController farmController;
 
     public static Vector3? nextSpawnPosition = null;
     public static string pendingSceneName = null;
+
+    private Coroutine autoSaveCoroutine;
+    private float autoSaveDebounceTime = 3.0f;
+    private bool isAutoSavePending = false;
+
+    // Khởi tạo Singleton và các tham chiếu UI cơ bản
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -43,33 +46,40 @@ public class SaveController : MonoBehaviour
         }
 
         Instance = this;
-
         IsDataLoaded = false;
 
-        uidText = GameObject.Find("UIDText").GetComponent<TextMeshProUGUI>();
+        GameObject uidObj = GameObject.Find("UIDText");
+        if (uidObj != null)
+            uidText = uidObj.GetComponent<TextMeshProUGUI>();
     }
+
+    // Hủy Singleton khi object bị hủy
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
     }
+
+    // Bắt đầu quy trình load game khi Scene khởi chạy
     void Start()
     {
         ShowMainLoadingScreen();
-
         StartLoadProcess();
     }
 
+    // Wrapper để bắt đầu Coroutine load
     private void StartLoadProcess()
     {
         StartCoroutine(LoadAndFinalize());
     }
 
+    // Quy trình load tuần tự: Khởi tạo component -> Load dữ liệu -> Xử lý UI
     IEnumerator LoadAndFinalize()
     {
         yield return InitializeComponents();
 
         bool sceneLoadTriggered = false;
-        yield return StartCoroutine(LoadRoutine((wasTriggered) => {
+        yield return StartCoroutine(LoadRoutine((wasTriggered) =>
+        {
             sceneLoadTriggered = wasTriggered;
         }));
 
@@ -82,74 +92,95 @@ public class SaveController : MonoBehaviour
 
         if (uidText != null)
             uidText.text = "UID: " + GetPlayerUID();
-        else
-            Debug.LogWarning("UIDText bị null, không thể set text.");
 
         HideMainLoadingScreen();
 
         OnDataLoaded?.Invoke();
     }
+
+    // Tìm kiếm và gán các reference component trong scene
     IEnumerator InitializeComponents()
     {
         inventoryController = FindFirstObjectByType<InventoryController>(FindObjectsInactive.Include);
-
         hotbarController = FindFirstObjectByType<HotbarController>();
-
         chests = FindObjectsByType<Chest>(FindObjectsSortMode.None);
-
         playerStats = GameObject.FindGameObjectWithTag("PlayerController").GetComponent<PlayerStats>();
-
         knightEquipmentPanel = FindFirstObjectByType<KnightEquipmentPanel>(FindObjectsInactive.Include);
         mageEquipmentPanel = FindFirstObjectByType<MageEquipmentPanel>(FindObjectsInactive.Include);
         sharedEquipmentPanel = FindFirstObjectByType<SharedEquipmentPanel>(FindObjectsInactive.Include);
-
         farmController = FindFirstObjectByType<FarmController>();
 
         yield break;
     }
-    public IEnumerator SaveRoutine(System.Action onSaveFinished = null)
+
+    // Kích hoạt lưu tự động với cơ chế Debounce (chờ thao tác kết thúc)
+    public void TriggerAutoSave()
+    {
+        if (IsSaving && !isAutoSavePending) return;
+
+        if (autoSaveCoroutine != null)
+        {
+            StopCoroutine(autoSaveCoroutine);
+        }
+
+        isAutoSavePending = true;
+        autoSaveCoroutine = StartCoroutine(DebounceAutoSave());
+    }
+
+    // Coroutine đếm ngược thời gian chờ trước khi thực hiện lưu ngầm
+    IEnumerator DebounceAutoSave()
+    {
+        yield return new WaitForSeconds(autoSaveDebounceTime);
+
+        if (isAutoSavePending)
+        {
+            StartCoroutine(SaveRoutine(null, true));
+            isAutoSavePending = false;
+        }
+    }
+
+    // Hàm gọi lưu game công khai, sử dụng cho các thao tác quan trọng cần chặn màn hình
+    public void SaveGame(System.Action onSaveFinished = null)
+    {
+        if (IsSaving)
+        {
+            return;
+        }
+
+        if (autoSaveCoroutine != null) StopCoroutine(autoSaveCoroutine);
+        isAutoSavePending = false;
+
+        StartCoroutine(SaveRoutine(onSaveFinished, false));
+    }
+
+    // Logic cốt lõi của việc lưu dữ liệu, hỗ trợ chế độ im lặng hoặc chặn màn hình
+    public IEnumerator SaveRoutine(System.Action onSaveFinished = null, bool isSilent = false)
     {
         IsSaving = true;
-        ShowMiniLoadingScreen();
+
+        if (!isSilent)
+        {
+            ShowMiniLoadingScreen();
+        }
 
         if (inventoryController == null || hotbarController == null || knightEquipmentPanel == null || mageEquipmentPanel == null || sharedEquipmentPanel == null || playerStats == null)
         {
-            Debug.LogError("SaveRoutine: Một trong các manager bị null. Hủy lưu.");
-            HideMiniLoadingScreen();
+            if (!isSilent) HideMiniLoadingScreen();
             IsSaving = false;
             onSaveFinished?.Invoke();
             yield break;
         }
 
-        // Always prefer server copy for existing chest states to avoid overwriting other scenes' data
         List<ChestSaveData> existingChestStates = new List<ChestSaveData>();
-
-        // Nếu đang ở Dungeon (FarmController == null), ta phải save lại dữ liệu cũ để không bị mất Farm.
         FarmData existingFarmData = new FarmData();
 
-        // Fetch current save from server (non-fatal). If server returns data, use its chestSaveData, farmData. Otherwise keep empty list.
         SaveData serverSave = null;
         yield return LoadFromServer((sd) => { serverSave = sd; });
 
         if (serverSave != null)
         {
-            if (serverSave.chestSaveData != null)
-            {
-                existingChestStates = serverSave.chestSaveData;
-            }
-            else
-            {
-                existingChestStates = new List<ChestSaveData>();
-            }
-
-            if (serverSave.farmData != null)
-            { 
-                existingFarmData = serverSave.farmData; 
-            }
-            else
-            {
-                existingFarmData = new FarmData();
-            }
+            existingChestStates = serverSave.chestSaveData ?? new List<ChestSaveData>();
+            existingFarmData = serverSave.farmData ?? new FarmData();
         }
 
         SaveData saveData = new SaveData
@@ -159,29 +190,23 @@ public class SaveController : MonoBehaviour
             backPackSlotCount = inventoryController.slotCount,
             inventorySaveData = inventoryController.GetInventoryItems(),
             hotbarSaveData = hotbarController.GetHotbarItems(),
-            chestSaveData = MergeChestsState(existingChestStates: existingChestStates),
+            chestSaveData = MergeChestsState(existingChestStates),
             questProgressData = QuestController.Instance.activeQuests,
             handInQuestIDs = QuestController.Instance.handInQuestIDs,
 
-            // Lưu vị trí Item đã được trang bị
             knightEquipSaveData = knightEquipmentPanel.GetEquipmentItems(),
             mageEquipSaveData = mageEquipmentPanel.GetEquipmentItems(),
             shareEquipSaveData = sharedEquipmentPanel.GetEquipmentItems(),
 
-            // Lưu trạng thái người chơi
             lvl = playerStats.level,
             exp = playerStats.exp,
             currentKnightHP = playerStats.knightHealth,
             currentmageHP = playerStats.mageHealth,
-
             currentKnightMP = playerStats.knightMP,
             currentMageMP = playerStats.mageMP,
-
             currentStamina = playerStats.currentStamina,
             coin = playerStats.coin,
             gem = playerStats.gem,
-
-            // Lưu các chỉ số và tiềm năng
             str = playerStats.STR,
             dex = playerStats.DEX,
             con = playerStats.CON,
@@ -189,8 +214,6 @@ public class SaveController : MonoBehaviour
             potentialPoints = playerStats.potentialPoints,
 
             farmData = MergeFarmData(existingFarmData),
-
-            // include collected items by scene so collectibles persist across visits
             collectedByScene = collectedByScene
         };
 
@@ -199,28 +222,16 @@ public class SaveController : MonoBehaviour
 
         pendingSceneName = null;
 
-        if (saveSuccess)
+        if (!isSilent)
         {
-            // Debug.Log("Game đã được lưu thành công!");
+            HideMiniLoadingScreen();
         }
 
-        HideMiniLoadingScreen();
         IsSaving = false;
         onSaveFinished?.Invoke();
     }
 
-    public void SaveGame(System.Action onSaveFinished = null)
-    {
-        if (IsSaving)
-        {
-            Debug.LogWarning("Đang lưu game, vui lòng chờ!");
-            return;
-        }
-
-        StartCoroutine(SaveRoutine(onSaveFinished));
-    }
-
-    // === Main Loading Screen ===
+    // Hiển thị màn hình chờ chính (Loading Scene)
     private void ShowMainLoadingScreen()
     {
         if (mainLoadingCanvasInstance != null)
@@ -233,17 +244,13 @@ public class SaveController : MonoBehaviour
         if (prefab != null)
         {
             mainLoadingCanvasInstance = Instantiate(prefab);
-
             mainLoadingCanvasInstance.SetActive(true);
-        }
-        else
-        {
-            Debug.LogError("SaveController: Chưa load được MainLoadingCanvasPrefab từ LoadResourceManager!");
         }
 
         PauseController.SetPause(true);
     }
 
+    // Ẩn màn hình chờ chính
     private void HideMainLoadingScreen()
     {
         if (mainLoadingCanvasInstance != null)
@@ -255,10 +262,7 @@ public class SaveController : MonoBehaviour
         PauseController.SetPause(false);
     }
 
-    // === Mini Loading Screen ===
-
-    // Cập nhật trong SaveController.cs
-
+    // Hiển thị màn hình chờ phụ (Mini loading)
     private void ShowMiniLoadingScreen()
     {
         GameObject prefab = LoadResourceManager.Instance.MiniLoadingScreenPrefab;
@@ -271,31 +275,25 @@ public class SaveController : MonoBehaviour
             }
 
             miniLoadingScreenInstance.SetActive(true);
-
             PauseController.SetPause(true);
-        }
-        else
-        {
-            Debug.LogError("SaveController: Chưa load được MiniLoadingScreenPrefab từ LoadResourceManager!");
         }
     }
 
+    // Ẩn màn hình chờ phụ
     private void HideMiniLoadingScreen()
     {
         if (miniLoadingScreenInstance != null)
         {
             miniLoadingScreenInstance.SetActive(false);
-
             if (MenuController.IsMenuOpen == true) return;
             PauseController.SetPause(false);
         }
     }
 
-    // === Merging Data Methods ===
+    // Lấy trạng thái rương của scene hiện tại
     private List<ChestSaveData> GetChestsState()
     {
         List<ChestSaveData> chestStates = new List<ChestSaveData>();
-        string scene = SceneManager.GetActiveScene().name;
         foreach (Chest chest in chests)
         {
             ChestSaveData chestSaveData = new ChestSaveData
@@ -307,14 +305,14 @@ public class SaveController : MonoBehaviour
         }
         return chestStates;
     }
+
+    // Gộp trạng thái rương hiện tại vào dữ liệu tổng từ server
     private List<ChestSaveData> MergeChestsState(List<ChestSaveData> existingChestStates)
     {
-        // existingChestStates comes from server and may include chests from many scenes
         List<ChestSaveData> currentChests = GetChestsState();
 
         foreach (var chest in currentChests)
         {
-            // Match by both chestID and sceneName to avoid cross-scene collisions
             var existing = existingChestStates.FirstOrDefault(c => c.chestID == chest.chestID);
             if (existing != null)
             {
@@ -328,7 +326,8 @@ public class SaveController : MonoBehaviour
 
         return existingChestStates;
     }
-    // Merge farm data from current scene into existing farm data from server
+
+    // Gộp dữ liệu nông trại hiện tại vào dữ liệu tổng từ server
     private FarmData MergeFarmData(FarmData existingFarmData)
     {
         FarmData currentSceneData = farmController.GetFarmDataToSave();
@@ -354,6 +353,8 @@ public class SaveController : MonoBehaviour
 
         return existingFarmData;
     }
+
+    // Quy trình load dữ liệu từ server
     public IEnumerator LoadRoutine(System.Action<bool> onComplete)
     {
         bool sceneLoadWasTriggered = false;
@@ -366,26 +367,23 @@ public class SaveController : MonoBehaviour
         onComplete(sceneLoadWasTriggered);
     }
 
+    // Áp dụng dữ liệu save vào game, xử lý chuyển scene nếu cần
     private bool ApplySaveData(SaveData saveData)
     {
         string targetScene = saveData.currentSceneName;
 
-        // Nếu null/rỗng -> về "1.1"
         if (string.IsNullOrEmpty(targetScene))
             targetScene = "1.1";
 
-        // Kiểm tra xem scene có tồn tại trong Build Settings không
         bool sceneExists = Enumerable.Range(0, SceneManager.sceneCountInBuildSettings)
             .Select(SceneUtility.GetScenePathByBuildIndex)
             .Any(scenePath => scenePath.EndsWith($"{targetScene}.unity"));
 
         if (!sceneExists)
         {
-            Debug.LogWarning($"[SaveController] Scene '{targetScene}' không tồn tại trong Build Settings. Chuyển về '1.1'.");
             targetScene = "1.1";
         }
 
-        // Nếu khác scene hiện tại -> load scene
         if (SceneManager.GetActiveScene().name != targetScene)
         {
             SceneManager.LoadScene(targetScene);
@@ -393,14 +391,6 @@ public class SaveController : MonoBehaviour
             SaveController.nextSpawnPosition = saveData.playerPosition;
             return true;
         }
-
-        //if (!string.IsNullOrEmpty(saveData.currentSceneName) && SceneManager.GetActiveScene().name != saveData.currentSceneName)
-        //{
-        //    SceneManager.LoadScene(saveData.currentSceneName);
-        //    SaveController.pendingSceneName = saveData.currentSceneName;
-        //    SaveController.nextSpawnPosition = saveData.playerPosition;
-        //    return;
-        //}
 
         GameObject player = GameObject.FindGameObjectWithTag("PlayerController");
         if (SaveController.nextSpawnPosition != null)
@@ -452,12 +442,9 @@ public class SaveController : MonoBehaviour
         var vcam = FindFirstObjectByType<CinemachineCamera>();
         if (vcam != null)
         {
-            // Force camera to player's position immediately to avoid cinematic damping sliding
             vcam.ForceCameraPosition(player.transform.position, Quaternion.identity);
         }
 
-        // Also reset Cinemachine internal state and snap main camera transform as a fallback
-        // This prevents long smooth-damping slides when entering a scene
         try
         {
             Unity.Cinemachine.CinemachineCore.ResetCameraState();
@@ -468,21 +455,16 @@ public class SaveController : MonoBehaviour
                 Camera.main.transform.rotation = Quaternion.identity;
             }
         }
-        catch (System.Exception ex)
-        {
-            Debug.LogWarning("Failed to force-snap Cinemachine camera: " + ex.Message);
-        }
+        catch { }
 
-        //SaveGame();
         return false;
     }
 
+    // Load trạng thái mở rương
     private void LoadChestStates(List<ChestSaveData> chestState)
     {
-        string scene = SceneManager.GetActiveScene().name;
         foreach (Chest chest in chests)
         {
-            // Prefer exact match (id + scene). For backward compatibility, also accept entries with empty sceneName that match id.
             ChestSaveData chestSaveData = chestState.FirstOrDefault(c => c.chestID == chest.ChestID);
 
             if (chestSaveData != null)
@@ -491,11 +473,14 @@ public class SaveController : MonoBehaviour
             }
         }
     }
+
     [System.Serializable]
     public class SaveDataRequest
     {
         public string DataSave;
     }
+
+    // Gửi dữ liệu lên Server
     IEnumerator SaveToServer(SaveData saveData, System.Action<bool> onComplete)
     {
         string json = JsonUtility.ToJson(new SaveDataRequest
@@ -518,19 +503,17 @@ public class SaveController : MonoBehaviour
         bool isSuccess = false;
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Đã lưu dữ liệu lên server thành công.");
             isSuccess = true;
         }
         else
         {
-            Debug.Log("Token save: " + token);
-            Debug.LogError("Lỗi khi lưu lên server: " + request.downloadHandler.text);
             isSuccess = false;
         }
 
         onComplete?.Invoke(isSuccess);
     }
 
+    // Tải dữ liệu từ Server
     IEnumerator LoadFromServer(System.Action<SaveData> onLoaded)
     {
         string url = "https://chronicles-of-knight-and-mage.onrender.com/api/GameData/get-save";
@@ -546,8 +529,6 @@ public class SaveController : MonoBehaviour
         {
             string json = request.downloadHandler.text;
             SaveData data = JsonUtility.FromJson<SaveData>(json);
-            //Debug.Log("JSON nhận được từ server: " + request.downloadHandler.text);
-            //Debug.Log("Token load: " + token);
             onLoaded?.Invoke(data);
         }
         else
@@ -555,19 +536,18 @@ public class SaveController : MonoBehaviour
             PlayerPrefs.DeleteAll();
             PlayerPrefs.Save();
             SceneManager.LoadScene("MainMenu");
-            Debug.LogError("Lỗi khi tải dữ liệu từ server: " + request.downloadHandler.text);
         }
     }
+
+    // Lấy UID người chơi từ PlayerPrefs
     public string GetPlayerUID()
     {
         return PlayerPrefs.GetString("AccountId", "");
     }
 
-
-    // Persist collected items per scene
-
     public List<SceneCollected> collectedByScene = new List<SceneCollected>();
 
+    // Kiểm tra item đã được thu thập ở scene chưa
     public bool IsCollected(string sceneName, string id)
     {
         if (collectedByScene == null)
@@ -577,7 +557,7 @@ public class SaveController : MonoBehaviour
         return s != null && s.collectedIDs.Contains(id);
     }
 
-
+    // Đánh dấu item đã được thu thập
     public void MarkCollected(string sceneName, string id)
     {
         var s = collectedByScene.Find(x => x.sceneName == sceneName);

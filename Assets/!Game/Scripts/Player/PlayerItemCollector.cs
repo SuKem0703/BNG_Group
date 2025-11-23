@@ -7,13 +7,11 @@ public class PlayerItemCollector : MonoBehaviour
 {
     private InventoryController inventoryController;
     private EquipmentScrollViewController equipmentViewController;
-    private SaveController saveController;
 
     void Start()
     {
         inventoryController = Object.FindFirstObjectByType<InventoryController>();
         equipmentViewController = Object.FindFirstObjectByType<EquipmentScrollViewController>();
-        saveController = Object.FindFirstObjectByType<SaveController>();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -47,7 +45,7 @@ public class PlayerItemCollector : MonoBehaviour
                 if (collectible != null)
                     collectible.OnPickedUp();
 
-                saveController.SaveGame();
+                SaveController.Instance.TriggerAutoSave();
                 Destroy(collision.gameObject);
 
                 monologue.OnDialogueEndEvent -= OnDialogueEnd;
@@ -72,7 +70,7 @@ public class PlayerItemCollector : MonoBehaviour
         if (collectible != null)
             collectible.OnPickedUp();
 
-        saveController.SaveGame();
+        SaveController.Instance.TriggerAutoSave();
         Destroy(collision.gameObject);
     }
 

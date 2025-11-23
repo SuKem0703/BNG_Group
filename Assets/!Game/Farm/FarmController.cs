@@ -40,7 +40,7 @@ public class FarmController : MonoBehaviour
 
         seed.RemoveFromStack(1);
 
-        SaveController.Instance.SaveGame();
+        SaveController.Instance.TriggerAutoSave();
     }
 
     public void TryHarvest(FarmPlot plot)
@@ -84,7 +84,7 @@ public class FarmController : MonoBehaviour
         plot.currentCrop = null;
         plot.isPlanted = false;
 
-        SaveController.Instance.SaveGame();
+        SaveController.Instance.TriggerAutoSave();
     }
 
     // ===== SAVE & LOAD =====
@@ -127,7 +127,6 @@ public class FarmController : MonoBehaviour
 
         foreach (var plot in allPlots)
         {
-            // [UPDATE] Dùng PlotID có sẵn để map
             if (!scenePlots.ContainsKey(plot.PlotID))
             {
                 scenePlots.Add(plot.PlotID, plot);

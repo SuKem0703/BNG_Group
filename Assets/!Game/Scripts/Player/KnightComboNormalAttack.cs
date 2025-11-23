@@ -91,7 +91,7 @@ public class KnightComboNormalAttack : MonoBehaviour
     {
         if (comboTempo < minComboInterval) return;
 
-        if (!KnightEquipmentPanel.HasWeaponEquipped)
+        if (!PlayerStats.Instance.CanAttack)
         {
             return;
         }
