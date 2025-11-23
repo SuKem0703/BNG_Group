@@ -28,6 +28,8 @@ public class SaveController : MonoBehaviour
     private MageEquipmentPanel mageEquipmentPanel;
     private SharedEquipmentPanel sharedEquipmentPanel;
 
+    private FarmController farmController;
+
     public static Vector3? nextSpawnPosition = null;
     public static string pendingSceneName = null;
     void Awake()
@@ -110,6 +112,8 @@ public class SaveController : MonoBehaviour
         mageEquipmentPanel = FindFirstObjectByType<MageEquipmentPanel>(FindObjectsInactive.Include);
         sharedEquipmentPanel = FindFirstObjectByType<SharedEquipmentPanel>(FindObjectsInactive.Include);
 
+        farmController = FindFirstObjectByType<FarmController>();
+
         yield break;
     }
     public IEnumerator SaveRoutine()
@@ -123,16 +127,32 @@ public class SaveController : MonoBehaviour
         // Always prefer server copy for existing chest states to avoid overwriting other scenes' data
         List<ChestSaveData> existingChestStates = new List<ChestSaveData>();
 
-        // Fetch current save from server (non-fatal). If server returns data, use its chestSaveData. Otherwise keep empty list.
+        // Nếu đang ở Dungeon (FarmController == null), ta phải save lại dữ liệu cũ để không bị mất Farm.
+        FarmData existingFarmData = new FarmData();
+
+        // Fetch current save from server (non-fatal). If server returns data, use its chestSaveData, farmData. Otherwise keep empty list.
         SaveData serverSave = null;
         yield return LoadFromServer((sd) => { serverSave = sd; });
-        if (serverSave != null && serverSave.chestSaveData != null)
+
+        if (serverSave != null)
         {
-            existingChestStates = serverSave.chestSaveData;
-        }
-        else
-        {
-            existingChestStates = new List<ChestSaveData>();
+            if (serverSave.chestSaveData != null)
+            {
+                existingChestStates = serverSave.chestSaveData;
+            }
+            else
+            {
+                existingChestStates = new List<ChestSaveData>();
+            }
+
+            if (serverSave.farmData != null)
+            { 
+                existingFarmData = serverSave.farmData; 
+            }
+            else
+            {
+                existingFarmData = new FarmData();
+            }
         }
 
         SaveData saveData = new SaveData
@@ -170,6 +190,8 @@ public class SaveController : MonoBehaviour
             con = playerStats.CON,
             intStat = playerStats.INT,
             potentialPoints = playerStats.potentialPoints,
+
+            farmData = MergeFarmData(existingFarmData),
 
             // include collected items by scene so collectibles persist across visits
             collectedByScene = collectedByScene
@@ -220,6 +242,32 @@ public class SaveController : MonoBehaviour
         }
 
         return existingChestStates;
+    }
+    // Merge farm data from current scene into existing farm data from server
+    private FarmData MergeFarmData(FarmData existingFarmData)
+    {
+        FarmData currentSceneData = farmController.GetFarmDataToSave();
+
+        if (existingFarmData.plotDataList == null)
+            existingFarmData.plotDataList = new List<FarmPlotSaveData>();
+
+        foreach (var currentPlot in currentSceneData.plotDataList)
+        {
+            var existingPlot = existingFarmData.plotDataList
+                .FirstOrDefault(p => p.plotID == currentPlot.plotID);
+
+            if (existingPlot != null)
+            {
+                existingPlot.hasCrop = currentPlot.hasCrop;
+                existingPlot.cropData = currentPlot.cropData;
+            }
+            else
+            {
+                existingFarmData.plotDataList.Add(currentPlot);
+            }
+        }
+
+        return existingFarmData;
     }
     public IEnumerator LoadRoutine(System.Action<bool> onComplete)
     {
@@ -308,6 +356,11 @@ public class SaveController : MonoBehaviour
         playerStats.knightMP = saveData.currentKnightMP;
         playerStats.mageMP = saveData.currentMageMP;
         playerStats.currentStamina = saveData.currentStamina;
+
+        if (farmController != null && saveData.farmData != null)
+        {
+            farmController.LoadFarmData(saveData.farmData);
+        }
 
         collectedByScene = saveData.collectedByScene;
 

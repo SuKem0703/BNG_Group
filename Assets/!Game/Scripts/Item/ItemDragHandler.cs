@@ -15,8 +15,15 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     [SerializeField] private Slot originalSlot;
     [SerializeField] private InventoryController inventoryController;
 
-    private GameObject confirmUIPrefab;
-    private GameObject notifyUIPrefab;
+    [Header("Selection Highlight")]
+    [SerializeField] private GameObject selectionBoxPrefab;
+    private GameObject currentSelectionBox;
+    private SpriteRenderer selectionBoxRenderer;
+
+    private Color invalidColor = new Color(1, 0, 0, 0.5f);
+
+    [SerializeField] private GameObject confirmUIPrefab;
+    [SerializeField] private GameObject notifyUIPrefab;
     private PlayerStats playerStats => GameObject.FindGameObjectWithTag("PlayerController").GetComponent<PlayerStats>();
     private KnightEquipmentPanel knightEquipmentPanel => Object.FindFirstObjectByType<KnightEquipmentPanel>();
     private MageEquipmentPanel mageEquipmentPanel => Object.FindFirstObjectByType<MageEquipmentPanel>();
@@ -36,6 +43,12 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (notifyUIPrefab == null)
         {
             Debug.LogError("Không tìm thấy 'NotifyUICanvas' trong thư mục Resources/UI!");
+        }
+
+        selectionBoxPrefab = Resources.Load<GameObject>("UI/SelectionBox");
+        if (selectionBoxPrefab == null)
+        {
+            Debug.LogError("Không tìm thấy 'SelectionBox' trong thư mục Resources/UI!");
         }
     }
 
@@ -57,6 +70,15 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         //{ 
         //    return; 
         //}
+
+        // Tạo selection box nếu là hạt giống
+        Item draggedItem = GetComponent<Item>();
+        if (draggedItem != null && draggedItem.itemType == ItemType.Seed && selectionBoxPrefab != null)
+        {
+            currentSelectionBox = Instantiate(selectionBoxPrefab);
+            selectionBoxRenderer = currentSelectionBox.GetComponent<SpriteRenderer>();
+            currentSelectionBox.SetActive(false);
+        }
 
         originalParent = transform.parent; // Save OG parent
         transform.SetParent(transform.root); // Above other canvas'
@@ -85,6 +107,12 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         //    return;
         //}
 
+        // Cập nhật selection box nếu là hạt giống
+        if (currentSelectionBox != null)
+        {
+            UpdateSelectionBoxPosition(eventData);
+        }
+
         transform.position = eventData.position; // Follow the mouse
     }
     public void OnEndDrag(PointerEventData eventData)
@@ -105,6 +133,13 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         //{
         //    return;
         //}
+
+        // Xoá selection box nếu có
+        if (currentSelectionBox != null)
+        {
+            Destroy(currentSelectionBox);
+            currentSelectionBox = null;
+        }
 
         canvasGroup.blocksRaycasts = true;
         canvasGroup.alpha = 1f;
@@ -349,7 +384,39 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         return null;
     }
+    private void UpdateSelectionBoxPosition(PointerEventData eventData)
+    {
+        if (IsWithinInventory(eventData.position))
+        {
+            currentSelectionBox.SetActive(false);
+            return;
+        }
 
+        FarmPlot plot = GetFarmPlotAtMouse(eventData);
+
+        if (plot != null)
+        {
+            currentSelectionBox.SetActive(true);
+
+            currentSelectionBox.transform.position = plot.transform.position;
+
+            bool isPlotInRange = InteractionDetector.Instance != null && InteractionDetector.Instance.IsPlotInRange(plot);
+            bool isPlanted = plot.isPlanted;
+
+            if (isPlotInRange && !isPlanted)
+            {
+                selectionBoxRenderer.color = Color.white;
+            }
+            else
+            {
+                selectionBoxRenderer.color = invalidColor;
+            }
+        }
+        else
+        {
+            currentSelectionBox.SetActive(false);
+        }
+    }
     // ========== CONFIRMATION & NOTIFY UI ==========
     private void ShowDropErrorMessage(string message)
     {

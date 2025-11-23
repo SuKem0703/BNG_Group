@@ -13,8 +13,8 @@ public enum QualityFactorMode
 
 public class Chest : MonoBehaviour, IInteractable
 {
-    public bool IsOpened { get; private set; }
-    public string ChestID { get; private set; }
+    [field: SerializeField] public bool IsOpened { get; private set; }
+    [field: SerializeField] public string ChestID { get; private set; }
 
     [Header("Prefab vật phẩm rơi ra")]
     public GameObject itemPrefab;
@@ -29,7 +29,7 @@ public class Chest : MonoBehaviour, IInteractable
     [Header("Hệ số chỉ số")]
     public QualityFactorMode qualityMode = QualityFactorMode.Random;
 
-    void Start()
+    void Awake()
     {
         ChestID ??= GlobalHelper.GenerateUniqueID(gameObject);
     }

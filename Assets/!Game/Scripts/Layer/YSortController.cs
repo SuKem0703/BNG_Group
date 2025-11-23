@@ -18,9 +18,17 @@ public class YSortController : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
     }
-
+    private void OnDestroy()
+    {
+        Instance = null;
+    }
     void Start()
     {
         var player = GameObject.FindWithTag(playerTag);

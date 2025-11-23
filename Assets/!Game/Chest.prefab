@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayerID: 172092471
   m_SortingLayer: 4
   m_SortingOrder: 0
-  m_Sprite: {fileID: -742772176, guid: 223f222ad41b6fc4c8d286c6f4267f39, type: 3}
+  m_Sprite: {fileID: -829400084, guid: 12cc7bd40f71aa141a2ce110cb23785f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -151,8 +151,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cbaa17bf034c5241a816d62dd7b38a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <IsOpened>k__BackingField: 0
+  <ChestID>k__BackingField: 
   itemPrefab: {fileID: 6731583872353999336, guid: 52fca917bd9812a4cbfaaa12e355cb08, type: 3}
-  openedSprite: {fileID: 1328302560, guid: 223f222ad41b6fc4c8d286c6f4267f39, type: 3}
+  openedSprite: {fileID: -1705685496, guid: 12cc7bd40f71aa141a2ce110cb23785f, type: 3}
   rarityMode: 0
   fixedRarity: 1
   qualityMode: 0

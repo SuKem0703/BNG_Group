@@ -218,7 +218,7 @@ MeshRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1831009817
-  m_SortingLayer: 2
+  m_SortingLayer: 3
   m_SortingOrder: 1
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &7505720532902085482
@@ -333,6 +333,7 @@ GameObject:
   - component: {fileID: 1154683947127696075}
   - component: {fileID: 7668840958455882077}
   - component: {fileID: 3288685941579284622}
+  - component: {fileID: 879185509534545875}
   m_Layer: 5
   m_Name: Item
   m_TagString: Item
@@ -444,7 +445,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1831009817
-  m_SortingLayer: 2
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_Sprite: {fileID: 2358940770890061759, guid: 7fab7a37dde5328479cd57c6a47c1361, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -593,3 +594,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb09ad945ca5759489c4e43a9bb1c1bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+--- !u!114 &879185509534545875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9179164393373267961}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f4c1c9905737434a9c7ed84e6fa103a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteDynamicSorting
+  inFrontLayer: Walk in front
+  behindLayer: Walk behind
+  yOffset: -0.2
+  sortingPrecision: 100

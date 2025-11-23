@@ -36,6 +36,8 @@ public class SaveData
     public List<EquippedSaveData> mageEquipSaveData;
     public List<EquippedSaveData> shareEquipSaveData;
 
+    public FarmData farmData;
+
     // Persist collected items per scene
     public List<SaveController.SceneCollected> collectedByScene = new();
 }

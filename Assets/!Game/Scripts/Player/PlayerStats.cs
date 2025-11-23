@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 public class PlayerStats : MonoBehaviour
 {
+    public static PlayerStats Instance { get; private set; }
+
     [Header("Base Potential Stats")]
     public int STR, DEX, CON, INT;
 
@@ -124,8 +126,17 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float potionCooldownTimer;
 
     private static GameObject s_damagePopupPrefab;
+
+    public CapsuleCollider2D playerCollider;
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         // Ensure the game keeps running when window loses focus in builds
         Application.runInBackground = true;
 
@@ -143,6 +154,11 @@ public class PlayerStats : MonoBehaviour
                 Debug.LogError("Không tìm thấy prefab 'DamagePopup' trong thư mục 'Assets/Resources/'!");
             }
         }
+        if (playerCollider == null) playerCollider = GetComponent<CapsuleCollider2D>();
+    }
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
     void Start()
     {

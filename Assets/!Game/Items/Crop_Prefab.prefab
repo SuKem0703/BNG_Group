@@ -104,14 +104,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0dd84dde5c04e93439a3bbbae2d10582, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Crop
+  seedItemID: 1
   growTime: 6
   growStages:
   - {fileID: -1483848513177272139, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
   - {fileID: 8223153036986676925, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
   - {fileID: 4030886375324548428, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
-  plot: {fileID: 0}
-  harvestItemID: 1
+  timer: 0
+  stage: 0
+  harvestItemPrefab: {fileID: 6731583872353999336, guid: 52fca917bd9812a4cbfaaa12e355cb08, type: 3}
   harvestAmount: 1
+  plot: {fileID: 0}
 --- !u!58 &8268784225592187116
 CircleCollider2D:
   m_ObjectHideFlags: 0
