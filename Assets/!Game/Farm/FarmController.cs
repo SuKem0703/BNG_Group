@@ -28,7 +28,6 @@ public class FarmController : MonoBehaviour
 
         GameObject obj = Instantiate(seed.cropPrefab, plot.transform);
         obj.transform.localPosition = Vector3.zero;
-        //obj.transform.localPosition = new Vector3(-0.5f, -0.5f, 0f);
 
         Crop crop = obj.GetComponent<Crop>();
         crop.seedItemID = seed.ID;
@@ -40,6 +39,8 @@ public class FarmController : MonoBehaviour
         SoundEffectManager.Play("Seeding", true);
 
         seed.RemoveFromStack(1);
+
+        SaveController.Instance.SaveGame();
     }
 
     public void TryHarvest(FarmPlot plot)
@@ -77,12 +78,13 @@ public class FarmController : MonoBehaviour
         }
 
         SoundEffectManager.Play("Harvesting", true);
-        SaveController.Instance.SaveGame();
 
         // DỌN DẸP CROP
         Destroy(crop.gameObject);
         plot.currentCrop = null;
         plot.isPlanted = false;
+
+        SaveController.Instance.SaveGame();
     }
 
     // ===== SAVE & LOAD =====

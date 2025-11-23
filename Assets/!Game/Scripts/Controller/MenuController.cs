@@ -6,6 +6,8 @@ using DG.Tweening;
 
 public class MenuController : MonoBehaviour
 {
+    public static MenuController Instance;
+
     public GameObject menuCanvas;
     public GameObject itemPopupContainer;
     public CanvasGroup canvasGroup;
@@ -24,12 +26,21 @@ public class MenuController : MonoBehaviour
     [SerializeField] private GameObject commonUI;
 
     public static bool CanOpenMenu = false;
+    public static bool IsMenuOpen = false;
 
     [Header("Âm thanh")]
     [SerializeField] private AudioClip openMenuSound;
     [SerializeField] private AudioClip closeMenuSound;
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
         if (menuCanvas == null)
             menuCanvas = GameObject.Find("Menu");
 
@@ -47,6 +58,10 @@ public class MenuController : MonoBehaviour
         {
             commonUI = GameObject.Find("CommonUI");
         }
+    }
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
     private void OnEnable()
     {
@@ -82,6 +97,7 @@ public class MenuController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E) && !isTransitioning && CanOpenMenu)
         {
             bool isOpening = !menuCanvas.activeSelf;
+            IsMenuOpen = isOpening;
             StartCoroutine(ToggleMenu(isOpening));
         }
     }

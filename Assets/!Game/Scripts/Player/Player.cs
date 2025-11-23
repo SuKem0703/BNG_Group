@@ -15,6 +15,7 @@ public class PlayerMovement : MonoBehaviour
     public Vector2 moveInput;
     public Animator animator;
     public bool isDashing = false;
+    private bool isDashOnCooldown = false;
     private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
     private KnightComboNormalAttack comboAttack;
     void Awake()
@@ -95,7 +96,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void Dash(InputAction.CallbackContext context)
     {
-        if (PauseController.IsGamePause || !context.performed || isDashing || moveInput == Vector2.zero)
+        if (PauseController.IsGamePause || !context.performed || isDashing || isDashOnCooldown || moveInput == Vector2.zero)
             return;
 
         if (playerStats != null && playerStats.currentStamina >= dashStaminaCost)
@@ -108,8 +109,9 @@ public class PlayerMovement : MonoBehaviour
     private IEnumerator DashRoutine()
     {
         isDashing = true;
-        playerStats?.SetInvincible(true);
+        isDashOnCooldown = true;
 
+        playerStats?.SetInvincible(true);
         SoundEffectManager.Play("Dash", true);
 
         GetComponent<GhostTrail>()?.CreateTrail();
@@ -128,6 +130,7 @@ public class PlayerMovement : MonoBehaviour
         playerStats?.SetInvincible(false);
 
         yield return new WaitForSeconds(dashCooldown);
+        isDashOnCooldown = false;
     }
 
     public void LookTowards(Vector3 targetPosition)

@@ -17,9 +17,9 @@ public class SaveController : MonoBehaviour
     public static bool IsDataLoaded { get; private set; } = false;
     public static bool IsSaving { get; private set; } = false;
 
+    private GameObject mainLoadingCanvasInstance;
     private GameObject miniLoadingScreenInstance;
 
-    [SerializeField] private GameObject loadingCanvas;
     [SerializeField] private TextMeshProUGUI uidText;
 
     private InventoryController inventoryController;
@@ -46,7 +46,6 @@ public class SaveController : MonoBehaviour
 
         IsDataLoaded = false;
 
-        loadingCanvas = GameObject.Find("LoadingCanvas");
         uidText = GameObject.Find("UIDText").GetComponent<TextMeshProUGUI>();
     }
     private void OnDestroy()
@@ -55,9 +54,7 @@ public class SaveController : MonoBehaviour
     }
     void Start()
     {
-        PauseController.SetPause(true);
-        if (loadingCanvas != null)
-            loadingCanvas.SetActive(true);
+        ShowMainLoadingScreen();
 
         StartLoadProcess();
     }
@@ -88,14 +85,8 @@ public class SaveController : MonoBehaviour
         else
             Debug.LogWarning("UIDText bị null, không thể set text.");
 
-        if (loadingCanvas != null)
-        {
-            loadingCanvas.SetActive(false);
-        }
-        else
-            Debug.LogWarning("LoadingCanvas bị null, không thể tắt.");
+        HideMainLoadingScreen();
 
-        PauseController.SetPause(false);
         OnDataLoaded?.Invoke();
     }
     IEnumerator InitializeComponents()
@@ -116,7 +107,7 @@ public class SaveController : MonoBehaviour
 
         yield break;
     }
-    public IEnumerator SaveRoutine()
+    public IEnumerator SaveRoutine(System.Action onSaveFinished = null)
     {
         IsSaving = true;
         ShowMiniLoadingScreen();
@@ -124,9 +115,9 @@ public class SaveController : MonoBehaviour
         if (inventoryController == null || hotbarController == null || knightEquipmentPanel == null || mageEquipmentPanel == null || sharedEquipmentPanel == null || playerStats == null)
         {
             Debug.LogError("SaveRoutine: Một trong các manager bị null. Hủy lưu.");
-            // Kết thúc lưu: Tắt cờ và ẩn loading
             HideMiniLoadingScreen();
             IsSaving = false;
+            onSaveFinished?.Invoke();
             yield break;
         }
 
@@ -213,12 +204,12 @@ public class SaveController : MonoBehaviour
             // Debug.Log("Game đã được lưu thành công!");
         }
 
-        // 3. Kết thúc lưu: Tắt cờ và ẩn loading
         HideMiniLoadingScreen();
         IsSaving = false;
+        onSaveFinished?.Invoke();
     }
 
-    public void SaveGame()
+    public void SaveGame(System.Action onSaveFinished = null)
     {
         if (IsSaving)
         {
@@ -226,10 +217,47 @@ public class SaveController : MonoBehaviour
             return;
         }
 
-        StartCoroutine(SaveRoutine());
+        StartCoroutine(SaveRoutine(onSaveFinished));
+    }
+
+    // === Main Loading Screen ===
+    private void ShowMainLoadingScreen()
+    {
+        if (mainLoadingCanvasInstance != null)
+        {
+            Destroy(mainLoadingCanvasInstance);
+            mainLoadingCanvasInstance = null;
+        }
+
+        GameObject prefab = LoadResourceManager.Instance.MainLoadingCanvasPrefab;
+        if (prefab != null)
+        {
+            mainLoadingCanvasInstance = Instantiate(prefab);
+
+            mainLoadingCanvasInstance.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("SaveController: Chưa load được MainLoadingCanvasPrefab từ LoadResourceManager!");
+        }
+
+        PauseController.SetPause(true);
+    }
+
+    private void HideMainLoadingScreen()
+    {
+        if (mainLoadingCanvasInstance != null)
+        {
+            Destroy(mainLoadingCanvasInstance);
+            mainLoadingCanvasInstance = null;
+        }
+
+        PauseController.SetPause(false);
     }
 
     // === Mini Loading Screen ===
+
+    // Cập nhật trong SaveController.cs
 
     private void ShowMiniLoadingScreen()
     {
@@ -239,19 +267,12 @@ public class SaveController : MonoBehaviour
         {
             if (miniLoadingScreenInstance == null)
             {
-                if (loadingCanvas != null)
-                {
-                    miniLoadingScreenInstance = Instantiate(prefab, loadingCanvas.transform.parent);
-                }
-                else
-                {
-                    miniLoadingScreenInstance = Instantiate(prefab);
-                }
+                miniLoadingScreenInstance = Instantiate(prefab);
             }
 
             miniLoadingScreenInstance.SetActive(true);
 
-            PauseController.SetPause(true); 
+            PauseController.SetPause(true);
         }
         else
         {
@@ -265,6 +286,7 @@ public class SaveController : MonoBehaviour
         {
             miniLoadingScreenInstance.SetActive(false);
 
+            if (MenuController.IsMenuOpen == true) return;
             PauseController.SetPause(false);
         }
     }
@@ -524,8 +546,8 @@ public class SaveController : MonoBehaviour
         {
             string json = request.downloadHandler.text;
             SaveData data = JsonUtility.FromJson<SaveData>(json);
-            Debug.Log("JSON nhận được từ server: " + request.downloadHandler.text);
-            Debug.Log("Token load: " + token);
+            //Debug.Log("JSON nhận được từ server: " + request.downloadHandler.text);
+            //Debug.Log("Token load: " + token);
             onLoaded?.Invoke(data);
         }
         else

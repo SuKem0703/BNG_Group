@@ -11,12 +11,14 @@ public class LoadResourceManager : MonoBehaviour
     [SerializeField] private GameObject selectionBoxPrefab;
     [SerializeField] private GameObject damagePopupPrefab;
     [SerializeField] private GameObject targetIndicatorPrefab;
+    [SerializeField] private GameObject mainLoadingCanvasPrefab;
     [SerializeField] private GameObject miniLoadingScreenPrefab;
     public GameObject ConfirmUIPrefab => confirmUIPrefab;
     public GameObject NotifyUIPrefab => notifyUIPrefab;
     public GameObject SelectionBoxPrefab => selectionBoxPrefab;
     public GameObject DamagePopupPrefab => damagePopupPrefab;
     public GameObject TargetIndicatorPrefab => targetIndicatorPrefab;
+    public GameObject MainLoadingCanvasPrefab => mainLoadingCanvasPrefab;
     public GameObject MiniLoadingScreenPrefab => miniLoadingScreenPrefab;
     private void Awake()
     {
@@ -39,6 +41,7 @@ public class LoadResourceManager : MonoBehaviour
         if (damagePopupPrefab == null) damagePopupPrefab = Resources.Load<GameObject>("DamagePopup");
         if (targetIndicatorPrefab == null) targetIndicatorPrefab = Resources.Load<GameObject>("UI/TargetIndicator_Prefab");
         if (miniLoadingScreenPrefab == null) miniLoadingScreenPrefab = Resources.Load<GameObject>("UI/MiniLoadingScreen");
+        if (mainLoadingCanvasPrefab == null) mainLoadingCanvasPrefab = Resources.Load<GameObject>("UI/LoadingCanvas");
     }
 
     void CheckLoadResources()
@@ -66,6 +69,10 @@ public class LoadResourceManager : MonoBehaviour
         if (miniLoadingScreenPrefab == null)
         {
             Debug.LogWarning("MiniLoadingScreenPrefab chưa được gán.");
+        }
+        if (mainLoadingCanvasPrefab == null)
+        {
+            Debug.LogWarning("MainLoadingCanvasPrefab chưa được gán.");
         }
     }
 
