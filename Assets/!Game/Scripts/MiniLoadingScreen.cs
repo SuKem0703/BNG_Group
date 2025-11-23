@@ -6,33 +6,18 @@ using UnityEngine.UI;
 
 public class MiniLoadingScreen : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("UI References (Gán trong Prefab)")]
     [SerializeField] private TMP_Text loadingText;
     [SerializeField] private Image rotatingImage;
-    [SerializeField] private List<Sprite> loadingSprites;
     [SerializeField] private Image blocker;
 
     [Header("Settings")]
+    [SerializeField] private List<Sprite> loadingSprites;
     [SerializeField] private float rotationSpeed = 120f;
     [SerializeField] private float spriteChangeInterval = 0.5f;
     [SerializeField] private float dotInterval = 0.5f;
 
     private int currentSpriteIndex = 0;
-    private Coroutine spriteCoroutine;
-    private Coroutine dotCoroutine;
-
-    private void Awake()
-    {
-        FindObjectsFirst();
-
-        // Đảm bảo blocker trong suốt nhưng vẫn chặn raycast
-        if (blocker != null)
-        {
-            Color c = blocker.color;
-            c.a = 0f;
-            blocker.color = c;
-        }
-    }
 
     private void OnEnable()
     {
@@ -42,11 +27,13 @@ public class MiniLoadingScreen : MonoBehaviour
             blocker.gameObject.SetActive(true);
         }
 
-        if (loadingText != null)
-            loadingText.text = "Đang kết nối";
+        if (loadingText != null) loadingText.text = "Đang kết nối";
+        currentSpriteIndex = 0;
+        if (rotatingImage != null && loadingSprites.Count > 0)
+            rotatingImage.sprite = loadingSprites[0];
 
-        spriteCoroutine = StartCoroutine(SpriteRoutine());
-        dotCoroutine = StartCoroutine(LoadingDotsRoutine());
+        StartCoroutine(SpriteRoutine());
+        StartCoroutine(LoadingDotsRoutine());
     }
 
     private void OnDisable()
@@ -67,60 +54,44 @@ public class MiniLoadingScreen : MonoBehaviour
             rotatingImage.transform.Rotate(Vector3.forward * -rotationSpeed * Time.unscaledDeltaTime);
         }
     }
-
-    private void FindObjectsFirst()
-    {
-        if (loadingText == null)
-        {
-            Transform t = transform.Find("loadingText");
-            if (t) loadingText = t.GetComponent<TMP_Text>();
-            else Debug.LogWarning("[MiniLoadingScreen] Không tìm thấy loadingText!");
-        }
-
-        if (rotatingImage == null)
-        {
-            Transform t = transform.Find("rotatingImage");
-            if (t) rotatingImage = t.GetComponent<Image>();
-            else Debug.LogWarning("[MiniLoadingScreen] Không tìm thấy rotatingImage!");
-        }
-
-        if (blocker == null)
-        {
-            Transform t = transform.Find("blocker");
-            if (t) blocker = t.GetComponent<Image>();
-            else Debug.LogWarning("[MiniLoadingScreen] Không tìm thấy blocker!");
-        }
-    }
-
     private IEnumerator SpriteRoutine()
     {
+        if (loadingSprites == null || loadingSprites.Count == 0 || rotatingImage == null)
+            yield break;
+
+        WaitForSeconds wait = new WaitForSeconds(spriteChangeInterval); // Cache lại để tối ưu
         while (true)
         {
-            yield return new WaitForSeconds(spriteChangeInterval);
-            if (loadingSprites.Count > 0 && rotatingImage != null)
-            {
-                currentSpriteIndex = (currentSpriteIndex + 1) % loadingSprites.Count;
-                rotatingImage.sprite = loadingSprites[currentSpriteIndex];
-            }
+            yield return wait;
+            currentSpriteIndex = (currentSpriteIndex + 1) % loadingSprites.Count;
+            rotatingImage.sprite = loadingSprites[currentSpriteIndex];
         }
     }
 
     private IEnumerator LoadingDotsRoutine()
     {
+        if (loadingText == null) yield break;
+
         int dotCount = 0;
-        string baseText = "Đang kết nối";
+        string baseText = loadingText.text;
+        WaitForSeconds wait = new WaitForSeconds(dotInterval);
+
         while (true)
         {
             dotCount = (dotCount % 3) + 1;
-            if (loadingText != null)
-                loadingText.text = baseText + new string('.', dotCount);
-            yield return new WaitForSeconds(dotInterval);
+            loadingText.text = baseText + new string('.', dotCount);
+            yield return wait;
         }
     }
 
     public void SetLoadingText(string text)
     {
         if (loadingText != null)
+        {
             loadingText.text = text;
+            StopAllCoroutines();
+            StartCoroutine(SpriteRoutine());
+            StartCoroutine(LoadingDotsRoutine());
+        }
     }
 }

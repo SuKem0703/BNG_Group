@@ -16,7 +16,6 @@ public class InteractionDetector : MonoBehaviour
     PlayerMovement playerMovement => GetComponentInParent<PlayerMovement>();
 
     [Header("UI Target (Trên đầu đối tượng)")]
-    public GameObject targetIndicatorPrefab;
     public float targetYOffset = 1.0f;
 
     private GameObject currentIndicatorInstance;
@@ -38,11 +37,6 @@ public class InteractionDetector : MonoBehaviour
         }
 
         Instance = this;
-
-        if (targetIndicatorPrefab == null)
-        {
-            targetIndicatorPrefab = Resources.Load<GameObject>("UI/TargetIndicator_Prefab");
-        }
     }
     private void OnDestroy()
     {
@@ -238,11 +232,15 @@ public class InteractionDetector : MonoBehaviour
 
         currentTarget = newTarget;
 
-        if (targetIndicatorPrefab != null && currentTarget != null)
+        GameObject indicatorPrefab = LoadResourceManager.Instance.TargetIndicatorPrefab;
+
+        // Kiểm tra null và có target
+        if (indicatorPrefab != null && currentTarget != null)
         {
             Transform targetTransform = (currentTarget as MonoBehaviour).transform;
             Vector3 indicatorPos = targetTransform.position + new Vector3(0, targetYOffset, 0);
-            currentIndicatorInstance = Instantiate(targetIndicatorPrefab, indicatorPos, Quaternion.identity);
+
+            currentIndicatorInstance = Instantiate(indicatorPrefab, indicatorPos, Quaternion.identity);
         }
 
         OnTargetChanged?.Invoke(currentTarget);

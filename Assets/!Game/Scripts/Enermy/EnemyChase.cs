@@ -31,8 +31,6 @@ public class EnemyChase : MonoBehaviour
     private Vector3 spawnPoint;
     private Rigidbody2D rb;
 
-    private static GameObject s_damagePopupPrefab;
-
     [Header("Animation")]
     private EnemyAnimator enemyAnimator;
 
@@ -51,16 +49,6 @@ public class EnemyChase : MonoBehaviour
 
         rb = GetComponent<Rigidbody2D>();
         enemyAnimator = GetComponent<EnemyAnimator>();
-
-        if (s_damagePopupPrefab == null)
-        {
-            s_damagePopupPrefab = Resources.Load<GameObject>("DamagePopup");
-
-            if (s_damagePopupPrefab == null)
-            {
-                Debug.LogError("Không tìm thấy prefab 'DamagePopup' trong thư mục 'Assets/Resources/'!");
-            }
-        }
 
         GameObject detectionArea = new GameObject("DetectionArea");
         detectionArea.transform.SetParent(transform);
@@ -161,10 +149,13 @@ public class EnemyChase : MonoBehaviour
         currentHealth -= damage;
         Debug.Log($"{gameObject.name} took {damage} damage. HP: {currentHealth}/{maxHealth}");
 
-        if (s_damagePopupPrefab != null)
+        GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
+
+        if (popupPrefab != null)
         {
             Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
-            GameObject popupGO = Instantiate(s_damagePopupPrefab, spawnPosition, Quaternion.identity);
+
+            GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
 
             DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
             if (popupScript != null)

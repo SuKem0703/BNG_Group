@@ -16,14 +16,10 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     [SerializeField] private InventoryController inventoryController;
 
     [Header("Selection Highlight")]
-    [SerializeField] private GameObject selectionBoxPrefab;
     private GameObject currentSelectionBox;
     private SpriteRenderer selectionBoxRenderer;
 
     private Color invalidColor = new Color(1, 0, 0, 0.5f);
-
-    [SerializeField] private GameObject confirmUIPrefab;
-    [SerializeField] private GameObject notifyUIPrefab;
     private PlayerStats playerStats => GameObject.FindGameObjectWithTag("PlayerController").GetComponent<PlayerStats>();
     private KnightEquipmentPanel knightEquipmentPanel => Object.FindFirstObjectByType<KnightEquipmentPanel>();
     private MageEquipmentPanel mageEquipmentPanel => Object.FindFirstObjectByType<MageEquipmentPanel>();
@@ -32,24 +28,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         canvasGroup = GetComponent<CanvasGroup>();
         inventoryController = InventoryController.Instance;
-
-        confirmUIPrefab = Resources.Load<GameObject>("UI/ConfirmUICanvas");
-        if (confirmUIPrefab == null)
-        {
-            Debug.LogError("Không tìm thấy 'ConfirmUICanvas' trong thư mục Resources/UI!");
-        }
-
-        notifyUIPrefab = Resources.Load<GameObject>("UI/NotifyUICanvas");
-        if (notifyUIPrefab == null)
-        {
-            Debug.LogError("Không tìm thấy 'NotifyUICanvas' trong thư mục Resources/UI!");
-        }
-
-        selectionBoxPrefab = Resources.Load<GameObject>("UI/SelectionBox");
-        if (selectionBoxPrefab == null)
-        {
-            Debug.LogError("Không tìm thấy 'SelectionBox' trong thư mục Resources/UI!");
-        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -73,9 +51,10 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         // Tạo selection box nếu là hạt giống
         Item draggedItem = GetComponent<Item>();
-        if (draggedItem != null && draggedItem.itemType == ItemType.Seed && selectionBoxPrefab != null)
+        if (draggedItem != null && draggedItem.itemType == ItemType.Seed && LoadResourceManager.Instance.SelectionBoxPrefab != null)
         {
-            currentSelectionBox = Instantiate(selectionBoxPrefab);
+            currentSelectionBox = Instantiate(LoadResourceManager.Instance.SelectionBoxPrefab);
+
             selectionBoxRenderer = currentSelectionBox.GetComponent<SpriteRenderer>();
             currentSelectionBox.SetActive(false);
         }
@@ -420,16 +399,18 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     // ========== CONFIRMATION & NOTIFY UI ==========
     private void ShowDropErrorMessage(string message)
     {
-        if (notifyUIPrefab == null)
+        GameObject notifyPrefab = LoadResourceManager.Instance.NotifyUIPrefab;
+
+        if (notifyPrefab == null)
         {
-            Debug.LogError("NotifyUIPrefab not loaded. Không thể hiển thị thông báo. Canceling drop.");
+            Debug.LogError("NotifyUIPrefab not loaded in LoadResourceManager. Không thể hiển thị thông báo. Canceling drop.");
             SnapBack();
             return;
         }
 
         MenuController.CanOpenMenu = false;
 
-        GameObject notifyUIObj = Instantiate(notifyUIPrefab);
+        GameObject notifyUIObj = Instantiate(notifyPrefab);
         NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
 
         if (notifyUI == null)
@@ -450,16 +431,18 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     }
     private void RequestDropItemConfirmation(Slot slotToEmpty, Item itemToDrop, Vector2 dragEndMousePosition)
     {
-        if (confirmUIPrefab == null)
+        GameObject confirmPrefab = LoadResourceManager.Instance.ConfirmUIPrefab;
+
+        if (confirmPrefab == null)
         {
-            Debug.LogError("ConfirmUIPrefab not loaded. Canceling drop.");
+            Debug.LogError("ConfirmUIPrefab not loaded in LoadResourceManager. Canceling drop.");
             SnapBack();
             return;
         }
 
         MenuController.CanOpenMenu = false;
 
-        GameObject confirmUIObj = Instantiate(confirmUIPrefab);
+        GameObject confirmUIObj = Instantiate(confirmPrefab);
         ConfirmUIController confirmUI = confirmUIObj.GetComponent<ConfirmUIController>();
 
         if (confirmUI == null)
@@ -497,7 +480,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             SnapBack();
         }
     }
-
     private bool IsItemNeededForActiveQuest(int itemID)
     {
         if (QuestController.Instance == null) return false;

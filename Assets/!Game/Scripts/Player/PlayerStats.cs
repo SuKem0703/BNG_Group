@@ -125,8 +125,6 @@ public class PlayerStats : MonoBehaviour
     public float potionCooldownDuration = 2.0f;
     [SerializeField] private float potionCooldownTimer;
 
-    private static GameObject s_damagePopupPrefab;
-
     public CapsuleCollider2D playerCollider;
     private void Awake()
     {
@@ -145,15 +143,6 @@ public class PlayerStats : MonoBehaviour
         if (mageRenderer == null)
             mageRenderer = GetComponent<ClassController>().mageObject.GetComponent<SpriteRenderer>();
 
-        if (s_damagePopupPrefab == null)
-        {
-            s_damagePopupPrefab = Resources.Load<GameObject>("DamagePopup");
-
-            if (s_damagePopupPrefab == null)
-            {
-                Debug.LogError("Không tìm thấy prefab 'DamagePopup' trong thư mục 'Assets/Resources/'!");
-            }
-        }
         if (playerCollider == null) playerCollider = GetComponent<CapsuleCollider2D>();
     }
     private void OnDestroy()
@@ -720,7 +709,14 @@ public class PlayerStats : MonoBehaviour
     // HÀM HELPER NÀY ĐỂ TẠO POPUP HIỂN THỊ SỐ LƯỢNG HỒI MÁU/MP
     private void ShowRecoveryPopup(int amount, DamageSourceType type)
     {
-        if (s_damagePopupPrefab == null || amount <= 0) return;
+        GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
+
+        // Kiểm tra null
+        if (popupPrefab == null || amount <= 0)
+        {
+            Debug.LogWarning("Cannot show recovery popup: Prefab is null or amount is <= 0");
+            return;
+        }
 
         // Lấy transform của nhân vật đang active
         var classController = GetComponent<ClassController>();
@@ -731,12 +727,11 @@ public class PlayerStats : MonoBehaviour
         // Vị trí xuất hiện (trên đầu nhân vật)
         Vector3 spawnPosition = activeCharacterTransform.position + new Vector3(0, 1.5f, 0);
 
-        GameObject popupGO = Instantiate(s_damagePopupPrefab, spawnPosition, Quaternion.identity);
+        GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
 
         DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
         if (popupScript != null)
         {
-            // Gọi hàm Setup (giả sử DamagePopup.cs có thể xử lý DamageSourceType.Heal và DamageSourceType.MP)
             popupScript.Setup(amount, type);
         }
     }

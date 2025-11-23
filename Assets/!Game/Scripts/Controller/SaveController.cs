@@ -15,11 +15,13 @@ public class SaveController : MonoBehaviour
 
     public static event System.Action OnDataLoaded;
     public static bool IsDataLoaded { get; private set; } = false;
+    public static bool IsSaving { get; private set; } = false;
+
+    private GameObject miniLoadingScreenInstance;
 
     [SerializeField] private GameObject loadingCanvas;
     [SerializeField] private TextMeshProUGUI uidText;
 
-    private string saveLocation;
     private InventoryController inventoryController;
     private HotbarController hotbarController;
     private Chest[] chests;
@@ -98,8 +100,6 @@ public class SaveController : MonoBehaviour
     }
     IEnumerator InitializeComponents()
     {
-        saveLocation = Path.Combine(Application.persistentDataPath, "saveData.json");
-
         inventoryController = FindFirstObjectByType<InventoryController>(FindObjectsInactive.Include);
 
         hotbarController = FindFirstObjectByType<HotbarController>();
@@ -118,9 +118,15 @@ public class SaveController : MonoBehaviour
     }
     public IEnumerator SaveRoutine()
     {
+        IsSaving = true;
+        ShowMiniLoadingScreen();
+
         if (inventoryController == null || hotbarController == null || knightEquipmentPanel == null || mageEquipmentPanel == null || sharedEquipmentPanel == null || playerStats == null)
         {
-            Debug.LogError("SaveRoutine: Một trong các manager (Inventory, Hotbar, Equipment, PlayerStats) bị null. Hủy lưu.");
+            Debug.LogError("SaveRoutine: Một trong các manager bị null. Hủy lưu.");
+            // Kết thúc lưu: Tắt cờ và ẩn loading
+            HideMiniLoadingScreen();
+            IsSaving = false;
             yield break;
         }
 
@@ -197,16 +203,73 @@ public class SaveController : MonoBehaviour
             collectedByScene = collectedByScene
         };
 
-        yield return SaveToServer(saveData);
+        bool saveSuccess = false;
+        yield return SaveToServer(saveData, (success) => saveSuccess = success);
+
         pendingSceneName = null;
-        //Debug.Log("Game đã được lưu thành công tại: " + saveLocation);
+
+        if (saveSuccess)
+        {
+            // Debug.Log("Game đã được lưu thành công!");
+        }
+
+        // 3. Kết thúc lưu: Tắt cờ và ẩn loading
+        HideMiniLoadingScreen();
+        IsSaving = false;
     }
 
     public void SaveGame()
     {
+        if (IsSaving)
+        {
+            Debug.LogWarning("Đang lưu game, vui lòng chờ!");
+            return;
+        }
+
         StartCoroutine(SaveRoutine());
     }
 
+    // === Mini Loading Screen ===
+
+    private void ShowMiniLoadingScreen()
+    {
+        GameObject prefab = LoadResourceManager.Instance.MiniLoadingScreenPrefab;
+
+        if (prefab != null)
+        {
+            if (miniLoadingScreenInstance == null)
+            {
+                if (loadingCanvas != null)
+                {
+                    miniLoadingScreenInstance = Instantiate(prefab, loadingCanvas.transform.parent);
+                }
+                else
+                {
+                    miniLoadingScreenInstance = Instantiate(prefab);
+                }
+            }
+
+            miniLoadingScreenInstance.SetActive(true);
+
+            PauseController.SetPause(true); 
+        }
+        else
+        {
+            Debug.LogError("SaveController: Chưa load được MiniLoadingScreenPrefab từ LoadResourceManager!");
+        }
+    }
+
+    private void HideMiniLoadingScreen()
+    {
+        if (miniLoadingScreenInstance != null)
+        {
+            miniLoadingScreenInstance.SetActive(false);
+
+            PauseController.SetPause(false);
+        }
+    }
+
+    // === Merging Data Methods ===
     private List<ChestSaveData> GetChestsState()
     {
         List<ChestSaveData> chestStates = new List<ChestSaveData>();
@@ -411,7 +474,7 @@ public class SaveController : MonoBehaviour
     {
         public string DataSave;
     }
-    IEnumerator SaveToServer(SaveData saveData)
+    IEnumerator SaveToServer(SaveData saveData, System.Action<bool> onComplete)
     {
         string json = JsonUtility.ToJson(new SaveDataRequest
         {
@@ -430,15 +493,20 @@ public class SaveController : MonoBehaviour
 
         yield return request.SendWebRequest();
 
+        bool isSuccess = false;
         if (request.result == UnityWebRequest.Result.Success)
         {
             Debug.Log("Đã lưu dữ liệu lên server thành công.");
+            isSuccess = true;
         }
         else
         {
             Debug.Log("Token save: " + token);
             Debug.LogError("Lỗi khi lưu lên server: " + request.downloadHandler.text);
+            isSuccess = false;
         }
+
+        onComplete?.Invoke(isSuccess);
     }
 
     IEnumerator LoadFromServer(System.Action<SaveData> onLoaded)
