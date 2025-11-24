@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: da279aeec9f873f4ba662c97840ce81e
+guid: 16224a2d5a93f2144aad7d224d8c15f3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6014520929937150712
-    second: LoadingBar_0
+      213: 3319255973151074740
+    second: 1. BG_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -51,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,23 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: LoadingBar_0
+      name: 1. BG_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 345
-        width: 1428
-        height: 360
+        y: 0
+        width: 272
+        height: 160
       alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 360, z: 0, w: 0}
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 4fbbba43d8f59e1478bc5d1fc141060a
-      internalID: -1234623050
+      spriteID: 4b9634ea8bd501e20800000000000000
+      internalID: 3319255973151074740
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 58b02a38ed485ec4eba7614a0d775648
+    spriteID: 124068076a8a091439e1e16c40b16a2f
     internalID: 0
     vertices: []
     indices: 
@@ -146,9 +146,11 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":272.0,"y":160.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      LoadingBar_0: -1234623050
+      1. BG_0: 3319255973151074740
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

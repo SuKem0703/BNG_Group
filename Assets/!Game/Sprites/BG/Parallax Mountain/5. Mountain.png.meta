@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 0f6a63b1be7258242b2dd5f1bc3b8ef3
+guid: bcfe0ee53f1bd1f4a86fe9097c85c90b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4930271065895141840
-    second: MainMenu_BackGround_0
+      213: -3643703857979957675
+    second: 5. Mountain_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -101,7 +101,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: MainMenu_BackGround_0
+      name: 5. Mountain_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 100
-        width: 1536
-        height: 864
+        y: 0
+        width: 272
+        height: 160
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 03efee65698249bb0800000000000000
-      internalID: -4930271065895141840
+      spriteID: 55e526675a6fe6dc0800000000000000
+      internalID: -3643703857979957675
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 9add6218aab2b62428da1e6c20ebfaad
+    spriteID: a4c5811a12d56db419a23f967a80f857
     internalID: 0
     vertices: []
     indices: 
@@ -146,9 +146,11 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":272.0,"y":160.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      MainMenu_BackGround_0: -4930271065895141840
+      5. Mountain_0: -3643703857979957675
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
