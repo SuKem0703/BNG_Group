@@ -1,11 +1,10 @@
 ﻿using NUnit.Framework.Interfaces;
 using UnityEngine;
-// Gán vào item để có thể nhặt được
+
 public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
 {
     private InventoryController inventoryController;
     private EquipmentScrollViewController equipmentViewController;
-    private SaveController saveController;
 
     private bool isCollected = false;
 
@@ -13,8 +12,8 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
     {
         inventoryController = InventoryController.Instance;
         equipmentViewController = Object.FindFirstObjectByType<EquipmentScrollViewController>();
-        saveController = Object.FindFirstObjectByType<SaveController>();
     }
+
     public bool CanInteract()
     {
         if (PauseController.IsGamePause || isCollected)
@@ -36,31 +35,30 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
             return;
         }
 
-        Collectible collectible = GetComponent<Collectible>();
+        Collectible questItem = GetComponent<Collectible>();
         Monologue monologue = GetComponent<Monologue>();
 
         if (monologue != null)
         {
-            monologue.OnDialogueEndEvent += HandleMonologueEnd;
+            monologue.OnDialogueEndEvent += () => HandleMonologueEnd(monologue);
             monologue.OpenDialogOnTrigger();
-            return; // Chờ cho đến khi nói xong
+            return;
         }
 
-        HandleCollection(item, collectible);
+        HandleCollection(item, questItem);
     }
 
-    private void HandleMonologueEnd()
+    private void HandleMonologueEnd(Monologue monologue)
     {
-        Monologue monologue = GetComponent<Monologue>();
-        if (monologue != null)
-            monologue.OnDialogueEndEvent -= HandleMonologueEnd;
+        monologue.OnDialogueEndEvent -= () => HandleMonologueEnd(monologue);
 
         Item item = GetComponent<Item>();
-        Collectible collectible = GetComponent<Collectible>();
-        HandleCollection(item, collectible);
+        Collectible questItem = GetComponent<Collectible>();
+
+        HandleCollection(item, questItem);
     }
 
-    private void HandleCollection(Item item, Collectible collectible)
+    private void HandleCollection(Item item, Collectible questItem)
     {
         if (isCollected) return;
 
@@ -77,13 +75,17 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
         if (equipmentViewController != null)
             equipmentViewController.ShowEquipmentItems();
 
-        if (collectible != null)
-            collectible.OnPickedUp();
+        if (questItem != null)
+        {
+            questItem.OnPickedUp();
+        }
+        else
+        {
+            if (SaveController.Instance != null)
+                SaveController.Instance.TriggerAutoSave();
 
-        if (saveController != null)
-            saveController.SaveGame();
-
-        Destroy(gameObject);
+            Destroy(gameObject);
+        }
     }
 
     public TargetInfoData GetInfo()

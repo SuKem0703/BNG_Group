@@ -437,7 +437,7 @@ public class SaveController : MonoBehaviour
             farmController.LoadFarmData(saveData.farmData);
         }
 
-        collectedByScene = saveData.collectedByScene;
+        collectedByScene = saveData.collectedByScene ?? new List<SceneCollected>();
 
         var vcam = FindFirstObjectByType<CinemachineCamera>();
         if (vcam != null)

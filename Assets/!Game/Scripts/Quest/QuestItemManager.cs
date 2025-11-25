@@ -4,19 +4,19 @@ using UnityEngine;
 public class QuestItemManager : MonoBehaviour
 {
     // List này tự động quản lý các item con
-    [SerializeField] private List<QuestDependentItem> managedItems;
+    [SerializeField] private List<Collectible> managedItems;
 
     // ----- THÊM DÒNG NÀY -----
     // List tạm để chứa các item đã bị phá hủy và chờ xóa
-    [SerializeField] private List<QuestDependentItem> itemsToRemove = new List<QuestDependentItem>();
+    [SerializeField] private List<Collectible> itemsToRemove = new List<Collectible>();
     // -------------------------
 
     void Awake()
     {
         // Tự động tìm tất cả các script QuestDependentItem 
         // trong các object con và nạp vào List
-        managedItems = new List<QuestDependentItem>(
-            GetComponentsInChildren<QuestDependentItem>(true) // true = bao gồm cả các object đang bị tắt
+        managedItems = new List<Collectible>(
+            GetComponentsInChildren<Collectible>(true) // true = bao gồm cả các object đang bị tắt
         );
     }
 
