@@ -3,7 +3,10 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class ServerTimeFetcher : MonoBehaviour
+/// <summary>
+/// Quản lý lấy giờ server, đồng bộ và auto-save.
+/// </summary>
+public class ServerTimeManager : MonoBehaviour
 {
     public static DateTime ServerTime { get; private set; }
     public static float LocalTimeAtFetch { get; private set; }
@@ -11,14 +14,16 @@ public class ServerTimeFetcher : MonoBehaviour
     private SaveController saveController;
     private const float REFRESH_INTERVAL = 300f;
     private bool autoSaveStarted = false;
-    void Start()
+
+    void Awake()
     {
         saveController = FindFirstObjectByType<SaveController>();
         if (saveController == null)
         {
-            Debug.LogWarning("ServerTimeFetcher: Không tìm thấy SaveController. Tính năng AutoSave sẽ không hoạt động.");
+            Debug.LogWarning("ServerTimeManager: Không tìm thấy SaveController. Auto-save sẽ không hoạt động.");
         }
     }
+
     void OnEnable()
     {
         SaveController.OnDataLoaded += StartAutoSaveRoutine;
@@ -28,75 +33,43 @@ public class ServerTimeFetcher : MonoBehaviour
     {
         SaveController.OnDataLoaded -= StartAutoSaveRoutine;
     }
+
     private void StartAutoSaveRoutine()
     {
         if (autoSaveStarted) return;
-
         autoSaveStarted = true;
-
         StartCoroutine(AutoTaskRoutine());
     }
-    void OnApplicationFocus(bool hasFocus)
-    {
-        if (!hasFocus)
-        {
-            if (saveController != null && SaveController.IsDataLoaded)
-            {
-                //Debug.Log("[ApplicationFocus] Người chơi đã tab ra ngoài. Buộc lưu game...");
-                saveController.SaveGame();
-            }
-        }
-    }
+
     private IEnumerator AutoTaskRoutine()
     {
         while (true)
         {
-            Debug.Log("[AutoTask] Đang lấy giờ server và đồng bộ...");
-            yield return StartCoroutine(FetchServerTime());
+            yield return FetchServerTime();
 
-            if (saveController != null)
-            {
-                Debug.Log("[AutoTask] Đang tự động lưu game...");
-                saveController.SaveGame();
-            }
+            saveController?.SaveGame();
 
-            Debug.Log($"[AutoTask] Đã xong. Chờ {REFRESH_INTERVAL} giây.");
             yield return new WaitForSeconds(REFRESH_INTERVAL);
         }
     }
 
     public IEnumerator FetchServerTime()
     {
-        string url = "https://timeapi.io/api/Time/current/zone?timeZone=Asia/Ho_Chi_Minh";
-        UnityWebRequest request = UnityWebRequest.Get(url);
+        const string url = "https://timeapi.io/api/Time/current/zone?timeZone=Asia/Ho_Chi_Minh";
+        using var request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            string json = request.downloadHandler.text;
-            TimeApiResponse timeData = JsonUtility.FromJson<TimeApiResponse>(json);
+            TimeApiResponse response = JsonUtility.FromJson<TimeApiResponse>(request.downloadHandler.text);
+            DateTime fetchedTime = DateTime.Parse(response.dateTime);
 
-            DateTime fetchedServerTime = DateTime.Parse(timeData.dateTime);
-
-            DateTime localSystemTime = DateTime.Now;
-
-            double diffInSeconds = Math.Abs((fetchedServerTime - localSystemTime).TotalSeconds);
-
-            if (diffInSeconds <= 10)
-            {
-                ServerTime = localSystemTime;
-            }
-            else
-            {
-                ServerTime = fetchedServerTime;
-                Debug.Log("[Time Sync] Thời gian đáng ngờ, đồng bộ về giờ server.");
-            }
-
+            ServerTime = Math.Abs((fetchedTime - DateTime.Now).TotalSeconds) <= 10 ? DateTime.Now : fetchedTime;
             LocalTimeAtFetch = Time.time;
         }
         else
         {
-            Debug.LogWarning("Lỗi lấy giờ từ server: " + request.error);
+            Debug.LogWarning($"Lỗi lấy giờ server: {request.error}");
             if (ServerTime == default)
             {
                 ServerTime = DateTime.Now;
@@ -104,22 +77,22 @@ public class ServerTimeFetcher : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// Lưu game khi tab ra ngoài.
+    /// </summary>
+    public void HandleAppFocusLoss(bool hasFocus)
+    {
+        if (!hasFocus)
+        {
+            saveController?.SaveGame();
+        }
+    }
 }
 
 [System.Serializable]
 public class TimeApiResponse
 {
-    public int year;
-    public int month;
-    public int day;
-    public int hour;
-    public int minute;
-    public int seconds;
-    public int milliSeconds;
     public string dateTime;
-    public string date;
-    public string time;
-    public string timeZone;
-    public string dayOfWeek;
-    public bool dstActive;
+    // Các field khác giữ nguyên nếu cần, nhưng thực tế bạn chỉ dùng dateTime
 }

@@ -3,26 +3,19 @@ using UnityEngine;
 
 public class QuestItemManager : MonoBehaviour
 {
-    // List này tự động quản lý các item con
     [SerializeField] private List<Collectible> managedItems;
 
-    // ----- THÊM DÒNG NÀY -----
-    // List tạm để chứa các item đã bị phá hủy và chờ xóa
     [SerializeField] private List<Collectible> itemsToRemove = new List<Collectible>();
-    // -------------------------
 
     void Awake()
     {
-        // Tự động tìm tất cả các script QuestDependentItem 
-        // trong các object con và nạp vào List
         managedItems = new List<Collectible>(
-            GetComponentsInChildren<Collectible>(true) // true = bao gồm cả các object đang bị tắt
+            GetComponentsInChildren<Collectible>(true)
         );
     }
 
     void Start()
     {
-        // Chờ SaveController load xong
         if (SaveController.IsDataLoaded)
         {
             UpdateAllItems();
@@ -41,7 +34,6 @@ public class QuestItemManager : MonoBehaviour
 
     private void OnEnable()
     {
-        // Manager lắng nghe sự kiện
         QuestController.OnQuestStatusUpdated += HandleQuestUpdate;
     }
 
@@ -50,51 +42,30 @@ public class QuestItemManager : MonoBehaviour
         QuestController.OnQuestStatusUpdated -= HandleQuestUpdate;
     }
 
-    /// <summary>
-    /// Khi 1 quest thay đổi, Manager "can thiệp"
-    /// </summary>
     private void HandleQuestUpdate(string updatedQuestID)
     {
-        // ----- THÊM DÒNG NÀY -----
-        // Dọn dẹp list tạm trước mỗi lần chạy
         itemsToRemove.Clear();
-        // -------------------------
-
-        // Duyệt qua List
         foreach (var item in managedItems)
         {
-            // ----- BẮT ĐẦU SỬA LỖI -----
-            // Kiểm tra xem item có "chết" (bị null) không
             if (item == null)
             {
-                // Nếu item đã bị phá hủy, đánh dấu nó để xóa sau
                 itemsToRemove.Add(item);
-                continue; // Bỏ qua, không chạy code bên dưới
+                continue;
             }
-            // ----- KẾT THÚC SỬA LỖI -----
-
-            // Chỉ gọi hàm update của những item nào liên quan đến quest này
             if (item.requiredQuestID == updatedQuestID)
             {
                 item.UpdateVisibility();
             }
         }
 
-        // ----- THÊM KHỐI NÀY -----
-        // Bây giờ, dọn dẹp các item "chết" ra khỏi List chính
         foreach (var item in itemsToRemove)
         {
             managedItems.Remove(item);
         }
-        // -------------------------
     }
 
-    /// <summary>
-    /// Chạy 1 lần lúc ban đầu để cập nhật tất cả
-    /// </summary>
     private void UpdateAllItems()
     {
-        // (Chúng ta cũng nên dọn dẹp ở đây để cho chắc)
         itemsToRemove.Clear();
 
         foreach (var item in managedItems)

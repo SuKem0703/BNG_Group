@@ -65,7 +65,7 @@ public class NPCQuestIndicator : MonoBehaviour
     {
         if (indicatorChildObject == null || indicatorSpriteRenderer == null) return;
 
-        if (npc.IsDialogueActive)
+        if (GameStateManager.IsDialogueActive)
         {
             indicatorChildObject.SetActive(false);
             StopFloatingEffect();

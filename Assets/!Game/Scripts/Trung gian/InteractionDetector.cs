@@ -80,7 +80,7 @@ public class InteractionDetector : MonoBehaviour
 
             if (mb != null && mb.TryGetComponent<NPC>(out NPC npc))
             {
-                if (npc.IsDialogueActive) return;
+                if (GameStateManager.IsDialogueActive) return;
             }
 
             if (!currentTarget.CanInteract())
@@ -145,7 +145,7 @@ public class InteractionDetector : MonoBehaviour
         if (PauseController.IsGamePause || PlayerStats.IsOnBattle)
             return;
 
-        if (currentTarget is NPC npc && npc.IsDialogueActive)
+        if (currentTarget is NPC npc && GameStateManager.IsDialogueActive)
         {
             return;
         }

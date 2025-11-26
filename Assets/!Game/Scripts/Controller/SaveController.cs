@@ -285,7 +285,7 @@ public class SaveController : MonoBehaviour
         if (miniLoadingScreenInstance != null)
         {
             miniLoadingScreenInstance.SetActive(false);
-            if (MenuController.IsMenuOpen == true) return;
+            if (GameStateManager.IsMenuOpen == true) return;
             PauseController.SetPause(false);
         }
     }

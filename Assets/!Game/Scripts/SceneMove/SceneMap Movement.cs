@@ -74,7 +74,6 @@ public class SceneMapMove : MonoBehaviour
         SaveController saveController = FindFirstObjectByType<SaveController>();
         if (saveController != null)
         {
-            // Kiểm tra nếu đang lưu thì không kích hoạt chuyển cảnh để tránh lỗi
             if (SaveController.IsSaving)
             {
                 Debug.LogWarning($"Không thể chuyển sang '{sceneName}' vì đang trong quá trình lưu game khác.");
@@ -83,19 +82,15 @@ public class SceneMapMove : MonoBehaviour
 
             Debug.Log($"Bắt đầu quy trình Lưu và Chuyển sang map '{sceneName}'...");
 
-            // Cài đặt thông tin cho scene tiếp theo
             SaveController.nextSpawnPosition = playerPosition;
             SaveController.pendingSceneName = sceneName;
 
-            // Gọi hàm SaveGame và truyền vào một "Lambda Expression" (hàm vô danh).
-            // Đoạn code bên trong dấu { } này CHỈ chạy khi SaveController báo đã lưu xong.
             saveController.SaveGame(() =>
             {
                 Debug.Log($"Lưu hoàn tất. Đang chuyển sang scene: {sceneName}");
                 SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
             });
 
-            // Thoát hàm, mọi việc còn lại do SaveController lo.
             return;
         }
 
@@ -125,7 +120,6 @@ public class SceneMapMove : MonoBehaviour
             Debug.LogWarning(reason);
         }
 
-        // Rung camera
         if (CinemachineShaker.Instance != null)
             CinemachineShaker.Instance.TriggerShake(3f, 10f, 0.2f);
     }

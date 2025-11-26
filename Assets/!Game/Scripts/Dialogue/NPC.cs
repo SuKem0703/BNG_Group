@@ -26,7 +26,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     private int dialogueIndex;
     private bool isTyping;
-    public bool IsDialogueActive { get; private set; }
 
     public bool triggerOnEnter = false;
 
@@ -152,7 +151,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     private void Update()
     {
-        if (!IsDialogueActive)
+        if (!GameStateManager.IsDialogueActive)
         {
             return;
         }
@@ -170,7 +169,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     public bool CanInteract()
     {
-        return !IsDialogueActive;
+        return !GameStateManager.IsDialogueActive;
     }
 
 
@@ -203,10 +202,10 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
     }
     public void OpenDialogOnTrigger()
     {
-        if (CurrentActiveDialogue == null || (PauseController.IsGamePause && !IsDialogueActive))
+        if (CurrentActiveDialogue == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive))
             return;
 
-        if (!IsDialogueActive)
+        if (!GameStateManager.IsDialogueActive)
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
@@ -225,16 +224,16 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
     public void Interact()
     {
         UpdateActiveDialogue();
-        if (CurrentActiveDialogue == null || (PauseController.IsGamePause && !IsDialogueActive))
+        if (CurrentActiveDialogue == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive))
             return;
 
-        if (IsDialogueActive)
+        if (GameStateManager.IsDialogueActive)
         {
             NextLine();
         }
         else
         {
-            if (triggerOnEnter == true && IsDialogueActive == false) return;
+            if (triggerOnEnter == true && GameStateManager.IsDialogueActive == false) return;
 
             Debug.Log("Hội thoại bắt đầu khi tương tác.");
             StartDialogue();
@@ -262,11 +261,11 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             dialogueIndex = CurrentActiveDialogue.noMoreQuestsIndex;
         }
 
-        IsDialogueActive = true;
+        GameStateManager.IsDialogueActive = true;
 
         OnQuestStateUpdated?.Invoke(CurrentQuestState);
 
-        MenuController.CanOpenMenu = false;
+        GameStateManager.CanOpenMenu = false;
 
         CommonUIController.Instance?.SetUIVisible(false);
         dialogueUI.ClearChoices();
@@ -467,8 +466,8 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         }
 
         StopAllCoroutines();
-        IsDialogueActive = false;
-        MenuController.CanOpenMenu = true;
+        GameStateManager.IsDialogueActive = false;
+        GameStateManager.CanOpenMenu = true;
         dialogueUI.continueIndicator.gameObject.SetActive(false);
 
         dialogueUI.SetDialogueText("");
@@ -489,7 +488,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         }
 
         UpdateActiveDialogue();
-        SyncQuestState(); // Cập nhật lại trạng thái (và indicator)
+        SyncQuestState();
 
         saveController = Object.FindFirstObjectByType<SaveController>();
         saveController.SaveGame();

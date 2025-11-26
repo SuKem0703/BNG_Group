@@ -2,7 +2,7 @@
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.EventSystems;
-using Unity.Cinemachine;
+using Unity.Cinemachine; // Unity 6
 
 [RequireComponent(typeof(PlayerInput))]
 public class PlayerInputAutoAssign : MonoBehaviour
@@ -11,39 +11,40 @@ public class PlayerInputAutoAssign : MonoBehaviour
     {
         var playerInput = GetComponent<PlayerInput>();
 
-        // Gán lại camera nếu null
         if (playerInput.camera == null)
         {
             var cam = Camera.main;
-            if (cam != null)
-            {
-                playerInput.camera = cam;
-            }
+            if (cam != null) playerInput.camera = cam;
         }
 
-        // Gán lại UI Input Module nếu null
         if (playerInput.uiInputModule == null)
         {
             var eventSystem = EventSystem.current;
             if (eventSystem != null)
             {
                 var uiModule = eventSystem.GetComponent<InputSystemUIInputModule>();
-                if (uiModule != null)
-                {
-                    playerInput.uiInputModule = uiModule;
-                }
+                if (uiModule != null) playerInput.uiInputModule = uiModule;
             }
         }
 
-        // Gán transform của player.pref vào Tracking Target của CinemachineCamera
-        var cineCam = FindFirstObjectByType<CinemachineCamera>();
-        if (cineCam != null)
+        GameObject camObj = GameObject.FindGameObjectWithTag("PlayerCamera");
+
+        if (camObj != null)
         {
-            cineCam.Follow = transform;
+            var cineCam = camObj.GetComponent<CinemachineCamera>();
+            if (cineCam != null)
+            {
+                cineCam.Follow = transform;
+            }
         }
         else
         {
-            Debug.LogWarning("Không tìm thấy CinemachineVirtualCamera để gán Tracking Target.");
+            var fallbackCam = GameObject.Find("Player Camera");
+            if (fallbackCam != null)
+            {
+                var cm = fallbackCam.GetComponent<CinemachineCamera>();
+                if (cm != null) cm.Follow = transform;
+            }
         }
     }
 }

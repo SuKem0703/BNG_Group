@@ -138,10 +138,10 @@ public class StatusUI : MonoBehaviour
         // Real Time
         if (timeText != null)
         {
-            if (ServerTimeFetcher.ServerTime != default && ServerTimeFetcher.LocalTimeAtFetch > 0f)
+            if (ServerTimeManager.ServerTime != default && ServerTimeManager.LocalTimeAtFetch > 0f)
             {
-                float secondsPassed = Time.time - ServerTimeFetcher.LocalTimeAtFetch;
-                DateTime currentTime = ServerTimeFetcher.ServerTime.AddSeconds(secondsPassed);
+                float secondsPassed = Time.time - ServerTimeManager.LocalTimeAtFetch;
+                DateTime currentTime = ServerTimeManager.ServerTime.AddSeconds(secondsPassed);
                 timeText.text = currentTime.ToString("HH:mm:ss");
             }
             else

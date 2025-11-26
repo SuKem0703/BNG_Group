@@ -408,14 +408,14 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        MenuController.CanOpenMenu = false;
+        GameStateManager.CanOpenMenu = false;
 
         GameObject notifyUIObj = Instantiate(notifyPrefab);
         NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
 
         if (notifyUI == null)
         {
-            MenuController.CanOpenMenu = true;
+            GameStateManager.CanOpenMenu = true;
             Debug.LogError("Prefab NotifyUICanvas thiếu script NotifyUIController!");
             Destroy(notifyUIObj);
             SnapBack();
@@ -423,7 +423,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
 
         UnityEngine.Events.UnityAction onOkAction = () => {
-            MenuController.CanOpenMenu = true;
+            GameStateManager.CanOpenMenu = true;
             SnapBack();
         };
 
@@ -440,14 +440,14 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        MenuController.CanOpenMenu = false;
+        GameStateManager.CanOpenMenu = false;
 
         GameObject confirmUIObj = Instantiate(confirmPrefab);
         ConfirmUIController confirmUI = confirmUIObj.GetComponent<ConfirmUIController>();
 
         if (confirmUI == null)
         {
-            MenuController.CanOpenMenu = true;
+            GameStateManager.CanOpenMenu = true;
             Debug.LogError("Prefab ConfirmUICanvas thiếu script ConfirmUIController!");
             Destroy(confirmUIObj);
             SnapBack();
@@ -455,12 +455,12 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
 
         UnityEngine.Events.UnityAction onYesAction = () => {
-            MenuController.CanOpenMenu = true;
+            GameStateManager.CanOpenMenu = true;
             DropItem(slotToEmpty, dragEndMousePosition);
         };
 
         UnityEngine.Events.UnityAction onNoAction = () => {
-            MenuController.CanOpenMenu = true;
+            GameStateManager.CanOpenMenu = true;
             SnapBack();
         };
 
@@ -475,7 +475,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
         else
         {
-            MenuController.CanOpenMenu = true;
+            GameStateManager.CanOpenMenu = true;
             Debug.LogError("Không tìm thấy 'noButton' trên ConfirmUI. Tự động SnapBack.");
             SnapBack();
         }

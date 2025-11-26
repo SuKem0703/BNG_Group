@@ -25,9 +25,6 @@ public class MenuController : MonoBehaviour
 
     [SerializeField] private GameObject commonUI;
 
-    public static bool CanOpenMenu = false;
-    public static bool IsMenuOpen = false;
-
     [Header("Âm thanh")]
     [SerializeField] private AudioClip openMenuSound;
     [SerializeField] private AudioClip closeMenuSound;
@@ -73,7 +70,7 @@ public class MenuController : MonoBehaviour
     }
     private void EnableMenuOpening()
     {
-        CanOpenMenu = true;
+        GameStateManager.CanOpenMenu = true;
 
         if (menuCanvas != null)
         {
@@ -94,10 +91,10 @@ public class MenuController : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E) && !isTransitioning && CanOpenMenu)
+        if (Input.GetKeyDown(KeyCode.E) && !isTransitioning && GameStateManager.CanOpenMenu)
         {
             bool isOpening = !menuCanvas.activeSelf;
-            IsMenuOpen = isOpening;
+            GameStateManager.IsMenuOpen = isOpening;
             StartCoroutine(ToggleMenu(isOpening));
         }
     }

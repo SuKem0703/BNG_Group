@@ -12,7 +12,7 @@ public class Monologue : MonoBehaviour, IInteractable
     private SaveController saveController;
 
     private int dialogueIndex;
-    private bool isTyping, isDialogueActive;
+    private bool isTyping;
     
     private Sprite elricPortrait;
 
@@ -31,7 +31,7 @@ public class Monologue : MonoBehaviour, IInteractable
     }
     private void Update()
     {
-        if (!isDialogueActive)
+        if (!GameStateManager.IsDialogueActive)
         {
             return;
         }
@@ -48,21 +48,21 @@ public class Monologue : MonoBehaviour, IInteractable
     }
     public bool CanInteract()
     {
-        return !isDialogueActive;
+        return !GameStateManager.IsDialogueActive;
     }
 
     public void Interact()
     {
-        if (monologueData == null || (PauseController.IsGamePause && !isDialogueActive))
+        if (monologueData == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive))
             return;
 
-        if (isDialogueActive)
+        if (GameStateManager.IsDialogueActive)
         {
             NextLine();
         }
         else
         {
-            if (triggerOnEnter == true && isDialogueActive == false) return;
+            if (triggerOnEnter == true && GameStateManager.IsDialogueActive == false) return;
 
             Debug.Log("Độc thoại bắt đầu khi tương tác.");
             StartDialogue();
@@ -81,10 +81,10 @@ public class Monologue : MonoBehaviour, IInteractable
     }
     public void OpenDialogOnTrigger()
     {
-        if (monologueData == null || (PauseController.IsGamePause && !isDialogueActive))
+        if (monologueData == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive))
             return;
 
-        if (!isDialogueActive)
+        if (!GameStateManager.IsDialogueActive)
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
@@ -104,9 +104,9 @@ public class Monologue : MonoBehaviour, IInteractable
     void StartDialogue()
     {
         dialogueIndex = 0;
-        isDialogueActive = true;
+        GameStateManager.IsDialogueActive = true;
 
-        MenuController.CanOpenMenu = false;
+        GameStateManager.CanOpenMenu = false;
 
         // Ẩn toàn bộ UI chung
         CommonUIController.Instance?.SetUIVisible(false);
@@ -190,8 +190,8 @@ public class Monologue : MonoBehaviour, IInteractable
         }
 
         StopAllCoroutines();
-        isDialogueActive = false;
-        MenuController.CanOpenMenu = true;
+        GameStateManager.IsDialogueActive = false;
+        GameStateManager.CanOpenMenu = true;
         dialogueUI.continueIndicator.gameObject.SetActive(false);
 
         dialogueUI.SetDialogueText("");

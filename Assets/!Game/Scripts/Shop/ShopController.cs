@@ -142,7 +142,7 @@ public class ShopController : MonoBehaviour
     {
         PauseController.SetPause(true);
         shopPanel.SetActive(true);
-        MenuController.CanOpenMenu = false;
+        GameStateManager.CanOpenMenu = false;
 
         commonUI.SetUIVisible(false);
     }
@@ -155,7 +155,7 @@ public class ShopController : MonoBehaviour
         gameObject.SetActive(false);
         PauseController.SetPause(false);
 
-        MenuController.CanOpenMenu = true;
+        GameStateManager.CanOpenMenu = true;
     }
     private void ExecuteBuyItem(int itemID, int price, CurrencyType currency, int quantity)
     {
