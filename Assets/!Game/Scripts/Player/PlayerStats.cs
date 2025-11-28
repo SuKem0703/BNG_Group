@@ -114,8 +114,6 @@ public class PlayerStats : MonoBehaviour
     {
         get
         {
-            if (PauseController.IsGamePause) return false;
-
             if (MapController.Instance != null && MapController.Instance.IsSafeZone()) return false;
 
             ClassController classController = GetComponent<ClassController>();

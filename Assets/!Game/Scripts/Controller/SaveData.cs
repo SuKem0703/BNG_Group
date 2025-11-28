@@ -38,7 +38,8 @@ public class SaveData
 
     public FarmData farmData;
 
-    // Persist collected items per scene
+    public List<ChestStorageEntry> allChestsData = new List<ChestStorageEntry>();
+
     public List<SaveController.SceneCollected> collectedByScene = new();
 }
 [System.Serializable]
@@ -53,4 +54,11 @@ public class SceneCollected
 {
     public string sceneName;
     public List<string> collectedIDs = new List<string>();
+}
+
+[System.Serializable]
+public class ChestStorageEntry
+{
+    public string chestID;
+    public List<StorageChestSaveData> items;
 }

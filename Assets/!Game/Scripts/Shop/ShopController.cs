@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class ShopController : MonoBehaviour
@@ -13,13 +12,10 @@ public class ShopController : MonoBehaviour
     public int slotCount;
     public List<ShopItemData> shopItems;
     [SerializeField] private ShopItemPreview shopItemPreview;
-
-    [Header("Prefabs")]
-    public GameObject confirmUIPrefab;
-    public GameObject notifyUIPrefab;
+    private GameObject ConfirmUIPrefab => LoadResourceManager.Instance.ConfirmUIPrefab;
+    private GameObject NotifyUIPrefab => LoadResourceManager.Instance.NotifyUIPrefab;
 
     private ItemDictionary itemDictionary;
-    private CommonUIController commonUI;
     private PlayerStats playerStats;
     private TextMeshProUGUI coinText;
     private TextMeshProUGUI gemText;
@@ -27,15 +23,6 @@ public class ShopController : MonoBehaviour
     private void Awake()
     {
         playerStats = FindFirstObjectByType<PlayerStats>();
-
-        if (commonUI == null)
-        {
-			commonUI = FindObjectsByType<CommonUIController>(FindObjectsSortMode.None)
-	.FirstOrDefault(x => x.name == "CommonUI");
-
-			if (commonUI == null)
-                Debug.LogError("CommonUIController not found!");
-        }
 
         if (playerStats != null)
         {
@@ -50,20 +37,9 @@ public class ShopController : MonoBehaviour
         itemDictionary = FindFirstObjectByType<ItemDictionary>();
 
         shopItemPreview = GetComponentsInChildren<ShopItemPreview>(true)
-    .FirstOrDefault(x => x.name == "ItemPreview");
-
-        confirmUIPrefab = Resources.Load<GameObject>("UI/ConfirmUICanvas");
-        if (confirmUIPrefab == null)
-        {
-            Debug.LogError("Không tìm thấy 'ConfirmUICanvas' trong thư mục Resources!");
-        }
-
-        notifyUIPrefab = Resources.Load<GameObject>("UI/NotifyUICanvas");
-        if (notifyUIPrefab == null)
-        {
-            Debug.LogError("Không tìm thấy 'NotifyUICanvas' trong thư mục Resources!");
-        }
+            .FirstOrDefault(x => x.name == "ItemPreview");
     }
+
     void Start()
     {
         StartCoroutine(SetupAndDeactivate());
@@ -72,13 +48,8 @@ public class ShopController : MonoBehaviour
     IEnumerator SetupAndDeactivate()
     {
         yield return null;
-
         SetupShop();
-
-        // Chờ 1 frame nữa để UI hoàn tất layout
         yield return null;
-
-        // 🔻 Tắt shop sau khi setup xong
         gameObject.SetActive(false);
     }
 
@@ -93,13 +64,11 @@ public class ShopController : MonoBehaviour
 
     void SetupShop()
     {
-        // 🧹 Clear toàn bộ slot test còn lại trong editor
         foreach (Transform child in shopPanel.transform)
         {
             Destroy(child.gameObject);
         }
 
-        // 🧱 Sau đó mới tạo slot mới từ prefab
         for (int i = 0; i < slotCount; i++)
         {
             GameObject slot = Instantiate(slotPrefab, shopPanel.transform);
@@ -140,23 +109,40 @@ public class ShopController : MonoBehaviour
 
     public void OpenShop()
     {
-        PauseController.SetPause(true);
-        shopPanel.SetActive(true);
-        GameStateManager.CanOpenMenu = false;
+        // Gọi MenuStateManager để xử lý Pause, chặn Input, ẩn HUD
+        if (MenuStateManager.Instance != null)
+        {
+            // Bật gameObject chứa script này lên trước nếu nó đang tắt
+            gameObject.SetActive(true);
 
-        commonUI.SetUIVisible(false);
+            // Gọi hàm mở menu chung
+            MenuStateManager.Instance.OpenMenu(shopPanel);
+        }
+        else
+        {
+            // Fallback nếu không có Manager (ít xảy ra)
+            gameObject.SetActive(true);
+            shopPanel.SetActive(true);
+            PauseController.SetPause(true);
+        }
     }
 
     public void CloseShop()
     {
-        shopPanel.SetActive(false);
+        // Đóng shop bằng Menu Manager
+        if (MenuStateManager.Instance != null)
+        {
+            MenuStateManager.Instance.CloseCurrentMenu();
+        }
+        else
+        {
+            shopPanel.SetActive(false);
+            PauseController.SetPause(false);
+        }
 
-        commonUI.SetUIVisible(true);
         gameObject.SetActive(false);
-        PauseController.SetPause(false);
-
-        GameStateManager.CanOpenMenu = true;
     }
+
     private void ExecuteBuyItem(int itemID, int price, CurrencyType currency, int quantity)
     {
         var player = Object.FindFirstObjectByType<PlayerStats>();
@@ -185,6 +171,7 @@ public class ShopController : MonoBehaviour
 
         bool allAdded = true;
 
+        // Trang bị → tạo từng món
         if (tempItem.itemType == ItemType.Equipment)
         {
             for (int i = 0; i < quantity; i++)
@@ -199,57 +186,58 @@ public class ShopController : MonoBehaviour
         }
         else
         {
+            // Consumable → tạo 1 item với quantity
             GameObject temp = Instantiate(itemPrefab);
             temp.GetComponent<Item>().quantity = quantity;
+
             allAdded = InventoryController.Instance.AddItem(temp);
+
             Destroy(temp);
         }
 
         if (allAdded)
         {
+            // Thanh toán
             if (currency == CurrencyType.Coin)
                 player.SpendCoin(price);
             else
                 player.SpendGem(price);
 
-            if (notifyUIPrefab != null)
-            {
-                GameObject okUIObj = Instantiate(notifyUIPrefab);
-                NotifyUIController notifyUIController = okUIObj.GetComponent<NotifyUIController>();
-                notifyUIController.Show("Mua thành công!");
-            }
+            // --- CLEAN VERSION: dùng Prefab Manager ---
+            GameObject okUIObj = Instantiate(LoadResourceManager.Instance.NotifyUIPrefab);
+            var notify = okUIObj.GetComponent<NotifyUIController>();
+            if (notify != null)
+                notify.Show("Mua thành công!");
+
+            // Auto Save
+            SaveController.Instance?.TriggerAutoSave();
         }
         else
         {
             ShowNotification("Túi đồ đầy! Không thể mua thêm vật phẩm.");
         }
-
-        SaveController saveController = FindFirstObjectByType<SaveController>();
-        saveController.SaveGame();
     }
+
+
     public void OpenBuyConfirm(int itemID, int price, CurrencyType currency, int quantity)
     {
-        if (confirmUIPrefab == null)
+        if (ConfirmUIPrefab == null)
         {
-            Debug.LogError("ConfirmUIPrefab chưa được load!");
+            Debug.LogError("ConfirmUIPrefab NOT FOUND in LoadResourceManager!");
             return;
         }
 
-        GameObject confirmUIObj = Instantiate(confirmUIPrefab);
-        ConfirmUIController confirmUI = confirmUIObj.GetComponent<ConfirmUIController>();
+        GameObject confirmUIObj = Instantiate(ConfirmUIPrefab);
+        var confirmUI = confirmUIObj.GetComponent<ConfirmUIController>();
 
         string itemName = "vật phẩm này";
-        if (itemDictionary != null)
+
+        GameObject pf = itemDictionary.GetItemPrefab(itemID);
+        if (pf != null)
         {
-            GameObject itemPrefab = itemDictionary.GetItemPrefab(itemID);
-            if (itemPrefab != null)
-            {
-                Item itemInfo = itemPrefab.GetComponent<Item>();
-                if (itemInfo != null && !string.IsNullOrEmpty(itemInfo.Name))
-                {
-                    itemName = $"<color=white>{itemInfo.Name}</color>";
-                }
-            }
+            var info = pf.GetComponent<Item>();
+            if (info != null && !string.IsNullOrEmpty(info.Name))
+                itemName = $"<color=white>{info.Name}</color>";
         }
 
         string currencyText = currency == CurrencyType.Coin ? "coin" : "gem";
@@ -260,27 +248,27 @@ public class ShopController : MonoBehaviour
             ExecuteBuyItem(itemID, price, currency, quantity);
         });
     }
+
     public void ShowNotification(string message)
     {
-        if (notifyUIPrefab == null)
+        if (NotifyUIPrefab == null)
         {
-            Debug.LogWarning($"NotifyUI Prefab bị thiếu, chỉ hiển thị Debug: {message}");
+            Debug.LogError("NotifyUIPrefab NOT FOUND in LoadResourceManager!");
             return;
         }
 
-        GameObject notifyObj = Instantiate(notifyUIPrefab);
-        NotifyUIController notifyController = notifyObj.GetComponent<NotifyUIController>();
+        GameObject obj = Instantiate(NotifyUIPrefab);
+        var controller = obj.GetComponent<NotifyUIController>();
 
-        if (notifyController != null)
-        {
-            notifyController.Show(message);
-        }
+        if (controller != null)
+            controller.Show(message);
         else
         {
-            Debug.LogError($"NotifyUICanvas thiếu component NotifyUIController. Thông báo: {message}");
-            Destroy(notifyObj);
+            Debug.LogError("NotifyUIPrefab missing NotifyUIController!");
+            Destroy(obj);
         }
     }
+
     TextMeshProUGUI FindTextByName(Transform parent, string childName)
     {
         var texts = parent.GetComponentsInChildren<TextMeshProUGUI>(includeInactive: true);

@@ -264,6 +264,7 @@ GameObject:
   - component: {fileID: 5955319861824337064}
   - component: {fileID: 919113707798610949}
   - component: {fileID: 2321789645097737207}
+  - component: {fileID: 4120798843451415831}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -303,7 +304,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19d234e22279f9144870ad1e1d70a639, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loadingCanvas: {fileID: 0}
   uidText: {fileID: 0}
   collectedByScene: []
 --- !u!114 &8994160904525692192
@@ -475,6 +475,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::YSortController
   playerTag: PlayerController
   minDeltaY: 0.01
+--- !u!114 &4120798843451415831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6839925855584844827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95d69f6e2a0413244a2caca48bed5260, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1 &8337080279249100801
 GameObject:
   m_ObjectHideFlags: 0

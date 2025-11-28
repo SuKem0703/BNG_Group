@@ -27,7 +27,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (PauseController.IsGamePause)
+        if (!GameStateManager.CanProcessInput())
         {
             rb.linearVelocity = Vector2.zero;
             animator.SetBool("isWalking", false);

@@ -28,6 +28,7 @@ public class SaveController : MonoBehaviour
     private MageEquipmentPanel mageEquipmentPanel;
     private SharedEquipmentPanel sharedEquipmentPanel;
     private FarmController farmController;
+    private StorageChest[] storageChests;
 
     public static Vector3? nextSpawnPosition = null;
     public static string pendingSceneName = null;
@@ -109,6 +110,7 @@ public class SaveController : MonoBehaviour
         mageEquipmentPanel = FindFirstObjectByType<MageEquipmentPanel>(FindObjectsInactive.Include);
         sharedEquipmentPanel = FindFirstObjectByType<SharedEquipmentPanel>(FindObjectsInactive.Include);
         farmController = FindFirstObjectByType<FarmController>();
+        storageChests = FindObjectsByType<StorageChest>(FindObjectsSortMode.None);
 
         yield break;
     }
@@ -182,6 +184,12 @@ public class SaveController : MonoBehaviour
             existingChestStates = serverSave.chestSaveData ?? new List<ChestSaveData>();
             existingFarmData = serverSave.farmData ?? new FarmData();
         }
+        List<ChestStorageEntry> existingStorageData = new List<ChestStorageEntry>();
+        if (serverSave != null && serverSave.allChestsData != null)
+        {
+            existingStorageData = serverSave.allChestsData;
+        }
+        List<ChestStorageEntry> finalStorageData = MergeStorageChests(existingStorageData);
 
         SaveData saveData = new SaveData
         {
@@ -214,6 +222,8 @@ public class SaveController : MonoBehaviour
             potentialPoints = playerStats.potentialPoints,
 
             farmData = MergeFarmData(existingFarmData),
+            allChestsData = finalStorageData,
+
             collectedByScene = collectedByScene
         };
 
@@ -354,6 +364,30 @@ public class SaveController : MonoBehaviour
         return existingFarmData;
     }
 
+    // Gộp dữ liệu rương lưu trữ hiện tại vào dữ liệu tổng từ server
+    private List<ChestStorageEntry> MergeStorageChests(List<ChestStorageEntry> existingChestsData)
+    {
+        List<ChestStorageEntry> currentChests = GetStorageChestsState();
+
+        if (existingChestsData == null)
+            existingChestsData = new List<ChestStorageEntry>();
+
+        foreach (var newChest in currentChests)
+        {
+            var existingChest = existingChestsData.FirstOrDefault(c => c.chestID == newChest.chestID);
+
+            if (existingChest != null)
+            {
+                existingChest.items = newChest.items;
+            }
+            else
+            {
+                existingChestsData.Add(newChest);
+            }
+        }
+
+        return existingChestsData;
+    }
     // Quy trình load dữ liệu từ server
     public IEnumerator LoadRoutine(System.Action<bool> onComplete)
     {
@@ -437,6 +471,8 @@ public class SaveController : MonoBehaviour
             farmController.LoadFarmData(saveData.farmData);
         }
 
+        LoadStorageChestStates(saveData.allChestsData);
+
         collectedByScene = saveData.collectedByScene ?? new List<SceneCollected>();
 
         var vcam = FindFirstObjectByType<CinemachineCamera>();
@@ -460,6 +496,40 @@ public class SaveController : MonoBehaviour
         return false;
     }
 
+    // Load trạng thái rương lưu trữ
+    private void LoadStorageChestStates(List<ChestStorageEntry> allChestsData)
+    {
+        if (storageChests == null || storageChests.Length == 0) return;
+
+        if (allChestsData == null) allChestsData = new List<ChestStorageEntry>();
+
+        foreach (var chest in storageChests)
+        {
+            var data = allChestsData.FirstOrDefault(c => c.chestID == chest.chestID);
+
+            if (data != null && data.items != null)
+            {
+                List<InventorySaveData> loadedItems = new List<InventorySaveData>();
+                foreach (var itemData in data.items)
+                {
+                    loadedItems.Add(new InventorySaveData
+                    {
+                        itemID = itemData.itemID,
+                        slotIndex = itemData.slotIndex,
+                        quantity = itemData.quantity,
+                        rarity = itemData.rarity,
+                        qualityFactor = itemData.qualityFactor,
+                        isEquipped = false
+                    });
+                }
+                chest.chestData = loadedItems;
+            }
+            else
+            {
+                chest.chestData = new List<InventorySaveData>();
+            }
+        }
+    }
     // Load trạng thái mở rương
     private void LoadChestStates(List<ChestSaveData> chestState)
     {
@@ -472,6 +542,53 @@ public class SaveController : MonoBehaviour
                 chest.SetOpened(chestSaveData.isOpened);
             }
         }
+    }
+
+    // Lấy trạng thái rương lưu trữ của scene hiện tại
+    private List<ChestStorageEntry> GetStorageChestsState()
+    {
+        List<ChestStorageEntry> currentSceneChests = new List<ChestStorageEntry>();
+
+        // Nếu map không có rương nào thì trả về list rỗng ngay
+        if (storageChests == null || storageChests.Length == 0)
+        {
+            return currentSceneChests;
+        }
+
+        foreach (var chest in storageChests)
+        {
+            // Bảo vệ null khi gọi Controller
+            if (StorageChestController.Instance != null)
+            {
+                StorageChestController.Instance.SyncDataIfOpen(chest);
+            }
+
+            List<StorageChestSaveData> savedItems = new List<StorageChestSaveData>();
+
+            // Bảo vệ null cho chestData
+            if (chest.chestData != null)
+            {
+                foreach (var item in chest.chestData)
+                {
+                    savedItems.Add(new StorageChestSaveData
+                    {
+                        itemID = item.itemID,
+                        slotIndex = item.slotIndex,
+                        quantity = item.quantity,
+                        rarity = item.rarity,
+                        qualityFactor = item.qualityFactor
+                    });
+                }
+            }
+
+            currentSceneChests.Add(new ChestStorageEntry
+            {
+                chestID = chest.chestID,
+                items = savedItems
+            });
+        }
+
+        return currentSceneChests;
     }
 
     [System.Serializable]

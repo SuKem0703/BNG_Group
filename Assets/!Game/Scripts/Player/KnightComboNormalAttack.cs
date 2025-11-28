@@ -91,7 +91,7 @@ public class KnightComboNormalAttack : MonoBehaviour
     {
         if (comboTempo < minComboInterval) return;
 
-        if (!PlayerStats.Instance.CanAttack)
+        if (!PlayerStats.Instance.CanAttack || !GameStateManager.CanProcessInput())
         {
             return;
         }
