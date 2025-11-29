@@ -11,8 +11,10 @@ public class EquipmentScrollViewController : MonoBehaviour
 
     private void Awake()
     {
-        equipmentList = GameObject.Find("EquipmentList");
-        inventoryPanel = GameObject.Find("InventoryPage");
+        if (equipmentList == null)
+            equipmentList = GameObject.Find("EquipmentList");
+        if (inventoryPanel == null)
+            inventoryPanel = GameObject.Find("InventoryPage");
     }
     private void Start()
     {

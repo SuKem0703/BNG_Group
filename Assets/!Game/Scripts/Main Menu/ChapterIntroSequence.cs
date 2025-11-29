@@ -23,9 +23,10 @@ public class ChapterIntroSequence : MonoBehaviour
 
     [Header("Scene Logic")]
     public string sceneToLoad;
+    [Tooltip("ID để lưu trạng thái đã xem. NẾU TRỐNG sẽ tự sinh theo tọa độ.")]
     public string uniqueID;
 
-    private bool hasDataCheckCompleted = false;
+    private string finalID;
 
     private void Awake()
     {
@@ -33,20 +34,32 @@ public class ChapterIntroSequence : MonoBehaviour
         if (map != null) map.IsCutsceneMode = true;
     }
 
-    private void OnEnable()
+    private void Start()
     {
-        if (string.IsNullOrEmpty(sceneToLoad))
-        {
-            SaveController.OnDataLoaded += HandleDataLoaded;
-            if (SaveController.IsDataLoaded) HandleDataLoaded();
-        }
-        else
+        if (!string.IsNullOrEmpty(uniqueID)) finalID = uniqueID;
+        else finalID = GenerateDeterministicID();
+
+        // Ẩn trước để tránh nhấp nháy trong lúc chờ check save
+        if (monologueText != null) SetAlpha(monologueText, 0);
+
+        // Nếu là chuyển cảnh (sceneToLoad có dữ liệu) thì luôn hiện nền
+        // Nếu là intro tại chỗ, tạm thời hiện nền để che map trong lúc check data
+        if (backgroundImage != null) SetAlpha(backgroundImage, 1);
+
+        if (!string.IsNullOrEmpty(sceneToLoad))
         {
             StartCoroutine(PlaySequence());
         }
+        else
+        {
+            if (!SaveController.IsDataLoaded)
+                SaveController.OnDataLoaded += HandleDataLoaded;
+            else
+                HandleDataLoaded();
+        }
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
         if (string.IsNullOrEmpty(sceneToLoad))
             SaveController.OnDataLoaded -= HandleDataLoaded;
@@ -56,13 +69,10 @@ public class ChapterIntroSequence : MonoBehaviour
 
     private void HandleDataLoaded()
     {
-        if (hasDataCheckCompleted) return;
-        hasDataCheckCompleted = true;
-
-        if (string.IsNullOrEmpty(uniqueID)) uniqueID = GenerateDeterministicID();
+        SaveController.OnDataLoaded -= HandleDataLoaded;
 
         var save = SaveController.Instance;
-        if (save != null && save.IsCollected(SceneManager.GetActiveScene().name, uniqueID))
+        if (save != null && save.IsCollected(SceneManager.GetActiveScene().name, finalID))
         {
             RestoreMapState();
             Destroy(gameObject);
@@ -82,8 +92,8 @@ public class ChapterIntroSequence : MonoBehaviour
         else
             SoundEffectManager.StopBGM();
 
+        // Đảm bảo trạng thái alpha đúng trước khi diễn
         if (monologueText != null) SetAlpha(monologueText, 0);
-
         if (backgroundImage != null) SetAlpha(backgroundImage, 1);
 
         for (int i = 0; i < monologueLines.Length; i++)
@@ -147,12 +157,12 @@ public class ChapterIntroSequence : MonoBehaviour
 
     private void SaveDataLogic()
     {
-        if (!string.IsNullOrEmpty(uniqueID))
+        if (!string.IsNullOrEmpty(finalID))
         {
             var save = SaveController.Instance;
             if (save != null)
             {
-                save.MarkCollected(SceneManager.GetActiveScene().name, uniqueID);
+                save.MarkCollected(SceneManager.GetActiveScene().name, finalID);
                 save.TriggerAutoSave();
             }
         }

@@ -21,7 +21,8 @@ public class EffectController : MonoBehaviour
         else
             Instance = this;
 
-        effectGrid = GameObject.Find("GameUI/CommonUI/UI_EffectGrid")?.transform;
+        if (effectGrid == null)
+            effectGrid = GameObject.Find("GameUI/CommonUI/UI_EffectGrid")?.transform;
     }
     public void AddEffect(GameObject target, string effectID, float duration, float value)
     {

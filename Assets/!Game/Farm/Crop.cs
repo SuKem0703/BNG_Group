@@ -1,13 +1,21 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Crop : MonoBehaviour, IInteractable, ITargetableInfo
 {
+    [System.Serializable]
+    public struct StageData
+    {
+        public Sprite sprite;
+        public float timeToNextStage; // Thời gian cần để lớn lên giai đoạn tiếp theo
+    }
+
     [Header("Save Data")]
     public int seedItemID;
 
     [Header("Growth Settings")]
-    public float growTime = 10f;
-    public Sprite[] growStages;
+    // List chứa thông tin từng giai đoạn (Sprite + Thời gian)
+    public List<StageData> cropStages;
 
     [HideInInspector] public float timer = 0f;
     [HideInInspector] public int stage = 0;
@@ -15,6 +23,10 @@ public class Crop : MonoBehaviour, IInteractable, ITargetableInfo
     [Header("Harvest Settings")]
     public GameObject harvestItemPrefab;
     public int harvestAmount = 1;
+
+    [Header("Regrow Settings")]
+    public bool isRegrowable = false;
+    public int regrowStage = 0;
 
     private Item _cachedHarvestItemData;
     private SpriteRenderer sr;
@@ -24,9 +36,11 @@ public class Crop : MonoBehaviour, IInteractable, ITargetableInfo
     private void Start()
     {
         sr = GetComponent<SpriteRenderer>();
-        if (stage == 0 && growStages.Length > 0)
+
+        // Cập nhật hiển thị ban đầu
+        if (cropStages != null && stage < cropStages.Count)
         {
-            sr.sprite = growStages[0];
+            sr.sprite = cropStages[stage].sprite;
         }
 
         if (harvestItemPrefab != null)
@@ -41,19 +55,31 @@ public class Crop : MonoBehaviour, IInteractable, ITargetableInfo
 
     private void Update()
     {
-        if (stage < growStages.Length - 1)
+        // Chỉ chạy timer nếu chưa đến giai đoạn cuối cùng
+        if (stage < cropStages.Count - 1)
         {
             timer += Time.deltaTime;
-            if (timer >= growTime)
+
+            // Kiểm tra thời gian dựa trên cấu hình của giai đoạn hiện tại
+            if (timer >= cropStages[stage].timeToNextStage)
             {
                 timer = 0f;
                 stage++;
-                sr.sprite = growStages[stage];
+                UpdateSprite();
             }
         }
     }
 
-    public bool IsReady() => stage == growStages.Length - 1;
+    private void UpdateSprite()
+    {
+        if (sr != null && stage < cropStages.Count)
+        {
+            sr.sprite = cropStages[stage].sprite;
+        }
+    }
+
+    // Cây sẵn sàng khi ở giai đoạn cuối cùng của List
+    public bool IsReady() => stage == cropStages.Count - 1;
 
     public void RestoreState(int loadedStage, float loadedTimer)
     {
@@ -61,10 +87,23 @@ public class Crop : MonoBehaviour, IInteractable, ITargetableInfo
         this.timer = loadedTimer;
 
         if (sr == null) sr = GetComponent<SpriteRenderer>();
-        if (growStages != null && stage < growStages.Length)
+        UpdateSprite();
+    }
+
+    public void Regrow()
+    {
+        // Quay về giai đoạn regrowStage
+        if (regrowStage < 0 || regrowStage >= cropStages.Count - 1)
         {
-            sr.sprite = growStages[stage];
+            stage = 0;
         }
+        else
+        {
+            stage = regrowStage;
+        }
+
+        timer = 0f;
+        UpdateSprite();
     }
 
     // ============================

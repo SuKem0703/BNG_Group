@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using DG.Tweening;
 
 public class MenuController : MonoBehaviour
 {
@@ -11,14 +10,6 @@ public class MenuController : MonoBehaviour
     public GameObject menuCanvas;
     public CanvasGroup canvasGroup;
     public GameObject itemPopupContainer;
-
-    [Header("Animation")]
-    public float transitionDuration = 0.4f;
-    public Ease scaleEaseOpen = Ease.OutBack;
-    public Ease scaleEaseClose = Ease.InSine;
-    [SerializeField] private List<RectTransform> menuElements;
-    public float staggerDelay = 0.01f;
-    public float staggerElementDuration = 0.02f;
 
     [Header("References")]
     [SerializeField] private GameObject commonUI;
@@ -112,30 +103,13 @@ public class MenuController : MonoBehaviour
     {
         isTransitioning = true;
 
-        RectTransform menuRect = menuCanvas.GetComponent<RectTransform>();
-        if (menuRect == null || canvasGroup == null)
-        {
-            menuCanvas.SetActive(open);
-            isTransitioning = false;
-            yield break;
-        }
-
         if (open)
         {
             SoundEffectManager.PlayVoice(openMenuSound);
             MenuStateManager.Instance.OpenMenu(null, true);
-            menuCanvas.SetActive(true);
-            canvasGroup.alpha = 0f;
-            menuRect.localScale = Vector3.one * 0.85f;
 
-            foreach (var element in menuElements)
-            {
-                if (element != null)
-                {
-                    element.gameObject.SetActive(true);
-                    element.localScale = Vector3.zero;
-                }
-            }
+            menuCanvas.SetActive(true);
+            canvasGroup.alpha = 1f;
 
             equipmentScrollView?.ShowEquipmentItems();
         }
@@ -147,48 +121,15 @@ public class MenuController : MonoBehaviour
             EquipTooltip.Instance?.Hide();
             ConsumableTooltip.Instance?.Hide();
             NecklaceEquipTooltip.Instance?.Hide();
+
+            menuCanvas.SetActive(false);
         }
 
         PauseController.SetPause(open);
-
         CommonUIController.Instance?.SetUIVisible(!open);
-        if (commonUI != null) yield return StartCoroutine(SetCommonUIVisible(!open));
 
-        // DOTween Animation
-        Sequence seq = DOTween.Sequence();
-        if (open)
-        {
-            seq.Append(canvasGroup.DOFade(1, transitionDuration));
-            seq.Join(menuRect.DOScale(1, transitionDuration).SetEase(scaleEaseOpen));
-            seq.AppendInterval(0.1f);
-
-            for (int i = 0; i < menuElements.Count; i++)
-            {
-                if (menuElements[i] != null)
-                {
-                    seq.Append(menuElements[i].DOScale(1, staggerElementDuration)
-                        .SetEase(Ease.OutBack)
-                        .SetDelay(i * staggerDelay));
-                }
-            }
-        }
-        else
-        {
-            seq.Append(canvasGroup.DOFade(0, transitionDuration * 0.8f));
-            seq.Join(menuRect.DOScale(0.85f, transitionDuration * 0.8f).SetEase(scaleEaseClose));
-        }
-
-        yield return seq.WaitForCompletion(true);
-
-        if (!open)
-        {
-            menuCanvas.SetActive(false);
-        }
-        else
-        {
-            menuRect.localScale = Vector3.one;
-            canvasGroup.alpha = 1f;
-        }
+        if (commonUI != null)
+            yield return StartCoroutine(SetCommonUIVisible(!open));
 
         isTransitioning = false;
     }

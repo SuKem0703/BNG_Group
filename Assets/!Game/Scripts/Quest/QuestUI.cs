@@ -5,17 +5,30 @@ using UnityEngine;
 
 public class QuestUI : MonoBehaviour
 {
+    public static QuestUI Instance;
+
     public Transform questListContent;
     public GameObject questEntryPrefab;
     public GameObject objectTextPrefab;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         questListContent = GameObject.Find("GameUI/Menu/Pages/QuestPage/QuestScroll/Viewport/Content").transform;
     }
     void Start()
     {
         UpdateQuestUI();
+    }
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     public void UpdateQuestUI()

@@ -49,9 +49,10 @@ public class SaveController : MonoBehaviour
         Instance = this;
         IsDataLoaded = false;
 
-        GameObject uidObj = GameObject.Find("UIDText");
-        if (uidObj != null)
-            uidText = uidObj.GetComponent<TextMeshProUGUI>();
+        if (uidText == null)
+        {
+            uidText = GameObject.Find("UIDText")?.GetComponent<TextMeshProUGUI>();
+        }
     }
 
     // Hủy Singleton khi object bị hủy
@@ -509,24 +510,23 @@ public class SaveController : MonoBehaviour
 
             if (data != null && data.items != null)
             {
-                List<InventorySaveData> loadedItems = new List<InventorySaveData>();
+                List<StorageChestSaveData> loadedItems = new List<StorageChestSaveData>();
                 foreach (var itemData in data.items)
                 {
-                    loadedItems.Add(new InventorySaveData
+                    loadedItems.Add(new StorageChestSaveData
                     {
                         itemID = itemData.itemID,
                         slotIndex = itemData.slotIndex,
                         quantity = itemData.quantity,
                         rarity = itemData.rarity,
-                        qualityFactor = itemData.qualityFactor,
-                        isEquipped = false
+                        qualityFactor = itemData.qualityFactor
                     });
                 }
                 chest.chestData = loadedItems;
             }
             else
             {
-                chest.chestData = new List<InventorySaveData>();
+                chest.chestData = new List<StorageChestSaveData>();
             }
         }
     }

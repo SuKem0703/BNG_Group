@@ -8,6 +8,8 @@ using System.Collections;
 
 public class GameSettingController : MonoBehaviour
 {
+    public static GameSettingController Instance;
+
     [Header("Âm thanh")]
     public Slider sfxSlider;
     private float lastTestPlayTime = 0f;
@@ -38,12 +40,25 @@ public class GameSettingController : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         // Tìm SaveController
         saveController = FindFirstObjectByType<SaveController>();
 
         // Tìm cài đặt âm thanh
-        sfxSlider = GameObject.Find("SFXSlider")?.GetComponent<Slider>();
-        bgmSlider = GameObject.Find("BGMSlider")?.GetComponent<Slider>();
+        if (sfxSlider == null)
+        {
+            sfxSlider = GameObject.Find("SFXSlider")?.GetComponent<Slider>();
+        }
+        if (bgmSlider == null)
+        {
+            bgmSlider = GameObject.Find("BGMSlider")?.GetComponent<Slider>();
+        }
 
         // Cài đặt âm lượng SFX và BGM
         if (sfxSlider != null)
@@ -84,10 +99,9 @@ public class GameSettingController : MonoBehaviour
 
         // Tìm Light2D
         lightSlider = GameObject.Find("LightSlider")?.GetComponent<Slider>();
-        sunLight = GameObject.Find("Global Light 2D")?.GetComponent<Light2D>();
         if (sunLight == null)
         {
-            Debug.LogWarning("Không tìm thấy Light2D nào trong scene.");
+            sunLight = GameObject.Find("Global Light 2D")?.GetComponent<Light2D>();
         }
 
         // Cài đặt slider ánh sáng
@@ -158,6 +172,14 @@ public class GameSettingController : MonoBehaviour
             settingUI.SetActive(false);
             SoundEffectManager.PlayBGM("Lumina Castle", true);
         }
+    }
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+    public void SaveGame()
+    {
+        SaveController.Instance.SaveGame();
     }
     void UpdateLightIntensity(float value)
     {

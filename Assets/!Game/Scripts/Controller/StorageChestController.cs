@@ -112,7 +112,7 @@ public class StorageChestController : MonoBehaviour
             Instantiate(slotPrefab, chestPanel.transform);
     }
 
-    private void PopulateChest(List<InventorySaveData> savedData)
+    private void PopulateChest(List<StorageChestSaveData> savedData)
     {
         if (savedData == null || savedData.Count == 0) return;
 
@@ -131,7 +131,6 @@ public class StorageChestController : MonoBehaviour
 
             Item item = itemObj.GetComponent<Item>();
             item.quantity = data.quantity;
-            item.isEquipped = data.isEquipped;
             item.rarity = data.rarity;
             item.qualityFactor = data.qualityFactor;
 
@@ -146,7 +145,7 @@ public class StorageChestController : MonoBehaviour
     {
         if (currentActiveChest == null) return;
 
-        List<InventorySaveData> newData = new();
+        List<StorageChestSaveData> newData = new();
 
         for (int i = 0; i < chestPanel.transform.childCount; i++)
         {
@@ -156,13 +155,12 @@ public class StorageChestController : MonoBehaviour
             Item item = slot.currentItem.GetComponent<Item>();
             if (item == null) continue;
 
-            newData.Add(new InventorySaveData
+            newData.Add(new StorageChestSaveData
             {
                 itemID = item.ID,
                 slotIndex = i,
                 quantity = item.quantity,
                 rarity = item.rarity,
-                isEquipped = item.isEquipped,
                 qualityFactor = item.qualityFactor
             });
         }

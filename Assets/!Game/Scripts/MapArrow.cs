@@ -20,12 +20,12 @@ public class MapArrow : MonoBehaviour
             case ArrowDirection.Up:
                 sr.sprite = Resources.Load<Sprite>("ArrowUp"); // sprite mũi lên
                 sr.flipX = false;
-                sr.flipY = false;
+                sr.flipY = true;
                 break;
             case ArrowDirection.Down:
                 sr.sprite = Resources.Load<Sprite>("ArrowUp"); // dùng mũi lên, lật dọc
                 sr.flipX = false;
-                sr.flipY = true;
+                sr.flipY = false;
                 break;
             case ArrowDirection.Right:
                 sr.sprite = Resources.Load<Sprite>("ArrowRight"); // sprite mũi phải

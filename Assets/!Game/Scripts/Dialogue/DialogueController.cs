@@ -19,13 +19,13 @@ public class DialogueController : MonoBehaviour
     public GameObject choiceButtonPrefab;
     void Awake()
     {
-        dialoguePanel = GameObject.Find("DialoguePanel");
-        dialogueText = dialoguePanel.transform.Find("DialogueText").GetComponent<TMP_Text>();
-        nameText = dialoguePanel.transform.Find("NPCNameText").GetComponent<TMP_Text>();
-        portraitImage = dialoguePanel.transform.Find("DialoguePortrait").GetComponent<Image>();
-        choiceContainer = dialoguePanel.transform.Find("ChoiceContainer");
+        //dialoguePanel = GameObject.Find("DialoguePanel");
+        //dialogueText = dialoguePanel.transform.Find("DialogueText").GetComponent<TMP_Text>();
+        //nameText = dialoguePanel.transform.Find("NPCNameText").GetComponent<TMP_Text>();
+        //portraitImage = dialoguePanel.transform.Find("DialoguePortrait").GetComponent<Image>();
+        //choiceContainer = dialoguePanel.transform.Find("ChoiceContainer");
 
-        continueIndicator = dialoguePanel.transform.Find("ContinueIndicator").GetComponent<Image>();
+        //continueIndicator = dialoguePanel.transform.Find("ContinueIndicator").GetComponent<Image>();
         continueIndicator.gameObject.SetActive(false);
 
         if (instance == null) { instance = this; }

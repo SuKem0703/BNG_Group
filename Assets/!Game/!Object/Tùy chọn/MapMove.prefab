@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 1951193391199078760}
   - component: {fileID: 5713023467403699836}
   - component: {fileID: 6249294872216924146}
+  - component: {fileID: 7090246538924651208}
   m_Layer: 0
   m_Name: MapMove
   m_TagString: Untagged
@@ -81,7 +82,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.5, y: 0.5}
   m_EdgeRadius: 0
 --- !u!212 &2391615279701976562
 SpriteRenderer:
@@ -128,7 +129,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1926694469
-  m_SortingLayer: 7
+  m_SortingLayer: 8
   m_SortingOrder: 0
   m_Sprite: {fileID: 8835027894284467046, guid: 099db70aab8357d448156fd8c985725f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -210,3 +211,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapArrow
   arrowDirection: 3
+--- !u!114 &7090246538924651208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8815816917034871688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6b184dfb3398c145854234d271eb6b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnapToGrid
+  gridSize: 1

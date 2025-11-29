@@ -11,7 +11,7 @@ public class InventoryController : MonoBehaviour
     public GameObject inventoryPanel;
     public GameObject slotPrefab;
     public int slotCount;
-    public GameObject[] itemPrefabs;
+    //public GameObject[] itemPrefabs;
 
     public static InventoryController Instance { get; private set; }
     Dictionary<int, int> itemCountCache = new();
@@ -24,7 +24,10 @@ public class InventoryController : MonoBehaviour
             return;
         }
 
-        inventoryPanel = GameObject.Find("InventoryPage");
+        if (inventoryPanel == null)
+        {
+            inventoryPanel = GameObject.Find("InventoryPage");
+        }
 
         Instance = this;
     }
@@ -59,7 +62,7 @@ public class InventoryController : MonoBehaviour
             Instantiate(slotPrefab, inventoryPanel.transform);
         }
 
-        itemDictionary = FindFirstObjectByType<ItemDictionary>();
+        if (itemDictionary == null) itemDictionary = FindFirstObjectByType<ItemDictionary>();
         ReBuildItemCounts();
     }
     public void ReBuildItemCounts()

@@ -57,7 +57,7 @@ public class EquipTooltip : MonoBehaviour
     {
         if (!gameObject.activeSelf) return;
 
-        RectTransform canvasRect = gameObject.transform.root.GetComponent<Canvas>().GetComponent<RectTransform>();
+        RectTransform canvasRect = GetComponentInParent<Canvas>().GetComponent<RectTransform>();
         RectTransform tooltipRect = gameObject.GetComponent<RectTransform>();
 
         // Pivot: góc dưới phải trùng chuột

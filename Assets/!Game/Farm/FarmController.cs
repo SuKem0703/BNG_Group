@@ -50,39 +50,62 @@ public class FarmController : MonoBehaviour
         if (!plot.currentCrop.IsReady()) return;
 
         Crop crop = plot.currentCrop;
-
         GameObject itemPrefab = crop.harvestItemPrefab;
 
         if (itemPrefab == null)
         {
             Debug.LogError($"Crop {crop.name} bị thiếu harvestItemPrefab!");
+            return;
         }
-        else
+
+        bool isFull = false;
+        int collectedCount = 0;
+
+        for (int i = 0; i < crop.harvestAmount; i++)
         {
-            for (int i = 0; i < crop.harvestAmount; i++)
+            bool added = InventoryController.Instance.AddItem(itemPrefab);
+
+            if (added)
             {
-                bool added = InventoryController.Instance.AddItem(itemPrefab);
+                collectedCount++;
 
-                if (added)
+                Vector3 randomOffset = new Vector3(Random.Range(-0.2f, 0.2f), Random.Range(0f, 0.3f), 0);
+                GameObject tempObj = Instantiate(itemPrefab, plot.transform.position + randomOffset, Quaternion.identity);
+                if (tempObj.TryGetComponent(out Item item))
                 {
-                    Vector3 randomOffset = new Vector3(Random.Range(-0.2f, 0.2f), Random.Range(0f, 0.3f), 0);
-                    GameObject tempObj = Instantiate(itemPrefab, plot.transform.position + randomOffset, Quaternion.identity);
-
-                    if (tempObj.TryGetComponent(out Item item))
-                    {
-                        item.ShowPopUp();
-                    }
-                    Destroy(tempObj);
+                    item.ShowPopUp();
                 }
+                Destroy(tempObj);
             }
+            else
+            {
+                isFull = true;
+                break;
+            }
+        }
+
+        if (collectedCount == 0)
+        {
+            Debug.Log("Túi đồ đã đầy! Không thể thu hoạch.");
+            return;
+        }
+        else if (isFull && collectedCount < crop.harvestAmount)
+        {
+            Debug.Log($"Túi đầy! Chỉ thu hoạch được {collectedCount}/{crop.harvestAmount} món.");
         }
 
         SoundEffectManager.Play("Harvesting", true);
 
-        // DỌN DẸP CROP
-        Destroy(crop.gameObject);
-        plot.currentCrop = null;
-        plot.isPlanted = false;
+        if (crop.isRegrowable)
+        {
+            crop.Regrow();
+        }
+        else
+        {
+            Destroy(crop.gameObject);
+            plot.currentCrop = null;
+            plot.isPlanted = false;
+        }
 
         SaveController.Instance.TriggerAutoSave();
     }

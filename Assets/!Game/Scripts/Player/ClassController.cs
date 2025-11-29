@@ -5,6 +5,8 @@ using UnityEngine.InputSystem;
 
 public class ClassController : MonoBehaviour
 {
+    public static ClassController Instance { get; private set; }
+
     [Header("Knight")]
     public GameObject knightObject;
     public GameObject knightHealthBar;
@@ -29,15 +31,38 @@ public class ClassController : MonoBehaviour
     [SerializeField] private Animator mageAnimator;
     private void Awake()
     {
-        if (knightObject == null)
-            knightObject = transform.FindDeepChild("Knight").gameObject;
-        knightHealthBar = GameObject.Find("GameUI/CommonUI/StatusUI/KnightHealthBarFill");
-        knightHealthText = GameObject.Find("GameUI/CommonUI/StatusUI/KnightHealthText");
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
 
+        if (knightObject == null) 
+        {
+            knightObject = transform.FindDeepChild("Knight").gameObject;
+        }
+        if (knightHealthBar == null)
+        {
+            knightHealthBar = GameObject.Find("GameUI/CommonUI/StatusUI/KnightHealthBarFill");
+        }
+        if (knightHealthText == null)
+        {
+            knightHealthText = GameObject.Find("GameUI/CommonUI/StatusUI/KnightHealthText");
+        }
         if (mageObject == null)
+        {
             mageObject = transform.FindDeepChild("Mage").gameObject;
-        mageHealthBar = GameObject.Find("GameUI/CommonUI/StatusUI/MageHealthBarFill");
-        mageHealthText = GameObject.Find("GameUI/CommonUI/StatusUI/MageHealthText");
+        }
+
+        if (mageHealthBar != null)
+        {
+            mageHealthBar = GameObject.Find("GameUI/CommonUI/StatusUI/MageHealthBarFill");
+        }
+        if (mageHealthText != null)
+        {
+            mageHealthText = GameObject.Find("GameUI/CommonUI/StatusUI/MageHealthText");
+        }
 
         if (knightObject != null)
             knightAnimator = knightObject.GetComponentInChildren<Animator>(true);
@@ -65,6 +90,12 @@ public class ClassController : MonoBehaviour
             mageHealthBar.SetActive(false);
             mageHealthText.SetActive(false);
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+
     }
     private void OnEnable()
     {
