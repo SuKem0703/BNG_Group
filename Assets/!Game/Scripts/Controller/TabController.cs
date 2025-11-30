@@ -6,6 +6,8 @@ using UnityEngine.UI;
 
 public class TabController : MonoBehaviour
 {
+    public static TabController Instance;
+
     public Image[] tabImages;
     public GameObject[] pages;
 
@@ -17,39 +19,30 @@ public class TabController : MonoBehaviour
     [Header("Âm thanh")]
     [SerializeField] private AudioClip tabClickSoundClip;
 
-    //void Awake()
-    //{
-    //    SaveController.OnDataLoaded += HandleDataLoaded;
-    //}
-    //void OnDestroy()
-    //{
-    //    SaveController.OnDataLoaded -= HandleDataLoaded;
-    //}
-    //void OnEnable()
-    //{
-    //    if (SaveController.IsDataLoaded)
-    //    {
-    //        // Delay one frame so other components can finish their Start/OnEnable
-    //        StartCoroutine(DelayedInit());
-    //    }
-    //}
+    private int currentTabIndex = 0;
 
-    //private IEnumerator DelayedInit()
-    //{
-    //    yield return null;
-    //    UpdateTabVisibility();
-    //    ActivateTab(0);
-    //}
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
 
-    //private void HandleDataLoaded()
-    //{
-    //    if (gameObject.activeInHierarchy)
-    //        StartCoroutine(DelayedInit());
-    //}
-
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
     private void OnEnable()
     {
         SaveController.OnDataLoaded += HandleDataLoaded;
+
+        if (SaveController.IsDataLoaded)
+        {
+            HandleDataLoaded();
+        }
     }
 
     private void OnDisable()
@@ -60,7 +53,7 @@ public class TabController : MonoBehaviour
     private void HandleDataLoaded()
     {
         UpdateTabVisibility();
-        ActivateTab(0);
+        ActivateTab(currentTabIndex);
     }
 
     private void UpdateTabVisibility()
@@ -95,8 +88,8 @@ public class TabController : MonoBehaviour
     {
         if (tabImages == null || tabImages.Length == 0 || pages == null || pages.Length == 0) return;
 
-        // Find a valid tab to activate: prefer requested if visible, otherwise first visible one
         int validTab = -1;
+
         if (tabNo >= 0 && tabNo < tabImages.Length && tabImages[tabNo] != null && tabImages[tabNo].gameObject.activeSelf)
         {
             validTab = tabNo;
@@ -113,7 +106,9 @@ public class TabController : MonoBehaviour
             }
         }
 
-        if (validTab == -1) return; // no visible tab
+        if (validTab == -1) return;
+
+        currentTabIndex = validTab;
 
         int pageCount = pages.Length;
         int tabCount = tabImages.Length;
@@ -122,15 +117,18 @@ public class TabController : MonoBehaviour
         {
             if (pages[i] != null)
                 pages[i].SetActive(false);
+
             if (i < tabCount && tabImages[i] != null)
                 tabImages[i].color = Color.grey;
         }
 
         if (validTab < pageCount && pages[validTab] != null)
             pages[validTab].SetActive(true);
+
         if (validTab < tabCount && tabImages[validTab] != null)
             tabImages[validTab].color = Color.white;
     }
+
     public void PointerDown()
     {
         if (tabClickSoundClip != null)

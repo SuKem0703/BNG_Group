@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class MenuController : MonoBehaviour
@@ -12,14 +10,11 @@ public class MenuController : MonoBehaviour
     public GameObject itemPopupContainer;
 
     [Header("References")]
-    [SerializeField] private GameObject commonUI;
     private EquipmentScrollViewController equipmentScrollView;
 
     [Header("Audio")]
     [SerializeField] private AudioClip openMenuSound;
     [SerializeField] private AudioClip closeMenuSound;
-
-    private bool isTransitioning = false;
 
     private void Awake()
     {
@@ -32,7 +27,6 @@ public class MenuController : MonoBehaviour
 
         if (menuCanvas == null) menuCanvas = GameObject.Find("Menu");
         if (itemPopupContainer == null) itemPopupContainer = GameObject.Find("ItemPopupContainer");
-        if (commonUI == null) commonUI = GameObject.Find("CommonUI");
 
         if (menuCanvas != null)
         {
@@ -74,81 +68,60 @@ public class MenuController : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E) && !isTransitioning)
+        if (Input.GetKeyDown(KeyCode.E))
         {
             if (!menuCanvas.activeSelf)
             {
                 if (GameStateManager.CanProcessInput() && GameStateManager.CanOpenMenu)
                 {
-                    ToggleMenuWithState(true);
+                    ToggleMenu(true);
                 }
             }
             else
             {
                 if (!GameStateManager.IsLoading)
                 {
-                    ToggleMenuWithState(false);
+                    ToggleMenu(false);
                 }
             }
         }
     }
 
-    private void ToggleMenuWithState(bool open)
+    private void ToggleMenu(bool open)
     {
-        GameStateManager.IsMenuOpen = open;
-        StartCoroutine(ToggleMenu(open));
-    }
-
-    private IEnumerator ToggleMenu(bool open)
-    {
-        isTransitioning = true;
+        if (menuCanvas == null) return;
 
         if (open)
         {
             SoundEffectManager.PlayVoice(openMenuSound);
+
+            // Gọi Manager để quản lý trạng thái chung
             MenuStateManager.Instance.OpenMenu(null, true);
 
+            // Bật UI riêng của Menu
             menuCanvas.SetActive(true);
-            canvasGroup.alpha = 1f;
+            if (canvasGroup != null) canvasGroup.alpha = 1f;
 
             equipmentScrollView?.ShowEquipmentItems();
+
+            if (CommonUIController.Instance != null)
+            {
+                CommonUIController.Instance.SetUIVisible(false, CommonUIController.Instance.hotBar);
+            }
         }
         else
         {
             SoundEffectManager.PlayVoice(closeMenuSound);
+
+            // Tắt UI
+            menuCanvas.SetActive(false);
+            if (canvasGroup != null) canvasGroup.alpha = 0f;
+
             MenuStateManager.Instance.CloseCurrentMenu();
 
             EquipTooltip.Instance?.Hide();
             ConsumableTooltip.Instance?.Hide();
             NecklaceEquipTooltip.Instance?.Hide();
-
-            menuCanvas.SetActive(false);
-        }
-
-        PauseController.SetPause(open);
-        CommonUIController.Instance?.SetUIVisible(!open);
-
-        if (commonUI != null)
-            yield return StartCoroutine(SetCommonUIVisible(!open));
-
-        isTransitioning = false;
-    }
-
-    private IEnumerator SetCommonUIVisible(bool visible)
-    {
-        if (commonUI == null) yield break;
-
-        foreach (Transform child in commonUI.transform)
-        {
-            if (child.name.Equals("Hotbar", System.StringComparison.OrdinalIgnoreCase))
-            {
-                child.gameObject.SetActive(true);
-            }
-            else
-            {
-                child.gameObject.SetActive(visible);
-            }
-            yield return null;
         }
     }
 }

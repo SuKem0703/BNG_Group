@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 using static Unity.Cinemachine.Samples.PlatformerCamera2D;
 using UnityEngine.UI;
 
-public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler//, IPointerClickHandler
+public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
     Transform originalParent;
     CanvasGroup canvasGroup;
@@ -60,7 +60,22 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
 
         originalParent = transform.parent; // Save OG parent
-        transform.SetParent(transform.root); // Above other canvas'
+        //transform.SetParent(transform.root); // Above other canvas'
+
+        Canvas mainCanvas = GetComponentInParent<Canvas>();
+        if (mainCanvas != null)
+        {
+            // Nếu Canvas có rootCanvas (Canvas lồng nhau), ta lấy cái to nhất
+            if (mainCanvas.rootCanvas != null)
+            {
+                transform.SetParent(mainCanvas.rootCanvas.transform, true);
+            }
+            else
+            {
+                transform.SetParent(mainCanvas.transform, true);
+            }
+        }
+
         canvasGroup.blocksRaycasts = false;
         canvasGroup.alpha = 0.6f; // semi-transparent during drag
 
@@ -602,6 +617,30 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         InventoryController.Instance.ReBuildItemCounts();
     }
+
+    float lastClickTime = 0f;
+    float doubleClickThreshold = 0.3f; // Thời gian tối đa giữa 2 lần click
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        // Kiểm tra Double Click
+        if (Time.time - lastClickTime < doubleClickThreshold)
+        {
+            // Kiểm tra xem có đang mở Rương không
+            if (StorageChestController.Instance != null && GameStateManager.IsMenuOpen)
+            {
+                Item thisItem = GetComponent<Item>();
+                StorageChestController.Instance.OnItemDoubleClicked(thisItem);
+
+                // Reset click time để tránh triple click gây lỗi
+                lastClickTime = 0;
+                return;
+            }
+        }
+
+        lastClickTime = Time.time;
+    }
+
     //public void OnPointerClick(PointerEventData eventData)
     //{
     //    if (eventData.button == PointerEventData.InputButton.Right)
