@@ -79,6 +79,20 @@ public class StorageChestController : MonoBehaviour
     {
         if (Instance == this) Instance = null;
     }
+    void Update()
+    {
+        if (chestPanel != null && chestPanel.activeSelf)
+        {
+            if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape))
+            {
+                CloseChest();
+            }
+            else if (Input.GetKeyDown(KeyCode.Tab))
+            {
+                ToggleView();
+            }
+        }
+    }
 
     // ============================
     // MỞ / ĐÓNG HỆ THỐNG
@@ -146,24 +160,44 @@ public class StorageChestController : MonoBehaviour
     }
 
     // ============================
-    // CHUYỂN ĐỔI VIEW (TAB)
+    // VIEW SWITCHING (TAB LOGIC) - CẬP NHẬT
     // ============================
 
-    // Hàm gọi từ nút UI để chuyển chế độ xem
-    public void SetViewMode(bool viewChest)
+    // Gắn hàm này vào sự kiện OnClick của nút "Tab Rương"
+    public void SwitchToChestView()
     {
-        IsViewingChest = viewChest;
-        UpdateViewMode();
+        // Chỉ chuyển nếu đang không ở chế độ xem Rương
+        if (!IsViewingChest)
+        {
+            IsViewingChest = true;
+            UpdateViewMode();
+
+            // Play âm thanh chuyển tab nếu cần
+            // SoundEffectManager.PlayVoice(openMenuSound); 
+        }
     }
 
-    // Hàm Toggle chế độ xem
+    // Gắn hàm này vào sự kiện OnClick của nút "Tab Túi"
+    public void SwitchToInventoryView()
+    {
+        // Chỉ chuyển nếu đang ở chế độ xem Rương (tức là đang không xem Túi)
+        if (IsViewingChest)
+        {
+            IsViewingChest = false;
+            UpdateViewMode();
+
+            // Play âm thanh chuyển tab nếu cần
+            // SoundEffectManager.PlayVoice(openMenuSound);
+        }
+    }
+
+    // Hàm Toggle cũ (giữ lại nếu muốn dùng phím tắt)
     public void ToggleView()
     {
         IsViewingChest = !IsViewingChest;
         UpdateViewMode();
     }
 
-    // Cập nhật hiển thị UI dựa trên chế độ xem hiện tại
     private void UpdateViewMode()
     {
         if (IsViewingChest)

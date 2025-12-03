@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class MenuStateManager : MonoBehaviour
 {
@@ -12,11 +13,12 @@ public class MenuStateManager : MonoBehaviour
         else Instance = this;
     }
 
+    // Open a specified menu panel
     public void OpenMenu(GameObject menuPanel, bool shouldPause = true)
     {
         if (currentActiveMenu != null && currentActiveMenu != menuPanel)
         {
-            CloseCurrentMenu();
+            currentActiveMenu.SetActive(false);
         }
 
         currentActiveMenu = menuPanel;
@@ -32,6 +34,8 @@ public class MenuStateManager : MonoBehaviour
 
         CommonUIController.Instance?.SetUIVisible(false);
     }
+
+    // Close the currently active menu
     public void CloseCurrentMenu()
     {
         if (currentActiveMenu != null)
@@ -41,11 +45,18 @@ public class MenuStateManager : MonoBehaviour
         }
 
         GameStateManager.IsMenuOpen = false;
-        GameStateManager.CanOpenMenu = true;
+
+        StartCoroutine(EnableMenuAccessRoutine());
 
         PauseController.SetPause(false);
 
         CommonUIController.Instance?.SetUIVisible(true);
+    }
+    IEnumerator EnableMenuAccessRoutine()
+    {
+        yield return null;
+
+        GameStateManager.CanOpenMenu = true;
     }
 
     public bool IsAnyMenuOpen() => currentActiveMenu != null;

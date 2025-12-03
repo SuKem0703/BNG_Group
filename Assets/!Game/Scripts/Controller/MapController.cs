@@ -14,6 +14,7 @@ public class MapController : MonoBehaviour
     [Header("Cấu hình Map")]
     [SerializeField] private string mapName = "Tên Bản Đồ";
     [SerializeField] private MapType mapType = MapType.CombatZone;
+    [SerializeField] private ItemRarity mapRarity = ItemRarity.Common;
     public AudioClip bgmClip;
     public bool IsCutsceneMode = false;
 
@@ -34,7 +35,30 @@ public class MapController : MonoBehaviour
         if (SaveController.IsDataLoaded) PlayMapBGM();
         else SaveController.OnDataLoaded += PlayMapBGM;
 
+        // Gọi hàm hiển thị UI
+        ShowMapNameUI();
+
         Debug.Log($"Đã tải Map: {mapName} | Loại: {mapType}");
+    }
+
+    public void ShowMapNameUI()
+    {
+        if (IsCutsceneMode) return;
+
+        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.MapInfoUIPrefab != null)
+        {
+            GameObject uiObj = Instantiate(LoadResourceManager.Instance.MapInfoUIPrefab);
+
+            MapInfoUIController controller = uiObj.GetComponent<MapInfoUIController>();
+            if (controller != null)
+            {
+                controller.ShowMapName(mapName, mapRarity);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Không tìm thấy LoadResourceManager hoặc MapInfoUIPrefab!");
+        }
     }
 
     public void PlayMapBGM()

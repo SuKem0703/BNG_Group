@@ -2451,6 +2451,30 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2675488557838621955, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2675488557838621955, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2675488557838621955, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2675488557838621955, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2675488557838621955, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2675488557838621955, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2708675862400144462, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -2572,6 +2596,30 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3126332662912854693, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301212649943468290, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301212649943468290, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301212649943468290, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301212649943468290, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301212649943468290, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301212649943468290, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
@@ -2994,6 +3042,10 @@ PrefabInstance:
     - target: {fileID: 4311456711263173234, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4533794114815784058, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: mapName
+      value: Outdoor
       objectReference: {fileID: 0}
     - target: {fileID: 4628291293712470032, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4082,6 +4134,10 @@ PrefabInstance:
     - target: {fileID: 8846601523021091095, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8883875592996786877, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -12.8878145
       objectReference: {fileID: 0}
     - target: {fileID: 8992818244039066185, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchorMax.y
@@ -37079,7 +37135,7 @@ Tilemap:
       - {fileID: 1895278393, guid: 223f222ad41b6fc4c8d286c6f4267f39, type: 3}
       - {fileID: 1943840508, guid: 223f222ad41b6fc4c8d286c6f4267f39, type: 3}
       - {fileID: 573578535, guid: 223f222ad41b6fc4c8d286c6f4267f39, type: 3}
-      m_AnimationSpeed: 10.000001
+      m_AnimationSpeed: 10
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -7, y: 28, z: 0}

@@ -2059,8 +2059,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b63d4141b989ff74296421b647cb8984, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  mapName: "T\xEAn B\u1EA3n \u0110\u1ED3"
+  mapName: Indoor
   mapType: 0
+  mapRarity: 6
   bgmClip: {fileID: 8300000, guid: b8295a7d858bebb478e2d5fb11d6745d, type: 3}
   IsCutsceneMode: 0
 --- !u!1 &545891421337189640
@@ -9179,7 +9180,7 @@ Transform:
   m_GameObject: {fileID: 2524661319489946267}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.8976853, y: 0, z: -10}
+  m_LocalPosition: {x: -3.8878233, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12027,7 +12028,7 @@ MonoBehaviour:
         m_Calls:
         - m_Target: {fileID: 542164347076241702}
           m_TargetAssemblyTypeName: StorageChestController, Assembly-CSharp
-          m_MethodName: ToggleView
+          m_MethodName: SwitchToChestView
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
@@ -15119,7 +15120,7 @@ MonoBehaviour:
         m_Calls:
         - m_Target: {fileID: 542164347076241702}
           m_TargetAssemblyTypeName: StorageChestController, Assembly-CSharp
-          m_MethodName: ToggleView
+          m_MethodName: SwitchToInventoryView
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
@@ -15737,7 +15738,6 @@ MonoBehaviour:
   menuCanvas: {fileID: 964475945296180889}
   canvasGroup: {fileID: 5102493386625563901}
   itemPopupContainer: {fileID: 8886377969739095452}
-  commonUI: {fileID: 6420577923380310753}
   openMenuSound: {fileID: 8300000, guid: 17f794f1c6b21b44fbef49071d220ef5, type: 3}
   closeMenuSound: {fileID: 8300000, guid: 738c875e7c0310e49b81eef5d1914ffa, type: 3}
 --- !u!222 &3814854460679455259
@@ -26978,7 +26978,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -25, y: -25}
+  m_AnchoredPosition: {x: -10, y: -10}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1777373419012572104

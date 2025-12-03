@@ -174,6 +174,7 @@ public class ChapterIntroSequence : MonoBehaviour
         {
             MapController.Instance.IsCutsceneMode = false;
             MapController.Instance.PlayMapBGM();
+            MapController.Instance.ShowMapNameUI();
         }
     }
 
