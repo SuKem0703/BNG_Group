@@ -7,34 +7,56 @@ public class Monologue : MonoBehaviour, IInteractable
 {
     public event System.Action OnDialogueEndEvent;
 
+    [Header("Data")]
     public MonologueData monologueData;
+
+    [Header("Settings")]
+    public bool triggerOnEnter = false;
+
+    [SerializeField] private string characterName = "Elric";
+
     private DialogueController dialogueUI;
     private SaveController saveController;
 
     private int dialogueIndex;
     private bool isTyping;
-    
-    private Sprite elricPortrait;
 
-    public bool triggerOnEnter = false;
-
+    private Sprite characterPortrait;
     private bool maintainPauseAfterDialogue = false;
+
     private void Start()
     {
         dialogueUI = DialogueController.instance;
-        
-        elricPortrait = Resources.Load<Sprite>("Elric_Portrait");
-        if (elricPortrait == null)
+
+        characterPortrait = Resources.Load<Sprite>("Elric_Portrait");
+        if (characterPortrait == null)
         {
-            Debug.LogError("Không tìm thấy 'Elric_Portrait' trong thư mục Resources!");
+            Debug.LogWarning($"Monologue: Không tìm thấy 'Elric_Portrait' trong Resources.");
+        }
+
+        if (!SaveController.IsDataLoaded)
+        {
+            SaveController.OnDataLoaded += HandleDataLoaded;
         }
     }
+
+    private void OnDestroy()
+    {
+        SaveController.OnDataLoaded -= HandleDataLoaded;
+    }
+
+    private void HandleDataLoaded()
+    {
+        SaveController.OnDataLoaded -= HandleDataLoaded;
+    }
+
     private void Update()
     {
         if (!GameStateManager.IsDialogueActive)
         {
             return;
         }
+        if (GameStateManager.IsMenuOpen) return;
 
         if (Input.GetMouseButtonDown(0))
         {
@@ -43,9 +65,10 @@ public class Monologue : MonoBehaviour, IInteractable
                 return;
             }
 
-            NextLine();
+            Interact();
         }
     }
+
     public bool CanInteract()
     {
         return !GameStateManager.IsDialogueActive;
@@ -62,23 +85,28 @@ public class Monologue : MonoBehaviour, IInteractable
         }
         else
         {
-            if (triggerOnEnter == true && GameStateManager.IsDialogueActive == false) return;
+            if (triggerOnEnter == true && GameStateManager.IsDialogueActive == false)
+            {
+                // Có thể return nếu muốn bắt buộc phải đi vào vùng mới kích hoạt
+                // return; 
+            }
 
             Debug.Log("Độc thoại bắt đầu khi tương tác.");
             StartDialogue();
         }
     }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (!triggerOnEnter || !collision.CompareTag("Player"))
             return;
 
-        // If the player has a pickup handler, let that side handle interaction to avoid double-calls
         if (collision.GetComponent<PlayerItemCollector>() != null)
             return;
 
         OpenDialogOnTrigger();
     }
+
     public void OpenDialogOnTrigger()
     {
         if (monologueData == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive))
@@ -99,23 +127,23 @@ public class Monologue : MonoBehaviour, IInteractable
             StartDialogue();
             Debug.Log("Độc thoại bắt đầu khi vào vùng kích hoạt.");
         }
-
     }
     void StartDialogue()
     {
         dialogueIndex = 0;
+
         GameStateManager.IsDialogueActive = true;
+        GameStateManager.CanOpenMenu = false; // Khóa menu
 
-        GameStateManager.CanOpenMenu = false;
-
-        // Ẩn toàn bộ UI chung
+        // Ẩn UI Gameplay
         CommonUIController.Instance?.SetUIVisible(false);
+
         dialogueUI.ClearChoices();
-        
-        // Luôn set thông tin là "Elric" cho độc thoại
-        dialogueUI.SetNPCInfo("Elric", elricPortrait); 
-        
+        // Set thông tin người nói (Mặc định là nhân vật chính tự nghĩ)
+        dialogueUI.SetNPCInfo(characterName, characterPortrait);
         dialogueUI.ShowDialogueUI(true);
+
+        // Pause game logic
         PauseController.SetPause(true);
 
         DisplayCurrentLine();
@@ -123,29 +151,37 @@ public class Monologue : MonoBehaviour, IInteractable
 
     void NextLine()
     {
+        // Logic skip typing (giống NPC.cs)
         if (isTyping)
         {
-            // Nếu đang gõ chữ, bỏ qua và hiển thị đầy đủ
             StopAllCoroutines();
-            dialogueUI.SetDialogueText(monologueData.dialogueLines[dialogueIndex]);
+            if (monologueData.dialogueLines.Length > dialogueIndex)
+            {
+                dialogueUI.SetDialogueText(monologueData.dialogueLines[dialogueIndex]);
+            }
             isTyping = false;
             dialogueUI.continueIndicator.gameObject.SetActive(true);
             return;
         }
 
         dialogueUI.continueIndicator.gameObject.SetActive(false);
-        dialogueUI.ClearChoices(); // Đảm bảo không có lựa chọn nào
+        dialogueUI.ClearChoices();
 
-        // Chuyển sang dòng tiếp theo
+        // Tăng index
         if (++dialogueIndex < monologueData.dialogueLines.Length)
         {
             DisplayCurrentLine();
         }
         else
         {
-            // Hết dòng -> Kết thúc
             EndDialogue();
         }
+    }
+
+    void DisplayCurrentLine()
+    {
+        StopAllCoroutines();
+        StartCoroutine(TypeLine());
     }
 
     IEnumerator TypeLine()
@@ -154,8 +190,9 @@ public class Monologue : MonoBehaviour, IInteractable
         dialogueUI.SetDialogueText("");
         dialogueUI.continueIndicator.gameObject.SetActive(false);
 
-        // Dòng thoại hiện ra từng ký tự
-        foreach (char letter in monologueData.dialogueLines[dialogueIndex])
+        string currentLine = monologueData.dialogueLines[dialogueIndex];
+
+        foreach (char letter in currentLine)
         {
             dialogueUI.SetDialogueText(dialogueUI.dialogueText.text + letter);
             yield return new WaitForSeconds(monologueData.typingSpeed);
@@ -164,7 +201,7 @@ public class Monologue : MonoBehaviour, IInteractable
         isTyping = false;
         dialogueUI.continueIndicator.gameObject.SetActive(true);
 
-        // Auto progress nếu có thiết lập
+        // Logic Auto Progress từ data cũ
         if (monologueData.autoProgressLines.Length > dialogueIndex &&
             monologueData.autoProgressLines[dialogueIndex])
         {
@@ -174,30 +211,30 @@ public class Monologue : MonoBehaviour, IInteractable
         }
     }
 
-
-    void DisplayCurrentLine()
-    {
-        StopAllCoroutines();
-        StartCoroutine(TypeLine());
-    }
-
     public void EndDialogue()
     {
+        // Xử lý nhiệm vụ từ MonologueData (Logic cũ)
         if (monologueData.triggerQuestAtEnd && monologueData.questToGive != null)
         {
-            QuestController.Instance.AcceptQuest(monologueData.questToGive);
-            Debug.Log($"Độc thoại đã kích hoạt nhiệm vụ: {monologueData.questToGive.name}");
+            // Kiểm tra null instance cho an toàn
+            if (QuestController.Instance != null)
+            {
+                QuestController.Instance.AcceptQuest(monologueData.questToGive);
+                Debug.Log($"Độc thoại đã kích hoạt nhiệm vụ: {monologueData.questToGive.questName}");
+            }
         }
 
+        // Dọn dẹp Coroutine & State
         StopAllCoroutines();
         GameStateManager.IsDialogueActive = false;
         GameStateManager.CanOpenMenu = true;
-        dialogueUI.continueIndicator.gameObject.SetActive(false);
 
+        dialogueUI.continueIndicator.gameObject.SetActive(false);
         dialogueUI.SetDialogueText("");
         dialogueUI.ShowDialogueUI(false);
         dialogueUI.ClearChoices();
 
+        // Khôi phục trạng thái Game
         if (!maintainPauseAfterDialogue)
         {
             CommonUIController.Instance?.SetUIVisible(true);
@@ -206,9 +243,14 @@ public class Monologue : MonoBehaviour, IInteractable
 
         maintainPauseAfterDialogue = false;
 
+        // Gọi Event kết thúc
         OnDialogueEndEvent?.Invoke();
 
-        saveController = FindFirstObjectByType<SaveController>();
-        saveController.SaveGame();
+        // Save Game (Giống NPC.cs)
+        saveController = Object.FindFirstObjectByType<SaveController>();
+        if (saveController != null)
+        {
+            saveController.SaveGame();
+        }
     }
 }

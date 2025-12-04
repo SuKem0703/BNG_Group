@@ -155,6 +155,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         {
             return;
         }
+        if (GameStateManager.IsMenuOpen) return;
 
         if (Input.GetMouseButtonDown(0))
         {
@@ -163,13 +164,13 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
                 return;
             }
 
-            NextLine();
+            Interact();
         }
     }
 
     public bool CanInteract()
     {
-        return !GameStateManager.IsDialogueActive;
+        return GameStateManager.CanProcessInput();
     }
 
 
