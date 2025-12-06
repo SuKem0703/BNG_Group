@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 3051677935332708012}
   - component: {fileID: 1477254997245988297}
   - component: {fileID: 5773387763495680172}
+  - component: {fileID: 1554956197311286333}
   m_Layer: 6
   m_Name: Slime
   m_TagString: Enemy
@@ -83,7 +84,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1710315361
-  m_SortingLayer: 5
+  m_SortingLayer: 6
   m_SortingOrder: 0
   m_Sprite: {fileID: -7294240746080377788, guid: d0eaefc0f9134c44fb5c3f95a3678793, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -131,7 +132,7 @@ CapsuleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: -0.15}
-  m_Size: {x: 0.5, y: 0.5}
+  m_Size: {x: 1, y: 1}
   m_Direction: 1
 --- !u!50 &6069447324859087565
 Rigidbody2D:
@@ -179,7 +180,7 @@ MonoBehaviour:
   currentHealth: 0
   chaseSpeed: 3
   detectionRadius: 5
-  attackRange: 1
+  attackRange: 1.25
   attackDelay: 1.5
   hurtDuration: 1
 --- !u!95 &3051677935332708012
@@ -229,3 +230,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   offset: 0
+--- !u!114 &1554956197311286333
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3107261148613328395}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6b184dfb3398c145854234d271eb6b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnapToGrid
+  gridSize: 1

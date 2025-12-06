@@ -65,6 +65,7 @@ public class QuestController : MonoBehaviour
 
     public bool IsQuestActive(string questID) => activeQuests.Exists(q => q.quest.questID == questID);
 
+    // Với quest thu thập, kiểm tra số lượng mục trong kho
     public void CheckInventoryForQuest()
     {
         if (InventoryController.Instance == null) return;
@@ -111,6 +112,81 @@ public class QuestController : MonoBehaviour
         }
         questUI.UpdateQuestUI();
     }
+
+    // Đánh dấu vị trí đã đến cho các quest liên quan
+    public void MarkLocationReached(string locationID)
+    {
+        bool anyQuestUpdated = false;
+
+        foreach (QuestProgress quest in activeQuests)
+        {
+            bool questProgressChanged = false;
+
+            foreach (QuestObject questObject in quest.questObjects)
+            {
+                if (questObject.objectType == ObjectType.ReachLocation &&
+                    questObject.objectID == locationID)
+                {
+                    if (questObject.currentAmount < questObject.requiredAmount)
+                    {
+                        questObject.currentAmount = questObject.requiredAmount;
+                        questProgressChanged = true;
+
+                        Debug.Log($"Location Reached: {questObject.objectTitle}");
+                    }
+                }
+            }
+
+            if (questProgressChanged)
+            {
+                OnQuestStatusUpdated?.Invoke(quest.QuestID);
+                anyQuestUpdated = true;
+            }
+        }
+
+        if (anyQuestUpdated)
+        {
+            questUI.UpdateQuestUI();
+        }
+    }
+
+    // Đánh dấu gieo hạt cho các quest liên quan
+    public void MarkCropPlanted(int seedItemID)
+    {
+        bool anyQuestUpdated = false;
+
+        foreach (QuestProgress quest in activeQuests)
+        {
+            bool questProgressChanged = false;
+
+            foreach (QuestObject questObject in quest.questObjects)
+            {
+                if (questObject.objectType == ObjectType.PlantSeed)
+                {
+                    if (questObject.objectID == seedItemID.ToString())
+                    {
+                        if (questObject.currentAmount < questObject.requiredAmount)
+                        {
+                            questObject.currentAmount++;
+                            questProgressChanged = true;
+                        }
+                    }
+                }
+            }
+
+            if (questProgressChanged)
+            {
+                OnQuestStatusUpdated?.Invoke(quest.QuestID);
+                anyQuestUpdated = true;
+            }
+        }
+
+        if (anyQuestUpdated)
+        {
+            questUI.UpdateQuestUI();
+        }
+    }
+
     public bool IsQuestCompleted(string questID)
     {
         QuestProgress quest = activeQuests.Find(q => q.QuestID == questID);

@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonologueData
   typingSpeed: 0.05
   dialogueLines:
-  - "Con \u01A1i..."
-  - "D\u1EADy \u0111i con..."
-  - "Tr\u1EDDi s\xE1ng r\u1ED3i..."
-  autoProgressLines: 010101
+  - "Elric \u01A1i! D\u1EADy ch\u01B0a con?"
+  - "M\u1EB7t tr\u1EDDi l\xEAn cao r\u1ED3i \u0111\u1EA5y! \u0110\u1EEBng ng\u1EE7
+    n\u01B0\u1EDBng n\u1EEFa, ra r\u1EEDa m\u1EB7t r\u1ED3i gi\xFAp m\u1EB9 m\u1ED9t
+    tay n\xE0o!"
+  autoProgressLines: 0101
   autoProgressDelay: 1.5
-  questToGive: {fileID: 0}
-  triggerQuestAtEnd: 0
+  questToGive: {fileID: 11400000, guid: f5fadfdcab57bab419cce3eb929cf1c4, type: 2}
+  triggerQuestAtEnd: 1

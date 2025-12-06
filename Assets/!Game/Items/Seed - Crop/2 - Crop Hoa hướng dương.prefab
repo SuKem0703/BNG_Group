@@ -14,19 +14,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: regrowStage
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: isRegrowable
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: harvestItemPrefab
       value: 
-      objectReference: {fileID: 5133012181627827295, guid: d3490af97f27c3c4c95841aabe3719c5, type: 3}
+      objectReference: {fileID: 5133012181627827295, guid: a7ac230d9fbadad49884c88005b982ce, type: 3}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: cropStages.Array.size
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: growStages.Array.size
@@ -51,38 +51,38 @@ PrefabInstance:
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: cropStages.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 1352955200029874055, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
+      objectReference: {fileID: -695067243, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: cropStages.Array.data[1].sprite
       value: 
-      objectReference: {fileID: -1268064389544249124, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
+      objectReference: {fileID: 1465300733, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: cropStages.Array.data[2].sprite
       value: 
-      objectReference: {fileID: 8635903978712429406, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
+      objectReference: {fileID: 1824223319, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: cropStages.Array.data[3].sprite
       value: 
       objectReference: {fileID: -5840972274582744104, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: cropStages.Array.data[0].timeToNextStage
-      value: 10
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: cropStages.Array.data[1].timeToNextStage
-      value: 10
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 1385748091153698923, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: cropStages.Array.data[2].timeToNextStage
-      value: 10
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4369468331323731034, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: -5840972274582744104, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
+      objectReference: {fileID: 1824223319, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
     - target: {fileID: 6141773907202939665, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: m_Name
-      value: 1 - Crop Nho
+      value: "2 - Crop Hoa h\u01B0\u1EDBng d\u01B0\u01A1ng"
       objectReference: {fileID: 0}
     - target: {fileID: 7709899902102572325, guid: 9c78a5a802d47f949a7f17ecfe3f25f0, type: 3}
       propertyPath: m_LocalPosition.x

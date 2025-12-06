@@ -40,6 +40,11 @@ public class FarmController : MonoBehaviour
 
         seed.RemoveFromStack(1);
 
+        if (QuestController.Instance != null)
+        {
+            QuestController.Instance.MarkCropPlanted(seed.ID);
+        }
+
         SaveController.Instance.TriggerAutoSave();
     }
 

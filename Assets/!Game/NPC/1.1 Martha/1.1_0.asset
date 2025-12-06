@@ -9,22 +9,26 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f47b24254ca3fb46875eb1e66f34883, type: 3}
+  m_Script: {fileID: 11500000, guid: 7f2a72aeb33766d42868f6d9de333142, type: 3}
   m_Name: 1.1_0
-  m_EditorClassIdentifier: Assembly-CSharp::Quest
-  questID: "Thu th\u1EADp c\xE0 r\u1ED1t"
-  questName: "Thu th\u1EADp c\xE0 r\u1ED1t"
-  questTitle: 
-  questObjects:
-  - objectID: 61
-    objectTitle: "Thu th\u1EADp c\xE0 r\u1ED1t"
-    objectType: 0
-    requiredAmount: 8
-    currentAmount: 0
-  questRewards:
-  - rewardType: 0
-    rewardID: 1
-    amount: 5
-  - rewardType: 3
-    rewardID: 0
-    amount: 20
+  m_EditorClassIdentifier: Assembly-CSharp::NPCDialogue
+  npcName: Martha
+  npcPortrait: {fileID: 222144225264086075, guid: 546d5a915985c3349a0997bfff98b79e, type: 3}
+  dialogueLines:
+  - "Ch\xE0o bu\u1ED5i s\xE1ng, Elric. Con ng\u1EE7 ngon kh\xF4ng, con trai?..."
+  autoProgressLines: 01
+  endDialogueLines: 01
+  autoProgressDelay: 1.5
+  typingSpeed: 0.05
+  choices: []
+  questInProgressIndex: 0
+  questCompletedIndex: 0
+  noMoreQuestsIndex: 0
+  quest: {fileID: 11400000, guid: f5fadfdcab57bab419cce3eb929cf1c4, type: 2}
+  hideWhenInProgress: 0
+  hideWhenCompleted: 0
+  hideWhenHandedIn: 0
+  triggerOnEnter_NotStarted: 0
+  triggerOnEnter_InProgress: 0
+  triggerOnEnter_Completed: 0
+  triggerOnEnter_NoMoreQuests: 0

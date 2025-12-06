@@ -12,6 +12,7 @@ public enum SpecialActionType
 }
 
 
+[RequireComponent(typeof(CapsuleCollider2D), typeof(CircleCollider2D))]
 public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 {
     public event System.Action<QuestState> OnQuestStateUpdated;
@@ -148,26 +149,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         CurrentActiveDialogue = dialogueDataList[dialogueDataList.Length - 1];
     }
 
-
-    private void Update()
-    {
-        if (!GameStateManager.IsDialogueActive)
-        {
-            return;
-        }
-        if (GameStateManager.IsMenuOpen) return;
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (dialogueUI != null && dialogueUI.choiceContainer.childCount > 0)
-            {
-                return;
-            }
-
-            Interact();
-        }
-    }
-
     public bool CanInteract()
     {
         return GameStateManager.CanProcessInput();
@@ -236,7 +217,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         {
             if (triggerOnEnter == true && GameStateManager.IsDialogueActive == false) return;
 
-            Debug.Log("Hội thoại bắt đầu khi tương tác.");
             StartDialogue();
         }
     }
@@ -460,6 +440,12 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     public void EndDialogue()
     {
+        if (!GameStateManager.IsDialogueActive)
+        {
+            Debug.Log("EndDialogue đã bị gọi trước đó — bỏ qua.");
+            return;
+        }
+
         if (CurrentActiveDialogue != null && CurrentActiveDialogue.quest != null &&
             CurrentQuestState == QuestState.Completed && !QuestController.Instance.IsQuestHandedIn(CurrentActiveDialogue.quest.questID))
         {

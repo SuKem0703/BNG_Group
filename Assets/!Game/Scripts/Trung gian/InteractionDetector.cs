@@ -78,9 +78,14 @@ public class InteractionDetector : MonoBehaviour
         {
             MonoBehaviour mb = currentTarget as MonoBehaviour;
 
-            if (mb != null && mb.TryGetComponent<NPC>(out NPC npc))
+            //if (mb != null && mb.TryGetComponent<NPC>(out NPC npc))
+            //{
+            //    if (GameStateManager.IsDialogueActive) return;
+            //}
+
+            if (GameStateManager.IsDialogueActive)
             {
-                if (GameStateManager.IsDialogueActive) return;
+                return;
             }
 
             if (!currentTarget.CanInteract())
@@ -224,28 +229,35 @@ public class InteractionDetector : MonoBehaviour
         }
     }
 
-    private void SetTarget(IInteractable newTarget)
+    private void SetTarget(IInteractable newTarget, bool showVisual = true)
     {
         if (currentTarget == newTarget) return;
 
         if (currentIndicatorInstance != null) Destroy(currentIndicatorInstance);
 
         currentTarget = newTarget;
-
-        GameObject indicatorPrefab = LoadResourceManager.Instance.TargetIndicatorPrefab;
-
-        // Kiểm tra null và có target
-        if (indicatorPrefab != null && currentTarget != null)
-        {
-            Transform targetTransform = (currentTarget as MonoBehaviour).transform;
-            Vector3 indicatorPos = targetTransform.position + new Vector3(0, targetYOffset, 0);
-
-            currentIndicatorInstance = Instantiate(indicatorPrefab, indicatorPos, Quaternion.identity);
-        }
-
         OnTargetChanged?.Invoke(currentTarget);
+
+        if (currentTarget == null) return;
+
+        if (showVisual)
+        {
+            GameObject indicatorPrefab = LoadResourceManager.Instance.TargetIndicatorPrefab;
+
+            if (indicatorPrefab != null)
+            {
+                Transform targetTransform = (currentTarget as MonoBehaviour).transform;
+                Vector3 indicatorPos = targetTransform.position + new Vector3(0, targetYOffset, 0);
+                currentIndicatorInstance = Instantiate(indicatorPrefab, indicatorPos, Quaternion.identity);
+            }
+        }
     }
 
+    // Dùng để ép set target từ bên ngoài (bỏ qua các kiểm tra)
+    public void ForceSetTarget(IInteractable target, bool showVisual = true)
+    {
+        SetTarget(target, showVisual);
+    }
     private void ClearTarget()
     {
         if (currentTarget == null) return;

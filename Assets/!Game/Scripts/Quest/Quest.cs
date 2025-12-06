@@ -45,6 +45,7 @@ public enum ObjectType
     DefeatEnemy,
     ReachLocation,
     TalkNPC,
+    PlantSeed,
     Custom
 }
 

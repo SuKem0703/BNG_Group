@@ -65,8 +65,6 @@ public class EnemyChase : MonoBehaviour
     {
         if (player == null) return;
 
-        PlayerStats.IsOnBattle = true;
-
         if (PauseController.IsGamePause || isStunned || isDead || isAttacking)
         {
             rb.linearVelocity = Vector2.zero;
@@ -76,13 +74,18 @@ public class EnemyChase : MonoBehaviour
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
-        if (distanceToPlayer <= attackRange && !isAttacking)
+        if (distanceToPlayer <= detectionRadius)
         {
-            StartAttack();
-        }
-        else if (distanceToPlayer <= detectionRadius && !isAttacking)
-        {
-            ChasePlayer();
+            PlayerStats.IsOnBattle = true;
+
+            if (distanceToPlayer <= attackRange && !isAttacking)
+            {
+                StartAttack();
+            }
+            else if (!isAttacking)
+            {
+                ChasePlayer();
+            }
         }
         else
         {
