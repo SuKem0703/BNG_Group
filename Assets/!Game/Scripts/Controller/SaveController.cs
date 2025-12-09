@@ -95,6 +95,8 @@ public class SaveController : MonoBehaviour
         if (uidText != null)
             uidText.text = "UID: " + GetPlayerUID();
 
+        yield return new WaitForSecondsRealtime(0.5f);
+
         HideMainLoadingScreen();
 
         OnDataLoaded?.Invoke();

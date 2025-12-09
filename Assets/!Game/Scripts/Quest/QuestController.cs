@@ -187,6 +187,43 @@ public class QuestController : MonoBehaviour
         }
     }
 
+    // Đánh dấu kẻ thù đã bị đánh bại cho các quest liên quan
+    public void MarkEnemyDefeated(string enemyID)
+    {
+        bool anyQuestUpdated = false;
+
+        foreach (QuestProgress quest in activeQuests)
+        {
+            bool questProgressChanged = false;
+
+            foreach (QuestObject questObject in quest.questObjects)
+            {
+                // Kiểm tra nếu nhiệm vụ là KillEnemy và ID trùng khớp
+                if (questObject.objectType == ObjectType.DefeatEnemy &&
+                    questObject.objectID == enemyID)
+                {
+                    if (questObject.currentAmount < questObject.requiredAmount)
+                    {
+                        questObject.currentAmount++;
+                        questProgressChanged = true;
+
+                        Debug.Log($"Enemy Defeated: {questObject.objectTitle} ({questObject.currentAmount}/{questObject.requiredAmount})");
+                    }
+                }
+            }
+
+            if (questProgressChanged)
+            {
+                OnQuestStatusUpdated?.Invoke(quest.QuestID);
+                anyQuestUpdated = true;
+            }
+        }
+
+        if (anyQuestUpdated)
+        {
+            questUI.UpdateQuestUI();
+        }
+    }
     public bool IsQuestCompleted(string questID)
     {
         QuestProgress quest = activeQuests.Find(q => q.QuestID == questID);
@@ -303,5 +340,31 @@ public class QuestController : MonoBehaviour
                 return quest;
         }
         return null;
+    }
+
+    // Kiểm tra xem item có cần thiết cho bất kỳ quest nào đang hoạt động không
+    public bool IsItemNeededForActiveQuest(int itemID)
+    {
+        foreach (QuestProgress quest in activeQuests)
+        {
+            foreach (QuestObject obj in quest.questObjects)
+            {
+                if (obj.objectType == ObjectType.CollectItem)
+                {
+                    if (int.TryParse(obj.objectID, out int questItemID))
+                    {
+                        if (questItemID == itemID) return true;
+                    }
+                }
+                else if (obj.objectType == ObjectType.PlantSeed)
+                {
+                    if (int.TryParse(obj.objectID, out int seedItemID))
+                    {
+                        if (seedItemID == itemID) return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

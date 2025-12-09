@@ -27,7 +27,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (!GameStateManager.CanProcessInput())
+        if (!GameStateManager.CanProcessInput() || !SaveController.IsDataLoaded)
         {
             rb.linearVelocity = Vector2.zero;
             animator.SetBool("isWalking", false);
@@ -62,7 +62,7 @@ public class PlayerMovement : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if (PauseController.IsGamePause || isDashing || (comboAttack != null && comboAttack.isAttacking))
+        if (PauseController.IsGamePause || isDashing || (comboAttack != null && comboAttack.isAttacking) || !SaveController.IsDataLoaded)
             return;
 
         rb.linearVelocity = moveInput * moveSpeed;

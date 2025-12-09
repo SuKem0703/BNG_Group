@@ -2,49 +2,64 @@
 
 public static class GameFlags
 {
-    // Equipment Menu First Opened Quest ID
-    private const string OpenEquipmentQuestID = "OpenEquipmentQuestID";
+    private static bool CheckQuestState(string questID, bool includeActive, bool includeHandedIn)
+    {
+        if (QuestController.Instance == null)
+        {
+            return false;
+        }
+
+        bool isActive = false;
+        bool isHandedIn = false;
+
+        if (includeActive)
+        {
+            isActive = QuestController.Instance.IsQuestActive(questID);
+        }
+
+        if (includeHandedIn)
+        {
+            isHandedIn = QuestController.Instance.IsQuestHandedIn(questID);
+        }
+
+        return isActive || isHandedIn;
+    }
+
+
+    // ----- KIỂM TRA CẢ ĐANG LÀM VÀ ĐÃ TRẢ XONG -----
+
+    // Equipment Menu example
+    private const string OpenEquipmentQuestID = "Thanh Kiếm Bị Bỏ Quên";
     public static bool IsOpenedEquipmentMenu()
     {
-        if (QuestController.Instance == null)
-        {
-            return false;
-        }
-        return QuestController.Instance.IsQuestHandedIn(OpenEquipmentQuestID);
+        return CheckQuestState(OpenEquipmentQuestID, includeActive: true, includeHandedIn: true);
     }
 
-    // Potential Menu First Opened Quest ID
-    private const string OpenPotentialQuestID = "OpenPotentialQuestID";
+    // Potential Menu example
+    private const string PotentialQuestID = "FirstCombatQuestID";
     public static bool IsOpenedPotentialMenu()
     {
-        if (QuestController.Instance == null)
-        {
-            return false;
-        }
-        return QuestController.Instance.IsQuestHandedIn(OpenPotentialQuestID);
+        return CheckQuestState(PotentialQuestID, includeActive: true, includeHandedIn: true);
     }
 
-    // Skill Menu First Opened Quest ID
+    // ----- CHỈ kiểm tra ĐANG LÀM (In Progress) -----
+    private const string TrainingQuestID = "TrainingQuestID";
+    public static bool IsTrainingInProgress()
+    {
+        return CheckQuestState(TrainingQuestID, includeActive: true, includeHandedIn: false);
+    }
+
+    // ------ CHỈ kiểm tra ĐÃ TRẢ XONG (Handed In) ------
+    private const string LyriaRecruitedQuestID = "TutorialBossQuestID";
+    public static bool HasRecruitedLyria()
+    {
+        return CheckQuestState(LyriaRecruitedQuestID, includeActive: false, includeHandedIn: true);
+    }
+
+    // Skill Menu example
     private const string OpenSkillQuestID = "OpenSkillQuestID";
     public static bool IsOpenedSkillMenu()
     {
-        if (QuestController.Instance == null)
-        {
-            return false;
-        }
-        return QuestController.Instance.IsQuestHandedIn(OpenSkillQuestID);
+        return CheckQuestState(OpenSkillQuestID, true, true);
     }
-
-    // Lyria Recruitment Quest ID
-    private const string RecruitLyriaQuestID = "QUEST_LYRIA_RECRUIT";
-    public static bool HasRecruitedLyria()
-    {
-        if (QuestController.Instance == null)
-        {
-            return false;
-        }
-
-        return QuestController.Instance.IsQuestHandedIn(RecruitLyriaQuestID);
-    }
-
 }

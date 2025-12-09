@@ -342,7 +342,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 }
 
                 // Kiểm tra nếu item đang cần cho nhiệm vụ
-                if (IsItemNeededForActiveQuest(draggedItem.ID))
+                if (QuestController.Instance.IsItemNeededForActiveQuest(draggedItem.ID))
                 {
                     ShowDropErrorMessage($"<color=yellow>{draggedItem.Name}</color> đang cần cho nhiệm vụ. Không thể vứt bỏ!");
                     SnapBack();
@@ -423,26 +423,18 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        GameStateManager.CanOpenMenu = false;
-
         GameObject notifyUIObj = Instantiate(notifyPrefab);
         NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
 
         if (notifyUI == null)
         {
-            GameStateManager.CanOpenMenu = true;
             Debug.LogError("Prefab NotifyUICanvas thiếu script NotifyUIController!");
             Destroy(notifyUIObj);
             SnapBack();
             return;
         }
 
-        UnityEngine.Events.UnityAction onOkAction = () => {
-            GameStateManager.CanOpenMenu = true;
-            SnapBack();
-        };
-
-        notifyUI.Show(message, onOkAction);
+        notifyUI.Show(message);
     }
     private void RequestDropItemConfirmation(Slot slotToEmpty, Item itemToDrop, Vector2 dragEndMousePosition)
     {
@@ -495,34 +487,34 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             SnapBack();
         }
     }
-    private bool IsItemNeededForActiveQuest(int itemID)
-    {
-        if (QuestController.Instance == null) return false;
+    //private bool IsItemNeededForActiveQuest(int itemID)
+    //{
+    //    if (QuestController.Instance == null) return false;
 
-        // Duyệt qua tất cả các Quest đang kích hoạt (active)
-        foreach (QuestProgress quest in QuestController.Instance.activeQuests)
-        {
-            foreach (QuestObject obj in quest.questObjects)
-            {
-                // Nếu nhiệm vụ là CollectItem
-                if (obj.objectType == ObjectType.CollectItem)
-                {
-                    // Parse ID từ string sang int để so sánh
-                    if (int.TryParse(obj.objectID, out int questItemID))
-                    {
-                        if (questItemID == itemID)
-                        {
-                            // Nếu tìm thấy item này trong 1 quest đang active
-                            // Bạn có thể check thêm điều kiện obj.IsCompleted nếu muốn cho phép vứt khi đã gom đủ
-                            // Nhưng an toàn nhất là không cho vứt khi chưa trả quest.
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
+    //    // Duyệt qua tất cả các Quest đang kích hoạt (active)
+    //    foreach (QuestProgress quest in QuestController.Instance.activeQuests)
+    //    {
+    //        foreach (QuestObject obj in quest.questObjects)
+    //        {
+    //            // Nếu nhiệm vụ là CollectItem
+    //            if (obj.objectType == ObjectType.CollectItem)
+    //            {
+    //                // Parse ID từ string sang int để so sánh
+    //                if (int.TryParse(obj.objectID, out int questItemID))
+    //                {
+    //                    if (questItemID == itemID)
+    //                    {
+    //                        // Nếu tìm thấy item này trong 1 quest đang active
+    //                        // Bạn có thể check thêm điều kiện obj.IsCompleted nếu muốn cho phép vứt khi đã gom đủ
+    //                        // Nhưng an toàn nhất là không cho vứt khi chưa trả quest.
+    //                        return true;
+    //                    }
+    //                }
+    //            }
+    //        }
+    //    }
+    //    return false;
+    //}
 
     // ========== HELPER METHODS ==========
     private void SnapBack()

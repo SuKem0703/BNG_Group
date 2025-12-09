@@ -20,18 +20,31 @@ public class SceneMapMove : MonoBehaviour
 
     [Header("Monologue Settings")]
     private Monologue monologueComponent;
+
     private void Awake()
     {
         monologueComponent = GetComponent<Monologue>();
         if (monologueComponent == null)
         {
-            Debug.LogError($"SceneMapMove trên '{gameObject.name}' yêu cầu một component Monologue.cs.");
+            Debug.Log($"SceneMapMove trên '{gameObject.name}' không có Monologue (Optional).");
         }
     }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag("Player"))
             return;
+
+        if (!SaveController.IsDataLoaded)
+        {
+            Debug.LogWarning($"[SceneMapMove] Dữ liệu chưa load xong. Chặn chuyển sang '{sceneName}'.");
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(SaveController.pendingSceneName))
+        {
+            return;
+        }
 
         if (!canEnter)
         {
@@ -39,6 +52,7 @@ public class SceneMapMove : MonoBehaviour
             return;
         }
 
+        // --- Logic Quest ---
         if (!string.IsNullOrEmpty(requiredQuestID) && (requireNotStarted || requireInProgress || requireCompleted || requireNoMoreQuests))
         {
             bool noMoreQuests = false;
@@ -71,12 +85,13 @@ public class SceneMapMove : MonoBehaviour
             }
         }
 
+        // --- Logic Save & Move ---
         SaveController saveController = FindFirstObjectByType<SaveController>();
         if (saveController != null)
         {
             if (SaveController.IsSaving)
             {
-                Debug.LogWarning($"Không thể chuyển sang '{sceneName}' vì đang trong quá trình lưu game khác.");
+                Debug.LogWarning($"Không thể chuyển sang '{sceneName}' vì hệ thống đang bận lưu game.");
                 return;
             }
 
@@ -94,20 +109,21 @@ public class SceneMapMove : MonoBehaviour
             return;
         }
 
-        Debug.Log("Switching Scene to " + sceneName);
+        Debug.Log("Switching Scene to " + sceneName + " (No SaveController found)");
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 
     private void HandleBlockedEntry(string reason)
     {
+        if (!SaveController.IsDataLoaded) return;
+
+        if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return;
+
         if (monologueComponent != null)
         {
             if (monologueComponent.triggerOnEnter)
             {
-                var method = monologueComponent.GetType()
-                    .GetMethod("StartDialogue", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                method?.Invoke(monologueComponent, null);
-
+                monologueComponent.OpenDialogOnTrigger();
                 Debug.Log(reason + " (Monologue tự động)");
             }
             else if (monologueComponent.CanInteract())
@@ -123,15 +139,10 @@ public class SceneMapMove : MonoBehaviour
         if (CinemachineShaker.Instance != null)
             CinemachineShaker.Instance.TriggerShake(3f, 10f, 0.2f);
     }
-
     private IEnumerator SaveAndLoad(SaveController saveController)
     {
-        // Wait for the save routine to finish so server has the latest save
         yield return StartCoroutine(saveController.SaveRoutine());
-
-        // Small delay to ensure server consistency if needed
         yield return null;
-
         Debug.Log("Switching Scene to " + sceneName + " (after save)");
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }

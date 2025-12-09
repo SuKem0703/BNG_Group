@@ -2,7 +2,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // Cần thêm để lấy Scene Name cho ID
+using UnityEngine.SceneManagement;
 
 public class Monologue : MonoBehaviour, IInteractable
 {
@@ -17,7 +17,6 @@ public class Monologue : MonoBehaviour, IInteractable
     public bool isOneTimeOnly = false;
 
     [Header("Save Data (Only used if OneTimeOnly is true)")]
-    [Tooltip("ID để lưu. Nếu trống sẽ tự sinh theo tọa độ.")]
     public string uniqueID;
     protected string finalID;
 
@@ -31,6 +30,15 @@ public class Monologue : MonoBehaviour, IInteractable
     protected bool maintainPauseAfterDialogue = false;
     protected float lastSkipTime = -99f;
 
+    private enum MonologueQuestState
+    {
+        NotStarted,
+        InProgress,
+        Completed,
+        NoMoreQuests
+    }
+    private MonologueQuestState currentQuestState = MonologueQuestState.NotStarted;
+
     protected virtual void Start()
     {
         dialogueUI = DialogueController.instance;
@@ -38,26 +46,25 @@ public class Monologue : MonoBehaviour, IInteractable
         if (characterPortrait == null)
             characterPortrait = Resources.Load<Sprite>("Elric_Portrait");
 
-        // --- LOGIC SAVE/LOAD TÍCH HỢP ---
         if (isOneTimeOnly)
         {
             if (!string.IsNullOrEmpty(uniqueID)) finalID = uniqueID;
             else finalID = GlobalHelper.GenerateUniqueID(gameObject);
-
-            if (SaveController.IsDataLoaded) CheckIfAlreadyPlayed();
-            else SaveController.OnDataLoaded += HandleDataLoaded;
         }
-        // -------------------------------
+
+        if (SaveController.IsDataLoaded) HandleDataLoaded();
+        else SaveController.OnDataLoaded += HandleDataLoaded;
     }
 
     protected virtual void OnDestroy()
     {
-        if (isOneTimeOnly) SaveController.OnDataLoaded -= HandleDataLoaded;
+        SaveController.OnDataLoaded -= HandleDataLoaded;
     }
 
     private void HandleDataLoaded()
     {
         if (isOneTimeOnly) CheckIfAlreadyPlayed();
+        SaveController.OnDataLoaded -= HandleDataLoaded;
     }
 
     protected virtual void CheckIfAlreadyPlayed()
@@ -68,14 +75,19 @@ public class Monologue : MonoBehaviour, IInteractable
         }
     }
 
-    // ... (Các hàm CanInteract, Interact, OnTriggerEnter2D, OpenDialogOnTrigger, StartDialogue, NextLine, TypeLine GIỮ NGUYÊN như cũ) ...
-    // Copy lại từ code cũ của bạn cho các hàm logic này.
-
-    public virtual bool CanInteract() { return !GameStateManager.IsDialogueActive; }
+    public virtual bool CanInteract()
+    {
+        if (!SaveController.IsDataLoaded) return false;
+        if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return false;
+        return !GameStateManager.IsDialogueActive;
+    }
 
     public virtual void Interact()
     {
+        if (!SaveController.IsDataLoaded) return;
+        if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return;
         if (monologueData == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive)) return;
+
         if (GameStateManager.IsDialogueActive) NextLine();
         else StartDialogue();
     }
@@ -83,13 +95,19 @@ public class Monologue : MonoBehaviour, IInteractable
     protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
         if (!triggerOnEnter || !collision.CompareTag("Player")) return;
+        if (!SaveController.IsDataLoaded) return;
+        if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return;
         if (collision.GetComponent<PlayerItemCollector>() != null) return;
+
         OpenDialogOnTrigger();
     }
 
     public virtual void OpenDialogOnTrigger()
     {
+        if (!SaveController.IsDataLoaded) return;
+        if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return;
         if (monologueData == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive)) return;
+
         if (!GameStateManager.IsDialogueActive)
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -100,13 +118,36 @@ public class Monologue : MonoBehaviour, IInteractable
 
     protected virtual void StartDialogue()
     {
+        CalculateQuestState();
+
+        if (currentQuestState == MonologueQuestState.NotStarted)
+        {
+            dialogueIndex = 0;
+        }
+        else if (currentQuestState == MonologueQuestState.InProgress)
+        {
+            dialogueIndex = monologueData.questInProgressIndex;
+        }
+        else if (currentQuestState == MonologueQuestState.Completed)
+        {
+            dialogueIndex = monologueData.questCompletedIndex;
+        }
+        else if (currentQuestState == MonologueQuestState.NoMoreQuests)
+        {
+            dialogueIndex = monologueData.noMoreQuestsIndex;
+        }
+
+        if (dialogueIndex >= monologueData.dialogueLines.Length)
+        {
+            dialogueIndex = 0;
+        }
+
         if (InteractionDetector.Instance != null)
         {
             bool showVisual = !triggerOnEnter;
             InteractionDetector.Instance.ForceSetTarget(this, showVisual);
         }
 
-        dialogueIndex = 0;
         lastSkipTime = -99f;
         GameStateManager.IsDialogueActive = true;
         GameStateManager.CanOpenMenu = false;
@@ -115,7 +156,37 @@ public class Monologue : MonoBehaviour, IInteractable
         dialogueUI.SetNPCInfo(characterName, characterPortrait);
         dialogueUI.ShowDialogueUI(true);
         PauseController.SetPause(true);
+
         DisplayCurrentLine();
+    }
+
+    private void CalculateQuestState()
+    {
+        currentQuestState = MonologueQuestState.NotStarted;
+
+        if (monologueData.quest == null) return;
+
+        var qc = QuestController.Instance;
+        if (qc == null) return;
+
+        string qID = monologueData.quest.questID;
+
+        if (qc.IsQuestHandedIn(qID))
+        {
+            currentQuestState = MonologueQuestState.NoMoreQuests;
+        }
+        else if (qc.IsQuestCompleted(qID))
+        {
+            currentQuestState = MonologueQuestState.Completed;
+        }
+        else if (qc.IsQuestActive(qID))
+        {
+            currentQuestState = MonologueQuestState.InProgress;
+        }
+        else
+        {
+            currentQuestState = MonologueQuestState.NotStarted;
+        }
     }
 
     protected virtual void NextLine()
@@ -135,6 +206,14 @@ public class Monologue : MonoBehaviour, IInteractable
         dialogueUI.continueIndicator.gameObject.SetActive(false);
         dialogueUI.ClearChoices();
 
+        if (monologueData.endDialogueLines != null &&
+            dialogueIndex < monologueData.endDialogueLines.Length &&
+            monologueData.endDialogueLines[dialogueIndex])
+        {
+            EndDialogue();
+            return;
+        }
+
         if (++dialogueIndex < monologueData.dialogueLines.Length) DisplayCurrentLine();
         else EndDialogue();
     }
@@ -150,7 +229,11 @@ public class Monologue : MonoBehaviour, IInteractable
         isTyping = true;
         dialogueUI.SetDialogueText("");
         dialogueUI.continueIndicator.gameObject.SetActive(false);
-        string currentLine = monologueData.dialogueLines[dialogueIndex];
+
+        string currentLine = "";
+        if (dialogueIndex < monologueData.dialogueLines.Length)
+            currentLine = monologueData.dialogueLines[dialogueIndex];
+
         foreach (char letter in currentLine)
         {
             dialogueUI.SetDialogueText(dialogueUI.dialogueText.text + letter);
@@ -158,7 +241,10 @@ public class Monologue : MonoBehaviour, IInteractable
         }
         isTyping = false;
         dialogueUI.continueIndicator.gameObject.SetActive(true);
-        if (monologueData.autoProgressLines.Length > dialogueIndex && monologueData.autoProgressLines[dialogueIndex])
+
+        if (monologueData.autoProgressLines != null &&
+            monologueData.autoProgressLines.Length > dialogueIndex &&
+            monologueData.autoProgressLines[dialogueIndex])
         {
             dialogueUI.continueIndicator.gameObject.SetActive(false);
             yield return new WaitForSecondsRealtime(monologueData.autoProgressDelay);
@@ -168,12 +254,20 @@ public class Monologue : MonoBehaviour, IInteractable
 
     public virtual void EndDialogue()
     {
-        // 1. Xử lý Quest trước
-        if (monologueData.triggerQuestAtEnd && monologueData.questToGive != null)
+        if (monologueData.triggerQuestAtEnd && monologueData.quest != null)
         {
             if (QuestController.Instance != null)
             {
-                QuestController.Instance.AcceptQuest(monologueData.questToGive);
+                QuestController.Instance.AcceptQuest(monologueData.quest);
+            }
+        }
+
+        if (monologueData.handleQuestAtEnd && monologueData.quest != null &&
+            currentQuestState == MonologueQuestState.Completed)
+        {
+            if (QuestController.Instance != null && !QuestController.Instance.IsQuestHandedIn(monologueData.quest.questID))
+            {
+                HandleQuestCompletion(monologueData.quest);
             }
         }
 
@@ -193,14 +287,12 @@ public class Monologue : MonoBehaviour, IInteractable
         maintainPauseAfterDialogue = false;
         OnDialogueEndEvent?.Invoke();
 
-        // 2. Logic Lưu & Tự hủy (nếu là OneTimeOnly)
         if (isOneTimeOnly)
         {
             FinishAndDestroySelf();
         }
         else
         {
-            // Nếu không phải one-time thì save game bình thường thôi
             saveController = Object.FindFirstObjectByType<SaveController>();
             if (saveController != null) saveController.SaveGame();
         }
@@ -214,5 +306,20 @@ public class Monologue : MonoBehaviour, IInteractable
             SaveController.Instance.TriggerAutoSave();
         }
         Destroy(gameObject);
+    }
+
+    protected void HandleQuestCompletion(Quest quest)
+    {
+        if (RewardController.Instance != null)
+        {
+            RewardController.Instance.GiveQuestReward(quest);
+        }
+
+        if (QuestController.Instance != null)
+        {
+            QuestController.Instance.HandInQuest(quest.questID);
+        }
+
+        currentQuestState = MonologueQuestState.NoMoreQuests;
     }
 }

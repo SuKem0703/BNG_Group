@@ -138,6 +138,26 @@ public class KnightEquipmentPanel : MonoBehaviour
     }
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
+        if (itemDictionary == null)
+        {
+            itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
+            if (itemDictionary == null)
+            {
+                Debug.LogError("[KnightEquipmentPanel] ItemDictionary is missing! Cannot load equipment.");
+                return;
+            }
+        }
+
+        if (savedData == null)
+        {
+            ClearSlot(Swords);
+            ClearSlot(Shield);
+            ClearSlot(Helmet);
+            ClearSlot(Armor);
+            UpdateWeaponStatus();
+            return;
+        }
+
         ClearSlot(Swords);
         ClearSlot(Shield);
         ClearSlot(Helmet);
@@ -145,6 +165,8 @@ public class KnightEquipmentPanel : MonoBehaviour
 
         foreach (EquippedSaveData data in savedData)
         {
+            if (data == null) continue;
+
             GameObject targetSlot = GetSlotByIndex(data.slotIndex);
             if (targetSlot != null)
             {
@@ -163,14 +185,12 @@ public class KnightEquipmentPanel : MonoBehaviour
                         itemComponent.qualityFactor = data.qualityFactor;
                         itemComponent.UpdateQuantityDisplay();
 
-                        // Tìm sourceItem trong Inventory
                         Item sourceItemInInventory = FindItemInInventory(itemComponent.ID);
                         if (sourceItemInInventory != null)
                         {
                             itemComponent.sourceItem = sourceItemInInventory;
                             sourceItemInInventory.isEquipped = true;
                         }
-
                     }
 
                     Slot slotComponent = targetSlot.GetComponent<Slot>();

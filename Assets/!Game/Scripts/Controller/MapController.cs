@@ -12,9 +12,8 @@ public class MapController : MonoBehaviour
     public static MapController Instance { get; private set; }
 
     [Header("Cấu hình Map")]
-    [SerializeField] private string mapName = "Tên Bản Đồ";
-    [SerializeField] private MapType mapType = MapType.CombatZone;
-    [SerializeField] private ItemRarity mapRarity = ItemRarity.Common;
+    [SerializeField] private string mapName = "";
+    [SerializeField] private MapType mapType = MapType.SafeZone;
     public AudioClip bgmClip;
     public bool IsCutsceneMode = false;
 
@@ -45,6 +44,11 @@ public class MapController : MonoBehaviour
     {
         if (IsCutsceneMode) return;
 
+        if (string.IsNullOrEmpty(mapName) || string.IsNullOrWhiteSpace(mapName))
+        {
+            return;
+        }
+
         if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.MapInfoUIPrefab != null)
         {
             GameObject uiObj = Instantiate(LoadResourceManager.Instance.MapInfoUIPrefab);
@@ -52,7 +56,7 @@ public class MapController : MonoBehaviour
             MapInfoUIController controller = uiObj.GetComponent<MapInfoUIController>();
             if (controller != null)
             {
-                controller.ShowMapName(mapName, mapRarity);
+                controller.ShowMapName(mapName);
             }
         }
         else

@@ -11,7 +11,6 @@ public enum SpecialActionType
     OpenUpgrade
 }
 
-
 [RequireComponent(typeof(CapsuleCollider2D), typeof(CircleCollider2D))]
 public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 {
@@ -20,6 +19,10 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
     [Header("Danh sách hội thoại (theo thứ tự)")]
     public NPCDialogue[] dialogueDataList;
 
+    [Header("Player Info")]
+    [SerializeField] private string playerName = "Elric";
+    [SerializeField] private Sprite playerPortrait;
+
     public NPCDialogue CurrentActiveDialogue { get; private set; }
 
     private DialogueController dialogueUI;
@@ -27,9 +30,11 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     private int dialogueIndex;
     private bool isTyping;
+    private bool isPlayerTalking;
+    private System.Action pendingChoiceLogic;
+    private string currentTypingText;
 
     public bool triggerOnEnter = false;
-
     private bool maintainPauseAfterDialogue = false;
     private bool justAcceptedQuest = false;
 
@@ -41,7 +46,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         NoMoreQuests
     }
     public QuestState CurrentQuestState { get; private set; } = QuestState.NotStarted;
-
 
     private void Awake()
     {
@@ -75,13 +79,17 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
                 }
             }
         }
+
+        if (playerPortrait == null)
+        {
+            playerPortrait = Resources.Load<Sprite>("Elric_Portrait");
+        }
     }
 
     private void Start()
     {
         dialogueUI = DialogueController.instance;
 
-        // Đăng ký sự kiện Load Data
         if (SaveController.IsDataLoaded)
         {
             UpdateActiveDialogue();
@@ -92,24 +100,22 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             SaveController.OnDataLoaded += HandleDataLoaded;
         }
 
-        // Đăng ký sự kiện cập nhật trạng thái Quest
         QuestController.OnQuestStatusUpdated += HandleQuestUpdate;
     }
+
     private void OnDestroy()
     {
         SaveController.OnDataLoaded -= HandleDataLoaded;
-
         QuestController.OnQuestStatusUpdated -= HandleQuestUpdate;
     }
+
     private void HandleDataLoaded()
     {
-        Debug.Log($"NPC {gameObject.name} nhận được event OnDataLoaded, đang đồng bộ trạng thái Quest.");
-
         UpdateActiveDialogue();
         SyncQuestState();
-
         SaveController.OnDataLoaded -= HandleDataLoaded;
     }
+
     private void HandleQuestUpdate(string updatedQuestID)
     {
         if (CurrentActiveDialogue == null || CurrentActiveDialogue.quest == null)
@@ -120,6 +126,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             SyncQuestState();
         }
     }
+
     private void UpdateActiveDialogue()
     {
         if (dialogueDataList == null || dialogueDataList.Length == 0)
@@ -154,7 +161,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         return GameStateManager.CanProcessInput();
     }
 
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (!triggerOnEnter || !collision.CompareTag("Player"))
@@ -182,6 +188,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             OpenDialogOnTrigger();
         }
     }
+
     public void OpenDialogOnTrigger()
     {
         if (CurrentActiveDialogue == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive))
@@ -203,6 +210,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             Debug.Log("Hội thoại bắt đầu khi vào vùng kích hoạt.");
         }
     }
+
     public void Interact()
     {
         UpdateActiveDialogue();
@@ -216,7 +224,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         else
         {
             if (triggerOnEnter == true && GameStateManager.IsDialogueActive == false) return;
-
             StartDialogue();
         }
     }
@@ -242,12 +249,13 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             dialogueIndex = CurrentActiveDialogue.noMoreQuestsIndex;
         }
 
+        isPlayerTalking = false;
+        pendingChoiceLogic = null;
+        currentTypingText = "";
+
         GameStateManager.IsDialogueActive = true;
-
         OnQuestStateUpdated?.Invoke(CurrentQuestState);
-
         GameStateManager.CanOpenMenu = false;
-
         CommonUIController.Instance?.SetUIVisible(false);
         dialogueUI.ClearChoices();
         dialogueUI.SetNPCInfo(CurrentActiveDialogue.npcName, CurrentActiveDialogue.npcPortrait);
@@ -278,12 +286,10 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         {
             CurrentQuestState = QuestState.NoMoreQuests;
         }
-
         else if (!qc.IsQuestActive(id))
         {
             CurrentQuestState = QuestState.NotStarted;
         }
-
         else
         {
             if (qc.IsQuestCompleted(id))
@@ -295,15 +301,31 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         OnQuestStateUpdated?.Invoke(CurrentQuestState);
     }
 
-
     void NextLine()
     {
+        if (isPlayerTalking)
+        {
+            if (isTyping)
+            {
+                StopAllCoroutines();
+                dialogueUI.SetDialogueText(currentTypingText);
+                isTyping = false;
+                dialogueUI.continueIndicator.gameObject.SetActive(true);
+            }
+            else
+            {
+                pendingChoiceLogic?.Invoke();
+            }
+            return;
+        }
+
         if (isTyping)
         {
             StopAllCoroutines();
-            dialogueUI.SetDialogueText(CurrentActiveDialogue.dialogueLines[dialogueIndex]);
+            dialogueUI.SetDialogueText(currentTypingText);
             isTyping = false;
             dialogueUI.continueIndicator.gameObject.SetActive(true);
+            CheckForChoices();
             return;
         }
 
@@ -335,21 +357,36 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         }
     }
 
+    void CheckForChoices()
+    {
+        foreach (DialogueChoice dialogueChoice in CurrentActiveDialogue.choices)
+        {
+            if (dialogueChoice.dialogueIndex == dialogueIndex)
+            {
+                DisplayChoices(dialogueChoice);
+                return;
+            }
+        }
+    }
+
     IEnumerator TypeLine()
     {
         isTyping = true;
         dialogueUI.SetDialogueText("");
         dialogueUI.continueIndicator.gameObject.SetActive(false);
 
-        foreach (char letter in CurrentActiveDialogue.dialogueLines[dialogueIndex])
+        currentTypingText = CurrentActiveDialogue.dialogueLines[dialogueIndex];
+
+        foreach (char letter in currentTypingText)
         {
             dialogueUI.SetDialogueText(dialogueUI.dialogueText.text += letter);
             yield return new WaitForSeconds(CurrentActiveDialogue.typingSpeed);
         }
 
         isTyping = false;
-
         dialogueUI.continueIndicator.gameObject.SetActive(true);
+
+        CheckForChoices();
 
         if (CurrentActiveDialogue.autoProgressLines.Length > dialogueIndex && CurrentActiveDialogue.autoProgressLines[dialogueIndex])
         {
@@ -361,6 +398,8 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     void DisplayChoices(DialogueChoice choice)
     {
+        dialogueUI.continueIndicator.gameObject.SetActive(false);
+
         for (int i = 0; i < choice.choices.Length; i++)
         {
             int nextIndex = (choice.nextDialogueIndexes != null && i < choice.nextDialogueIndexes.Length)
@@ -375,13 +414,59 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             Object specialTarget = (choice.specialTargets != null && i < choice.specialTargets.Length)
                 ? choice.specialTargets[i] : null;
 
-            dialogueUI.CreateChoiceButton(choice.choices[i], () =>
-                ChooseOption(nextIndex, giveQuest, specialAction, specialTarget));
+            string choiceText = choice.choices[i];
+
+            dialogueUI.CreateChoiceButton(choiceText, () =>
+                OnPlayerSelectedOption(choiceText, nextIndex, giveQuest, specialAction, specialTarget));
+        }
+    }
+
+    void OnPlayerSelectedOption(string textToSay, int nextIndex, bool giveQuest, SpecialActionType action, Object target)
+    {
+        dialogueUI.ClearChoices();
+        isPlayerTalking = true;
+        dialogueUI.SetNPCInfo(playerName, playerPortrait);
+
+        StartCoroutine(TypePlayerLine(textToSay));
+
+        pendingChoiceLogic = () =>
+        {
+            ExecuteChoiceLogic(nextIndex, giveQuest, action, target);
+        };
+    }
+
+    IEnumerator TypePlayerLine(string text)
+    {
+        isTyping = true;
+        currentTypingText = text;
+        dialogueUI.SetDialogueText("");
+        dialogueUI.continueIndicator.gameObject.SetActive(false);
+
+        foreach (char letter in text)
+        {
+            dialogueUI.SetDialogueText(dialogueUI.dialogueText.text += letter);
+            yield return new WaitForSeconds(CurrentActiveDialogue.typingSpeed);
         }
 
+        isTyping = false;
+
+        yield return new WaitForSeconds(1.5f); // Đợi 1 giây
+        pendingChoiceLogic?.Invoke(); // Tự động chuyển luôn
+        yield break;
+
+        //dialogueUI.continueIndicator.gameObject.SetActive(true);
     }
-    void ChooseOption(int nextIndex, bool giveQuest, SpecialActionType action, Object target)
+
+    void ExecuteChoiceLogic(int nextIndex, bool giveQuest, SpecialActionType action, Object target)
     {
+        isPlayerTalking = false;
+        pendingChoiceLogic = null;
+
+        if (CurrentActiveDialogue != null)
+        {
+            dialogueUI.SetNPCInfo(CurrentActiveDialogue.npcName, CurrentActiveDialogue.npcPortrait);
+        }
+
         if (action != SpecialActionType.None)
         {
             maintainPauseAfterDialogue = true;
@@ -406,6 +491,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         dialogueUI.ClearChoices();
         DisplayCurrentLine();
     }
+
     void TriggerSpecialAction(SpecialActionType action, Object target)
     {
         switch (action)
@@ -432,6 +518,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
                 break;
         }
     }
+
     void DisplayCurrentLine()
     {
         StopAllCoroutines();
@@ -474,12 +561,16 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             justAcceptedQuest = false;
         }
 
+        isPlayerTalking = false;
+        pendingChoiceLogic = null;
+
         UpdateActiveDialogue();
         SyncQuestState();
 
         saveController = Object.FindFirstObjectByType<SaveController>();
         saveController.SaveGame();
     }
+
     void HandleQuestCompletion(Quest quest)
     {
         RewardController.Instance.GiveQuestReward(quest);

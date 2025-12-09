@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: "1.1. Di\u1EC7t Slime"
   m_EditorClassIdentifier: Assembly-CSharp::MonologueData
   typingSpeed: 0.05
+  autoProgressDelay: 1.5
   dialogueLines:
   - "L\u1EA1i l\xE0 b\u1ECDn Slime n\xE0y! Ch\xFAng \u0111ang b\u1EAFt \u0111\u1EA7u
     x\u1EDBi tung khu v\u01B0\u1EDDn l\xEAn r\u1ED3i."
@@ -21,7 +22,17 @@ MonoBehaviour:
     \u0111\u01B0\u1EE3c."
   - "Ph\u1EA3i quay v\u1EC1 nh\xE0 l\u1EA5y thanh ki\u1EBFm c\u0169 ra \u0111\xE2y
     nhanh th\xF4i!"
-  autoProgressLines: 010101
-  autoProgressDelay: 1.5
-  questToGive: {fileID: 11400000, guid: b8c3688ac369f1746bf33127297995b1, type: 2}
+  - "Ph\xF9... Cu\u1ED1i c\xF9ng c\u0169ng xong. \u0110\xE1m Slime n\xE0y tr\xF4ng
+    v\u1EADy m\xE0 dai th\u1EADt."
+  - "May m\xE0 m\xECnh k\u1ECBp l\u1EA5y v\u0169 kh\xED. Gi\u1EDD th\xEC m\u1EA3nh
+    \u0111\u1EA5t \u0111\xE3 an to\xE0n r\u1ED3i."
+  - "M\xECnh n\xEAn tranh th\u1EE7 gieo s\u1ED1 h\u1EA1t gi\u1ED1ng m\u1EB9 \u0111\u01B0a
+    xu\u1ED1ng ngay th\xF4i."
+  autoProgressLines: 010101010101
+  endDialogueLines: 000001000001
+  quest: {fileID: 11400000, guid: b8c3688ac369f1746bf33127297995b1, type: 2}
   triggerQuestAtEnd: 1
+  handleQuestAtEnd: 1
+  questInProgressIndex: 0
+  questCompletedIndex: 3
+  noMoreQuestsIndex: 0

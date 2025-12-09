@@ -138,7 +138,7 @@ GameObject:
   - component: {fileID: 127545317}
   - component: {fileID: 127545318}
   m_Layer: 0
-  m_Name: QuesTrigger
+  m_Name: QuesTrigger NotStarted
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -248,7 +248,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb1c14806c5befe48a24e360da624e21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Collectible
-  requiredQuestID: 
+  requiredQuestID: "Thanh Ki\u1EBFm B\u1ECB B\u1ECF Qu\xEAn"
   requiredState: 0
   uniqueID: 
 --- !u!1001 &217987911
@@ -1552,8 +1552,12 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4533794114815784058, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: bgmClip
+      value: 
+      objectReference: {fileID: 8300000, guid: b8295a7d858bebb478e2d5fb11d6745d, type: 3}
+    - target: {fileID: 4533794114815784058, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: mapName
-      value: "Khu v\u01B0\u1EDDn"
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4533794114815784058, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: mapType
@@ -2841,6 +2845,75 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1006869367702660960, guid: 0df300e919dea954eb6686a05f97ad43, type: 3}
   m_PrefabInstance: {fileID: 927841789}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &253851311
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3107261148613328395, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_Name
+      value: Slime (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: enemyID
+      value: "D\u1ECDn d\u1EB9p Slime"
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: isQuestEnemy
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: questTargetID
+      value: "D\u1ECDn d\u1EB9p Slime"
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -30
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -38
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
 --- !u!4 &342000785 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1587918199682678419, guid: 70f15dfd7a62eda43ae56f6f22b5e713, type: 3}
@@ -19121,6 +19194,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Slime
       objectReference: {fileID: 0}
+    - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: enemyID
+      value: "D\u1ECDn d\u1EB9p Slime"
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: isQuestEnemy
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: questTargetID
+      value: "D\u1ECDn d\u1EB9p Slime"
+      objectReference: {fileID: 0}
     - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -43
@@ -19268,6 +19353,133 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1407254730003623389, guid: 62e9ebcab6aebcf488a3f584ebe1edb6, type: 3}
   m_PrefabInstance: {fileID: 1182127660}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1891149826
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1891149831}
+  - component: {fileID: 1891149830}
+  - component: {fileID: 1891149829}
+  - component: {fileID: 1891149828}
+  - component: {fileID: 1891149827}
+  m_Layer: 0
+  m_Name: QuesTrigger Completed
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1891149827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1891149826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb1c14806c5befe48a24e360da624e21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Collectible
+  requiredQuestID: "Thanh Ki\u1EBFm B\u1ECB B\u1ECF Qu\xEAn"
+  requiredState: 2
+  uniqueID: 
+--- !u!114 &1891149828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1891149826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6b184dfb3398c145854234d271eb6b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnapToGrid
+  gridSize: 1
+--- !u!61 &1891149829
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1891149826}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 8, y: 10}
+  m_EdgeRadius: 0
+--- !u!114 &1891149830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1891149826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88ef75e882caec448958651027899269, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Monologue
+  monologueData: {fileID: 11400000, guid: f9e5f0616ab2126428aecd21fc7f9848, type: 2}
+  triggerOnEnter: 1
+  isOneTimeOnly: 1
+  uniqueID: 
+  characterName: Elric
+  characterPortrait: {fileID: 0}
+--- !u!4 &1891149831
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1891149826}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -40, y: -36, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1912497037
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19762,6 +19974,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Slime (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: enemyID
+      value: "D\u1ECDn d\u1EB9p Slime"
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: isQuestEnemy
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+      propertyPath: questTargetID
+      value: "D\u1ECDn d\u1EB9p Slime"
+      objectReference: {fileID: 0}
     - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -42
@@ -19822,4 +20046,6 @@ SceneRoots:
   - {fileID: 1088437734}
   - {fileID: 1671719792}
   - {fileID: 2016325389}
+  - {fileID: 253851311}
   - {fileID: 127545314}
+  - {fileID: 1891149831}

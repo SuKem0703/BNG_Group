@@ -15,12 +15,36 @@ MonoBehaviour:
   npcName: Martha
   npcPortrait: {fileID: 222144225264086075, guid: 546d5a915985c3349a0997bfff98b79e, type: 3}
   dialogueLines:
-  - "Ch\xE0o bu\u1ED5i s\xE1ng, Elric. Con ng\u1EE7 ngon kh\xF4ng, con trai?..."
-  autoProgressLines: 01
-  endDialogueLines: 01
+  - "N\xE0y Elric, \u0111\u1ECBnh ng\u1EE7 \u0111\u1EBFn bao gi\u1EDD th\u1EBF con
+    trai? M\u1EB7t tr\u1EDDi l\xEAn \u0111\u1EBFn \u0111\u1EC9nh \u0111\u1EA7u r\u1ED3i
+    \u0111\u1EA5y."
+  - "L\u1EA1i c\xF2n l\xFD s\u1EF1 n\u1EEFa. C\xE1i gi\u01B0\u1EDDng kh\xF4ng bi\u1EBFt
+    \u0111\xF3i, nh\u01B0ng c\xE1i b\u1EE5ng c\u1EE7a con th\xEC c\xF3 \u0111\u1EA5y.
+    D\u1EADy mau!"
+  autoProgressLines: 0101
+  endDialogueLines: 0000
   autoProgressDelay: 1.5
   typingSpeed: 0.05
-  choices: []
+  choices:
+  - dialogueIndex: 0
+    choices:
+    - "Con d\u1EADy r\u1ED3i m\xE0 M\u1EB9. T\u1EA1i c\xE1i gi\u01B0\u1EDDng h\xF4m
+      nay n\xF3 c\u1EE9... gi\u1EEF ch\u1EB7t l\u1EA5y con, kh\xF4ng cho con d\u1EADy
+      \u1EA5y ch\u1EE9. "
+    nextDialogueIndexes: 01000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  - dialogueIndex: 1
+    choices:
+    - "V\xE2ng, v\xE2ng... L\u1EA1i l\xE0 m\u1ED9t ng\xE0y loanh quanh v\u1EDBi ru\u1ED9ng
+      v\u01B0\u1EDDn."
+    nextDialogueIndexes: 
+    endDialogues: 01
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
   questInProgressIndex: 0
   questCompletedIndex: 0
   noMoreQuestsIndex: 0

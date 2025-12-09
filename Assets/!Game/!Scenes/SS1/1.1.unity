@@ -3044,9 +3044,9 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4533794114815784058, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
-      propertyPath: mapName
-      value: Outdoor
-      objectReference: {fileID: 0}
+      propertyPath: bgmClip
+      value: 
+      objectReference: {fileID: 8300000, guid: b8295a7d858bebb478e2d5fb11d6745d, type: 3}
     - target: {fileID: 4628291293712470032, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -11642,6 +11642,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Monologue
   monologueData: {fileID: 11400000, guid: f97b034449618344383b5bd2a4036b9d, type: 2}
   triggerOnEnter: 0
+  isOneTimeOnly: 0
+  uniqueID: 
   characterName: Elric
   characterPortrait: {fileID: 0}
 --- !u!1001 &568293012
@@ -40051,11 +40053,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4488301578668682688, guid: 7ce25c848c80d6241ab23255d4b9950d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 19.60806
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4488301578668682688, guid: 7ce25c848c80d6241ab23255d4b9950d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.75632
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4488301578668682688, guid: 7ce25c848c80d6241ab23255d4b9950d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -55851,11 +55853,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3227774755239720696, guid: 30f942fa4f2132a469a7422f345b3cb9, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 19.60806
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3227774755239720696, guid: 30f942fa4f2132a469a7422f345b3cb9, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.75632
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3227774755239720696, guid: 30f942fa4f2132a469a7422f345b3cb9, type: 3}
       propertyPath: m_LocalPosition.z
@@ -62605,6 +62607,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Monologue
   monologueData: {fileID: 11400000, guid: f59322becf68dc34399554ea71cb52e5, type: 2}
   triggerOnEnter: 1
+  isOneTimeOnly: 0
+  uniqueID: 
   characterName: Elric
   characterPortrait: {fileID: 0}
 --- !u!224 &1918530081 stripped

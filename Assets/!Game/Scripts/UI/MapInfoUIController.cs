@@ -26,22 +26,9 @@ public class MapInfoUIController : MonoBehaviour
         if (background != null) _originalPos = background.localPosition;
     }
 
-    public void ShowMapName(string mapName, ItemRarity rarity)
+    public void ShowMapName(string mapName)
     {
         mapNameText.text = mapName;
-        //Color themeColor = RarityColorHelper.GetColorByRarity(rarity);
-
-        //if (mapNameText != null)
-        //    mapNameText.color = themeColor;
-
-        //if (background != null)
-        //{
-        //    Image bgImage = background.GetComponent<Image>();
-        //    if (bgImage != null)
-        //    {
-        //        bgImage.color = themeColor;
-        //    }
-        //}
 
         // Đảm bảo Reset vị trí trước khi chạy tween
         RectTransform canvasRect = transform.root.GetComponent<RectTransform>();
