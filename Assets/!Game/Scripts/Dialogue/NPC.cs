@@ -303,6 +303,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     void NextLine()
     {
+        // 1. Nếu Player đang nói
         if (isPlayerTalking)
         {
             if (isTyping)
@@ -314,21 +315,29 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             }
             else
             {
+                // Nếu muốn bấm thủ công thì dùng dòng này
                 pendingChoiceLogic?.Invoke();
             }
             return;
         }
 
+        // 2. Nếu NPC đang nói
         if (isTyping)
         {
             StopAllCoroutines();
+
+            // Hiện full text
             dialogueUI.SetDialogueText(currentTypingText);
             isTyping = false;
+
+            // QUAN TRỌNG: Chỉ hiện mũi tên, KHÔNG kiểm tra choice ở đây
+            // Điều này ép người chơi phải bấm Interact lần nữa thì mới chạy xuống logic check choice bên dưới
             dialogueUI.continueIndicator.gameObject.SetActive(true);
-            CheckForChoices();
+
             return;
         }
 
+        // ... Logic chạy khi đã hiện hết chữ ...
         dialogueUI.continueIndicator.gameObject.SetActive(false);
         dialogueUI.ClearChoices();
 
@@ -338,6 +347,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             return;
         }
 
+        // Kiểm tra Choice
         foreach (DialogueChoice dialogueChoice in CurrentActiveDialogue.choices)
         {
             if (dialogueChoice.dialogueIndex == dialogueIndex)
@@ -347,6 +357,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             }
         }
 
+        // Nếu không có choice thì tăng dòng
         if (++dialogueIndex < CurrentActiveDialogue.dialogueLines.Length)
         {
             DisplayCurrentLine();
@@ -359,6 +370,8 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     void CheckForChoices()
     {
+        // Hàm này có thể bỏ nếu không dùng trong Auto Progress
+        // Hoặc giữ lại nếu bạn muốn Auto Progress tự chuyển sang Choice
         foreach (DialogueChoice dialogueChoice in CurrentActiveDialogue.choices)
         {
             if (dialogueChoice.dialogueIndex == dialogueIndex)
@@ -377,6 +390,8 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
         currentTypingText = CurrentActiveDialogue.dialogueLines[dialogueIndex];
 
+        dialogueUI.SetNPCInfo(CurrentActiveDialogue.npcName, CurrentActiveDialogue.npcPortrait);
+
         foreach (char letter in currentTypingText)
         {
             dialogueUI.SetDialogueText(dialogueUI.dialogueText.text += letter);
@@ -386,8 +401,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         isTyping = false;
         dialogueUI.continueIndicator.gameObject.SetActive(true);
 
-        CheckForChoices();
-
+        // Auto Progress Logic (nếu dùng)
         if (CurrentActiveDialogue.autoProgressLines.Length > dialogueIndex && CurrentActiveDialogue.autoProgressLines[dialogueIndex])
         {
             dialogueUI.continueIndicator.gameObject.SetActive(false);
@@ -400,20 +414,26 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
     {
         dialogueUI.continueIndicator.gameObject.SetActive(false);
 
+        // Nếu chỉ có 1 lựa chọn, tự động chọn luôn
+        if (choice.choices.Length == 1)
+        {
+            string choiceText = choice.choices[0];
+            int nextIndex = (choice.nextDialogueIndexes != null && 0 < choice.nextDialogueIndexes.Length) ? choice.nextDialogueIndexes[0] : -1;
+            bool giveQuest = (choice.giveQuest != null && 0 < choice.giveQuest.Length) ? choice.giveQuest[0] : false;
+            SpecialActionType specialAction = (choice.specialActions != null && 0 < choice.specialActions.Length) ? choice.specialActions[0] : SpecialActionType.None;
+            Object specialTarget = (choice.specialTargets != null && 0 < choice.specialTargets.Length) ? choice.specialTargets[0] : null;
+
+            OnPlayerSelectedOption(choiceText, nextIndex, giveQuest, specialAction, specialTarget);
+            return;
+        }
+
+        // Nếu có nhiều lựa chọn, hiển thị nút bấm
         for (int i = 0; i < choice.choices.Length; i++)
         {
-            int nextIndex = (choice.nextDialogueIndexes != null && i < choice.nextDialogueIndexes.Length)
-                ? choice.nextDialogueIndexes[i] : -1;
-
-            bool giveQuest = (choice.giveQuest != null && i < choice.giveQuest.Length)
-                ? choice.giveQuest[i] : false;
-
-            SpecialActionType specialAction = (choice.specialActions != null && i < choice.specialActions.Length)
-                ? choice.specialActions[i] : SpecialActionType.None;
-
-            Object specialTarget = (choice.specialTargets != null && i < choice.specialTargets.Length)
-                ? choice.specialTargets[i] : null;
-
+            int nextIndex = (choice.nextDialogueIndexes != null && i < choice.nextDialogueIndexes.Length) ? choice.nextDialogueIndexes[i] : -1;
+            bool giveQuest = (choice.giveQuest != null && i < choice.giveQuest.Length) ? choice.giveQuest[i] : false;
+            SpecialActionType specialAction = (choice.specialActions != null && i < choice.specialActions.Length) ? choice.specialActions[i] : SpecialActionType.None;
+            Object specialTarget = (choice.specialTargets != null && i < choice.specialTargets.Length) ? choice.specialTargets[i] : null;
             string choiceText = choice.choices[i];
 
             dialogueUI.CreateChoiceButton(choiceText, () =>
@@ -450,11 +470,9 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
         isTyping = false;
 
-        yield return new WaitForSeconds(1.5f); // Đợi 1 giây
-        pendingChoiceLogic?.Invoke(); // Tự động chuyển luôn
-        yield break;
+        yield return new WaitForSeconds(1.5f);
 
-        //dialogueUI.continueIndicator.gameObject.SetActive(true);
+        pendingChoiceLogic?.Invoke();
     }
 
     void ExecuteChoiceLogic(int nextIndex, bool giveQuest, SpecialActionType action, Object target)
@@ -500,18 +518,10 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
                 if (target is GameObject go)
                 {
                     NPCShop shop = go.GetComponent<NPCShop>();
-                    if (shop != null)
-                    {
-                        EndDialogue();
-                        shop.OpenShop();
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Target GameObject không chứa NPCShop.");
-                    }
+                    if (shop != null) { EndDialogue(); shop.OpenShop(); }
+                    else Debug.LogWarning("Target GameObject không chứa NPCShop.");
                 }
                 break;
-
             case SpecialActionType.OpenUpgrade:
                 EndDialogue();
                 Debug.Log("Open Upgrade UI");
@@ -527,11 +537,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     public void EndDialogue()
     {
-        if (!GameStateManager.IsDialogueActive)
-        {
-            Debug.Log("EndDialogue đã bị gọi trước đó — bỏ qua.");
-            return;
-        }
+        if (!GameStateManager.IsDialogueActive) return;
 
         if (CurrentActiveDialogue != null && CurrentActiveDialogue.quest != null &&
             CurrentQuestState == QuestState.Completed && !QuestController.Instance.IsQuestHandedIn(CurrentActiveDialogue.quest.questID))
@@ -543,7 +549,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         GameStateManager.IsDialogueActive = false;
         GameStateManager.CanOpenMenu = true;
         dialogueUI.continueIndicator.gameObject.SetActive(false);
-
         dialogueUI.SetDialogueText("");
         dialogueUI.ShowDialogueUI(false);
         dialogueUI.ClearChoices();
@@ -555,18 +560,13 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         }
 
         maintainPauseAfterDialogue = false;
-
-        if (justAcceptedQuest)
-        {
-            justAcceptedQuest = false;
-        }
+        if (justAcceptedQuest) justAcceptedQuest = false;
 
         isPlayerTalking = false;
         pendingChoiceLogic = null;
 
         UpdateActiveDialogue();
         SyncQuestState();
-
         saveController = Object.FindFirstObjectByType<SaveController>();
         saveController.SaveGame();
     }
@@ -581,20 +581,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
     public TargetInfoData GetInfo()
     {
         if (CurrentActiveDialogue != null)
-        {
-            return new TargetInfoData(
-                CurrentActiveDialogue.npcName,
-                CurrentActiveDialogue.npcPortrait,
-                "Nói chuyện",
-                TargetType.NPC
-            );
-        }
-
-        return new TargetInfoData(
-            gameObject.name,
-            null,
-            "Nói chuyện",
-            TargetType.NPC
-        );
+            return new TargetInfoData(CurrentActiveDialogue.npcName, CurrentActiveDialogue.npcPortrait, "Nói chuyện", TargetType.NPC);
+        return new TargetInfoData(gameObject.name, null, "Nói chuyện", TargetType.NPC);
     }
 }

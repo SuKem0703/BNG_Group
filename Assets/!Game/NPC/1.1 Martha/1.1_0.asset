@@ -31,6 +31,7 @@ MonoBehaviour:
     - "Con d\u1EADy r\u1ED3i m\xE0 M\u1EB9. T\u1EA1i c\xE1i gi\u01B0\u1EDDng h\xF4m
       nay n\xF3 c\u1EE9... gi\u1EEF ch\u1EB7t l\u1EA5y con, kh\xF4ng cho con d\u1EADy
       \u1EA5y ch\u1EE9. "
+    - asd
     nextDialogueIndexes: 01000000
     endDialogues: 
     specialActions: 
@@ -44,11 +45,11 @@ MonoBehaviour:
     endDialogues: 01
     specialActions: 
     specialTargetNames: []
-    giveQuest: 
+    giveQuest: 01
   questInProgressIndex: 0
   questCompletedIndex: 0
   noMoreQuestsIndex: 0
-  quest: {fileID: 11400000, guid: f5fadfdcab57bab419cce3eb929cf1c4, type: 2}
+  quest: {fileID: 11400000, guid: b5ec77aa0e45c00429fca4d296d32c25, type: 2}
   hideWhenInProgress: 0
   hideWhenCompleted: 0
   hideWhenHandedIn: 0
