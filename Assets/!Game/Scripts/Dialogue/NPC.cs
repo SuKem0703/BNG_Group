@@ -303,7 +303,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     void NextLine()
     {
-        // 1. Nếu Player đang nói
         if (isPlayerTalking)
         {
             if (isTyping)
@@ -315,29 +314,23 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             }
             else
             {
-                // Nếu muốn bấm thủ công thì dùng dòng này
                 pendingChoiceLogic?.Invoke();
             }
             return;
         }
 
-        // 2. Nếu NPC đang nói
         if (isTyping)
         {
             StopAllCoroutines();
 
-            // Hiện full text
             dialogueUI.SetDialogueText(currentTypingText);
             isTyping = false;
 
-            // QUAN TRỌNG: Chỉ hiện mũi tên, KHÔNG kiểm tra choice ở đây
-            // Điều này ép người chơi phải bấm Interact lần nữa thì mới chạy xuống logic check choice bên dưới
             dialogueUI.continueIndicator.gameObject.SetActive(true);
 
             return;
         }
 
-        // ... Logic chạy khi đã hiện hết chữ ...
         dialogueUI.continueIndicator.gameObject.SetActive(false);
         dialogueUI.ClearChoices();
 
@@ -390,6 +383,13 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
         currentTypingText = CurrentActiveDialogue.dialogueLines[dialogueIndex];
 
+        if (string.IsNullOrWhiteSpace(currentTypingText))
+        {
+            isTyping = false;
+            CheckForChoices();
+            yield break;
+        }
+
         dialogueUI.SetNPCInfo(CurrentActiveDialogue.npcName, CurrentActiveDialogue.npcPortrait);
 
         foreach (char letter in currentTypingText)
@@ -401,7 +401,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         isTyping = false;
         dialogueUI.continueIndicator.gameObject.SetActive(true);
 
-        // Auto Progress Logic (nếu dùng)
+        // Auto Progress Logic
         if (CurrentActiveDialogue.autoProgressLines.Length > dialogueIndex && CurrentActiveDialogue.autoProgressLines[dialogueIndex])
         {
             dialogueUI.continueIndicator.gameObject.SetActive(false);
@@ -480,10 +480,10 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         isPlayerTalking = false;
         pendingChoiceLogic = null;
 
-        if (CurrentActiveDialogue != null)
-        {
-            dialogueUI.SetNPCInfo(CurrentActiveDialogue.npcName, CurrentActiveDialogue.npcPortrait);
-        }
+        //if (CurrentActiveDialogue != null)
+        //{
+        //    dialogueUI.SetNPCInfo(CurrentActiveDialogue.npcName, CurrentActiveDialogue.npcPortrait);
+        //}
 
         if (action != SpecialActionType.None)
         {

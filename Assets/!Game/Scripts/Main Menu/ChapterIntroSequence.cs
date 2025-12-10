@@ -88,7 +88,7 @@ public class ChapterIntroSequence : MonoBehaviour
         GameStateManager.StartLoading();
 
         if (introAudioClip != null)
-            SoundEffectManager.PlayBGM(introAudioClip, false);
+            StartCoroutine(TryPlayIntroBGM());
         else
             SoundEffectManager.StopBGM();
 
@@ -108,6 +108,48 @@ public class ChapterIntroSequence : MonoBehaviour
         if (backgroundImage != null) SetAlpha(backgroundImage, 0);
 
         yield return StartCoroutine(SmoothExit());
+    }
+
+    private IEnumerator TryPlayIntroBGM()
+    {
+        // Wait until SoundEffectManager instance exists and has AudioSources
+        float timeout = 2f;
+        float elapsed = 0f;
+
+        while (elapsed < timeout)
+        {
+            var mgr = FindFirstObjectByType<SoundEffectManager>();
+            if (mgr != null)
+            {
+                // Request play
+                SoundEffectManager.PlayBGM(introAudioClip, false);
+
+                // Give a short moment for AudioSource to start
+                yield return new WaitForSecondsRealtime(0.1f);
+
+                // Check if any AudioSource on manager is playing our clip
+                var srcs = mgr.GetComponents<AudioSource>();
+                foreach (var s in srcs)
+                {
+                    if (s != null && s.isPlaying && s.clip == introAudioClip)
+                    {
+                        Debug.Log($"ChapterIntroSequence: Intro BGM started: {introAudioClip.name}");
+                        yield break;
+                    }
+                }
+
+                // If not started yet, try again shortly
+                yield return new WaitForSecondsRealtime(0.1f);
+                elapsed += 0.2f;
+                continue;
+            }
+
+            yield return null;
+            elapsed += Time.unscaledDeltaTime;
+        }
+
+        Debug.LogWarning("ChapterIntroSequence: Không thể phát Intro BGM (SoundEffectManager chưa sẵn sàng).");
+        yield break;
     }
 
     IEnumerator SmoothExit()

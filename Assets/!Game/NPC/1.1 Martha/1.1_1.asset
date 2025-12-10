@@ -15,38 +15,56 @@ MonoBehaviour:
   npcName: Martha
   npcPortrait: {fileID: 222144225264086075, guid: 546d5a915985c3349a0997bfff98b79e, type: 3}
   dialogueLines:
-  - "Elric, d\u1EADy r\u1ED3i \xE0? Tranh th\u1EE7 tr\u1EDDi \u0111ang \u0111\u1EB9p,
-    m\u1EB9 mu\u1ED1n tr\u1ED3ng th\xEAm \xEDt Hoa H\u01B0\u1EDBng D\u01B0\u01A1ng
-    ngo\xE0i v\u01B0\u1EDDn. Con gi\xFAp m\u1EB9 m\u1ED9t tay \u0111\u01B0\u1EE3c
-    kh\xF4ng?"
-  - "Trong c\xE1i r\u01B0\u01A1ng g\u1ED7 \u1EDF g\xF3c nh\xE0. C\xE1i n\u1EAFp h\u01A1i
-    k\xEAu, nh\u01B0ng v\u1EABn m\u1EDF \u0111\u01B0\u1EE3c. Con l\u1EA1i l\u1EA5y
-    gi\xFAp m\u1EB9."
+  - "Elric n\xE0y, h\xF4m nay tr\u1EDDi \u0111\u1EB9p qu\xE1. M\u1EB9 \u0111\u1ECBnh
+    tr\u1ED3ng th\xEAm \xEDt \u2018Hoa H\u01B0\u1EDBng D\u01B0\u01A1ng\u2019 \u1EDF
+    m\u1EA3nh \u0111\u1EA5t tr\u01B0\u1EDBc nh\xE0. S\u1EB5n tay ch\xE2n \u0111ang
+    r\u1EA3nh, con v\xE0o trong l\u1EA5y t\xFAi h\u1EA1t gi\u1ED1ng ra \u0111\xE2y
+    cho m\u1EB9."
+  - "C\xE1i th\u1EB1ng n\xE0y, luy\xEAn thuy\xEAn m\xE3i. M\u1EB9 c\u1EA5t g\u1ECDn
+    g\xE0ng trong chi\u1EBFc r\u01B0\u01A1ng g\u1ED7 \u1EDF g\xF3c nh\xE0 \u1EA5y.
+    Nhanh ch\xE2n l\xEAn, m\u1EB9 ra v\u01B0\u1EDDn tr\u01B0\u1EDBc \u0111\u1EE3i."
   - "M\u1EB9 \u1EDF trong nh\xE0 chu\u1EA9n b\u1ECB \xEDt \u0111\u1ED3. Con l\xE0m
     xong th\xEC g\u1ECDi m\u1EB9."
-  autoProgressLines: 010101
-  endDialogueLines: 000001
+  - "Sao th\u1EBF Elric? Con v\u1EABn ch\u01B0a t\xECm th\u1EA5y t\xFAi h\u1EA1t
+    gi\u1ED1ng \xE0?"
+  - "N\xF3 \u1EDF trong chi\u1EBFc r\u01B0\u01A1ng g\u1ED7 ngay g\xF3c nh\xE0 \u1EA5y."
+  - "\u0110\u1EEBng \u0111\u1EC3 m\u1EB9 \u0111\u1EE3i l\xE2u nh\xE9, tranh th\u1EE7
+    l\xFAc \u0111\u1EA5t c\xF2n \u1EA9m th\xEC gieo ngay, ch\u1EE9 \u0111\u1EC3 n\u1EAFng
+    tr\u01B0a hong kh\xF4 h\u1EBFt \u0111\u1EA5t th\xEC h\u1EA1t kh\xF3 n\u1EA3y
+    m\u1EA7m l\u1EAFm."
+  autoProgressLines: 0101010101
+  endDialogueLines: 0000000001
   autoProgressDelay: 1.5
   typingSpeed: 0.05
   choices:
   - dialogueIndex: 0
     choices:
-    - "\u0110\u01B0\u1EE3c ch\u1EE9 m\u1EB9. H\u1EA1t gi\u1ED1ng m\u1EB9 \u0111\u1EC3
-      ch\u1ED7 n\xE0o?"
+    - "V\xE2ng, v\xE2ng... M\u1EB9 c\u1EE9 ra l\u1EC7nh l\xE0 con l\xE0m ngay. M\xE0
+      M\u1EB9 l\u1EA1i c\u1EA5t n\xF3 \u1EDF \u0111\xE2u th\u1EBF? \u0110\u1EEBng
+      n\xF3i l\xE0 l\u1EA1i nh\xE9t d\u01B0\u1EDBi g\u1EA7m t\u1EE7 nh\xE9?"
     nextDialogueIndexes: 01000000
     endDialogues: 
     specialActions: 
     specialTargetNames: []
     giveQuest: 
-  - dialogueIndex: 1
+  - dialogueIndex: 2
     choices:
-    - "V\xE2ng, con hi\u1EC3u r\u1ED3i. Con l\xE0m ngay \u0111\xE2y."
+    - "V\xE2ng, con hi\u1EC3u r\u1ED3i. Con \u0111i l\xE0m ngay \u0111\xE2y."
     nextDialogueIndexes: 
     endDialogues: 01
     specialActions: 
     specialTargetNames: []
     giveQuest: 01
-  questInProgressIndex: 2
+  - dialogueIndex: 3
+    choices:
+    - "Con \u0111ang \u0111i t\xECm \u0111\xE2y \u1EA1... Tr\xED nh\u1EDB con d\u1EA1o
+      n\xE0y h\u01A1i t\u1EC7."
+    nextDialogueIndexes: 04000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  questInProgressIndex: 3
   questCompletedIndex: 0
   noMoreQuestsIndex: 0
   quest: {fileID: 11400000, guid: b5ec77aa0e45c00429fca4d296d32c25, type: 2}

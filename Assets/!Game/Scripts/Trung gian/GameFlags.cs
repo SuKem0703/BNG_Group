@@ -28,6 +28,13 @@ public static class GameFlags
 
     // ----- KIỂM TRA CẢ ĐANG LÀM VÀ ĐÃ TRẢ XONG -----
 
+    // Storage Chest example
+    private const string InteractChestQuestID = "MQ_C01_P01_01_FetchSeeds";
+    public static bool HasInteractedWithStorageChest()
+    {
+        return CheckQuestState(InteractChestQuestID, includeActive: true, includeHandedIn: true);
+    }
+
     // Equipment Menu example
     private const string OpenEquipmentQuestID = "Thanh Kiếm Bị Bỏ Quên";
     public static bool IsOpenedEquipmentMenu()

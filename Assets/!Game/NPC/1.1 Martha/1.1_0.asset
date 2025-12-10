@@ -21,8 +21,20 @@ MonoBehaviour:
   - "L\u1EA1i c\xF2n l\xFD s\u1EF1 n\u1EEFa. C\xE1i gi\u01B0\u1EDDng kh\xF4ng bi\u1EBFt
     \u0111\xF3i, nh\u01B0ng c\xE1i b\u1EE5ng c\u1EE7a con th\xEC c\xF3 \u0111\u1EA5y.
     D\u1EADy mau!"
-  autoProgressLines: 0101
-  endDialogueLines: 0000
+  - 
+  - 
+  - 
+  - "B\u1ECF ngay c\xE1i \xFD \u0111\u1ECBnh \u0111i\xEAn r\u1ED3 \u0111\xF3 \u0111i!
+    M\u1EB9 \u0111\xE3 d\u1EB7n bao nhi\xEAu l\u1EA7n r\u1ED3i? Ph\xEDa T\xE2y B\u1EAFc
+    l\xE0 v\xF9ng \u0111\u1EA5t c\u1EA5m, tuy\u1EC7t \u0111\u1ED1i kh\xF4ng \u0111\u01B0\u1EE3c
+    b\xE9n m\u1EA3ng t\u1EDBi \u0111\xF3!"
+  - 
+  - 
+  - "\u0110\u1EEBng \u0111\xF9a v\u1EDBi t\xEDnh m\u1EA1ng c\u1EE7a m\xECnh. Th\xF4i,
+    r\u1EEDa m\u1EB7t cho t\u1EC9nh t\xE1o r\u1ED3i ra ngo\xE0i n\xE0y, m\u1EB9 c\xF3
+    vi\u1EC7c nh\u1EDD con \u0111\xE2y."
+  autoProgressLines: 010101010101010101
+  endDialogueLines: 000000000000000001
   autoProgressDelay: 1.5
   typingSpeed: 0.05
   choices:
@@ -31,7 +43,6 @@ MonoBehaviour:
     - "Con d\u1EADy r\u1ED3i m\xE0 M\u1EB9. T\u1EA1i c\xE1i gi\u01B0\u1EDDng h\xF4m
       nay n\xF3 c\u1EE9... gi\u1EEF ch\u1EB7t l\u1EA5y con, kh\xF4ng cho con d\u1EADy
       \u1EA5y ch\u1EE9. "
-    - asd
     nextDialogueIndexes: 01000000
     endDialogues: 
     specialActions: 
@@ -41,15 +52,64 @@ MonoBehaviour:
     choices:
     - "V\xE2ng, v\xE2ng... L\u1EA1i l\xE0 m\u1ED9t ng\xE0y loanh quanh v\u1EDBi ru\u1ED9ng
       v\u01B0\u1EDDn."
-    nextDialogueIndexes: 
-    endDialogues: 01
+    nextDialogueIndexes: 02000000
+    endDialogues: 
     specialActions: 
     specialTargetNames: []
-    giveQuest: 01
-  questInProgressIndex: 0
+    giveQuest: 
+  - dialogueIndex: 2
+    choices:
+    - ...
+    nextDialogueIndexes: 03000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  - dialogueIndex: 3
+    choices:
+    - "M\u1EB9 \xE0, th\u1EADt t\xECnh l\xE0 con ch\xE1n ng\u1EA5y vi\u1EC7c xua
+      \u0111u\u1ED5i m\u1EA5y con Slime quanh nh\xE0 m\u1ED7i ng\xE0y r\u1ED3i. Ch\xFAng
+      y\u1EBFu x\xECu, ch\u1ECDc nh\u1EB9 c\xE1i l\xE0 n\u1ED5 tung, ch\u1EB3ng c\xF3
+      ch\xFAt th\u1EED th\xE1ch n\xE0o c\u1EA3."
+    nextDialogueIndexes: 04000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  - dialogueIndex: 4
+    choices:
+    - "Con mu\u1ED1n th\u1EED s\u1EE9c m\xECnh v\u1EDBi th\u1EE9 g\xEC \u0111\xF3
+      m\u1EA1nh m\u1EBD h\u01A1n... Nh\u01B0 l\u0169 qu\xE1i v\u1EADt trong l\u1EDDi
+      \u0111\u1ED3n n\u1EB1m s\xE2u trong \u2018R\u1EEBng T\xE0n S\u01B0\u01A1ng\u2019
+      ph\xEDa T\xE2y B\u1EAFc kia ch\u1EB3ng h\u1EA1n!"
+    nextDialogueIndexes: 05000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  - dialogueIndex: 5
+    choices:
+    - "Th\xF4i \u0111\u01B0\u1EE3c r\u1ED3i... Con ch\u1EC9 n\xF3i \u0111\xF9a th\xF4i
+      m\xE0."
+    nextDialogueIndexes: 07000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  - dialogueIndex: 7
+    choices:
+    - "(M\xECnh kh\xF4ng th\u1EC3 n\xF3i g\xEC \u0111\u01B0\u1EE3c... M\u1EB9 m\xECnh
+      lu\xF4n n\u1ED5i gi\u1EADn m\u1ED7i khi m\xECnh nh\u1EAFc \u0111\u1EBFn khu
+      r\u1EEBng ph\xEDa T\xE2y B\u1EAFc.)"
+    nextDialogueIndexes: 08000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  questInProgressIndex: -1
   questCompletedIndex: 0
-  noMoreQuestsIndex: 0
-  quest: {fileID: 11400000, guid: b5ec77aa0e45c00429fca4d296d32c25, type: 2}
+  noMoreQuestsIndex: -1
+  quest: {fileID: 11400000, guid: f5fadfdcab57bab419cce3eb929cf1c4, type: 2}
   hideWhenInProgress: 0
   hideWhenCompleted: 0
   hideWhenHandedIn: 0

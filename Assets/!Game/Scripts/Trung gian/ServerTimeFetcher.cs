@@ -11,17 +11,12 @@ public class ServerTimeManager : MonoBehaviour
     public static DateTime ServerTime { get; private set; }
     public static float LocalTimeAtFetch { get; private set; }
 
-    private SaveController saveController;
     private const float REFRESH_INTERVAL = 300f;
     private bool autoSaveStarted = false;
 
     void Awake()
     {
-        saveController = FindFirstObjectByType<SaveController>();
-        if (saveController == null)
-        {
-            Debug.LogWarning("ServerTimeManager: Không tìm thấy SaveController. Auto-save sẽ không hoạt động.");
-        }
+
     }
 
     void OnEnable()
@@ -47,7 +42,7 @@ public class ServerTimeManager : MonoBehaviour
         {
             yield return FetchServerTime();
 
-            saveController?.SaveGame();
+            SaveController.Instance?.TriggerAutoSave();
 
             yield return new WaitForSeconds(REFRESH_INTERVAL);
         }
@@ -85,7 +80,7 @@ public class ServerTimeManager : MonoBehaviour
     {
         if (!hasFocus)
         {
-            saveController?.SaveGame();
+            SaveController.Instance?.TriggerAutoSave();
         }
     }
 }
