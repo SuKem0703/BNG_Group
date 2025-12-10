@@ -32,8 +32,19 @@ MonoBehaviour:
     l\xFAc \u0111\u1EA5t c\xF2n \u1EA9m th\xEC gieo ngay, ch\u1EE9 \u0111\u1EC3 n\u1EAFng
     tr\u01B0a hong kh\xF4 h\u1EBFt \u0111\u1EA5t th\xEC h\u1EA1t kh\xF3 n\u1EA3y
     m\u1EA7m l\u1EAFm."
-  autoProgressLines: 0101010101
-  endDialogueLines: 0000000001
+  - 
+  - "C\u1EA3m \u01A1n con trai. Con l\xE0m kh\xE9o l\u1EAFm, ch\u1EB3ng m\u1EA5y
+    ch\u1ED1c m\xE0 tr\u01B0\u1EDBc nh\xE0 m\xECnh s\u1EBD v\xE0ng r\u1EF1c m\xE0u
+    hoa th\xF4i."
+  - "V\xE0... con \u0111\xE3 d\xF9ng thanh ki\u1EBFm c\u1EE7a cha sao?  Tr\xF4ng
+    c\xE1ch con c\u1EA7m n\xF3, m\u1EB9 l\u1EA1i nh\u1EDB \u0111\u1EBFn \xF4ng \u1EA5y..."
+  - "\u0110\u01B0\u1EE3c r\u1ED3i, c\u1EA5t n\xF3 \u0111i. Gi\u1EDD con ngh\u1EC9
+    tay ch\xFAt... \xC0 khoan, ch\u1EBFt th\u1EADt!"
+  - "M\u1EA3i tr\u1ED3ng hoa m\xE0 m\u1EB9 qu\xEAn m\u1EA5t n\u1ED3i s\xFAp \u0111ang
+    h\u1EA7m. L\xF2 s\u01B0\u1EDFi s\u1EAFp t\u1EAFt ng\u1EA5m r\u1ED3i m\xE0 trong
+    nh\xE0 h\u1EBFt s\u1EA1ch c\u1EE7i."
+  autoProgressLines: 0101010101010101010101
+  endDialogueLines: 0000000000010000000001
   autoProgressDelay: 1.5
   typingSpeed: 0.05
   choices:
@@ -64,8 +75,28 @@ MonoBehaviour:
     specialActions: 
     specialTargetNames: []
     giveQuest: 
+  - dialogueIndex: 6
+    choices:
+    - "Xong xu\xF4i c\u1EA3 r\u1ED3i M\u1EB9 \u01A1i! M\u1EA5y lu\u1ED1ng \u0111\u1EA5t
+      \u0111\xE3 \u0111\u01B0\u1EE3c gieo h\u1EA1t \u0111\u1EA7y \u0111\u1EE7. Con
+      c\u0169ng \u0111\xE3 d\u1EA1y d\u1ED7 b\u1ECDn Slime m\u1ED9t tr\u1EADn, ch\u1EAFc
+      ch\xFAng kh\xF4ng d\xE1m b\xE9n m\u1EA3ng t\u1EDBi \u0111\xE2y s\u1EDBm \u0111\xE2u."
+    nextDialogueIndexes: 07000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  - dialogueIndex: 8
+    choices:
+    - "\xC0... v\xE2ng. N\xF3 h\u01A1i n\u1EB7ng v\xE0 r\u1EC9 s\xE9t m\u1ED9t ch\xFAt,
+      nh\u01B0ng v\u1EABn t\u1ED1t ch\xE1n so v\u1EDBi tay kh\xF4ng \u1EA1."
+    nextDialogueIndexes: 09000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
   questInProgressIndex: 3
-  questCompletedIndex: 0
+  questCompletedIndex: 6
   noMoreQuestsIndex: 0
   quest: {fileID: 11400000, guid: b5ec77aa0e45c00429fca4d296d32c25, type: 2}
   hideWhenInProgress: 0
