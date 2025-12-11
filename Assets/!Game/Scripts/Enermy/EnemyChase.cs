@@ -5,13 +5,8 @@ using UnityEngine.SceneManagement;
 public class EnemyChase : MonoBehaviour
 {
     [Header("Quest Settings")]
-    [Tooltip("ID dùng để tính Quest (VD: 'slime_blue'). 3 con Slime cùng loại phải có ID này GIỐNG NHAU.")]
     public string questTargetID;
-
-    [Tooltip("Nếu True: Enemy này sẽ lưu trạng thái chết vĩnh viễn (dùng cho Boss hoặc Quest Mobs).")]
     public bool isQuestEnemy = false;
-
-    [Tooltip("ID dùng để Save. ĐỂ TRỐNG để tự sinh theo tọa độ (Khuyên dùng cho quái thường).")]
     public string uniqueSaveID;
 
     [Header("Enemy Info")]
@@ -20,58 +15,47 @@ public class EnemyChase : MonoBehaviour
     public float damage = 10f;
     public int maxHealth = 100;
     public int currentHealth;
+    private float experienceReward;
+    private float goldReward;
 
     [Header("Movement")]
     public float chaseSpeed = 3f;
     public float detectionRadius = 5f;
     public float attackRange = 1f;
 
-    [Header("Attack Setings")]
-    public float attackDelay = 1f;
+    [Header("Attack Settings")]
+    public float attackCooldown = 1f;
+    private float lastAttackTime = -999f;
 
     [Header("Hurt Settings")]
-    [Tooltip("Thời gian choáng sau khi bị đánh")]
     public float hurtDuration = 1f;
 
     private PlayerStats playerStats;
     private Transform player;
-    private Vector3 spawnPoint;
     private Rigidbody2D rb;
-
-    [Header("Animation")]
     private EnemyAnimator enemyAnimator;
 
+    // State flags
     private bool isAttacking = false;
-    private Coroutine attackCoroutine;
-    private Coroutine hurtCoroutine;
     private bool isStunned = false;
     private bool isDead = false;
     private bool hasDealtDamageThisAttack = false;
+    private Coroutine hurtCoroutine;
 
-    // Sinh ID tự động ngay khi khởi tạo
     private void Awake()
     {
-        if (string.IsNullOrEmpty(uniqueSaveID))
-        {
-            uniqueSaveID = GlobalHelper.GenerateUniqueID(gameObject);
-        }
-
-        if (string.IsNullOrEmpty(questTargetID))
-        {
-            questTargetID = enemyName;
-        }
+        if (string.IsNullOrEmpty(uniqueSaveID)) uniqueSaveID = GlobalHelper.GenerateUniqueID(gameObject);
+        if (string.IsNullOrEmpty(questTargetID)) questTargetID = enemyName;
     }
 
-    // Khởi tạo và kiểm tra Save Data
     void Start()
     {
         playerStats = FindFirstObjectByType<PlayerStats>();
         player = GameObject.FindGameObjectWithTag("PlayerController")?.transform;
-        spawnPoint = transform.position;
-
         rb = GetComponent<Rigidbody2D>();
         enemyAnimator = GetComponent<EnemyAnimator>();
 
+        // Setup Detection Area
         GameObject detectionArea = new GameObject("DetectionArea");
         detectionArea.transform.SetParent(transform);
         detectionArea.transform.localPosition = Vector3.zero;
@@ -82,57 +66,43 @@ public class EnemyChase : MonoBehaviour
 
         currentHealth = maxHealth;
 
-        // Logic check Save Data cho Quest Enemy
         if (isQuestEnemy)
         {
-            if (SaveController.IsDataLoaded)
-            {
-                CheckPersistence();
-            }
-            else
-            {
-                SaveController.OnDataLoaded += HandleDataLoaded;
-            }
+            if (SaveController.IsDataLoaded) CheckPersistence();
+            else SaveController.OnDataLoaded += HandleDataLoaded;
         }
     }
 
-    // Hủy đăng ký sự kiện để tránh lỗi bộ nhớ
     private void OnDestroy()
     {
-        if (isQuestEnemy)
-        {
-            SaveController.OnDataLoaded -= HandleDataLoaded;
-        }
+        if (isQuestEnemy) SaveController.OnDataLoaded -= HandleDataLoaded;
     }
 
-    // Xử lý khi dữ liệu load xong (trường hợp load scene chưa xong data)
     private void HandleDataLoaded()
     {
         SaveController.OnDataLoaded -= HandleDataLoaded;
         CheckPersistence();
     }
 
-    // Kiểm tra xem Enemy này đã bị tiêu diệt chưa
     private void CheckPersistence()
     {
         if (SaveController.Instance != null && !string.IsNullOrEmpty(uniqueSaveID))
         {
             if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, uniqueSaveID))
-            {
                 Destroy(gameObject);
-            }
         }
     }
 
-    // Logic update mỗi khung hình
     void Update()
     {
         if (player == null) return;
 
         if (PauseController.IsGamePause || isStunned || isDead || isAttacking)
         {
-            rb.linearVelocity = Vector2.zero;
-            if (enemyAnimator != null) enemyAnimator.SetWalking(false);
+            StopMovement();
+
+            if (!isAttacking && enemyAnimator != null) enemyAnimator.SetWalking(false);
+
             return;
         }
 
@@ -142,69 +112,60 @@ public class EnemyChase : MonoBehaviour
         {
             PlayerStats.IsOnBattle = true;
 
-            if (distanceToPlayer <= attackRange && !isAttacking)
+            if (distanceToPlayer <= attackRange)
             {
-                StartAttack();
+                StopMovement();
+                if (enemyAnimator != null) enemyAnimator.SetWalking(false);
+
+                if (Time.time >= lastAttackTime + attackCooldown)
+                {
+                    PerformAttack();
+                }
             }
-            else if (!isAttacking)
+            else
             {
                 ChasePlayer();
             }
         }
         else
         {
-            rb.linearVelocity = Vector2.zero;
+            StopMovement();
             if (enemyAnimator != null) enemyAnimator.SetWalking(false);
         }
     }
 
-    // Di chuyển tới player
     void ChasePlayer()
     {
         Vector2 direction = (player.position - transform.position).normalized;
         rb.linearVelocity = direction * chaseSpeed;
-
         if (enemyAnimator != null) enemyAnimator.SetWalking(true);
     }
 
-    // Bắt đầu tấn công
-    void StartAttack()
+    // Hàm dừng di chuyển dùng chung
+    void StopMovement()
     {
-        if (attackCoroutine == null)
-        {
-            attackCoroutine = StartCoroutine(AttackRoutine());
-        }
+        rb.linearVelocity = Vector2.zero;
     }
 
-    // Coroutine thực hiện tấn công
-    IEnumerator AttackRoutine()
+    // Hàm kích hoạt tấn công
+    void PerformAttack()
     {
         isAttacking = true;
-        rb.linearVelocity = Vector2.zero;
+        hasDealtDamageThisAttack = false;
+        StopMovement();
 
-        while (player != null && Vector2.Distance(transform.position, player.position) <= attackRange && !isStunned && !isDead)
+        if (enemyAnimator != null)
         {
-            hasDealtDamageThisAttack = false;
-
-            if (enemyAnimator != null)
-            {
-                enemyAnimator.SetWalking(false);
-                enemyAnimator.TriggerAttack();
-            }
-
-            yield return new WaitForSeconds(attackDelay);
+            enemyAnimator.SetWalking(false);
+            enemyAnimator.TriggerAttack();
         }
-
-        isAttacking = false;
-        attackCoroutine = null;
     }
 
-    // Gây sát thương (được gọi từ Animation Event)
     public void DealDamage()
     {
         if (isDead || isStunned || hasDealtDamageThisAttack || PauseController.IsGamePause) return;
 
-        if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
+        if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange + 0.5f)
         {
             var health = player.GetComponentInParent<PlayerStats>();
             if (health != null)
@@ -215,27 +176,26 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    // Nhận sát thương từ người chơi
+    public void EndAttack()
+    {
+        isAttacking = false;
+        lastAttackTime = Time.time;
+    }
+
+
     public void TakeDamage(int damage, DamageSourceType damageSourceType)
     {
         if (isDead) return;
 
         currentHealth -= damage;
-        Debug.Log($"{gameObject.name} took {damage} damage. HP: {currentHealth}/{maxHealth}");
 
         GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
-
         if (popupPrefab != null)
         {
             Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
-
             GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
-
             DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
-            if (popupScript != null)
-            {
-                popupScript.Setup(damage, damageSourceType);
-            }
+            if (popupScript != null) popupScript.Setup(damage, damageSourceType);
         }
 
         if (currentHealth <= 0 && !isDead)
@@ -247,42 +207,29 @@ public class EnemyChase : MonoBehaviour
 
         if (currentHealth > 0)
         {
-            if (hurtCoroutine != null)
-            {
-                StopCoroutine(hurtCoroutine);
-            }
+            if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
 
             bool shouldStun = false;
-            if (playerStats != null)
-            {
-                if (playerStats.level > levelEnemy + 5)
-                {
-                    shouldStun = true;
-                }
-            }
+            if (playerStats != null && playerStats.level > levelEnemy + 5)
+                shouldStun = true;
 
             if (shouldStun)
             {
-                if (isAttacking && attackCoroutine != null)
+                // Nếu bị choáng khi đang đánh -> Hủy đánh ngay
+                if (isAttacking)
                 {
-                    StopCoroutine(attackCoroutine);
                     isAttacking = false;
-                    attackCoroutine = null;
                 }
-
                 hurtCoroutine = StartCoroutine(HurtRoutine());
             }
         }
     }
 
-    // Coroutine xử lý trạng thái bị thương
     private IEnumerator HurtRoutine()
     {
         isStunned = true;
-
         if (enemyAnimator != null) enemyAnimator.TriggerHurt();
-
-        rb.linearVelocity = Vector2.zero;
+        StopMovement();
 
         yield return new WaitForSeconds(hurtDuration);
 
@@ -290,19 +237,13 @@ public class EnemyChase : MonoBehaviour
         hurtCoroutine = null;
     }
 
-    // Xử lý khi chết
     void Die()
     {
         isStunned = true;
-
-        if (attackCoroutine != null) StopCoroutine(attackCoroutine);
         if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
 
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector2.zero;
-            rb.bodyType = RigidbodyType2D.Kinematic;
-        }
+        StopMovement();
+        rb.bodyType = RigidbodyType2D.Kinematic;
 
         if (enemyAnimator != null)
         {
@@ -312,10 +253,14 @@ public class EnemyChase : MonoBehaviour
 
         PlayerStats.IsOnBattle = false;
 
+        int expGain = Mathf.FloorToInt(experienceReward * Random.Range(0.9f, 1.1f));
+        PlayerStats.Instance.AddEXP(expGain);
+
+        int goldGain = Mathf.FloorToInt(goldReward * Random.Range(0.9f, 1.1f));
+        PlayerStats.Instance.AddCoin(goldGain);
+
         if (QuestController.Instance != null && !string.IsNullOrEmpty(questTargetID))
-        {
             QuestController.Instance.MarkEnemyDefeated(questTargetID);
-        }
 
         if (isQuestEnemy && SaveController.Instance != null && !string.IsNullOrEmpty(uniqueSaveID))
         {
@@ -324,32 +269,21 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    // Hàm gọi bởi Animation Event khi animation chết kết thúc
     public void Dead()
     {
         StopAllCoroutines();
         Destroy(gameObject);
     }
 
-    // Kết thúc tấn công (Animation Event)
-    public void EndAttack()
-    {
-        isAttacking = false;
-    }
-
-    // Phát hiện người chơi
     public void OnPlayerDetected(Transform detectedPlayer)
     {
         player = detectedPlayer;
     }
 
-    // Mất dấu người chơi
     public void OnPlayerLost()
     {
         player = null;
-        rb.linearVelocity = Vector2.zero;
-
-        if (enemyAnimator != null)
-            enemyAnimator.SetWalking(false);
+        StopMovement();
+        if (enemyAnimator != null) enemyAnimator.SetWalking(false);
     }
 }

@@ -137,12 +137,6 @@ public class PlayerStats : MonoBehaviour
 
     public bool isInvincible = false;
 
-    [Header("Hit Feedback")]
-    [SerializeField] private SpriteRenderer knightRenderer;
-    [SerializeField] private SpriteRenderer mageRenderer;
-    [SerializeField] private float flashDuration = 0.1f;
-    [SerializeField] private int flashCount = 3;
-
     public float potionCooldownDuration = 2.0f;
     [SerializeField] private float potionCooldownTimer;
 
@@ -159,11 +153,6 @@ public class PlayerStats : MonoBehaviour
         Instance = this;
 
         Application.runInBackground = true;
-
-        if (knightRenderer == null)
-            knightRenderer = GetComponent<ClassController>().knightObject.GetComponent<SpriteRenderer>();
-        if (mageRenderer == null)
-            mageRenderer = GetComponent<ClassController>().mageObject.GetComponent<SpriteRenderer>();
 
         if (playerCollider == null) playerCollider = GetComponent<CapsuleCollider2D>();
     }
@@ -471,11 +460,17 @@ public class PlayerStats : MonoBehaviour
 
         currentHP -= dmgTaken;
 
+        GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
+        if (popupPrefab != null)
+        {
+            Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
+            GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
+            DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
+            if (popupScript != null) popupScript.Setup(damage, DamageSourceType.Enemy);
+        }
+
         if (isKnight) knightHealth = currentHP;
         else mageHealth = currentHP;
-
-        SpriteRenderer renderer = isKnight ? knightRenderer : mageRenderer;
-        StartCoroutine(FlashCharacter(renderer));
 
         if (currentHP <= 0)
             HandleDeath(isKnight ? "Knight" : "Mage");
@@ -642,21 +637,6 @@ public class PlayerStats : MonoBehaviour
         else
         {
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameOverScene");
-        }
-    }
-
-    // Hiệu ứng nhấp nháy khi trúng đòn
-    private IEnumerator FlashCharacter(SpriteRenderer renderer)
-    {
-        if (renderer == null) yield break;
-        Color originalColor = renderer.color;
-
-        for (int i = 0; i < flashCount; i++)
-        {
-            renderer.color = new Color(1f, 0.3f, 0.3f);
-            yield return new WaitForSeconds(flashDuration);
-            renderer.color = originalColor;
-            yield return new WaitForSeconds(flashDuration);
         }
     }
 

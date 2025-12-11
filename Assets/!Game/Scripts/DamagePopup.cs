@@ -47,6 +47,9 @@ public class DamagePopup : MonoBehaviour
             case DamageSourceType.Heal:
                 ColorUtility.TryParseHtmlString("#3BFF7E", out newColor);
                 break;
+            case DamageSourceType.Enemy:
+                ColorUtility.TryParseHtmlString("#FF8C3B", out newColor);
+                break;
             case DamageSourceType.Environment:
             default:
                 newColor = textMesh.color;

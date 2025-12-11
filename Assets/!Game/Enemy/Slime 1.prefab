@@ -212,7 +212,7 @@ GameObject:
   - component: {fileID: 5773387763495680172}
   - component: {fileID: 1554956197311286333}
   m_Layer: 6
-  m_Name: Slime
+  m_Name: Slime 1
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -379,7 +379,7 @@ MonoBehaviour:
   chaseSpeed: 3
   detectionRadius: 5
   attackRange: 1.25
-  attackDelay: 1.5
+  attackCooldown: 0.25
   hurtDuration: 1
 --- !u!95 &3051677935332708012
 Animator:
