@@ -292,6 +292,8 @@ public class GameSettingController : MonoBehaviour
             PlayerPrefs.Save();
         }
 
+        MenuStateManager.Instance.ResetState();
+
         // Trả về MainMenu
         SceneManager.LoadScene("MainMenu");
     }

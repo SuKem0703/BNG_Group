@@ -1637,6 +1637,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4533794114815784058, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: mapType
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4628291293712470032, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2759,7 +2763,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8883875592996786877, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.8878233
+      value: 5.8928633
       objectReference: {fileID: 0}
     - target: {fileID: 8992818244039066185, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3991,11 +3995,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9f2cc607d04e9664e9ac03468f736163, type: 3}
---- !u!1 &32602693 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1881203985810376631, guid: 9f2cc607d04e9664e9ac03468f736163, type: 3}
-  m_PrefabInstance: {fileID: 32602692}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &48686761
 GameObject:
   m_ObjectHideFlags: 0
@@ -31314,6 +31313,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3913558003946125615, guid: 9f2cc607d04e9664e9ac03468f736163, type: 3}
   m_PrefabInstance: {fileID: 744978118}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &759586715 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3913558003946125615, guid: 9f2cc607d04e9664e9ac03468f736163, type: 3}
+  m_PrefabInstance: {fileID: 32602692}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &774319415
 GameObject:
   m_ObjectHideFlags: 0
@@ -31408,6 +31412,8 @@ GameObject:
   - component: {fileID: 865456893}
   - component: {fileID: 865456892}
   - component: {fileID: 865456891}
+  - component: {fileID: 865456896}
+  - component: {fileID: 865456895}
   m_Layer: 8
   m_Name: Joanna
   m_TagString: Untagged
@@ -31443,6 +31449,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dialogueDataList: []
+  playerName: Elric
+  playerPortrait: {fileID: 0}
   triggerOnEnter: 0
 --- !u!95 &865456892
 Animator:
@@ -31570,6 +31578,79 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.5, y: 1.2}
   m_EdgeRadius: 0
+--- !u!58 &865456895
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 865456888}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
+--- !u!70 &865456896
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 865456888}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Size: {x: 0.5, y: 1}
+  m_Direction: 0
 --- !u!213 &866059064
 Sprite:
   m_ObjectHideFlags: 0
@@ -32313,7 +32394,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: levelEnemy
-      value: 10
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5748400431044971867, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: damagePopupPrefab
@@ -32321,11 +32402,11 @@ PrefabInstance:
       objectReference: {fileID: 2960487663141793060, guid: 68eb536ab1234324aa2411b09b1397ac, type: 3}
     - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.5761733
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.2037716
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -36583,11 +36664,11 @@ PrefabInstance:
       objectReference: {fileID: 2960487663141793060, guid: 68eb536ab1234324aa2411b09b1397ac, type: 3}
     - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.32
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.1
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 5985982328215177655, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -37505,7 +37586,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c11447a8cbc5e3c4486cd6bd7e9b187b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCShop
-  shopUIObject: {fileID: 32602693}
+  shopUIObject: {fileID: 759586715}
 --- !u!1 &1538779034
 GameObject:
   m_ObjectHideFlags: 0

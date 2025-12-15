@@ -258,13 +258,25 @@ public class StorageChestController : MonoBehaviour
         }
         else
         {
-            Debug.Log("Túi đầy!");
+            ShowErrorMessage("Túi đồ đã đầy!");
         }
     }
 
     // Cất đồ từ Túi vào Rương
     private void DepositItem(Item item)
     {
+        if (item.itemType == ItemType.QuestItem)
+        {
+            ShowErrorMessage("Không thể cất vật phẩm nhiệm vụ!");
+            return;
+        }
+
+        if (item.isEquipped)
+        {
+            ShowErrorMessage("Vui lòng tháo trang bị trước khi cất!");
+            return;
+        }
+
         if (AddItemToChestInternal(item))
         {
             Destroy(item.gameObject);
@@ -274,6 +286,30 @@ public class StorageChestController : MonoBehaviour
         else
         {
             Debug.Log("Rương đầy!");
+        }
+    }
+
+    // Hiển thị thông báo lỗi sử dụng NotifyUI
+    private void ShowErrorMessage(string message)
+    {
+        // Kiểm tra xem LoadResourceManager có tồn tại không
+        if (LoadResourceManager.Instance == null || LoadResourceManager.Instance.NotifyUIPrefab == null)
+        {
+            Debug.LogWarning("Chưa load NotifyUIPrefab trong LoadResourceManager, dùng Debug.Log thay thế: " + message);
+            return;
+        }
+
+        // Tạo thông báo từ Prefab
+        GameObject notifyUIObj = Instantiate(LoadResourceManager.Instance.NotifyUIPrefab);
+        NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
+
+        if (notifyUI != null)
+        {
+            notifyUI.Show(message);
+        }
+        else
+        {
+            Destroy(notifyUIObj);
         }
     }
 

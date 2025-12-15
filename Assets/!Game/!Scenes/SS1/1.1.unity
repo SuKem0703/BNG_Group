@@ -4137,7 +4137,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8883875592996786877, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -12.897059
+      value: -12.892864
       objectReference: {fileID: 0}
     - target: {fileID: 8992818244039066185, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchorMax.y
@@ -36876,7 +36876,7 @@ Tilemap:
       - {fileID: 1249039380, guid: 223f222ad41b6fc4c8d286c6f4267f39, type: 3}
       - {fileID: 1895278393, guid: 223f222ad41b6fc4c8d286c6f4267f39, type: 3}
       - {fileID: 1943840508, guid: 223f222ad41b6fc4c8d286c6f4267f39, type: 3}
-      m_AnimationSpeed: 10
+      m_AnimationSpeed: 10.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -8, y: 28, z: 0}
@@ -66038,6 +66038,10 @@ PrefabInstance:
       propertyPath: Target.TrackingTarget
       value: 
       objectReference: {fileID: 1153038317}
+    - target: {fileID: 4814466114242016829, guid: 699952044979f3d439213ba1e4057502, type: 3}
+      propertyPath: introID
+      value: PanIntro_Map1.1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

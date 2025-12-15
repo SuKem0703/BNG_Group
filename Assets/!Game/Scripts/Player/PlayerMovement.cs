@@ -67,6 +67,12 @@ public class PlayerMovement : MonoBehaviour
 
         rb.linearVelocity = moveInput * moveSpeed;
     }
+
+    private void OnEnable()
+    {
+        isDashing = false;
+        isDashOnCooldown = false;
+    }
     public void Move(InputAction.CallbackContext context)
     {
         Vector2 rawInput = context.ReadValue<Vector2>();

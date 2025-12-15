@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Unity.Cinemachine.Samples;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -115,6 +116,16 @@ public class EnemyChase : MonoBehaviour
             if (distanceToPlayer <= attackRange)
             {
                 StopMovement();
+
+                if (enemyAnimator != null && !isAttacking)
+                {
+                    if (distanceToPlayer > 0.1f)
+                    {
+                        Vector2 directionToPlayer = player.position - transform.position;
+                        enemyAnimator.SetFacingDirection(directionToPlayer);
+                    }
+                }
+
                 if (enemyAnimator != null) enemyAnimator.SetWalking(false);
 
                 if (Time.time >= lastAttackTime + attackCooldown)
@@ -285,5 +296,17 @@ public class EnemyChase : MonoBehaviour
         player = null;
         StopMovement();
         if (enemyAnimator != null) enemyAnimator.SetWalking(false);
+    }
+
+    // Thêm vào cuối class EnemyChase
+    private void OnDrawGizmosSelected()
+    {
+        // Vẽ vùng phát hiện (màu vàng)
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, detectionRadius);
+
+        // Vẽ vùng tấn công (màu đỏ)
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 }

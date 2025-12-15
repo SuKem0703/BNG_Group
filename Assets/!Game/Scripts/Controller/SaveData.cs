@@ -6,6 +6,10 @@ public class SaveData
 {
     public Vector3 playerPosition;
     public string currentSceneName;
+
+    public Vector3 checkpointPosition;
+    public string checkpointSceneName;
+
     public int backPackSlotCount;
     public List<InventorySaveData> inventorySaveData;
     public List<InventorySaveData> hotbarSaveData;

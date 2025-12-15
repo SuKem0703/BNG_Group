@@ -13,6 +13,13 @@ public class MenuStateManager : MonoBehaviour
         else Instance = this;
     }
 
+    private void OnDestroy()
+    {
+        ResetState();
+
+        if (Instance == this) Instance = null;
+    }
+
     // Open a specified menu panel
     public void OpenMenu(GameObject menuPanel, bool shouldPause = true)
     {
@@ -51,12 +58,24 @@ public class MenuStateManager : MonoBehaviour
         PauseController.SetPause(false);
 
         CommonUIController.Instance?.SetUIVisible(true);
+        //GameStateManager.EndLoading();
     }
     IEnumerator EnableMenuAccessRoutine()
     {
         yield return null;
 
         GameStateManager.CanOpenMenu = true;
+    }
+
+    public void ResetState()
+    {
+        // Reset global states to avoid stale pause/loading blocking input after scene change
+        PauseController.SetPause(false);
+        Time.timeScale = 1f;
+        GameStateManager.IsMenuOpen = false;
+        GameStateManager.CanOpenMenu = true;
+        // Ensure loading flag cleared
+        GameStateManager.EndLoading();
     }
 
     public bool IsAnyMenuOpen() => currentActiveMenu != null;

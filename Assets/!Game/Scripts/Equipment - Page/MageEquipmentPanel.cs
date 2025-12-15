@@ -140,6 +140,23 @@ public class MageEquipmentPanel : MonoBehaviour
 
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
+        // Defensive checks
+        if (savedData == null)
+        {
+            Debug.LogWarning("[MageEquipmentPanel] SetEquipmentItems called with null savedData.");
+            return;
+        }
+
+        if (itemDictionary == null)
+        {
+            itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
+            if (itemDictionary == null)
+            {
+                Debug.LogError("[MageEquipmentPanel] ItemDictionary not found. Cannot SetEquipmentItems.");
+                return;
+            }
+        }
+
         ClearSlot(Staff);
         ClearSlot(Catalyst);
         ClearSlot(Hat);
@@ -180,6 +197,14 @@ public class MageEquipmentPanel : MonoBehaviour
                         slotComponent.currentItem = itemGO;
                     }
                 }
+                else
+                {
+                    Debug.LogWarning($"[MageEquipmentPanel] Item prefab not found for ID {data.itemID}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[MageEquipmentPanel] No target slot for slotIndex {data.slotIndex}");
             }
         }
 

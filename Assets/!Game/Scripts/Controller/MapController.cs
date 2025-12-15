@@ -12,7 +12,7 @@ public class MapController : MonoBehaviour
     public static MapController Instance { get; private set; }
 
     [Header("Cấu hình Map")]
-    [SerializeField] private string mapName = "";
+    public string mapName = "";
     [SerializeField] private MapType mapType = MapType.SafeZone;
     public AudioClip bgmClip;
     public bool IsCutsceneMode = false;

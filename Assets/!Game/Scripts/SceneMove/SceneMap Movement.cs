@@ -43,6 +43,7 @@ public class SceneMapMove : MonoBehaviour
 
         if (!string.IsNullOrEmpty(SaveController.pendingSceneName))
         {
+            Debug.LogWarning($"[SceneMapMove] Đang chuyển cảnh sang '{SaveController.pendingSceneName}'. Chặn chuyển sang '{sceneName}'.");
             return;
         }
 
@@ -95,14 +96,14 @@ public class SceneMapMove : MonoBehaviour
                 return;
             }
 
-            Debug.Log($"Bắt đầu quy trình Lưu và Chuyển sang map '{sceneName}'...");
+            //Debug.Log($"Bắt đầu quy trình Lưu và Chuyển sang map '{sceneName}'...");
 
             SaveController.nextSpawnPosition = playerPosition;
             SaveController.pendingSceneName = sceneName;
 
             saveController.SaveGame(() =>
             {
-                Debug.Log($"Lưu hoàn tất. Đang chuyển sang scene: {sceneName}");
+                //Debug.Log($"Lưu hoàn tất. Đang chuyển sang scene: {sceneName}");
                 SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
             });
 

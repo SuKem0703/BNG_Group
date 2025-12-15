@@ -625,19 +625,21 @@ public class PlayerStats : MonoBehaviour
     {
         if (PauseController.IsGamePause) return;
 
-        Debug.Log("💀 GAME OVER");
+        DeathManager.Instance.HandlePlayerDeath();
 
-        PauseController.SetPause(true);
+        //Debug.Log("💀 GAME OVER");
 
-        GameObject gameOverUI = GameObject.Find("GameOverUI");
-        if (gameOverUI != null)
-        {
-            gameOverUI.SetActive(true);
-        }
-        else
-        {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("GameOverScene");
-        }
+        //PauseController.SetPause(true);
+
+        //GameObject gameOverUI = GameObject.Find("GameOverUI");
+        //if (gameOverUI != null)
+        //{
+        //    gameOverUI.SetActive(true);
+        //}
+        //else
+        //{
+        //    UnityEngine.SceneManagement.SceneManager.LoadScene("GameOverScene");
+        //}
     }
 
     // Hồi máu cho nhân vật đang active

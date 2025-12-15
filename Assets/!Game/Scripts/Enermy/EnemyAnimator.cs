@@ -35,26 +35,15 @@ public class EnemyAnimator : MonoBehaviour
 
     public void SetFacingDirection(Vector2 direction)
     {
-        if (direction == Vector2.zero)
-            return;
+        if (direction == Vector2.zero) return;
 
         Vector2 dir = direction.normalized;
 
-        // Ưu tiên trục nào lớn hơn
-        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-        {
-            // Left / Right
-            animator.SetFloat("LastInputX", dir.x > 0 ? 1 : -1);
-            animator.SetFloat("LastInputY", 0);
-        }
-        else
-        {
-            // Up / Down
-            animator.SetFloat("LastInputX", 0);
-            animator.SetFloat("LastInputY", dir.y > 0 ? 1 : -1);
-        }
+        animator.SetFloat("InputX", dir.x);
+        animator.SetFloat("InputY", dir.y);
+        animator.SetFloat("LastInputX", dir.x);
+        animator.SetFloat("LastInputY", dir.y);
     }
-
 
     public void SetWalking(bool walking)
     {
