@@ -31,7 +31,10 @@ public class Chest : MonoBehaviour, IInteractable
 
     void Awake()
     {
-        ChestID ??= GlobalHelper.GenerateUniqueID(gameObject);
+        if (string.IsNullOrEmpty(ChestID))
+        {
+            ChestID = GlobalHelper.GenerateUniqueID(gameObject);
+        }
     }
     public bool CanInteract()
     {

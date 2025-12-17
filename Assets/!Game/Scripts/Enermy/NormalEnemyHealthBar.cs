@@ -24,6 +24,13 @@ public class EnemyHealthBar : MonoBehaviour
     void Start()
     {
         enemyChase = GetComponentInParent<EnemyChase>();
+
+        if (enemyChase != null && enemyChase.enemyRank == EnemyRank.Boss)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         canvas = GetComponent<Canvas>();
         mainCamera = Camera.main.transform;
 

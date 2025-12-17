@@ -3,6 +3,13 @@ using Unity.Cinemachine.Samples;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+public enum EnemyRank
+{
+    Normal,
+    Elite,
+    Boss
+}
+
 public class EnemyChase : MonoBehaviour
 {
     [Header("Quest Settings")]
@@ -11,45 +18,48 @@ public class EnemyChase : MonoBehaviour
     public string uniqueSaveID;
 
     [Header("Enemy Info")]
+    public EnemyRank enemyRank = EnemyRank.Normal;
     public string enemyName = "Slime";
     public int levelEnemy = 1;
     public float damage = 10f;
     public int maxHealth = 100;
     public int currentHealth;
-    private float experienceReward;
-    private float goldReward;
+    public float experienceReward;
+    public float goldReward;
 
     [Header("Movement")]
     public float chaseSpeed = 3f;
     public float detectionRadius = 5f;
     public float attackRange = 1f;
+    public float attackTriggerBuffer = 0.5f; // Khoảng cách buffer để kích hoạt tấn công
+    public float chaseResumeBuffer = 0.2f; // Khoảng cách buffer để tiếp tục đuổi theo
 
     [Header("Attack Settings")]
     public float attackCooldown = 1f;
-    private float lastAttackTime = -999f;
+    protected float lastAttackTime = -999f;
 
     [Header("Hurt Settings")]
     public float hurtDuration = 1f;
 
-    private PlayerStats playerStats;
-    private Transform player;
-    private Rigidbody2D rb;
-    private EnemyAnimator enemyAnimator;
+    protected PlayerStats playerStats;
+    protected Transform player;
+    protected Rigidbody2D rb;
+    protected EnemyAnimator enemyAnimator;
 
     // State flags
-    private bool isAttacking = false;
-    private bool isStunned = false;
-    private bool isDead = false;
-    private bool hasDealtDamageThisAttack = false;
-    private Coroutine hurtCoroutine;
+    protected bool isAttacking = false;
+    protected bool isStunned = false;
+    protected bool isDead = false;
+    protected bool hasDealtDamageThisAttack = false;
+    protected Coroutine hurtCoroutine;
 
-    private void Awake()
+    protected virtual void Awake()
     {
         if (string.IsNullOrEmpty(uniqueSaveID)) uniqueSaveID = GlobalHelper.GenerateUniqueID(gameObject);
         if (string.IsNullOrEmpty(questTargetID)) questTargetID = enemyName;
     }
 
-    void Start()
+    protected virtual void Start()
     {
         playerStats = FindFirstObjectByType<PlayerStats>();
         player = GameObject.FindGameObjectWithTag("PlayerController")?.transform;
@@ -66,6 +76,11 @@ public class EnemyChase : MonoBehaviour
         detectionArea.AddComponent<EnemyDetection>().enemyChase = this;
 
         currentHealth = maxHealth;
+
+        if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
+        {
+            BossHUD.Instance.ShowBossHealth(this);
+        }
 
         if (isQuestEnemy)
         {
@@ -94,36 +109,33 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    void Update()
+    protected virtual void Update()
     {
         if (player == null) return;
 
         if (PauseController.IsGamePause || isStunned || isDead || isAttacking)
         {
             StopMovement();
-
             if (!isAttacking && enemyAnimator != null) enemyAnimator.SetWalking(false);
-
             return;
         }
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
+        float actualTriggerDistance = attackRange - attackTriggerBuffer;
+
         if (distanceToPlayer <= detectionRadius)
         {
             PlayerStats.IsOnBattle = true;
 
-            if (distanceToPlayer <= attackRange)
+            if (distanceToPlayer <= actualTriggerDistance)
             {
                 StopMovement();
 
-                if (enemyAnimator != null && !isAttacking)
+                if (distanceToPlayer > 0.1f && enemyAnimator != null)
                 {
-                    if (distanceToPlayer > 0.1f)
-                    {
-                        Vector2 directionToPlayer = player.position - transform.position;
-                        enemyAnimator.SetFacingDirection(directionToPlayer);
-                    }
+                    Vector2 directionToPlayer = player.position - transform.position;
+                    enemyAnimator.SetFacingDirection(directionToPlayer);
                 }
 
                 if (enemyAnimator != null) enemyAnimator.SetWalking(false);
@@ -133,9 +145,20 @@ public class EnemyChase : MonoBehaviour
                     PerformAttack();
                 }
             }
-            else
+            else if (distanceToPlayer > actualTriggerDistance + chaseResumeBuffer)
             {
                 ChasePlayer();
+            }
+            else
+            {
+                StopMovement();
+                if (enemyAnimator != null) enemyAnimator.SetWalking(false);
+
+                if (distanceToPlayer > 0.1f && enemyAnimator != null)
+                {
+                    Vector2 directionToPlayer = player.position - transform.position;
+                    enemyAnimator.SetFacingDirection(directionToPlayer);
+                }
             }
         }
         else
@@ -145,7 +168,7 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    void ChasePlayer()
+    protected void ChasePlayer()
     {
         Vector2 direction = (player.position - transform.position).normalized;
         rb.linearVelocity = direction * chaseSpeed;
@@ -153,13 +176,13 @@ public class EnemyChase : MonoBehaviour
     }
 
     // Hàm dừng di chuyển dùng chung
-    void StopMovement()
+    protected void StopMovement()
     {
         rb.linearVelocity = Vector2.zero;
     }
 
     // Hàm kích hoạt tấn công
-    void PerformAttack()
+    protected virtual void PerformAttack()
     {
         isAttacking = true;
         hasDealtDamageThisAttack = false;
@@ -172,11 +195,11 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    public void DealDamage()
+    public virtual void DealDamage()
     {
         if (isDead || isStunned || hasDealtDamageThisAttack || PauseController.IsGamePause) return;
 
-        if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange + 0.5f)
+        if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
         {
             var health = player.GetComponentInParent<PlayerStats>();
             if (health != null)
@@ -236,7 +259,7 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    private IEnumerator HurtRoutine()
+    protected IEnumerator HurtRoutine()
     {
         isStunned = true;
         if (enemyAnimator != null) enemyAnimator.TriggerHurt();
@@ -248,7 +271,7 @@ public class EnemyChase : MonoBehaviour
         hurtCoroutine = null;
     }
 
-    void Die()
+    protected virtual void Die()
     {
         isStunned = true;
         if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
@@ -263,6 +286,11 @@ public class EnemyChase : MonoBehaviour
         }
 
         PlayerStats.IsOnBattle = false;
+
+        if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
+        {
+            BossHUD.Instance.HideBossHealth();
+        }
 
         int expGain = Mathf.FloorToInt(experienceReward * Random.Range(0.9f, 1.1f));
         PlayerStats.Instance.AddEXP(expGain);
@@ -280,7 +308,7 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    public void Dead()
+    protected virtual void Dead()
     {
         StopAllCoroutines();
         Destroy(gameObject);
@@ -298,15 +326,18 @@ public class EnemyChase : MonoBehaviour
         if (enemyAnimator != null) enemyAnimator.SetWalking(false);
     }
 
-    // Thêm vào cuối class EnemyChase
     private void OnDrawGizmosSelected()
     {
-        // Vẽ vùng phát hiện (màu vàng)
+        // Vùng phát hiện (Vàng)
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRadius);
 
-        // Vẽ vùng tấn công (màu đỏ)
+        // Vùng Hitbox Gây sát thương (Đỏ)
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        // Vùng Kích hoạt tấn công (Xanh dương)
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, attackRange - attackTriggerBuffer);
     }
 }

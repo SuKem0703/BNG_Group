@@ -444,9 +444,9 @@ public class PlayerStats : MonoBehaviour
     }
 
     // Nhận sát thương
-    public void TakeDamage(int damage)
+    public int TakeDamage(int damage)
     {
-        if (isInvincible) return;
+        if (isInvincible) return 0;
 
         float mitigation = finalDefense / (finalDefense + 100f);
         float reductionFactor = (1f - mitigation) * (1f - damageReduction);
@@ -466,7 +466,7 @@ public class PlayerStats : MonoBehaviour
             Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
             GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
             DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
-            if (popupScript != null) popupScript.Setup(damage, DamageSourceType.Enemy);
+            if (popupScript != null) popupScript.Setup(dmgTaken, DamageSourceType.Enemy);
         }
 
         if (isKnight) knightHealth = currentHP;
@@ -474,6 +474,8 @@ public class PlayerStats : MonoBehaviour
 
         if (currentHP <= 0)
             HandleDeath(isKnight ? "Knight" : "Mage");
+
+        return dmgTaken;
     }
 
     // Set trạng thái bất tử
