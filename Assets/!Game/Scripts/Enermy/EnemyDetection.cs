@@ -2,7 +2,7 @@
 
 public class EnemyDetection : MonoBehaviour
 {
-    public EnemyChase enemyChase;
+    public Enemy enemyChase;
     private Transform player;
     private void Start()
     {

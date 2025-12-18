@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
-public class VampireKing : EnemyChase
+public class VampireKing : Enemy
 {
     [Header("Vampire Stats")]
     public float lifeStealRatio = 0.5f;
@@ -12,7 +13,10 @@ public class VampireKing : EnemyChase
 
     [Header("Phase 1: Summoning")]
     public GameObject minionPrefab;
-    public Transform[] summonPoints;
+
+    // Khoảng cách triệu hồi đệ
+    public float summonDistance = 2.0f;
+
     public float summonInterval = 10f;
 
     private bool _hitFrame1Success = false;
@@ -25,6 +29,8 @@ public class VampireKing : EnemyChase
     private bool _hasExplodedOnDeath = false;
     private bool _isTrueForm = false;
 
+    private List<GameObject> _activeMinions = new List<GameObject>();
+
     private CapsuleCollider2D _bodyCollider;
 
     protected override void Start()
@@ -33,7 +39,6 @@ public class VampireKing : EnemyChase
 
         _bodyCollider = GetComponent<CapsuleCollider2D>();
 
-        // Setup trạng thái ban đầu
         if (currentPhaseIndex == 0)
         {
             _isTrueForm = false;
@@ -41,12 +46,10 @@ public class VampireKing : EnemyChase
         }
         else
         {
-            // Trường hợp load game mà đang ở phase 2
             _isTrueForm = true;
             chaseSpeed = phase2Speed;
         }
 
-        // Cập nhật Animator ngay khi bắt đầu
         UpdateAnimatorPhase();
     }
 
@@ -71,12 +74,12 @@ public class VampireKing : EnemyChase
             chaseSpeed = phase2Speed;
             Debug.Log("VAMPIRE KING: PHASE 2!");
 
-            // Báo cho Animator biết đã sang Phase 2
+            ClearMinions();
+
             UpdateAnimatorPhase();
         }
     }
 
-    // Hàm gửi thông số Phase vào Animator
     private void UpdateAnimatorPhase()
     {
         Animator anim = GetComponent<Animator>();
@@ -86,7 +89,6 @@ public class VampireKing : EnemyChase
         }
     }
 
-    // Logic Skill 3 Frame
     public void DealVampireDamage(int frameIndex)
     {
         if (Time.time - _lastDamageTime < DAMAGE_EVENT_COOLDOWN) return;
@@ -144,12 +146,71 @@ public class VampireKing : EnemyChase
         }
     }
 
+    // Triệu hồi theo hình tam giác đều dựa trên hướng nhìn
     private void SummonMinions()
     {
-        if (minionPrefab == null || summonPoints == null) return;
-        foreach (Transform point in summonPoints)
+        if (minionPrefab == null) return;
+
+        // Dọn dẹp danh sách
+        _activeMinions.RemoveAll(item => item == null);
+
+        // 1. Xác định hướng quay mặt của Boss (hướng về phía Player)
+        Vector2 facingDir = Vector2.down; // Mặc định nếu mất player
+        if (player != null)
         {
-            if (point != null) Instantiate(minionPrefab, point.position, Quaternion.identity);
+            facingDir = (player.position - transform.position).normalized;
+        }
+
+        // 2. Góc lệch để tạo hình tam giác đều: +/- 30 độ so với hướng chính diện
+        // Boss là đỉnh, 2 minion là 2 đỉnh còn lại
+        float[] angles = { -30f, 30f };
+
+        foreach (float angle in angles)
+        {
+            // Công thức xoay vector trong Unity (Quaternion * Vector)
+            // Xoay hướng nhìn đi 30 độ trái/phải
+            Vector2 spawnDirection = Quaternion.Euler(0, 0, angle) * facingDir;
+
+            // Tính vị trí cuối cùng
+            Vector3 spawnPos = transform.position + (Vector3)spawnDirection * summonDistance;
+
+            // Triệu hồi
+            GameObject minion = Instantiate(minionPrefab, spawnPos, Quaternion.identity);
+            _activeMinions.Add(minion);
+
+            // (Optional) Spawn Effect
+            // Instantiate(spawnEffectPrefab, spawnPos, Quaternion.identity);
+        }
+
+        Debug.Log("Summoned 2 minions in triangle formation!");
+    }
+
+    private void ClearMinions()
+    {
+        if (_activeMinions.Count > 0)
+        {
+            var minionsToKill = new List<GameObject>(_activeMinions);
+
+            foreach (var minion in minionsToKill)
+            {
+                if (minion != null)
+                {
+                    Enemy minionScript = minion.GetComponent<Enemy>();
+
+                    if (minionScript != null)
+                    {
+                        minionScript.TakeDamage(99999, DamageSourceType.Environment);
+
+                        Destroy(minion, 2.0f);
+                    }
+                    else
+                    {
+                        Destroy(minion);
+                    }
+                }
+            }
+            _activeMinions.Clear();
+            Debug.Log($"Sacrificed {minionsToKill.Count} minions for Phase 2!");
         }
     }
 
@@ -214,6 +275,7 @@ public class VampireKing : EnemyChase
     protected override void Dead()
     {
         if (!isDead) return;
+        _activeMinions.Clear();
         base.Dead();
     }
 }

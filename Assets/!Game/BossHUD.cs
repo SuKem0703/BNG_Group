@@ -23,7 +23,7 @@ public class BossHUD : MonoBehaviour
     [Header("Settings")]
     public float lerpSpeed = 5f;
 
-    private EnemyChase _currentBoss;
+    private Enemy _currentBoss;
 
     private void Awake()
     {
@@ -49,7 +49,7 @@ public class BossHUD : MonoBehaviour
         }
     }
 
-    public void ShowBossHealth(EnemyChase boss)
+    public void ShowBossHealth(Enemy boss)
     {
         _currentBoss = boss;
         if (bossPanel != null) bossPanel.SetActive(true);
@@ -58,7 +58,7 @@ public class BossHUD : MonoBehaviour
     }
 
     // Cập nhật thông tin khi chuyển Phase hoặc mới vào trận
-    public void UpdatePhaseInfo(EnemyChase boss)
+    public void UpdatePhaseInfo(Enemy boss)
     {
         // Cập nhật Tên
         if (bossNameText != null) bossNameText.text = boss.GetCurrentPhaseName();

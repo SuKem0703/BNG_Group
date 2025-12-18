@@ -200,6 +200,58 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.size
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_ActionId
+      value: 55f7c94f-a898-411c-a2cb-1a876ec1b4bc
+      objectReference: {fileID: 0}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_ActionName
+      value: 'Player/Swap[/Keyboard/tab]'
+      objectReference: {fileID: 0}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[13].m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 860202645}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 513364941}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[13].m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SwitchClass
+      objectReference: {fileID: 0}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: ClassController, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgument
+      value: 
+      objectReference: {fileID: 425416262}
+    - target: {fileID: 123018037826651668, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.GameObject, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 212978759159536177, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -295,6 +347,42 @@ PrefabInstance:
     - target: {fileID: 352212840372614934, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 366934284778579620, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.size
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 366934284778579620, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_ActionId
+      value: 55f7c94f-a898-411c-a2cb-1a876ec1b4bc
+      objectReference: {fileID: 0}
+    - target: {fileID: 366934284778579620, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_ActionName
+      value: 'Player/Swap[/Keyboard/tab]'
+      objectReference: {fileID: 0}
+    - target: {fileID: 366934284778579620, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 366934284778579620, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 513364941}
+    - target: {fileID: 366934284778579620, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SwitchClass
+      objectReference: {fileID: 0}
+    - target: {fileID: 366934284778579620, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: ClassController, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 366934284778579620, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgument
+      value: 
+      objectReference: {fileID: 860202645}
+    - target: {fileID: 366934284778579620, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_ActionEvents.Array.data[14].m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.GameObject, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 378114958668637933, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchorMax.y
@@ -1560,7 +1648,8 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 8250403872567571998, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -1570,6 +1659,22 @@ PolygonCollider2D:
   m_CorrespondingSourceObject: {fileID: 6755314822793981656, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
   m_PrefabInstance: {fileID: 257249162}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &425416262 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1595925321534887211, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+  m_PrefabInstance: {fileID: 257249162}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &513364941 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5031004178007698492, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+  m_PrefabInstance: {fileID: 257249162}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11c56c8bfa19ff246a98e1045bf900fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &608256502
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3439,6 +3544,11 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1 &860202645 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1784960951971407369, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+  m_PrefabInstance: {fileID: 257249162}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &904199148
 PrefabInstance:
   m_ObjectHideFlags: 0

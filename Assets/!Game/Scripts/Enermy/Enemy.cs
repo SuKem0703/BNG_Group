@@ -17,7 +17,7 @@ public class BossPhaseInfo
     public int maxHealth = 1000;
 }
 
-public class EnemyChase : MonoBehaviour
+public class Enemy : MonoBehaviour
 {
     [Header("Quest Settings")]
     public string questTargetID;
@@ -35,6 +35,7 @@ public class EnemyChase : MonoBehaviour
     public int levelEnemy = 1;
     public float damage = 10f;
     public int maxHealth = 100;
+    public int defense = 0;
     public int currentHealth;
     public float experienceReward;
     public float goldReward;
@@ -131,6 +132,21 @@ public class EnemyChase : MonoBehaviour
 
     protected virtual void Update()
     {
+        if (!isDead && !isTransitioning && currentHealth <= 0)
+        {
+            if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
+            {
+                StartCoroutine(SwitchPhaseRoutine());
+            }
+            else
+            {
+                isDead = true;
+                Die();
+                Dead();
+            }
+            return;
+        }
+
         if (player == null) return;
 
         // Failsafe: Reset nếu kẹt Attack quá lâu
@@ -225,11 +241,16 @@ public class EnemyChase : MonoBehaviour
         lastAttackTime = Time.time;
     }
 
-    public void TakeDamage(int damage, DamageSourceType damageSourceType)
+    public void TakeDamage(int rawDamage, DamageSourceType damageSourceType)
     {
         if (isDead || isTransitioning) return;
 
-        currentHealth -= damage;
+        float reductionMultiplier = 100f / (defense + 100f);
+        int finalDamage = Mathf.CeilToInt(rawDamage * reductionMultiplier);
+
+        finalDamage = Mathf.Max(finalDamage, 1);
+
+        currentHealth -= finalDamage;
 
         GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
         if (popupPrefab != null)
@@ -237,7 +258,7 @@ public class EnemyChase : MonoBehaviour
             Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
             GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
             DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
-            if (popupScript != null) popupScript.Setup(damage, damageSourceType);
+            if (popupScript != null) popupScript.Setup(finalDamage, damageSourceType);
         }
 
         if (currentHealth <= 0)
@@ -260,7 +281,7 @@ public class EnemyChase : MonoBehaviour
             isStunned = false; // Reset stun cũ
 
             bool shouldStun = false;
-            if (playerStats != null && playerStats.level > levelEnemy + 5) shouldStun = true;
+            if ((playerStats != null && playerStats.level > levelEnemy + 5) || enemyRank != EnemyRank.Boss) shouldStun = true;
             if (shouldStun)
             {
                 if (isAttacking) isAttacking = false;

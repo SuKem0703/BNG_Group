@@ -160,7 +160,7 @@ public class KnightComboNormalAttack : MonoBehaviour
                 continue;
             }
 
-            EnemyChase enemyChase = enemy.GetComponent<EnemyChase>();
+            Enemy enemyChase = enemy.GetComponent<Enemy>();
             if (enemyChase != null)
             {
                 float scale = checkCombo(currentComboCache);

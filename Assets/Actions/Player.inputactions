@@ -43,15 +43,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Skill1",
-                    "type": "Button",
-                    "id": "4662e0cb-41e6-495c-b51c-9932b4da859c",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Swap",
                     "type": "Button",
                     "id": "55f7c94f-a898-411c-a2cb-1a876ec1b4bc",
@@ -224,17 +215,6 @@
                     "processors": "",
                     "groups": ";Keyboard&Mouse;Touch;Gamepad;Joystick;XR",
                     "action": "Attack",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "befda630-30bd-4c31-a807-0cd9fe842bbb",
-                    "path": "<Keyboard>/1",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";Keyboard&Mouse;Gamepad;Touch;Joystick;XR",
-                    "action": "Skill1",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

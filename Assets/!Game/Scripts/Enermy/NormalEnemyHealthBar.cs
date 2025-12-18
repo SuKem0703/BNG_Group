@@ -17,13 +17,13 @@ public class EnemyHealthBar : MonoBehaviour
     [Tooltip("Tốc độ cập nhật thanh máu (càng cao càng nhanh)")]
     public float lerpSpeed = 10f;
 
-    private EnemyChase enemyChase;
+    private Enemy enemyChase;
     private Transform mainCamera;
     private Canvas canvas;
 
     void Start()
     {
-        enemyChase = GetComponentInParent<EnemyChase>();
+        enemyChase = GetComponentInParent<Enemy>();
 
         if (enemyChase != null && enemyChase.enemyRank == EnemyRank.Boss)
         {
