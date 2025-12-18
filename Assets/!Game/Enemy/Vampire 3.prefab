@@ -119,6 +119,68 @@ MonoBehaviour:
   offset: {x: 0, y: 0, z: 0}
   hideWhenFull: 1
   lerpSpeed: 10
+--- !u!1 &804208696632259423
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2300823263266895675}
+  m_Layer: 6
+  m_Name: Summon Point 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2300823263266895675
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 804208696632259423}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.5, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7085651187345940742}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1019487225587674186
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7304922550037679299}
+  m_Layer: 6
+  m_Name: Summon Point 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7304922550037679299
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1019487225587674186}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.5, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7085651187345940742}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1731890664459771352
 GameObject:
   m_ObjectHideFlags: 0
@@ -232,6 +294,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6097801723926335279}
+  - {fileID: 7304922550037679299}
+  - {fileID: 2300823263266895675}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2010415558918039725
@@ -322,7 +386,7 @@ CapsuleCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
@@ -372,9 +436,14 @@ MonoBehaviour:
   isQuestEnemy: 0
   uniqueSaveID: 
   enemyRank: 2
+  bossPhases:
+  - phaseDescription: "L\xE3nh Ch\xFAa Ng\u1EA1o M\u1EA1n"
+    maxHealth: 500
+  - phaseDescription: "B\u1EA3n N\u0103ng Kh\xE1t M\xE1u"
+    maxHealth: 800
   enemyName: Vampire King
   levelEnemy: 50
-  damage: 20
+  damage: 30
   maxHealth: 1000
   currentHealth: 0
   experienceReward: 0
@@ -388,6 +457,13 @@ MonoBehaviour:
   hurtDuration: 1
   lifeStealRatio: 0.5
   regenInterval: 1
+  phase1Speed: 2
+  phase2Speed: 5
+  minionPrefab: {fileID: 3107261148613328395, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+  summonPoints:
+  - {fileID: 7304922550037679299}
+  - {fileID: 2300823263266895675}
+  summonInterval: 10
 --- !u!95 &1164483360629191738
 Animator:
   serializedVersion: 7

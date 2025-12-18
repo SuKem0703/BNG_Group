@@ -1,5 +1,5 @@
 ﻿using System.Collections;
-using Unity.Cinemachine.Samples;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,6 +8,13 @@ public enum EnemyRank
     Normal,
     Elite,
     Boss
+}
+
+[System.Serializable]
+public class BossPhaseInfo
+{
+    [TextArea] public string phaseDescription = "Phase Description";
+    public int maxHealth = 1000;
 }
 
 public class EnemyChase : MonoBehaviour
@@ -19,7 +26,12 @@ public class EnemyChase : MonoBehaviour
 
     [Header("Enemy Info")]
     public EnemyRank enemyRank = EnemyRank.Normal;
-    public string enemyName = "Slime";
+
+    [Header("Boss Phases System")]
+    public List<BossPhaseInfo> bossPhases = new List<BossPhaseInfo>();
+    protected int currentPhaseIndex = 0;
+
+    public string enemyName = "Enemy";
     public int levelEnemy = 1;
     public float damage = 10f;
     public int maxHealth = 100;
@@ -29,13 +41,13 @@ public class EnemyChase : MonoBehaviour
 
     [Header("Movement")]
     public float chaseSpeed = 3f;
-    public float detectionRadius = 5f;
-    public float attackRange = 1f;
-    public float attackTriggerBuffer = 0.5f; // Khoảng cách buffer để kích hoạt tấn công
-    public float chaseResumeBuffer = 0.2f; // Khoảng cách buffer để tiếp tục đuổi theo
+    public float detectionRadius = 15f;
+    public float attackRange = 2f;
+    public float attackTriggerBuffer = 1f; // Khoảng cách trừ hao để bắt đầu dừng lại
+    public float chaseResumeBuffer = -2f;  // Số âm để luôn đuổi nếu trượt ra khỏi tầm
 
     [Header("Attack Settings")]
-    public float attackCooldown = 1f;
+    public float attackCooldown = 0.5f;
     protected float lastAttackTime = -999f;
 
     [Header("Hurt Settings")]
@@ -46,11 +58,11 @@ public class EnemyChase : MonoBehaviour
     protected Rigidbody2D rb;
     protected EnemyAnimator enemyAnimator;
 
-    // State flags
     protected bool isAttacking = false;
     protected bool isStunned = false;
     protected bool isDead = false;
     protected bool hasDealtDamageThisAttack = false;
+    protected bool isTransitioning = false;
     protected Coroutine hurtCoroutine;
 
     protected virtual void Awake()
@@ -66,7 +78,6 @@ public class EnemyChase : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         enemyAnimator = GetComponent<EnemyAnimator>();
 
-        // Setup Detection Area
         GameObject detectionArea = new GameObject("DetectionArea");
         detectionArea.transform.SetParent(transform);
         detectionArea.transform.localPosition = Vector3.zero;
@@ -75,7 +86,7 @@ public class EnemyChase : MonoBehaviour
         detectionCollider.radius = detectionRadius;
         detectionArea.AddComponent<EnemyDetection>().enemyChase = this;
 
-        currentHealth = maxHealth;
+        InitializePhase(0);
 
         if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
         {
@@ -89,61 +100,71 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    protected void InitializePhase(int phaseIndex)
     {
-        if (isQuestEnemy) SaveController.OnDataLoaded -= HandleDataLoaded;
-    }
-
-    private void HandleDataLoaded()
-    {
-        SaveController.OnDataLoaded -= HandleDataLoaded;
-        CheckPersistence();
-    }
-
-    private void CheckPersistence()
-    {
-        if (SaveController.Instance != null && !string.IsNullOrEmpty(uniqueSaveID))
+        currentPhaseIndex = phaseIndex;
+        if (bossPhases != null && bossPhases.Count > phaseIndex)
         {
-            if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, uniqueSaveID))
-                Destroy(gameObject);
+            maxHealth = bossPhases[phaseIndex].maxHealth;
         }
+        currentHealth = maxHealth;
     }
+
+    public string GetCurrentPhaseName()
+    {
+        return enemyName;
+    }
+
+    public string GetCurrentPhaseDescription()
+    {
+        if (bossPhases != null && bossPhases.Count > currentPhaseIndex) return bossPhases[currentPhaseIndex].phaseDescription;
+        return "";
+    }
+
+    public int GetRemainingPhases()
+    {
+        if (bossPhases == null) return 0;
+        return (bossPhases.Count - 1) - currentPhaseIndex;
+    }
+
+    public bool IsDefeated() => isDead;
 
     protected virtual void Update()
     {
         if (player == null) return;
 
-        if (PauseController.IsGamePause || isStunned || isDead || isAttacking)
+        // Failsafe: Reset nếu kẹt Attack quá lâu
+        if (isAttacking && Time.time - lastAttackTime > 3.0f)
+        {
+            EndAttack();
+        }
+
+        if (PauseController.IsGamePause || isStunned || isDead || isAttacking || isTransitioning)
         {
             StopMovement();
-            if (!isAttacking && enemyAnimator != null) enemyAnimator.SetWalking(false);
+            if (!isAttacking && !isTransitioning && enemyAnimator != null) enemyAnimator.SetWalking(false);
             return;
         }
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-
-        float actualTriggerDistance = attackRange - attackTriggerBuffer;
+        float actualTriggerDistance = attackRange - attackTriggerBuffer; // Ví dụ: 2 - 1 = 1m
 
         if (distanceToPlayer <= detectionRadius)
         {
             PlayerStats.IsOnBattle = true;
 
+            // LOGIC DI CHUYỂN TÍCH HỢP BUFFER ÂM
             if (distanceToPlayer <= actualTriggerDistance)
             {
                 StopMovement();
-
                 if (distanceToPlayer > 0.1f && enemyAnimator != null)
                 {
                     Vector2 directionToPlayer = player.position - transform.position;
                     enemyAnimator.SetFacingDirection(directionToPlayer);
                 }
-
                 if (enemyAnimator != null) enemyAnimator.SetWalking(false);
 
-                if (Time.time >= lastAttackTime + attackCooldown)
-                {
-                    PerformAttack();
-                }
+                if (Time.time >= lastAttackTime + attackCooldown) PerformAttack();
             }
             else if (distanceToPlayer > actualTriggerDistance + chaseResumeBuffer)
             {
@@ -153,7 +174,6 @@ public class EnemyChase : MonoBehaviour
             {
                 StopMovement();
                 if (enemyAnimator != null) enemyAnimator.SetWalking(false);
-
                 if (distanceToPlayer > 0.1f && enemyAnimator != null)
                 {
                     Vector2 directionToPlayer = player.position - transform.position;
@@ -161,11 +181,7 @@ public class EnemyChase : MonoBehaviour
                 }
             }
         }
-        else
-        {
-            StopMovement();
-            if (enemyAnimator != null) enemyAnimator.SetWalking(false);
-        }
+        else { StopMovement(); if (enemyAnimator != null) enemyAnimator.SetWalking(false); }
     }
 
     protected void ChasePlayer()
@@ -175,19 +191,13 @@ public class EnemyChase : MonoBehaviour
         if (enemyAnimator != null) enemyAnimator.SetWalking(true);
     }
 
-    // Hàm dừng di chuyển dùng chung
-    protected void StopMovement()
-    {
-        rb.linearVelocity = Vector2.zero;
-    }
+    protected void StopMovement() { rb.linearVelocity = Vector2.zero; }
 
-    // Hàm kích hoạt tấn công
     protected virtual void PerformAttack()
     {
         isAttacking = true;
         hasDealtDamageThisAttack = false;
         StopMovement();
-
         if (enemyAnimator != null)
         {
             enemyAnimator.SetWalking(false);
@@ -198,7 +208,6 @@ public class EnemyChase : MonoBehaviour
     public virtual void DealDamage()
     {
         if (isDead || isStunned || hasDealtDamageThisAttack || PauseController.IsGamePause) return;
-
         if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
         {
             var health = player.GetComponentInParent<PlayerStats>();
@@ -216,10 +225,9 @@ public class EnemyChase : MonoBehaviour
         lastAttackTime = Time.time;
     }
 
-
     public void TakeDamage(int damage, DamageSourceType damageSourceType)
     {
-        if (isDead) return;
+        if (isDead || isTransitioning) return;
 
         currentHealth -= damage;
 
@@ -232,75 +240,89 @@ public class EnemyChase : MonoBehaviour
             if (popupScript != null) popupScript.Setup(damage, damageSourceType);
         }
 
-        if (currentHealth <= 0 && !isDead)
+        if (currentHealth <= 0)
         {
-            isDead = true;
-            Die();
+            if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
+            {
+                StartCoroutine(SwitchPhaseRoutine());
+            }
+            else
+            {
+                isDead = true;
+                Die();
+            }
             return;
         }
 
         if (currentHealth > 0)
         {
             if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
+            isStunned = false; // Reset stun cũ
 
             bool shouldStun = false;
-            if (playerStats != null && playerStats.level > levelEnemy + 5)
-                shouldStun = true;
-
+            if (playerStats != null && playerStats.level > levelEnemy + 5) shouldStun = true;
             if (shouldStun)
             {
-                // Nếu bị choáng khi đang đánh -> Hủy đánh ngay
-                if (isAttacking)
-                {
-                    isAttacking = false;
-                }
+                if (isAttacking) isAttacking = false;
                 hurtCoroutine = StartCoroutine(HurtRoutine());
             }
         }
     }
 
-    protected IEnumerator HurtRoutine()
+    protected IEnumerator SwitchPhaseRoutine()
     {
+        isTransitioning = true;
         isStunned = true;
-        if (enemyAnimator != null) enemyAnimator.TriggerHurt();
         StopMovement();
 
-        yield return new WaitForSeconds(hurtDuration);
+        if (enemyAnimator != null) enemyAnimator.TriggerDie();
 
+        yield return new WaitForSeconds(2.0f);
+
+        int nextPhase = currentPhaseIndex + 1;
+        InitializePhase(nextPhase);
+        OnPhaseChange(nextPhase);
+
+        if (BossHUD.Instance != null) BossHUD.Instance.UpdatePhaseInfo(this);
+
+        isTransitioning = false;
         isStunned = false;
-        hurtCoroutine = null;
     }
+
+    protected virtual void OnPhaseChange(int nextPhaseIndex)
+    {
+        // Reset animator để Boss đứng dậy
+        if (enemyAnimator != null)
+        {
+            Animator anim = GetComponent<Animator>();
+            if (anim != null) anim.Play("Idle");
+            enemyAnimator.SetWalking(false);
+        }
+    }
+
+    protected IEnumerator HurtRoutine() { isStunned = true; if (enemyAnimator != null) enemyAnimator.TriggerHurt(); StopMovement(); yield return new WaitForSeconds(hurtDuration); isStunned = false; hurtCoroutine = null; }
 
     protected virtual void Die()
     {
         isStunned = true;
         if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
-
         StopMovement();
         rb.bodyType = RigidbodyType2D.Kinematic;
-
         if (enemyAnimator != null)
         {
             enemyAnimator.SetWalking(false);
             enemyAnimator.TriggerDie();
         }
-
         PlayerStats.IsOnBattle = false;
-
         if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
         {
             BossHUD.Instance.HideBossHealth();
         }
-
         int expGain = Mathf.FloorToInt(experienceReward * Random.Range(0.9f, 1.1f));
         PlayerStats.Instance.AddEXP(expGain);
-
         int goldGain = Mathf.FloorToInt(goldReward * Random.Range(0.9f, 1.1f));
         PlayerStats.Instance.AddCoin(goldGain);
-
-        if (QuestController.Instance != null && !string.IsNullOrEmpty(questTargetID))
-            QuestController.Instance.MarkEnemyDefeated(questTargetID);
-
+        if (QuestController.Instance != null && !string.IsNullOrEmpty(questTargetID)) QuestController.Instance.MarkEnemyDefeated(questTargetID);
         if (isQuestEnemy && SaveController.Instance != null && !string.IsNullOrEmpty(uniqueSaveID))
         {
             SaveController.Instance.MarkCollected(SceneManager.GetActiveScene().name, uniqueSaveID);
@@ -308,36 +330,11 @@ public class EnemyChase : MonoBehaviour
         }
     }
 
-    protected virtual void Dead()
-    {
-        StopAllCoroutines();
-        Destroy(gameObject);
-    }
+    protected virtual void Dead() { StopAllCoroutines(); Destroy(gameObject); }
+    public void OnPlayerDetected(Transform detectedPlayer) { player = detectedPlayer; }
+    public void OnPlayerLost() { player = null; StopMovement(); if (enemyAnimator != null) enemyAnimator.SetWalking(false); }
 
-    public void OnPlayerDetected(Transform detectedPlayer)
-    {
-        player = detectedPlayer;
-    }
-
-    public void OnPlayerLost()
-    {
-        player = null;
-        StopMovement();
-        if (enemyAnimator != null) enemyAnimator.SetWalking(false);
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        // Vùng phát hiện (Vàng)
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRadius);
-
-        // Vùng Hitbox Gây sát thương (Đỏ)
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
-
-        // Vùng Kích hoạt tấn công (Xanh dương)
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, attackRange - attackTriggerBuffer);
-    }
+    private void OnDestroy() { if (isQuestEnemy) SaveController.OnDataLoaded -= HandleDataLoaded; }
+    private void HandleDataLoaded() { SaveController.OnDataLoaded -= HandleDataLoaded; CheckPersistence(); }
+    private void CheckPersistence() { if (SaveController.Instance != null && !string.IsNullOrEmpty(uniqueSaveID)) { if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, uniqueSaveID)) Destroy(gameObject); } }
 }

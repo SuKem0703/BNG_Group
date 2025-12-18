@@ -7,10 +7,18 @@ public class BossHUD : MonoBehaviour
     public static BossHUD Instance { get; private set; }
 
     [Header("UI Components")]
-    [Tooltip("Kéo toàn bộ Panel chứa thanh máu vào đây để tắt/bật")]
+    [Tooltip("Kéo Panel chứa toàn bộ UI Boss vào đây")]
     public GameObject bossPanel;
     public Image healthFillImage;
     public TextMeshProUGUI bossNameText;
+
+    [Tooltip("Text mô tả Phase (vd: 'Kẻ Ngạo Mạn', 'Bản Năng Hắc Ám')")]
+    public TextMeshProUGUI phaseDescriptionText;
+
+    [Header("Phase Stack Indicator")]
+    [Tooltip("Object chứa icon hiển thị số mạng còn lại")]
+    public GameObject healthStackIndicator;
+    public TextMeshProUGUI healthStackText;
 
     [Header("Settings")]
     public float lerpSpeed = 5f;
@@ -22,7 +30,7 @@ public class BossHUD : MonoBehaviour
         if (Instance != null && Instance != this) Destroy(gameObject);
         else Instance = this;
 
-        // Ẩn lúc đầu game
+        // Ẩn UI khi bắt đầu game
         if (bossPanel != null) bossPanel.SetActive(false);
     }
 
@@ -34,23 +42,47 @@ public class BossHUD : MonoBehaviour
         float targetFill = (float)_currentBoss.currentHealth / _currentBoss.maxHealth;
         healthFillImage.fillAmount = Mathf.Lerp(healthFillImage.fillAmount, targetFill, Time.deltaTime * lerpSpeed);
 
-        // Tự động tắt nếu Boss chết hoặc bị hủy
-        if (_currentBoss.currentHealth <= 0 || _currentBoss == null)
+        // Tự động tắt nếu Boss chết hẳn
+        if (_currentBoss.currentHealth <= 0 && _currentBoss.IsDefeated())
         {
             HideBossHealth();
         }
     }
 
-    // Hàm này sẽ được Boss gọi khi xuất hiện
     public void ShowBossHealth(EnemyChase boss)
     {
         _currentBoss = boss;
-
         if (bossPanel != null) bossPanel.SetActive(true);
-        if (bossNameText != null) bossNameText.text = boss.enemyName;
 
-        // Reset thanh máu về 0 rồi chạy lên hoặc set full luôn tùy ý
-        if (healthFillImage != null) healthFillImage.fillAmount = (float)boss.currentHealth / boss.maxHealth;
+        UpdatePhaseInfo(boss);
+    }
+
+    // Cập nhật thông tin khi chuyển Phase hoặc mới vào trận
+    public void UpdatePhaseInfo(EnemyChase boss)
+    {
+        // Cập nhật Tên
+        if (bossNameText != null) bossNameText.text = boss.GetCurrentPhaseName();
+
+        // Cập nhật Mô tả
+        if (phaseDescriptionText != null) phaseDescriptionText.text = boss.GetCurrentPhaseDescription();
+
+        // Cập nhật số thanh máu còn lại (Health Stacks)
+        if (healthStackText != null && healthStackIndicator != null)
+        {
+            int remainingPhases = boss.GetRemainingPhases();
+            if (remainingPhases > 0)
+            {
+                healthStackIndicator.SetActive(true);
+                healthStackText.text = $"x{remainingPhases + 1}";
+            }
+            else
+            {
+                healthStackIndicator.SetActive(false);
+            }
+        }
+
+        // Hồi đầy thanh máu trên UI ngay lập tức để chuẩn bị cho Phase mới
+        if (healthFillImage != null) healthFillImage.fillAmount = 1f;
     }
 
     public void HideBossHealth()

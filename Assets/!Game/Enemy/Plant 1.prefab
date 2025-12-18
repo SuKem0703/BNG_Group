@@ -296,14 +296,19 @@ MonoBehaviour:
   questTargetID: 
   isQuestEnemy: 0
   uniqueSaveID: 
+  enemyRank: 0
   enemyName: Plant
   levelEnemy: 5
-  damage: 1
+  damage: 10
   maxHealth: 150
   currentHealth: 0
+  experienceReward: 0
+  goldReward: 0
   chaseSpeed: 3
   detectionRadius: 7
   attackRange: 1.5
+  attackTriggerBuffer: 0.5
+  chaseResumeBuffer: -1.5
   attackCooldown: 1
   hurtDuration: 1
 --- !u!95 &5964361228703599746

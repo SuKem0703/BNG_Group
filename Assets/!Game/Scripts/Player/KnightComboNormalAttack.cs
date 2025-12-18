@@ -185,4 +185,17 @@ public class KnightComboNormalAttack : MonoBehaviour
 
         attackPoint.position = transform.position + (Vector3)attackDirection * attackRange;
     }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (attackPoint == null) return;
+
+        // 1. Vẽ vùng tấn công (Màu đỏ)
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+
+        // 2. Vẽ đường hướng tấn công (Màu vàng - Tuỳ chọn)
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(transform.position, attackPoint.position);
+    }
 }
