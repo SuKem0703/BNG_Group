@@ -109,6 +109,11 @@ public class Enemy : MonoBehaviour
             maxHealth = bossPhases[phaseIndex].maxHealth;
         }
         currentHealth = maxHealth;
+
+        if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
+        {
+            BossHUD.Instance.UpdatePhaseInfo(this);
+        }
     }
 
     public string GetCurrentPhaseName()
@@ -134,15 +139,17 @@ public class Enemy : MonoBehaviour
     {
         if (!isDead && !isTransitioning && currentHealth <= 0)
         {
+            isAttacking = false;
+            isStunned = false;
+
             if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
             {
-                StartCoroutine(SwitchPhaseRoutine());
+                if (!isTransitioning) StartCoroutine(SwitchPhaseRoutine());
             }
             else
             {
                 isDead = true;
                 Die();
-                Dead();
             }
             return;
         }
@@ -239,9 +246,13 @@ public class Enemy : MonoBehaviour
     {
         isAttacking = false;
         lastAttackTime = Time.time;
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
     }
 
-    public void TakeDamage(int rawDamage, DamageSourceType damageSourceType)
+    public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, bool isCritical = false)
     {
         if (isDead || isTransitioning) return;
 
@@ -258,11 +269,19 @@ public class Enemy : MonoBehaviour
             Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
             GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
             DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
-            if (popupScript != null) popupScript.Setup(finalDamage, damageSourceType);
+
+            if (popupScript != null)
+            {
+                popupScript.Setup(finalDamage, damageSourceType, isCritical);
+            }
         }
 
         if (currentHealth <= 0)
         {
+            isAttacking = false;
+            isStunned = false;
+            if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
+
             if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
             {
                 StartCoroutine(SwitchPhaseRoutine());
@@ -278,10 +297,16 @@ public class Enemy : MonoBehaviour
         if (currentHealth > 0)
         {
             if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
-            isStunned = false; // Reset stun cũ
+            isStunned = false;
 
             bool shouldStun = false;
-            if ((playerStats != null && playerStats.level > levelEnemy + 5) || enemyRank != EnemyRank.Boss) shouldStun = true;
+            // Boss thì khó bị stun hơn, hoặc nếu bị crit thì tỉ lệ stun cao hơn (tuỳ bạn game design)
+            if ((playerStats != null && playerStats.level > levelEnemy + 5) || enemyRank != EnemyRank.Boss || isCritical)
+            {
+                // Ví dụ: Nếu bị CRITICAL thì luôn bị khựng lại (Stun) dù là ai
+                shouldStun = true;
+            }
+
             if (shouldStun)
             {
                 if (isAttacking) isAttacking = false;
@@ -325,7 +350,9 @@ public class Enemy : MonoBehaviour
 
     protected virtual void Die()
     {
-        isStunned = true;
+        isStunned = false;
+        isAttacking = false;
+
         if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
         StopMovement();
         rb.bodyType = RigidbodyType2D.Kinematic;

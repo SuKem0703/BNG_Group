@@ -212,7 +212,7 @@ GameObject:
   - component: {fileID: 4800640869558908706}
   - component: {fileID: 954720159451659637}
   m_Layer: 6
-  m_Name: Vampire 3
+  m_Name: Vampire King
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -345,7 +345,7 @@ Rigidbody2D:
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_GravityScale: 0
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: fe5c54a074200e24ab85ce91b1e81931, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -383,8 +383,8 @@ MonoBehaviour:
   maxHealth: 1300
   defense: 40
   currentHealth: 0
-  experienceReward: 0
-  goldReward: 0
+  experienceReward: 300
+  goldReward: 500
   chaseSpeed: 5
   detectionRadius: 15
   attackRange: 2
@@ -396,7 +396,7 @@ MonoBehaviour:
   regenInterval: 1
   phase1Speed: 2
   phase2Speed: 5
-  minionPrefab: {fileID: 3107261148613328395, guid: 22a180b1221b5f04295363762f2af81d, type: 3}
+  minionPrefab: {fileID: 8541255292816746399, guid: 74ad7ed5a7e4c5649bb82ed093a6a912, type: 3}
   summonDistance: 3
   summonInterval: 10
 --- !u!95 &1164483360629191738

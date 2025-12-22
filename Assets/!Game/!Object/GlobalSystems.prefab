@@ -5676,7 +5676,6 @@ GameObject:
   - component: {fileID: 4310227737306822917}
   - component: {fileID: 892801816765079490}
   - component: {fileID: 1473663592954474464}
-  - component: {fileID: 8250403872567571998}
   - component: {fileID: 366934284778579620}
   - component: {fileID: 4341726287597272542}
   - component: {fileID: 2737585240263512024}
@@ -5828,28 +5827,6 @@ MonoBehaviour:
   moveInput: {x: 0, y: 0}
   animator: {fileID: 0}
   isDashing: 0
---- !u!114 &8250403872567571998
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1595925321534887211}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3307eed3a9a62740b3a9c693cb12048, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  slashSpeed: 10
-  slashDuration: 0.15
-  slashCooldown: 1.5
-  slashStaminaCost: 3
-  slashMPCost: 30
-  attackPoint: {fileID: 0}
-  attackRange: 1.5
-  enemyLayer:
-    serializedVersion: 2
-    m_Bits: 64
 --- !u!114 &366934284778579620
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5979,22 +5956,6 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 39ee33bf-3da5-4539-a68d-73cdee0ba483
     m_ActionName: 'Player/Attack[/Mouse/leftButton]'
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 8250403872567571998}
-        m_TargetAssemblyTypeName: KnightSkill1, Assembly-CSharp
-        m_MethodName: OnSlash
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 4662e0cb-41e6-495c-b51c-9932b4da859c
-    m_ActionName: 'Player/Skill1[/Keyboard/1]'
   - m_PersistentCalls:
       m_Calls: []
     m_ActionId: 55f7c94f-a898-411c-a2cb-1a876ec1b4bc
@@ -8615,7 +8576,7 @@ Rigidbody2D:
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_GravityScale: 0
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: fe5c54a074200e24ab85ce91b1e81931, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -9770,7 +9731,7 @@ Transform:
   m_GameObject: {fileID: 2524661319489946267}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.8878233, y: 0, z: -10}
+  m_LocalPosition: {x: -3.8856783, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

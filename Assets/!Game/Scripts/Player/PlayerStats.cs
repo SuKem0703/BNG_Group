@@ -278,6 +278,7 @@ public class PlayerStats : MonoBehaviour
             if (staminaRegenTimer >= staminaRegenInterval)
             {
                 currentStamina += finalStaminaRegen;
+                currentStamina = (float)System.Math.Round(currentStamina, 2);
                 currentStamina = Mathf.Min(currentStamina, finalStamina);
                 staminaRegenTimer = 0f;
             }
@@ -545,6 +546,7 @@ public class PlayerStats : MonoBehaviour
     public void UseStamina(int amount)
     {
         currentStamina = Mathf.Max(currentStamina - amount, 0);
+        currentStamina = (float)System.Math.Round(currentStamina, 2);
         staminaRegenCooldown = staminaRegenDelay;
         staminaRegenTimer = 0f;
     }
@@ -576,6 +578,7 @@ public class PlayerStats : MonoBehaviour
     public void RecoverStamina(int amount)
     {
         currentStamina = Mathf.Min(currentStamina + amount, finalStamina);
+        currentStamina = (float)System.Math.Round(currentStamina, 2);
     }
 
     // Currency helpers
@@ -739,5 +742,10 @@ public class PlayerStats : MonoBehaviour
         {
             popupScript.Setup(amount, type);
         }
+    }
+
+    private float RoundToTwoDecimal(float value)
+    {
+        return (float)System.Math.Round(value, 2);
     }
 }

@@ -341,11 +341,11 @@ Rigidbody2D:
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
-  m_Mass: 9999
+  m_Mass: 999
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_GravityScale: 0
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: fe5c54a074200e24ab85ce91b1e81931, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -372,10 +372,12 @@ MonoBehaviour:
   isQuestEnemy: 0
   uniqueSaveID: 
   enemyRank: 0
+  bossPhases: []
   enemyName: Slime
   levelEnemy: 1
   damage: 5
   maxHealth: 100
+  defense: 0
   currentHealth: 0
   experienceReward: 0
   goldReward: 0

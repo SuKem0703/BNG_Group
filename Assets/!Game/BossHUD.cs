@@ -12,7 +12,6 @@ public class BossHUD : MonoBehaviour
     public Image healthFillImage;
     public TextMeshProUGUI bossNameText;
 
-    [Tooltip("Text mô tả Phase (vd: 'Kẻ Ngạo Mạn', 'Bản Năng Hắc Ám')")]
     public TextMeshProUGUI phaseDescriptionText;
 
     [Header("Phase Stack Indicator")]
@@ -39,14 +38,13 @@ public class BossHUD : MonoBehaviour
         if (_currentBoss == null) return;
 
         // Cập nhật thanh máu mượt mà
-        float targetFill = (float)_currentBoss.currentHealth / _currentBoss.maxHealth;
+        float targetFill = Mathf.Clamp01((float)_currentBoss.currentHealth / _currentBoss.maxHealth);
         healthFillImage.fillAmount = Mathf.Lerp(healthFillImage.fillAmount, targetFill, Time.deltaTime * lerpSpeed);
 
-        // Tự động tắt nếu Boss chết hẳn
-        if (_currentBoss.currentHealth <= 0 && _currentBoss.IsDefeated())
-        {
-            HideBossHealth();
-        }
+        // if (_currentBoss.currentHealth <= 0 && _currentBoss.IsDefeated())
+        // {
+        //    HideBossHealth();
+        // }
     }
 
     public void ShowBossHealth(Enemy boss)

@@ -7,7 +7,6 @@ using UnityEngine.EventSystems;
 public class PotentialStatsDisplay : MonoBehaviour
 {
     private PlayerStats playerStats;
-    private SaveController saveController;
 
     [Header("Tiềm năng")]
     public TMP_Text availablePointsText;
@@ -30,17 +29,10 @@ public class PotentialStatsDisplay : MonoBehaviour
     void Awake()
     {
         playerStats = FindFirstObjectByType<PlayerStats>();
-        saveController = FindFirstObjectByType<SaveController>();
 
         if (playerStats == null)
         {
             Debug.LogError("PlayerStats vẫn null sau khi chờ trong PotentialStatsDisplay!");
-            return;
-        }
-
-        if (saveController == null)
-        {
-            Debug.LogError("SaveController vẫn null sau khi chờ trong PotentialStatsDisplay!");
             return;
         }
 
@@ -121,7 +113,7 @@ public class PotentialStatsDisplay : MonoBehaviour
                 return;
         }
         playerStats.potentialPoints--;
-        saveController.SaveGame();
+        SaveController.Instance.TriggerAutoSave();
     }
     public void ResetPoints()
     {
@@ -133,7 +125,7 @@ public class PotentialStatsDisplay : MonoBehaviour
         playerStats.SpendGem(20);
         playerStats.ResetPotential();
         
-        saveController.SaveGame();
+        SaveController.Instance.SaveGame();
 
         playerStats.ApplyEquippedItems();
     }
@@ -151,8 +143,16 @@ public class PotentialStatsDisplay : MonoBehaviour
             tooltipText.text = message;
             tooltipPanel.SetActive(true);
 
-            // ===== Logic positioning giống Update bạn đưa =====
-            RectTransform canvasRect = tooltipPanel.transform.root.GetComponent<Canvas>().GetComponent<RectTransform>();
+            // Tìm Canvas ở các object cha thay vì tìm ở root
+            Canvas canvas = tooltipPanel.GetComponentInParent<Canvas>();
+
+            if (canvas == null)
+            {
+                Debug.LogError("Không tìm thấy Canvas chứa TooltipPanel!");
+                return;
+            }
+            RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+
             RectTransform tooltipRect = tooltipPanel.GetComponent<RectTransform>();
 
             // Pivot: góc dưới phải trùng chuột
@@ -196,6 +196,7 @@ public class PotentialStatsDisplay : MonoBehaviour
         });
         trigger.triggers.Add(entryExit);
     }
+
     public void Hide()
     {
         tooltipText.text = "";

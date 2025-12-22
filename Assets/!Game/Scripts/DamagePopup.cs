@@ -10,6 +10,9 @@ public class DamagePopup : MonoBehaviour
     public float moveSpeed = 2f;
     public float lifetime = 1f;
 
+    // [MỚI] Kích thước gốc để scale khi crit
+    private Vector3 originalScale;
+
     private void Awake()
     {
         // Lấy component TextMeshPro
@@ -20,11 +23,12 @@ public class DamagePopup : MonoBehaviour
             return;
         }
 
+        originalScale = transform.localScale; // Lưu kích thước gốc
         disappearTimer = lifetime;
         textColor = textMesh.color;
     }
 
-    public void Setup(int amount, DamageSourceType damageSourceType)
+    public void Setup(int amount, DamageSourceType damageSourceType, bool isCritical = false)
     {
         if (textMesh == null) return;
 
@@ -34,26 +38,42 @@ public class DamagePopup : MonoBehaviour
         else
             textMesh.SetText("-" + amount);
 
-        // 🟣 Xử lý màu
         Color newColor;
-        switch (damageSourceType)
+
+        if (isCritical)
         {
-            case DamageSourceType.Knight:
-                ColorUtility.TryParseHtmlString("#FF3B3B", out newColor);
-                break;
-            case DamageSourceType.Mage:
-                ColorUtility.TryParseHtmlString("#3B8BFF", out newColor);
-                break;
-            case DamageSourceType.Heal:
-                ColorUtility.TryParseHtmlString("#3BFF7E", out newColor);
-                break;
-            case DamageSourceType.Enemy:
-                ColorUtility.TryParseHtmlString("#FF8C3B", out newColor);
-                break;
-            case DamageSourceType.Environment:
-            default:
-                newColor = textMesh.color;
-                break;
+            ColorUtility.TryParseHtmlString("#FFD700", out newColor);
+
+            transform.localScale = originalScale * 1.5f;
+
+            textMesh.SetText(textMesh.text + "!");
+
+            textMesh.fontStyle = FontStyles.Bold;
+        }
+        else
+        {
+            transform.localScale = originalScale;
+            textMesh.fontStyle = FontStyles.Normal;
+
+            switch (damageSourceType)
+            {
+                case DamageSourceType.Knight:
+                    ColorUtility.TryParseHtmlString("#FF3B3B", out newColor);
+                    break;
+                case DamageSourceType.Mage:
+                    ColorUtility.TryParseHtmlString("#3B8BFF", out newColor);
+                    break;
+                case DamageSourceType.Heal:
+                    ColorUtility.TryParseHtmlString("#3BFF7E", out newColor);
+                    break;
+                case DamageSourceType.Enemy:
+                    ColorUtility.TryParseHtmlString("#FF8C3B", out newColor);
+                    break;
+                case DamageSourceType.Environment:
+                default:
+                    newColor = textMesh.color;
+                    break;
+            }
         }
 
         textMesh.color = newColor;
@@ -69,6 +89,9 @@ public class DamagePopup : MonoBehaviour
 
         // 2. Mờ dần (Fade out)
         disappearTimer -= Time.deltaTime;
+
+        if (disappearTimer < 0) disappearTimer = 0;
+
         textColor.a = disappearTimer / lifetime; // Alpha giảm dần theo thời gian
         textMesh.color = textColor;
 

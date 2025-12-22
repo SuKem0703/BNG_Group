@@ -20,6 +20,7 @@ public class LoginManager : MonoBehaviour
     [SerializeField] MiniLoadingScreen miniLoadingScreen;
 
     private string loginUrl = "https://chronicles-of-knight-and-mage.onrender.com/api/GameData/login";
+    private string registerUrl = "https://chronicles-of-knight-and-mage.onrender.com/Accounts/Create";
     void Start()
     {
         loginUI.SetActive(false);
@@ -49,6 +50,12 @@ public class LoginManager : MonoBehaviour
             miniLoadingScreen.gameObject.SetActive(false);
         }
     }
+
+    public void OnRegisterButtonPressed()
+    {
+        Application.OpenURL(registerUrl);
+    }
+
     public void OnLoginButtonPressed()
     {
         string username = usernameInput.text;

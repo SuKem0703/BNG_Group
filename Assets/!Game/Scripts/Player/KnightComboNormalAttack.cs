@@ -164,8 +164,22 @@ public class KnightComboNormalAttack : MonoBehaviour
             if (enemyChase != null)
             {
                 float scale = checkCombo(currentComboCache);
-                int damage = (int)(playerStats.finalPhysicalAttack * scale);
-                enemyChase.TakeDamage(damage, DamageSourceType.Knight);
+                float rawDamage = playerStats.finalPhysicalAttack * scale;
+                bool isCritical = false;
+
+                float critChance = 50f; //playerStats.finalCritRate;
+
+                if (UnityEngine.Random.Range(0f, 100f) < critChance)
+                {
+                    isCritical = true;
+                    rawDamage *= 2;
+
+                    // SoundEffectManager.Play("CriticalHit"); 
+                }
+
+                int finalDamage = Mathf.RoundToInt(rawDamage);
+
+                enemyChase.TakeDamage(finalDamage, DamageSourceType.Knight, isCritical);
 
                 enemiesHitThisAttack.Add(enemy);
             }
