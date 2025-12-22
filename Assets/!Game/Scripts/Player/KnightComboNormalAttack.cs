@@ -179,7 +179,7 @@ public class KnightComboNormalAttack : MonoBehaviour
 
                 int finalDamage = Mathf.RoundToInt(rawDamage);
 
-                enemyChase.TakeDamage(finalDamage, DamageSourceType.Knight, isCritical);
+                enemyChase.TakeDamage(finalDamage, DamageSourceType.Knight, transform.parent, isCritical);
 
                 enemiesHitThisAttack.Add(enemy);
             }

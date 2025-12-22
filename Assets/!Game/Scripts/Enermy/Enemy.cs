@@ -44,15 +44,20 @@ public class Enemy : MonoBehaviour
     public float chaseSpeed = 3f;
     public float detectionRadius = 15f;
     public float attackRange = 2f;
-    public float attackTriggerBuffer = 1f; // Khoảng cách trừ hao để bắt đầu dừng lại
-    public float chaseResumeBuffer = -2f;  // Số âm để luôn đuổi nếu trượt ra khỏi tầm
+    public float attackTriggerBuffer = 1f;
+    public float chaseResumeBuffer = -2f;
 
     [Header("Attack Settings")]
     public float attackCooldown = 0.5f;
     protected float lastAttackTime = -999f;
 
-    [Header("Hurt Settings")]
-    public float hurtDuration = 1f;
+    [Header("Hurt & Knockback Settings")]
+    public float hurtDuration = 0.5f;
+
+    // Các biến cho Knockback
+    public float knockbackForce = 5f;
+    public float knockbackDuration = 0.2f;
+    protected bool isKnockedBack = false;
 
     protected PlayerStats playerStats;
     protected Transform player;
@@ -116,31 +121,27 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public string GetCurrentPhaseName()
-    {
-        return enemyName;
-    }
-
+    public string GetCurrentPhaseName() => enemyName;
     public string GetCurrentPhaseDescription()
     {
         if (bossPhases != null && bossPhases.Count > currentPhaseIndex) return bossPhases[currentPhaseIndex].phaseDescription;
         return "";
     }
-
     public int GetRemainingPhases()
     {
         if (bossPhases == null) return 0;
         return (bossPhases.Count - 1) - currentPhaseIndex;
     }
-
     public bool IsDefeated() => isDead;
 
     protected virtual void Update()
     {
+        // Check chết
         if (!isDead && !isTransitioning && currentHealth <= 0)
         {
             isAttacking = false;
             isStunned = false;
+            isKnockedBack = false; // Reset knockback nếu chết
 
             if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
             {
@@ -156,27 +157,29 @@ public class Enemy : MonoBehaviour
 
         if (player == null) return;
 
-        // Failsafe: Reset nếu kẹt Attack quá lâu
-        if (isAttacking && Time.time - lastAttackTime > 3.0f)
-        {
-            EndAttack();
-        }
+        // Failsafe Attack
+        if (isAttacking && Time.time - lastAttackTime > 3.0f) EndAttack();
 
-        if (PauseController.IsGamePause || isStunned || isDead || isAttacking || isTransitioning)
+        // [QUAN TRỌNG] Logic chặn di chuyển
+        // Thêm isKnockedBack vào điều kiện chặn
+        if (PauseController.IsGamePause || isStunned || isDead || isAttacking || isTransitioning || isKnockedBack)
         {
-            StopMovement();
+            // [FIX LOGIC] Nếu đang bị đẩy lùi (KnockedBack) thì KHÔNG gọi StopMovement() 
+            // Vì StopMovement() set vận tốc = 0, làm mất lực đẩy ngay lập tức.
+            if (!isKnockedBack) StopMovement();
+
             if (!isAttacking && !isTransitioning && enemyAnimator != null) enemyAnimator.SetWalking(false);
             return;
         }
 
+        // Logic AI di chuyển bình thường
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-        float actualTriggerDistance = attackRange - attackTriggerBuffer; // Ví dụ: 2 - 1 = 1m
+        float actualTriggerDistance = attackRange - attackTriggerBuffer;
 
         if (distanceToPlayer <= detectionRadius)
         {
             PlayerStats.IsOnBattle = true;
 
-            // LOGIC DI CHUYỂN TÍCH HỢP BUFFER ÂM
             if (distanceToPlayer <= actualTriggerDistance)
             {
                 StopMovement();
@@ -246,40 +249,35 @@ public class Enemy : MonoBehaviour
     {
         isAttacking = false;
         lastAttackTime = Time.time;
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        if (currentHealth <= 0) Die();
     }
 
-    public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, bool isCritical = false)
+    public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, Transform attacker = null, bool isCritical = false)
     {
         if (isDead || isTransitioning) return;
 
         float reductionMultiplier = 100f / (defense + 100f);
         int finalDamage = Mathf.CeilToInt(rawDamage * reductionMultiplier);
-
         finalDamage = Mathf.Max(finalDamage, 1);
 
         currentHealth -= finalDamage;
 
+        // --- POPUP ---
         GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
         if (popupPrefab != null)
         {
             Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
             GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
             DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
-
-            if (popupScript != null)
-            {
-                popupScript.Setup(finalDamage, damageSourceType, isCritical);
-            }
+            if (popupScript != null) popupScript.Setup(finalDamage, damageSourceType, isCritical);
         }
 
+        // --- XỬ LÝ CHẾT ---
         if (currentHealth <= 0)
         {
             isAttacking = false;
             isStunned = false;
+            isKnockedBack = false;
             if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
 
             if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
@@ -294,25 +292,66 @@ public class Enemy : MonoBehaviour
             return;
         }
 
+        // --- XỬ LÝ KHI CÒN SỐNG (HURT / KNOCKBACK / SHAKE) ---
         if (currentHealth > 0)
         {
             if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
-            isStunned = false;
 
+            isStunned = false;
             bool shouldStun = false;
-            // Boss thì khó bị stun hơn, hoặc nếu bị crit thì tỉ lệ stun cao hơn (tuỳ bạn game design)
-            if ((playerStats != null && playerStats.level > levelEnemy + 5) || enemyRank != EnemyRank.Boss || isCritical)
+
+            // 1. KIỂM TRA ĐIỀU KIỆN STUN (Chênh lệch Level + Crit)
+            bool isLevelHighEnough = playerStats != null && playerStats.level > levelEnemy + 5;
+
+            if (isLevelHighEnough && isCritical)
             {
-                // Ví dụ: Nếu bị CRITICAL thì luôn bị khựng lại (Stun) dù là ai
                 shouldStun = true;
             }
 
+            // 2. LOGIC ĐẨY LÙI (Phải thỏa mãn shouldStun mới được đẩy)
+            if (attacker != null && !isDead && enemyRank != EnemyRank.Boss && shouldStun)
+            {
+                ApplyKnockback(attacker);
+            }
+
+            // 3. Rung Camera (Vẫn giữ nguyên khi Crit)
+            if (isCritical && CinemachineShaker.Instance != null)
+            {
+                CinemachineShaker.Instance.TriggerShake(2f, 2f, 0.2f);
+            }
+
+            // 4. Kích hoạt Animation Stun
             if (shouldStun)
             {
                 if (isAttacking) isAttacking = false;
                 hurtCoroutine = StartCoroutine(HurtRoutine());
             }
         }
+    }
+
+    // --- COROUTINE KNOCKBACK MỚI ---
+    public void ApplyKnockback(Transform attackerTransform)
+    {
+        if (isDead || isTransitioning) return;
+        StartCoroutine(KnockbackRoutine(attackerTransform));
+    }
+
+    protected IEnumerator KnockbackRoutine(Transform attackerTransform)
+    {
+        isKnockedBack = true;
+        isAttacking = false;
+
+        // Tính hướng từ người đánh -> quái
+        Vector2 direction = (transform.position - attackerTransform.position).normalized;
+
+        // Đẩy đi
+        rb.linearVelocity = direction * knockbackForce;
+
+        yield return new WaitForSeconds(knockbackDuration);
+
+        // Dừng lại
+        rb.linearVelocity = Vector2.zero;
+        isKnockedBack = false;
     }
 
     protected IEnumerator SwitchPhaseRoutine()
@@ -337,7 +376,6 @@ public class Enemy : MonoBehaviour
 
     protected virtual void OnPhaseChange(int nextPhaseIndex)
     {
-        // Reset animator để Boss đứng dậy
         if (enemyAnimator != null)
         {
             Animator anim = GetComponent<Animator>();
@@ -346,21 +384,40 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    protected IEnumerator HurtRoutine() { isStunned = true; if (enemyAnimator != null) enemyAnimator.TriggerHurt(); StopMovement(); yield return new WaitForSeconds(hurtDuration); isStunned = false; hurtCoroutine = null; }
+    protected IEnumerator HurtRoutine()
+    {
+        isStunned = true;
+        isAttacking = false;
+
+        if (enemyAnimator != null) enemyAnimator.TriggerHurt();
+
+        // Nếu không bị knockback thì mới StopMovement ở đây, còn đang knockback thì để lực đẩy lo
+        if (!isKnockedBack) StopMovement();
+
+        yield return new WaitForSeconds(hurtDuration);
+        isStunned = false;
+        hurtCoroutine = null;
+    }
 
     protected virtual void Die()
     {
         isStunned = false;
         isAttacking = false;
+        isKnockedBack = false;
 
         if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
         StopMovement();
         rb.bodyType = RigidbodyType2D.Kinematic;
+
         if (enemyAnimator != null)
         {
             enemyAnimator.SetWalking(false);
-            enemyAnimator.TriggerDie();
+            // Dùng Play thay vì Trigger để đảm bảo chết ngay lập tức
+            Animator anim = GetComponent<Animator>();
+            if (anim != null) anim.Play("Dead");
+            else enemyAnimator.TriggerDie();
         }
+
         PlayerStats.IsOnBattle = false;
         if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
         {

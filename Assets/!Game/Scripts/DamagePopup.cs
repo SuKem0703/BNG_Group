@@ -44,11 +44,9 @@ public class DamagePopup : MonoBehaviour
         {
             ColorUtility.TryParseHtmlString("#FFD700", out newColor);
 
-            transform.localScale = originalScale * 1.5f;
+            transform.localScale = originalScale * 1.2f;
 
-            textMesh.SetText(textMesh.text + "!");
-
-            textMesh.fontStyle = FontStyles.Bold;
+            textMesh.SetText(textMesh.text);
         }
         else
         {

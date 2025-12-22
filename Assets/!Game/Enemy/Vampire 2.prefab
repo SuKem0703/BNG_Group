@@ -228,7 +228,7 @@ MonoBehaviour:
   enemyRank: 1
   bossPhases: []
   enemyName: Vampire Noble
-  levelEnemy: 47
+  levelEnemy: 45
   damage: 15
   maxHealth: 200
   defense: 10
@@ -242,6 +242,8 @@ MonoBehaviour:
   chaseResumeBuffer: -2
   attackCooldown: 0.5
   hurtDuration: 1
+  knockbackForce: 5
+  knockbackDuration: 0.2
 --- !u!50 &6245962013495930809
 Rigidbody2D:
   serializedVersion: 5
