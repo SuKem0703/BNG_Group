@@ -126,16 +126,16 @@ public class LoginManager : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             LoginResponse res = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
-            PlayerPrefs.SetString("AccountId", res.id);
+            PlayerPrefs.SetString("AccountId", res.userId);
             PlayerPrefs.SetString("Username", res.username);
             PlayerPrefs.SetString("AuthToken", res.token);
 
-            Debug.Log($"Đăng nhập thành công! ID: {res.id}, Username: {res.username}");
+            Debug.Log($"Đăng nhập thành công! ID: {res.userId}, Username: {res.username}");
 
             HideLoginPanel();
 
             if (uidText != null)
-                uidText.text = $"UID: {res.id}";
+                uidText.text = $"UID: {res.userId}";
             UpdateLoginUI();
 
         }
@@ -244,7 +244,7 @@ public class LoginManager : MonoBehaviour
     [System.Serializable]
     public class LoginResponse
     {
-        public string id;
+        public string userId;
         public string username;
         public string token;
     }

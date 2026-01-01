@@ -8,151 +8,178 @@ public class DeathManager : MonoBehaviour
     public static DeathManager Instance { get; private set; }
 
     [Header("Death Penalty Settings")]
-    [Tooltip("Phần trăm vàng bị mất khi chết (0.1 = 10%)")]
-    public float coinPenaltyPercentage = 0.1f;
-    [Tooltip("Số vàng tối thiểu bị trừ")]
-    public int minCoinPenalty = 10;
+    [Tooltip("Phần trăm EXP bị mất khi chết (0.1 = 10%)")]
+    public float expPenaltyPercentage = 0.1f;
 
     [Header("UI Animation Settings")]
-    [Tooltip("Thời gian hiện bảng Game Over")]
     public float fadeDuration = 1.0f;
-
     public GameObject gameOverUI;
+
+    // Biến để chặn spam nút khi đang load scene
+    private bool isRespawning = false;
 
     private void Awake()
     {
         if (Instance != null && Instance != this) Destroy(gameObject);
         else Instance = this;
 
-        if (gameOverUI == null)
-        {
-            gameOverUI = GameObject.Find("GameOverUI");
-        }
-
-        gameOverUI.SetActive(false);
+        if (gameOverUI == null) gameOverUI = GameObject.Find("GameOverUI");
+        if (gameOverUI != null) gameOverUI.SetActive(false);
     }
 
     public void HandlePlayerDeath()
     {
         if (PlayerStats.Instance == null) return;
 
-        Debug.Log("DeathManager: Bắt đầu quy trình xử lý tử vong...");
+        Debug.Log("DeathManager: Xử lý tử vong...");
+        isRespawning = false;
 
+        // 1. Tính toán và Trừ EXP
         ApplyDeathPenalty();
 
+        // 2. [QUAN TRỌNG] Đẩy EXP lên Server NGAY LẬP TỨC
+        // Để đảm bảo Server ghi nhận việc trừ EXP trước khi Save
+        PlayerStats.Instance.ForceSyncExpImmediate();
+
+        // 3. Hồi phục HP/MP về Max (để chuẩn bị Save trạng thái "Sống")
         PlayerStats.Instance.RefreshStats();
 
-        if (SaveController.currentCheckpointPos != null && !string.IsNullOrEmpty(SaveController.currentCheckpointScene))
+        // 4. Update thông tin SaveData (Vị trí spawn...)
+        if (SaveController.Instance != null)
         {
-            SaveController.nextSpawnPosition = SaveController.currentCheckpointPos.Value;
-            SaveController.pendingSceneName = SaveController.currentCheckpointScene;
-        }
-        else
-        {
-            Debug.LogWarning("Chưa có checkpoint! Sẽ lưu vị trí hiện tại (chỗ chết).");
+            if (SaveController.currentCheckpointPos != null && !string.IsNullOrEmpty(SaveController.currentCheckpointScene))
+            {
+                SaveController.nextSpawnPosition = SaveController.currentCheckpointPos.Value;
+                SaveController.pendingSceneName = SaveController.currentCheckpointScene;
+            }
+            else
+            {
+                Debug.LogWarning("Chưa có checkpoint! Sẽ hồi sinh tại chỗ.");
+                SaveController.nextSpawnPosition = PlayerStats.Instance.transform.position;
+                SaveController.pendingSceneName = SceneManager.GetActiveScene().name;
+            }
         }
 
+        // 5. Lưu Game (Lúc này EXP đã trừ, HP đã đầy)
         if (SaveController.Instance != null)
         {
             StartCoroutine(SaveAndShowGameOver());
+        }
+        else
+        {
+            ShowGameOverUI();
         }
     }
 
     private void ApplyDeathPenalty()
     {
-        int currentCoin = PlayerStats.Instance.coin;
-        int penalty = Mathf.FloorToInt(currentCoin * coinPenaltyPercentage);
+        int currentExp = PlayerStats.Instance.exp;
+        int penalty = Mathf.FloorToInt(currentExp * expPenaltyPercentage);
 
-        if (penalty < minCoinPenalty && currentCoin > 0)
-            penalty = Mathf.Min(minCoinPenalty, currentCoin);
+        // Trừ local (để hiển thị) -> Hàm này sẽ queue vào pendingExpToAdd
+        PlayerStats.Instance.AddEXP(-penalty);
 
-        PlayerStats.Instance.SpendCoin(penalty);
+        ShowNotification($"Bạn đã mất {penalty} EXP!");
     }
 
     private IEnumerator SaveAndShowGameOver()
     {
         bool saveCompleted = false;
 
-        SaveController.Instance.SaveGame(() => { saveCompleted = true; });
+        // Gọi save
+        SaveController.Instance.SaveGame(SaveReason.Death, (isSuccess) =>
+        {
+            saveCompleted = true;
+            if (isSuccess) Debug.Log("Đã lưu dữ liệu sau khi chết (bao gồm trừ EXP).");
+            else Debug.LogError("Lưu dữ liệu thất bại!");
+        });
 
-        yield return new WaitUntil(() => saveCompleted);
+        // Chờ save xong (hoặc timeout sau 3 giây để tránh treo game nếu mạng lag)
+        float timeout = 3f;
+        while (!saveCompleted && timeout > 0)
+        {
+            timeout -= Time.unscaledDeltaTime; // Dùng unscaled vì game có thể đang pause
+            yield return null;
+        }
 
+        if (!saveCompleted) Debug.LogWarning("Save quá lâu, bỏ qua chờ đợi để hiện UI.");
+
+        // Hiện UI sau khi save xong
         ShowGameOverUI();
     }
 
     private void ShowGameOverUI()
     {
-        PauseController.SetPause(true);
+        PauseController.SetPause(true); // Pause game
+        if (CommonUIController.Instance != null) CommonUIController.Instance.SetUIVisible(false);
 
-        CommonUIController.Instance.SetUIVisible(false);
-
-        ClassController.Instance.knightObject.SetActive(false);
-        ClassController.Instance.mageObject.SetActive(false);
+        // Ẩn nhân vật
+        if (ClassController.Instance != null)
+        {
+            if (ClassController.Instance.knightObject) ClassController.Instance.knightObject.SetActive(false);
+            if (ClassController.Instance.mageObject) ClassController.Instance.mageObject.SetActive(false);
+        }
 
         if (gameOverUI != null)
         {
             CanvasGroup canvasGroup = gameOverUI.GetComponent<CanvasGroup>();
-            if (canvasGroup == null)
-            {
-                canvasGroup = gameOverUI.AddComponent<CanvasGroup>();
-            }
+            if (canvasGroup == null) canvasGroup = gameOverUI.AddComponent<CanvasGroup>();
 
             canvasGroup.alpha = 0f;
-            canvasGroup.blocksRaycasts = false;
+            canvasGroup.blocksRaycasts = false; // Chặn bấm khi đang fade
             gameOverUI.SetActive(true);
 
-            canvasGroup.DOFade(1f, fadeDuration)
-                .SetUpdate(true)
-                .OnComplete(() =>
-                {
-                    canvasGroup.blocksRaycasts = true;
-                });
+            // Dùng SetUpdate(true) để chạy tween kể cả khi Time.timeScale = 0
+            canvasGroup.DOFade(1f, fadeDuration).SetUpdate(true).OnComplete(() =>
+            {
+                canvasGroup.blocksRaycasts = true; // Cho phép bấm nút
+            });
         }
         else
         {
-            Debug.LogError("Không tìm thấy GameOverUI! Load lại scene ngay lập tức.");
+            // Fallback nếu không có UI
             OnRespawnClicked();
         }
     }
 
-    // Hàm được gọi khi người chơi bấm nút "Hồi sinh" trên UI
+    // Gắn hàm này vào nút "Hồi sinh" / "Tiếp tục"
     public void OnRespawnClicked()
     {
+        // Chặn bấm liên tục
+        if (isRespawning) return;
+        isRespawning = true;
+
+        // [FIX] Bỏ dòng check SaveController.IsSaving ở đây
+        // Vì UI chỉ hiện sau khi Save xong. Nếu check ở đây có thể gây kẹt nút.
+
+        Debug.Log("Nút Hồi sinh đã được bấm!");
+
+        // 1. Unpause game trước khi load
         PauseController.SetPause(false);
         DOTween.KillAll();
 
-        if (SaveController.IsSaving)
-        {
-            Debug.LogWarning("[RESPAWN] IsSaving = true, abort");
-            return;
-        }
+        // 2. Xác định scene cần load
+        string targetScene = SaveController.pendingSceneName;
 
-        string targetScene = SaveController.currentCheckpointScene;
-        Vector3 targetPos = SaveController.currentCheckpointPos.Value;
-
+        // Fallback nếu tên scene rỗng
         if (string.IsNullOrEmpty(targetScene))
         {
-            Debug.LogError("[RESPAWN] CheckpointScene NULL or EMPTY");
-            return;
+            targetScene = SceneManager.GetActiveScene().name;
         }
 
-        // truyền vào TRƯỚC
-        SaveController.nextSpawnPosition = targetPos;
-        SaveController.pendingSceneName = targetScene;
+        Debug.Log($"[RESPAWN] Đang load về scene: {targetScene}");
 
-        Debug.Log(
-            $"[RESPAWN] Commit before save | Scene={targetScene} | Pos={targetPos}"
-        );
-
+        // 3. Load Scene
         SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
+    }
 
-        //SaveController.Instance.SaveGame(() =>
-        //{
-        //    Debug.Log(
-        //        $"[RESPAWN CALLBACK] Load scene='{targetScene}'"
-        //    );
-
-        //    SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
-        //});
+    private void ShowNotification(string message)
+    {
+        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.NotifyUIPrefab != null)
+        {
+            GameObject notifyUIObj = Instantiate(LoadResourceManager.Instance.NotifyUIPrefab);
+            NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
+            if (notifyUI != null) notifyUI.Show(message);
+        }
     }
 }

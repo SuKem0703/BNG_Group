@@ -167,7 +167,7 @@ public class KnightComboNormalAttack : MonoBehaviour
                 float rawDamage = playerStats.finalPhysicalAttack * scale;
                 bool isCritical = false;
 
-                float critChance = 50f; //playerStats.finalCritRate;
+                float critChance = playerStats.finalCritRate;
 
                 if (UnityEngine.Random.Range(0f, 100f) < critChance)
                 {

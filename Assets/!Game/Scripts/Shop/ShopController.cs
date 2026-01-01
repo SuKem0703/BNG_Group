@@ -12,88 +12,54 @@ public class ShopController : MonoBehaviour
     public int slotCount;
     public List<ShopItemData> shopItems;
     [SerializeField] private ShopItemPreview shopItemPreview;
+
     private GameObject ConfirmUIPrefab => LoadResourceManager.Instance.ConfirmUIPrefab;
     private GameObject NotifyUIPrefab => LoadResourceManager.Instance.NotifyUIPrefab;
 
     private ItemDictionary itemDictionary;
-    private PlayerStats playerStats;
     private TextMeshProUGUI coinText;
     private TextMeshProUGUI gemText;
 
     private void Awake()
     {
-        playerStats = FindFirstObjectByType<PlayerStats>();
-
-        if (playerStats != null)
-        {
-            coinText = FindTextByName(transform, "CoinText");
-            gemText = FindTextByName(transform, "GemText");
-        }
-        else
-        {
-            Debug.LogError("PlayerStats not found in ShopController!");
-        }
-
+        coinText = FindTextByName(transform, "CoinText");
+        gemText = FindTextByName(transform, "GemText");
         itemDictionary = FindFirstObjectByType<ItemDictionary>();
-
-        shopItemPreview = GetComponentsInChildren<ShopItemPreview>(true)
-            .FirstOrDefault(x => x.name == "ItemPreview");
+        shopItemPreview = GetComponentsInChildren<ShopItemPreview>(true).FirstOrDefault(x => x.name == "ItemPreview");
     }
 
-    void Start()
-    {
-        StartCoroutine(SetupAndDeactivate());
-    }
-
-    IEnumerator SetupAndDeactivate()
-    {
-        yield return null;
-        SetupShop();
-        yield return null;
-        gameObject.SetActive(false);
-    }
+    void Start() { StartCoroutine(SetupAndDeactivate()); }
+    IEnumerator SetupAndDeactivate() { yield return null; SetupShop(); yield return null; gameObject.SetActive(false); }
 
     void Update()
     {
-        if (playerStats != null && coinText != null && gemText != null)
+        if (PlayerStats.Instance != null && coinText != null && gemText != null)
         {
-            coinText.text = playerStats.coin.ToString();
-            gemText.text = playerStats.gem.ToString();
+            coinText.text = PlayerStats.Instance.coin.ToString();
+            gemText.text = PlayerStats.Instance.gem.ToString();
         }
     }
 
     void SetupShop()
     {
-        foreach (Transform child in shopPanel.transform)
-        {
-            Destroy(child.gameObject);
-        }
+        foreach (Transform child in shopPanel.transform) Destroy(child.gameObject);
 
         for (int i = 0; i < slotCount; i++)
         {
             GameObject slot = Instantiate(slotPrefab, shopPanel.transform);
-
             if (i < shopItems.Count)
             {
                 var data = shopItems[i];
                 GameObject itemPrefab = itemDictionary.GetItemPrefab(data.itemID);
-
                 if (itemPrefab != null)
                 {
                     GameObject item = Instantiate(itemPrefab, slot.transform);
                     item.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-
                     Item itemScript = item.GetComponent<Item>();
-                    if (itemScript != null)
-                    {
-                        itemScript.quantity = data.quantity;
-                        itemScript.UpdateQuantityDisplay();
-                    }
+                    if (itemScript != null) { itemScript.quantity = data.quantity; itemScript.UpdateQuantityDisplay(); }
 
                     slot.GetComponent<Slot>().isShopSlot = true;
-
-                    Slot slotComp = slot.GetComponent<Slot>();
-                    if (slotComp != null) slotComp.currentItem = item;
+                    slot.GetComponent<Slot>().currentItem = item;
 
                     var shopHandler = item.AddComponent<ItemShopHandler>();
                     shopHandler.itemID = data.itemID;
@@ -109,141 +75,69 @@ public class ShopController : MonoBehaviour
 
     public void OpenShop()
     {
-        // Gọi MenuStateManager để xử lý Pause, chặn Input, ẩn HUD
-        if (MenuStateManager.Instance != null)
-        {
-            // Bật gameObject chứa script này lên trước nếu nó đang tắt
-            gameObject.SetActive(true);
-
-            // Gọi hàm mở menu chung
-            MenuStateManager.Instance.OpenMenu(shopPanel);
-        }
-        else
-        {
-            // Fallback nếu không có Manager (ít xảy ra)
-            gameObject.SetActive(true);
-            shopPanel.SetActive(true);
-            PauseController.SetPause(true);
-        }
+        if (MenuStateManager.Instance != null) { gameObject.SetActive(true); MenuStateManager.Instance.OpenMenu(shopPanel); }
+        else { gameObject.SetActive(true); shopPanel.SetActive(true); PauseController.SetPause(true); }
     }
 
     public void CloseShop()
     {
-        // Đóng shop bằng Menu Manager
-        if (MenuStateManager.Instance != null)
-        {
-            MenuStateManager.Instance.CloseCurrentMenu();
-        }
-        else
-        {
-            shopPanel.SetActive(false);
-            PauseController.SetPause(false);
-        }
-
+        if (MenuStateManager.Instance != null) MenuStateManager.Instance.CloseCurrentMenu();
+        else { shopPanel.SetActive(false); PauseController.SetPause(false); }
         gameObject.SetActive(false);
     }
 
     private void ExecuteBuyItem(int itemID, int price, CurrencyType currency, int quantity)
     {
-        var player = Object.FindFirstObjectByType<PlayerStats>();
-        bool canBuy = (currency == CurrencyType.Coin && player.coin >= price) ||
-                      (currency == CurrencyType.Gem && player.gem >= price);
+        bool isCoin = currency == CurrencyType.Coin;
+        int currentBalance = isCoin ? PlayerStats.Instance.coin : PlayerStats.Instance.gem;
 
-        if (!canBuy)
+        if (currentBalance < price)
         {
-            ShowNotification("Không đủ tiền! Bạn không thể mua vật phẩm này.");
+            ShowNotification("Số dư không đủ!");
             return;
         }
 
-        GameObject itemPrefab = itemDictionary.GetItemPrefab(itemID);
-        if (itemPrefab == null)
-        {
-            ShowNotification("Lỗi hệ thống: Không tìm thấy dữ liệu vật phẩm!");
-            return;
-        }
+        string currencyStr = isCoin ? "Coin" : "Gem";
 
-        Item tempItem = itemPrefab.GetComponent<Item>();
-        if (tempItem == null)
+        InventoryService.Instance.RequestBuyItem(itemID, quantity, price, currencyStr, (success, serverItems) =>
         {
-            ShowNotification("Lỗi hệ thống: Vật phẩm không có thuộc tính Item!");
-            return;
-        }
-
-        bool allAdded = true;
-
-        // Trang bị → tạo từng món
-        if (tempItem.itemType == ItemType.Equipment)
-        {
-            for (int i = 0; i < quantity; i++)
+            if (success)
             {
-                bool added = InventoryController.Instance.AddItem(itemPrefab);
-                if (!added)
+                ShowNotification("Mua thành công!");
+
+                int newBalance = currentBalance - (price);
+                if (isCoin)
+                    PlayerStats.Instance.SyncCoinFromServer(newBalance);
+                else
+                    PlayerStats.Instance.SyncGemFromServer(newBalance);
+
+                if (InventoryController.Instance != null)
                 {
-                    allAdded = false;
-                    break;
+                    InventoryController.Instance.RefreshInventory();
                 }
             }
-        }
-        else
-        {
-            // Consumable → tạo 1 item với quantity
-            GameObject temp = Instantiate(itemPrefab);
-            temp.GetComponent<Item>().quantity = quantity;
-
-            allAdded = InventoryController.Instance.AddItem(temp);
-
-            Destroy(temp);
-        }
-
-        if (allAdded)
-        {
-            // Thanh toán
-            if (currency == CurrencyType.Coin)
-                player.SpendCoin(price);
             else
-                player.SpendGem(price);
+            {
+                ShowNotification("Giao dịch thất bại! Vui lòng kiểm tra lại.");
 
-            // --- CLEAN VERSION: dùng Prefab Manager ---
-            GameObject okUIObj = Instantiate(LoadResourceManager.Instance.NotifyUIPrefab);
-            var notify = okUIObj.GetComponent<NotifyUIController>();
-            if (notify != null)
-                notify.Show("Mua thành công!");
-
-            // Auto Save
-            SaveController.Instance?.TriggerAutoSave();
-        }
-        else
-        {
-            ShowNotification("Túi đồ đầy! Không thể mua thêm vật phẩm.");
-        }
+                // Mẹo: Nếu nghi ngờ lệch tiền, hãy sync lại tiền luôn
+                // PlayerStats.Instance.SyncStatsFromServer(...); 
+            }
+        });
     }
-
 
     public void OpenBuyConfirm(int itemID, int price, CurrencyType currency, int quantity)
     {
-        if (ConfirmUIPrefab == null)
-        {
-            Debug.LogError("ConfirmUIPrefab NOT FOUND in LoadResourceManager!");
-            return;
-        }
-
+        if (ConfirmUIPrefab == null) return;
         GameObject confirmUIObj = Instantiate(ConfirmUIPrefab);
         var confirmUI = confirmUIObj.GetComponent<ConfirmUIController>();
 
         string itemName = "vật phẩm này";
-
         GameObject pf = itemDictionary.GetItemPrefab(itemID);
-        if (pf != null)
-        {
-            var info = pf.GetComponent<Item>();
-            if (info != null && !string.IsNullOrEmpty(info.Name))
-                itemName = $"<color=white>{info.Name}</color>";
-        }
+        if (pf != null) itemName = $"<color=white>{pf.GetComponent<Item>().Name}</color>";
+        string curStr = currency == CurrencyType.Coin ? "coin" : "gem";
 
-        string currencyText = currency == CurrencyType.Coin ? "coin" : "gem";
-        string message = $"Bạn có chắc muốn mua {itemName} với giá {price} {currencyText}?";
-
-        confirmUI.Show(message, () =>
+        confirmUI.Show($"Bạn có chắc muốn mua {itemName} với giá {price} {curStr}?", () =>
         {
             ExecuteBuyItem(itemID, price, currency, quantity);
         });
@@ -251,32 +145,13 @@ public class ShopController : MonoBehaviour
 
     public void ShowNotification(string message)
     {
-        if (NotifyUIPrefab == null)
-        {
-            Debug.LogError("NotifyUIPrefab NOT FOUND in LoadResourceManager!");
-            return;
-        }
-
-        GameObject obj = Instantiate(NotifyUIPrefab);
-        var controller = obj.GetComponent<NotifyUIController>();
-
-        if (controller != null)
-            controller.Show(message);
-        else
-        {
-            Debug.LogError("NotifyUIPrefab missing NotifyUIController!");
-            Destroy(obj);
-        }
+        if (NotifyUIPrefab == null) return;
+        Instantiate(NotifyUIPrefab).GetComponent<NotifyUIController>()?.Show(message);
     }
 
-    TextMeshProUGUI FindTextByName(Transform parent, string childName)
+    TextMeshProUGUI FindTextByName(Transform p, string n)
     {
-        var texts = parent.GetComponentsInChildren<TextMeshProUGUI>(includeInactive: true);
-        foreach (var t in texts)
-        {
-            if (t.name == childName)
-                return t;
-        }
+        foreach (var t in p.GetComponentsInChildren<TextMeshProUGUI>(true)) if (t.name == n) return t;
         return null;
     }
 }

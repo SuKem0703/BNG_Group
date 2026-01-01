@@ -37,7 +37,7 @@ public class MapController : MonoBehaviour
         // Gọi hàm hiển thị UI
         ShowMapNameUI();
 
-        Debug.Log($"Đã tải Map: {mapName} | Loại: {mapType}");
+        //Debug.Log($"Đã tải Map: {mapName} | Loại: {mapType}");
     }
 
     public void ShowMapNameUI()

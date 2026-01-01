@@ -21,15 +21,12 @@ public class ConsumableItem : Item
     private new void Awake()
     {
         base.Awake();
-
         itemType = ItemType.Consumable;
-
         playerStats = FindFirstObjectByType<PlayerStats>();
         if (playerStats == null)
-        {
             Debug.LogError("ConsumableItem: Không tìm thấy PlayerStats trong Scene!");
-        }
     }
+
     public override void UseItem()
     {
         if (playerStats == null || EffectController.Instance == null)
@@ -37,17 +34,13 @@ public class ConsumableItem : Item
             Debug.LogWarning("Không thể dùng item: Thiếu PlayerStats hoặc EffectController.");
             return;
         }
+
         if (triggersGlobalPotionCooldown)
         {
-            if (playerStats.IsPotionOnCooldown())
-            {
-                Debug.Log("Không thể dùng: Potion đang hồi!");
-                return;
-            }
+            if (playerStats.IsPotionOnCooldown()) return;
         }
 
         bool canBeUsed = true;
-
         switch (effectID)
         {
             case "HEAL_INSTANT":
@@ -65,13 +58,10 @@ public class ConsumableItem : Item
                 }
                 break;
         }
-        if (!canBeUsed)
-        {
-            return;
-        }
+
+        if (!canBeUsed) return;
 
         float durationForIcon = effectDuration;
-
         if (triggersGlobalPotionCooldown)
         {
             durationForIcon = playerStats.potionCooldownDuration;
@@ -87,6 +77,11 @@ public class ConsumableItem : Item
 
         RemoveFromStack(1);
 
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.ScheduleConsumableSync(this.dbID, this.quantity);
+            InventoryController.Instance.ReBuildItemCounts();
+        }
         if (quantity <= 0)
         {
             Slot parentSlot = GetComponentInParent<Slot>();
@@ -96,11 +91,6 @@ public class ConsumableItem : Item
             }
 
             Destroy(gameObject);
-        }
-
-        if (InventoryController.Instance != null)
-        {
-            InventoryController.Instance.ReBuildItemCounts();
         }
     }
 }

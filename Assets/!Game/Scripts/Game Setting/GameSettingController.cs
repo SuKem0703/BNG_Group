@@ -313,7 +313,7 @@ public class GameSettingController : MonoBehaviour
     }
     private IEnumerator QuitAfterSave()
     {
-        yield return StartCoroutine(saveController.SaveRoutine());
+        yield return StartCoroutine(saveController.SaveRoutine(SaveReason.Manual));
 
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;

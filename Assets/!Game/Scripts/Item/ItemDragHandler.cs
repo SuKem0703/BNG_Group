@@ -32,108 +32,53 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        // 🔒 Kiểm tra parent slot có phải slot trang bị hoặc slot shop không
         Slot parentSlot = transform.parent.GetComponent<Slot>();
-        if (parentSlot != null && parentSlot.isEquipmentSlot)
-        {
-            return;
-        }
+        if (parentSlot != null && (parentSlot.isEquipmentSlot || parentSlot.isShopSlot)) return;
 
-        if (parentSlot != null && parentSlot.isShopSlot == true)
-        {
-            return;
-        }
-
-        //if (parentSlot != null && parentSlot.isHotBarSlot) 
-        //{ 
-        //    return; 
-        //}
-
-        // Tạo selection box nếu là hạt giống
+        // Selection box logic
         Item draggedItem = GetComponent<Item>();
+        if (draggedItem != null && draggedItem.dbID == 0)
+        {
+            Debug.LogWarning("Đang đồng bộ dữ liệu vật phẩm, vui lòng chờ...");
+            return;
+        }
+
         if (draggedItem != null && draggedItem.itemType == ItemType.Seed && LoadResourceManager.Instance.SelectionBoxPrefab != null)
         {
             currentSelectionBox = Instantiate(LoadResourceManager.Instance.SelectionBoxPrefab);
-
             selectionBoxRenderer = currentSelectionBox.GetComponent<SpriteRenderer>();
             currentSelectionBox.SetActive(false);
         }
 
-        originalParent = transform.parent; // Save OG parent
-        //transform.SetParent(transform.root); // Above other canvas'
+        originalParent = transform.parent;
+        originalSlot = originalParent.GetComponent<Slot>();
 
         Canvas mainCanvas = GetComponentInParent<Canvas>();
         if (mainCanvas != null)
         {
-            // Nếu Canvas có rootCanvas (Canvas lồng nhau), ta lấy cái to nhất
-            if (mainCanvas.rootCanvas != null)
-            {
-                transform.SetParent(mainCanvas.rootCanvas.transform, true);
-            }
-            else
-            {
-                transform.SetParent(mainCanvas.transform, true);
-            }
+            transform.SetParent(mainCanvas.rootCanvas != null ? mainCanvas.rootCanvas.transform : mainCanvas.transform, true);
         }
 
         canvasGroup.blocksRaycasts = false;
-        canvasGroup.alpha = 0.6f; // semi-transparent during drag
-
+        canvasGroup.alpha = 0.6f;
         TooltipManager.Instance.gameObject.SetActive(false);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        // 🔒 Kiểm tra parent slot có phải slot trang bị hoặc slot shop không
         Slot parentSlot = transform.parent.GetComponent<Slot>();
-        if (parentSlot != null && parentSlot.isEquipmentSlot)
-        {
-            return;
-        }
+        if (parentSlot != null && (parentSlot.isEquipmentSlot || parentSlot.isShopSlot)) return;
 
-        if (parentSlot != null && parentSlot.isShopSlot == true)
-        {
-            return;
-        }
-
-        //if (parentSlot != null && parentSlot.isHotBarSlot == true) 
-        //{ 
-        //    return;
-        //}
-
-        // Cập nhật selection box nếu là hạt giống
-        if (currentSelectionBox != null)
-        {
-            UpdateSelectionBoxPosition(eventData);
-        }
-
-        transform.position = eventData.position; // Follow the mouse
+        if (currentSelectionBox != null) UpdateSelectionBoxPosition(eventData);
+        transform.position = eventData.position;
     }
+
     public void OnEndDrag(PointerEventData eventData)
     {
-        // 🔒 Kiểm tra parent slot có phải slot trang bị hoặc slot shop không
         Slot parentSlot = transform.parent.GetComponent<Slot>();
-        if (parentSlot != null && parentSlot.isEquipmentSlot)
-        {
-            return;
-        }
+        if (parentSlot != null && (parentSlot.isEquipmentSlot || parentSlot.isShopSlot)) return;
 
-        if (parentSlot != null && parentSlot.isShopSlot == true)
-        {
-            return;
-        }
-
-        //if (parentSlot != null && parentSlot.isHotBarSlot == true)
-        //{
-        //    return;
-        //}
-
-        // Xoá selection box nếu có
-        if (currentSelectionBox != null)
-        {
-            Destroy(currentSelectionBox);
-            currentSelectionBox = null;
-        }
+        if (currentSelectionBox != null) { Destroy(currentSelectionBox); currentSelectionBox = null; }
 
         canvasGroup.blocksRaycasts = true;
         canvasGroup.alpha = 1f;
@@ -142,171 +87,33 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (dropSlot == null)
         {
             GameObject dropItem = eventData.pointerEnter;
-            if (dropItem != null)
-            {
-                dropSlot = dropItem.GetComponentInParent<Slot>();
-            }
+            if (dropItem != null) dropSlot = dropItem.GetComponentInParent<Slot>();
         }
 
-        originalSlot = originalParent.GetComponent<Slot>();
         Item draggedItem = GetComponent<Item>();
+        if (draggedItem == null) { SnapBack(); return; }
 
-        if (dropSlot == originalSlot)
+        // 1. Kéo vào chính nó -> Snapback
+        if (dropSlot == originalSlot) { SnapBack(); return; }
+
+        // 2. Kéo ra ngoài Inventory -> Vứt đồ
+        if (dropSlot == null)
         {
-            SnapBack();
-        }
-
-        // Không kéo gì cả hoặc lỗi thì snapback
-        if (draggedItem == null)
-        {
-            SnapBack();
-            return;
-        }
-
-        // Nếu kéo vào slot nào đó
-        if (dropSlot != null)
-        {
-            if (dropSlot.isShopSlot)
-            {
-                SnapBack();
-                return;
-            }
-
-            // Nếu slot đích là Hotbar
-            if (dropSlot.isHotBarSlot)
-            {
-                // Cấm kéo Equipment vào Hotbar
-                if (draggedItem.itemType == ItemType.Equipment)
-                {
-                    Debug.Log("Không thể kéo trang bị vào Hotbar.");
-                    SnapBack();
-                    return;
-                }
-
-                // (Đây là yêu cầu của bạn) Cấm kéo QuestItem vào Hotbar
-                if (draggedItem.itemType == ItemType.QuestItem)
-                {
-                    Debug.Log("Không thể kéo vật phẩm nhiệm vụ vào Hotbar.");
-                    SnapBack();
-                    return;
-                }
-            }
-
-            // Nếu item là QuestItem (chúng ta đã biết nó không phải hotbar)
-            if (draggedItem.itemType == ItemType.QuestItem)
-            {
-                // Cấm kéo QuestItem vào EquipmentSlot
-                if (dropSlot.isEquipmentSlot)
-                {
-                    Debug.Log("Không thể trang bị vật phẩm nhiệm vụ.");
-                    SnapBack();
-                    return;
-                }
-                // (Nếu nó là inventory slot bình thường, code sẽ chạy tiếp và cho phép di chuyển/swap)
-            }
-
-            // Kiểm tra nếu slot là EquipmentSlot và item hợp lệ
-            if (dropSlot.isEquipmentSlot)
-            {
-                // Kiểm tra nếu trang bị hợp lệ
-                if (draggedItem.equipSlot != dropSlot.acceptedEquipSlot ||
-                    (dropSlot.classRestriction != ClassRestriction.None && draggedItem.classRestriction != dropSlot.classRestriction))
-                {
-                    SnapBack();
-                    return;
-                }
-
-                // Kiểm tra cấp độ của người chơi
-                if (playerStats != null && playerStats.level < draggedItem.requiredLevel)
-                {
-                    Debug.Log($"Không thể trang bị {draggedItem.Name}: yêu cầu cấp {draggedItem.requiredLevel}, hiện tại là cấp {playerStats.level}");
-                    SnapBack();
-                    return;
-                }
-            }
-
-            // Nếu slot đích có item rồi
-            if (dropSlot.currentItem != null)
-            {
-                Item targetItem = dropSlot.currentItem.GetComponent<Item>();
-
-                bool isFromDisplayToEquip = draggedItem != null
-                                            && draggedItem.isDisplayOnly
-                                            && dropSlot.isEquipmentSlot;
-
-                // 🚫 Còn lại: nếu item đích bị khóa (displayOnly hoặc equipped) thì snapback
-                if (!isFromDisplayToEquip && targetItem != null && (targetItem.isDisplayOnly || targetItem.isEquipped))
-                {
-                    SnapBack();
-                    return;
-                }
-
-                // Nếu cùng loại và stackable
-                if (draggedItem.ID == targetItem.ID && draggedItem.itemType != ItemType.Equipment && draggedItem.gameObject != targetItem.gameObject)
-                {
-                    targetItem.AddToStack(draggedItem.quantity);
-                    originalSlot.currentItem = null;
-                    TooltipManager.Instance.gameObject.SetActive(true);
-                    Destroy(gameObject);
-                    Debug.Log($"Gộp vào slot {dropSlot.name}, huỷ object {draggedItem.Name}");
-                    return;
-                }
-                else
-                {
-                    //Slot has an item - swap items
-                    dropSlot.currentItem.transform.SetParent(originalSlot.transform);
-                    originalSlot.currentItem = dropSlot.currentItem;
-                    dropSlot.currentItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-
-                    transform.SetParent(dropSlot.transform);
-                    dropSlot.currentItem = gameObject;
-                    GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-                }
-            }
-            else
-            {
-                originalSlot.currentItem = null;
-                transform.SetParent(dropSlot.transform);
-                dropSlot.currentItem = gameObject;
-                GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            }
-
-            // Gán item vào slot mới
-            transform.SetParent(dropSlot.transform);
-            dropSlot.currentItem = gameObject;
-            GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-
-            // Nếu là item trang bị, cập nhật trạng thái
-            if (dropSlot.isEquipmentSlot && draggedItem != null)
-            {
-                UpdateAllEquipmentItems(draggedItem);
-                playerStats.ApplyEquippedItems();
-                draggedItem.isEquipped = true;
-                if (draggedItem.sourceItem != null)
-                    draggedItem.sourceItem.isEquipped = true;
-            }
-
-            EquipmentScrollViewController equipmentView = Object.FindFirstObjectByType<EquipmentScrollViewController>();
-            if (equipmentView != null)
-            {
-                equipmentView.ShowEquipmentItems();
-            }
-        }
-
-        // Kéo ra ngoài inventory
-        else
-        {
-            // Nếu thả ra ngoài slot
             if (!IsWithinInventory(eventData.position))
             {
-                // Thử gieo hạt nếu có thể
+                // Logic gieo hạt
                 FarmPlot plot = GetFarmPlotAtMouse(eventData);
-
                 if (plot != null && draggedItem.itemType == ItemType.Seed)
                 {
                     if (InteractionDetector.Instance != null && InteractionDetector.Instance.IsPlotInRange(plot))
                     {
                         FarmController.Instance.TryPlantSeed(plot, (SeedItem)draggedItem);
+
+                        if (InventoryService.Instance != null)
+                        {
+                            InventoryService.Instance.RequestUpdateQuantity(draggedItem.dbID, draggedItem.quantity);
+                        }
+
                         if (draggedItem.quantity <= 0)
                         {
                             originalSlot.currentItem = null;
@@ -318,41 +125,111 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                         }
                         return;
                     }
-                    else
-                    {
-                        //ShowDropErrorMessage("Hãy lại gần hơn để gieo hạt!");
-                        SnapBack();
-                        return;
-                    }
                 }
 
-                // Nếu là item đang equipped => không cho vứt
-                if (draggedItem.isEquipped)
+                if (draggedItem.isEquipped || draggedItem.itemType == ItemType.QuestItem || QuestController.Instance.IsItemNeededForActiveQuest(draggedItem.ID))
                 {
+                    ShowDropErrorMessage("Không thể vứt bỏ vật phẩm này!");
                     SnapBack();
                     return;
                 }
-
-                // Nếu là quest item => không cho vứt
-                if (draggedItem.itemType == ItemType.QuestItem)
-                {
-                    ShowDropErrorMessage("Không thể vứt bỏ vật phẩm nhiệm vụ!");
-                    SnapBack();
-                    return;
-                }
-
-                // Kiểm tra nếu item đang cần cho nhiệm vụ
-                if (QuestController.Instance.IsItemNeededForActiveQuest(draggedItem.ID))
-                {
-                    ShowDropErrorMessage($"<color=yellow>{draggedItem.Name}</color> đang cần cho nhiệm vụ. Không thể vứt bỏ!");
-                    SnapBack();
-                    return;
-                }
-
                 RequestDropItemConfirmation(originalSlot, draggedItem, eventData.position);
             }
-            SnapBack();
+            else SnapBack();
+            TooltipManager.Instance.gameObject.SetActive(true);
+            return;
         }
+
+        // 3. Kéo vào Slot hợp lệ
+        if (dropSlot.isShopSlot) { SnapBack(); return; }
+
+        // --- LOGIC HOTBAR ---
+        if (dropSlot.isHotBarSlot)
+        {
+            if (draggedItem.itemType == ItemType.Equipment || draggedItem.itemType == ItemType.QuestItem)
+            {
+                SnapBack(); return;
+            }
+        }
+
+        // --- LOGIC EQUIP (Trang bị) ---
+        if (dropSlot.isEquipmentSlot)
+        {
+            if (draggedItem.itemType == ItemType.QuestItem ||
+                draggedItem.equipSlot != dropSlot.acceptedEquipSlot ||
+                (dropSlot.classRestriction != ClassRestriction.None && draggedItem.classRestriction != dropSlot.classRestriction) ||
+                (playerStats != null && playerStats.level < draggedItem.requiredLevel))
+            {
+                SnapBack(); return;
+            }
+        }
+
+        // --- XỬ LÝ SWAP HOẶC MOVE ---
+        Item targetItem = dropSlot.currentItem != null ? dropSlot.currentItem.GetComponent<Item>() : null;
+
+        // Logic Stack (Gộp)
+        if (targetItem != null && draggedItem.ID == targetItem.ID && draggedItem.itemType != ItemType.Equipment)
+        {
+            // Client Side Update
+            targetItem.AddToStack(draggedItem.quantity);
+            originalSlot.currentItem = null;
+            Destroy(gameObject);
+
+            // TODO: Call API Merge/Stack nếu Server hỗ trợ, hoặc Move item vào đè lên
+            // Hiện tại dùng tạm RequestMoveItem để Server tự xử lý gộp
+            InventoryService.Instance.RequestMoveItem(draggedItem.dbID, GetGlobalSlotIndex(dropSlot));
+            return;
+        }
+
+        // Thực hiện Swap UI
+        if (dropSlot.currentItem != null)
+        {
+            // Move target về slot cũ
+            dropSlot.currentItem.transform.SetParent(originalSlot.transform);
+            originalSlot.currentItem = dropSlot.currentItem;
+            dropSlot.currentItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+        }
+        else
+        {
+            originalSlot.currentItem = null;
+        }
+
+        // Move dragged đến slot mới
+        transform.SetParent(dropSlot.transform);
+        dropSlot.currentItem = gameObject;
+        GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+        // --- GỌI API CẬP NHẬT DB ---
+
+        // A. Xử lý Equip/Unequip
+        if (dropSlot.isEquipmentSlot)
+        {
+            // Đeo vào -> Gọi Equip TRUE
+            UpdateAllEquipmentItems(draggedItem);
+            draggedItem.isEquipped = true;
+            InventoryService.Instance.RequestEquip(draggedItem.dbID, true);
+            playerStats.ApplyEquippedItems();
+        }
+        else if (originalSlot.isEquipmentSlot)
+        {
+            // Tháo ra -> Gọi Equip FALSE
+            draggedItem.isEquipped = false;
+            InventoryService.Instance.RequestEquip(draggedItem.dbID, false);
+            playerStats.ApplyEquippedItems();
+        }
+        else
+        {
+            // B. Xử lý Move (Inventory -> Inventory / Hotbar)
+            // Gửi lệnh move cho item đang kéo
+            InventoryService.Instance.RequestMoveItem(draggedItem.dbID, GetGlobalSlotIndex(dropSlot));
+
+            // Nếu là Swap (targetItem bị đẩy về originalSlot), gửi lệnh move cho nó nữa
+            if (targetItem != null)
+            {
+                InventoryService.Instance.RequestMoveItem(targetItem.dbID, GetGlobalSlotIndex(originalSlot));
+            }
+        }
+
         TooltipManager.Instance.gameObject.SetActive(true);
     }
 
@@ -525,6 +402,13 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         playerStats.ApplyEquippedItems();
     }
 
+    private int GetGlobalSlotIndex(Slot slot)
+    {
+        int index = slot.transform.GetSiblingIndex();
+        if (slot.isHotBarSlot) index += 1000;
+        return index;
+    }
+
     private void UpdateAllEquipmentItems(Item draggedItem)
     {
         foreach (Transform slotTransform in inventoryController.inventoryPanel.transform)
@@ -538,7 +422,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                     && item.classRestriction == draggedItem.classRestriction
                     && item.equipSlot == draggedItem.equipSlot)
                 {
-                    item.isEquipped = false; // Set tất cả các item cùng loại là false
+                    item.isEquipped = false;
                     Debug.Log($"Đã bỏ trang bị: {item.Name}");
                 }
             }
@@ -556,75 +440,76 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         Item item = GetComponent<Item>();
 
-        if (item != null && (item.isDisplayOnly || item.isEquipped))
+        if (item == null || item.dbID == 0)
         {
-            transform.SetParent(originalParent);
-            GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            Debug.LogWarning("Item chưa đồng bộ, không thể vứt.");
+            SnapBack();
             return;
         }
 
+        if (item.isDisplayOnly || item.isEquipped)
+        {
+            SnapBack(); return;
+        }
+
         int dropQuantity = item.quantity;
+        int itemDbIdToRemove = item.dbID;
 
         originalSlot.currentItem = null;
 
         Transform playerTransform = GameObject.FindGameObjectWithTag("Player")?.transform;
-        if (playerTransform == null)
-        {
-            Debug.LogError("Missing 'Player' tag");
-            return;
-        }
+        if (playerTransform == null) return;
 
         Vector2 playerPosition = (Vector2)playerTransform.position;
         Vector2 mouseScreenPosition = dragEndMousePosition;
         Vector2 mouseWorldPosition = Camera.main.ScreenToWorldPoint(mouseScreenPosition);
         Vector2 dropDirection = (mouseWorldPosition - playerPosition).normalized;
-
-        // Xử lý trường hợp chuột ở ngay trên người chơi
-        if (dropDirection == Vector2.zero)
-        {
-            dropDirection = Vector2.up;
-        }
-
+        if (dropDirection == Vector2.zero) dropDirection = Vector2.up;
         float randomDistance = Random.Range(minDropDistance, maxDropDistance);
         Vector2 dropPosition = playerPosition + (dropDirection * randomDistance);
 
-        //Vector2 dropOffset = Random.insideUnitCircle.normalized * Random.Range(minDropDistance, maxDropDistance);
-        //Vector2 dropPosition = (Vector2)playerTransform.position + dropOffset;
-
-        // ✅ Tạo object mới đúng chuẩn:
         GameObject dropItem = Instantiate(gameObject, dropPosition, Quaternion.identity);
-
-        // ✅ Reset các cờ không đúng
         Item droppedItem = dropItem.GetComponent<Item>();
+
         droppedItem.isEquipped = false;
         droppedItem.isDisplayOnly = false;
-
+        droppedItem.dbID = 0;
         droppedItem.quantity = dropQuantity;
         droppedItem.UpdateQuantityDisplay();
 
-        dropItem.GetComponent<BounceEffect>().StartBounce();
+        dropItem.GetComponent<BounceEffect>()?.StartBounce();
+
+        InventoryService.Instance.RequestRemoveItem(itemDbIdToRemove);
 
         Destroy(gameObject);
-        Debug.Log($"Đã vứt item: {item.Name} ({dropQuantity}) tại vị trí {dropPosition}");
+        Debug.Log($"Đã vứt item: {item.Name} (ID: {itemDbIdToRemove})");
 
         InventoryController.Instance.ReBuildItemCounts();
     }
 
     float lastClickTime = 0f;
-    float doubleClickThreshold = 0.3f; // Thời gian tối đa giữa 2 lần click
+    float doubleClickThreshold = 0.3f;
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        // Kiểm tra Double Click
         if (Time.time - lastClickTime < doubleClickThreshold)
         {
-            // Kiểm tra xem có đang mở Rương không
-            if (StorageChestController.Instance != null && GameStateManager.IsMenuOpen)
+            if (StorageChestController.Instance != null &&
+                StorageChestController.Instance.chestPanel.activeSelf)
             {
                 Item thisItem = GetComponent<Item>();
+
+                if (thisItem == null) return;
+
+                if (thisItem.dbID == 0)
+                {
+                    Debug.LogWarning("Vật phẩm đang được đồng bộ với Server, vui lòng đợi giây lát rồi thử lại.");
+                    ShowDropErrorMessage("Đang đồng bộ...");
+                    return;
+                }
+
                 StorageChestController.Instance.OnItemDoubleClicked(thisItem);
 
-                // Reset click time để tránh triple click gây lỗi
                 lastClickTime = 0;
                 return;
             }

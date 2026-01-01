@@ -89,7 +89,7 @@ public class CheckPoint : MonoBehaviour, IInteractable
 
         if (SaveController.Instance != null)
         {
-            SaveController.Instance.SaveGame(() =>
+            SaveController.Instance.SaveGame(SaveReason.Checkpoint, (isSuccess) =>
             {
                 Debug.Log("Lưu checkpoint hoàn tất!");
                 // SaveController.nextSpawnPosition = null; 

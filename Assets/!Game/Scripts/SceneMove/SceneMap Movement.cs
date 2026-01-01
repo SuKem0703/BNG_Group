@@ -101,10 +101,17 @@ public class SceneMapMove : MonoBehaviour
             SaveController.nextSpawnPosition = playerPosition;
             SaveController.pendingSceneName = sceneName;
 
-            saveController.SaveGame(() =>
+            saveController.SaveGame(SaveReason.SceneTransition ,(isSuccess) =>
             {
-                //Debug.Log($"Lưu hoàn tất. Đang chuyển sang scene: {sceneName}");
-                SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+                if (isSuccess)
+                {
+                    SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+                }
+                else
+                {
+                    Debug.LogError("Không thể chuyển map do lỗi lưu dữ liệu (Mất kết nối?)");
+                    ShowNotification("Lỗi kết nối! Không thể sang map.");
+                }
             });
 
             return;
@@ -140,11 +147,13 @@ public class SceneMapMove : MonoBehaviour
         if (CinemachineShaker.Instance != null)
             CinemachineShaker.Instance.TriggerShake(3f, 10f, 0.2f);
     }
-    private IEnumerator SaveAndLoad(SaveController saveController)
+    private void ShowNotification(string message)
     {
-        yield return StartCoroutine(saveController.SaveRoutine());
-        yield return null;
-        Debug.Log("Switching Scene to " + sceneName + " (after save)");
-        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.NotifyUIPrefab != null)
+        {
+            GameObject notifyUIObj = Instantiate(LoadResourceManager.Instance.NotifyUIPrefab);
+            NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
+            if (notifyUI != null) notifyUI.Show(message);
+        }
     }
 }

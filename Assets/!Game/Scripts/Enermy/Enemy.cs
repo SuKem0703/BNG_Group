@@ -71,6 +71,8 @@ public class Enemy : MonoBehaviour
     protected bool isTransitioning = false;
     protected Coroutine hurtCoroutine;
 
+    protected bool hasProcessedDeath = false;
+
     protected virtual void Awake()
     {
         if (string.IsNullOrEmpty(uniqueSaveID)) uniqueSaveID = GlobalHelper.GenerateUniqueID(gameObject);
@@ -249,7 +251,11 @@ public class Enemy : MonoBehaviour
     {
         isAttacking = false;
         lastAttackTime = Time.time;
-        if (currentHealth <= 0) Die();
+        if (currentHealth <= 0 && !isDead)
+        {
+            isDead = true;
+            Die();
+        }
     }
 
     public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, Transform attacker = null, bool isCritical = false)
@@ -273,7 +279,7 @@ public class Enemy : MonoBehaviour
         }
 
         // --- XỬ LÝ CHẾT ---
-        if (currentHealth <= 0)
+        if (currentHealth <= 0 && !isDead)
         {
             isAttacking = false;
             isStunned = false;
@@ -401,6 +407,9 @@ public class Enemy : MonoBehaviour
 
     protected virtual void Die()
     {
+        if (hasProcessedDeath) return;
+        hasProcessedDeath = true;
+
         isStunned = false;
         isAttacking = false;
         isKnockedBack = false;
@@ -412,22 +421,45 @@ public class Enemy : MonoBehaviour
         if (enemyAnimator != null)
         {
             enemyAnimator.SetWalking(false);
-            // Dùng Play thay vì Trigger để đảm bảo chết ngay lập tức
             Animator anim = GetComponent<Animator>();
             if (anim != null) anim.Play("Dead");
             else enemyAnimator.TriggerDie();
         }
 
         PlayerStats.IsOnBattle = false;
+
         if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
         {
             BossHUD.Instance.HideBossHealth();
         }
+
         int expGain = Mathf.FloorToInt(experienceReward * Random.Range(0.9f, 1.1f));
-        PlayerStats.Instance.AddEXP(expGain);
         int goldGain = Mathf.FloorToInt(goldReward * Random.Range(0.9f, 1.1f));
-        PlayerStats.Instance.AddCoin(goldGain);
-        if (QuestController.Instance != null && !string.IsNullOrEmpty(questTargetID)) QuestController.Instance.MarkEnemyDefeated(questTargetID);
+
+        if (PlayerStats.Instance != null && expGain > 0)
+        {
+            PlayerStats.Instance.AddEXP(expGain);
+        }
+
+        if (EconomyService.Instance != null && goldGain > 0)
+        {
+            EconomyService.Instance.EarnCurrency("Coin", goldGain, $"Kill: {enemyName}", (success) =>
+            {
+                if (success)
+                {
+                    if (PlayerStats.Instance != null)
+                        PlayerStats.Instance.SyncCoinFromServer(PlayerStats.Instance.coin + goldGain);
+                }
+            });
+        }
+        else
+        {
+            
+        }
+
+        if (QuestController.Instance != null && !string.IsNullOrEmpty(questTargetID))
+            QuestController.Instance.MarkEnemyDefeated(questTargetID);
+
         if (isQuestEnemy && SaveController.Instance != null && !string.IsNullOrEmpty(uniqueSaveID))
         {
             SaveController.Instance.MarkCollected(SceneManager.GetActiveScene().name, uniqueSaveID);

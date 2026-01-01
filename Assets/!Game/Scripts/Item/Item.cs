@@ -60,6 +60,7 @@ public class Item : MonoBehaviour
     public Item sourceItem;
 
     [Header("Thông tin cơ bản")]
+    public int dbID = 0;
     public int ID;
     public string Name;
     [TextArea]

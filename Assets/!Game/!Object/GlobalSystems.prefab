@@ -7142,19 +7142,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5554492082707588758}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 3169673934291442994}
-        m_TargetAssemblyTypeName: PotentialStatsDisplay, Assembly-CSharp
-        m_MethodName: ResetPoints
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!1 &1784960951971407369
 GameObject:
   m_ObjectHideFlags: 0
@@ -8523,6 +8511,89 @@ MonoBehaviour:
   - {fileID: 5711254839942964637, guid: d3490af97f27c3c4c95841aabe3719c5, type: 3}
   - {fileID: 1009763311550534419, guid: 4d789e0d5cf69424bb5c7c9fca1c08ac, type: 3}
   - {fileID: 5711254839942964637, guid: a7ac230d9fbadad49884c88005b982ce, type: 3}
+--- !u!1 &2030503547049691082
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6488970988312829018}
+  - component: {fileID: 6584166330347018246}
+  - component: {fileID: 3318519193978376835}
+  - component: {fileID: 6412153594416270769}
+  - component: {fileID: 2666134204494274066}
+  m_Layer: 0
+  m_Name: Services
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6488970988312829018
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2030503547049691082}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7353727550721029081}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6584166330347018246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2030503547049691082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3abadc45272904447a7e76dfb603132b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ServerTimeManager
+--- !u!114 &3318519193978376835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2030503547049691082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c49dffefb3ac134db1c209da52b39c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EconomyService
+--- !u!114 &6412153594416270769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2030503547049691082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48c3d556335b9114c8d1d924b476c8b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsService
+--- !u!114 &2666134204494274066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2030503547049691082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47817a10c55316e42b876bccff966b9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryService
 --- !u!1 &2038197716066328339
 GameObject:
   m_ObjectHideFlags: 0
@@ -8599,13 +8670,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6eb5c30b75304f45955bc912c4969df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  STR: 0
-  DEX: 0
-  CON: 0
-  INT: 0
-  level: 1
-  exp: 0
-  potentialPoints: 0
   bonusPhysicalAttack: 0
   bonusMagicAttack: 0
   bonusDefense: 0
@@ -8621,8 +8685,6 @@ MonoBehaviour:
   healthRegenInterval: 2
   mpRegenInterval: 1
   staminaRegenInterval: 1
-  coin: 0
-  gem: 0
   equipmentKnightSlots: []
   equipmentMageSlots: []
   shareEquipmentSlots: []
@@ -12279,6 +12341,7 @@ MonoBehaviour:
   dexAddButton: {fileID: 314755355158962543}
   conAddButton: {fileID: 4662978330930972628}
   intAddButton: {fileID: 8471078960288246740}
+  resetButton: {fileID: 4392046549909875674}
   tooltipPanel: {fileID: 798180394847398209}
   tooltipText: {fileID: 5858960804768860559}
 --- !u!1 &3387572725096828329
@@ -16824,8 +16887,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58a7077d5a65ac244b58ed6e88173870, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathManager
-  coinPenaltyPercentage: 0.1
-  minCoinPenalty: 0
+  expPenaltyPercentage: 0.1
   fadeDuration: 1
   gameOverUI: {fileID: 6287927098034005221}
 --- !u!1 &4786611053659100071
@@ -20516,7 +20578,6 @@ GameObject:
   - component: {fileID: 5320338490959678963}
   - component: {fileID: 6176788853723849960}
   - component: {fileID: 7089025771583806475}
-  - component: {fileID: 5844957432913764670}
   - component: {fileID: 6100323139993295561}
   - component: {fileID: 1507598847299703259}
   - component: {fileID: 7832694068043120012}
@@ -20546,6 +20607,7 @@ Transform:
   - {fileID: 763063462847619163}
   - {fileID: 8972534832222857781}
   - {fileID: 3562448626065794447}
+  - {fileID: 6488970988312829018}
   m_Father: {fileID: 7170818221138753997}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1722496395295705670
@@ -20629,18 +20691,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 625a4e127025119479ebe41d8c586810, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &5844957432913764670
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5770386255020000470}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3abadc45272904447a7e76dfb603132b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &6100323139993295561

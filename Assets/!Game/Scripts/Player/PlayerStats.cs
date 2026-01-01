@@ -7,13 +7,46 @@ public class PlayerStats : MonoBehaviour
 {
     public static PlayerStats Instance { get; private set; }
 
-    [Header("Base Potential Stats")]
-    public int STR, DEX, CON, INT;
+    [Header("Base Stats (Read-Only from Server)")]
+    public int STR { get; private set; }
+    public int DEX { get; private set; }
+    public int CON { get; private set; }
+    public int INT { get; private set; }
 
-    [Header("Level & EXP")]
-    public int level = 1;
-    public int exp;
-    public int potentialPoints;
+    [Header("Level & EXP (Read-Only)")]
+    public int level { get; private set; } = 1;
+    public int exp { get; private set; }
+    public int potentialPoints { get; private set; }
+    public void SyncStatsFromServer(PlayerStatsService.ServerUserStat data)
+    {
+        this.level = data.level;
+        this.exp = data.exp;
+        this.potentialPoints = data.potentialPoints;
+
+        this.STR = data.str;
+        this.DEX = data.dex;
+        this.INT = data.intStat;
+        this.CON = data.con;
+
+        ApplyEquippedItems();
+    }
+
+    private int effectSTR;
+    private int effectDEX;
+    private int effectINT;
+    private int effectCON;
+
+    public void ModifyEffectStat(string statType, int amount)
+    {
+        switch (statType)
+        {
+            case "STR": effectSTR += amount; break;
+            case "DEX": effectDEX += amount; break;
+            case "INT": effectINT += amount; break;
+            case "CON": effectCON += amount; break;
+        }
+    }
+
     public int expToNextLevel
     {
         get
@@ -60,10 +93,10 @@ public class PlayerStats : MonoBehaviour
     private int bonusStamina;
 
     [Header("Derived Final Stats")]
-    public int finalSTR => STR + bonusSTR;
-    public int finalDEX => DEX + bonusDEX;
-    public int finalCON => CON + bonusCON;
-    public int finalINT => INT + bonusINT;
+    public int finalSTR => STR + bonusSTR + effectSTR;
+    public int finalDEX => DEX + bonusDEX + effectDEX;
+    public int finalCON => CON + bonusCON + effectCON;
+    public int finalINT => INT + bonusINT + effectINT;
     public int finalPhysicalAttack => Mathf.FloorToInt(basePhysicalAttack + bonusPhysicalAttack);
     public int finalMagicAttack => Mathf.FloorToInt(baseMagicAttack + bonusMagicAttack);
     public int finalDefense => baseDefense + bonusDefense;
@@ -104,8 +137,13 @@ public class PlayerStats : MonoBehaviour
     private float staminaRegenTimer;
 
     [Header("Currency")]
-    public int coin;
-    public int gem;
+    public int coin { get; private set; }
+    public int gem { get; private set; }
+    public void SyncCurrency(int svCoin, int svGem)
+    {
+        coin = svCoin;
+        gem = svGem;
+    }
 
     public static bool IsOnBattle = false;
 
@@ -421,27 +459,70 @@ public class PlayerStats : MonoBehaviour
         currentStamina = finalStamina;
     }
 
+    // --- LOGIC CỘNG EXP, TIỀN VÀ TIÊU TIỀN (RMI) ---
+    [Header("Network Optimization")]
+    private int pendingExpToAdd = 0;
+    private Coroutine expBatchCoroutine;
+    private float expDebounceTime = 1.0f;
+
     // Cộng EXP
     public void AddEXP(int amount)
     {
         exp += amount;
 
-        while (exp >= expToNextLevel)
+        pendingExpToAdd += amount;
+
+        if (expBatchCoroutine != null) StopCoroutine(expBatchCoroutine);
+        expBatchCoroutine = StartCoroutine(SendExpBatchRoutine());
+    }
+
+    public void ForceSyncExpImmediate()
+    {
+        if (expBatchCoroutine != null) StopCoroutine(expBatchCoroutine);
+
+        if (pendingExpToAdd != 0)
         {
-            exp -= expToNextLevel;
-            LevelUp();
+            Debug.Log($"[Network] Force Sync EXP: {pendingExpToAdd}");
+
+            if (PlayerStatsService.Instance != null)
+            {
+                PlayerStatsService.Instance.AddExp(pendingExpToAdd);
+            }
+
+            pendingExpToAdd = 0;
         }
     }
 
-    // Lên cấp
-    private void LevelUp()
+    public void PlayLevelUpEffect()
     {
-        level++;
-        potentialPoints += 5;
-
         SoundEffectManager.Play("LevelUp");
 
-        Debug.Log($"Level Up! New level: {level}, EXP to next: {expToNextLevel}, Potential Points: {potentialPoints}");
+        // Hiệu ứng particle, text bay lên...
+        GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
+        if (popupPrefab != null)
+        {
+            // Show text "LEVEL UP!"
+        }
+
+        Debug.Log($"Level Up! New stats synced from Server.");
+    }
+
+    private IEnumerator SendExpBatchRoutine()
+    {
+        yield return new WaitForSeconds(expDebounceTime);
+
+        if (pendingExpToAdd > 0)
+        {
+            int amountToSend = pendingExpToAdd;
+            pendingExpToAdd = 0;
+
+            Debug.Log($"[Network] Sending BATCH EXP request: {amountToSend}");
+
+            if (PlayerStatsService.Instance != null)
+            {
+                PlayerStatsService.Instance.AddExp(amountToSend);
+            }
+        }
     }
 
     // Nhận sát thương
@@ -583,9 +664,46 @@ public class PlayerStats : MonoBehaviour
 
     // Currency helpers
     public void AddCoin(int amount) => coin += amount;
-    public void SpendCoin(int amount) => coin = Mathf.Max(coin - amount, 0);
     public void AddGem(int amount) => gem += amount;
-    public void SpendGem(int amount) => gem = Mathf.Max(gem - amount, 0);
+    public void SyncCoinFromServer(int serverCoin)
+    {
+        coin = serverCoin;
+        // Trigger event update UI ở đây nếu cần
+        // OnCurrencyChanged?.Invoke();
+    }
+
+    public void SyncGemFromServer(int serverGem)
+    {
+        gem = serverGem;
+    }
+
+    // --- LOGIC TIÊU TIỀN (RMI) ---
+    public void RequestSpendCoin(int amount, string reason, System.Action onSuccess, System.Action onFail)
+    {
+        // Check sơ bộ ở client để đỡ tốn request nếu rõ ràng là không đủ
+        if (coin < amount)
+        {
+            Debug.Log("Client check: Không đủ tiền!");
+            onFail?.Invoke();
+            return;
+        }
+
+        // Gọi RMI lên Server
+        EconomyService.Instance.SpendCurrency("Coin", amount, reason, (isSuccess) =>
+        {
+            if (isSuccess) onSuccess?.Invoke();
+            else onFail?.Invoke();
+        });
+    }
+
+    public void RequestSpendGem(int amount, string reason, System.Action onSuccess, System.Action onFail)
+    {
+        EconomyService.Instance.SpendCurrency("Gem", amount, reason, (isSuccess) =>
+        {
+            if (isSuccess) onSuccess?.Invoke();
+            else onFail?.Invoke();
+        });
+    }
 
     // Tìm Slot UI theo tên
     Slot[] FindSlotsByName(string parentName)

@@ -28907,6 +28907,26 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f4bbc18d027e5ae41b57002b71be565f, type: 3}
+--- !u!1 &1630965299 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2244460697414391153, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+  m_PrefabInstance: {fileID: 2989399028622230580}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1630965302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1630965299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ae60ec203a177a4dbd5136db0fb2790, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DebugDepositTest
+  targetItem: {fileID: 0}
+  targetChestID: "1.0_Trong nh\xE0_-11_7"
+  targetSlotIndex: 0
 --- !u!1 &1646164301
 GameObject:
   m_ObjectHideFlags: 0
@@ -33783,6 +33803,34 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3897150325204676892, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3897150325204676892, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3897150325204676892, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1630965302}
+    - target: {fileID: 3897150325204676892, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3897150325204676892, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: TestDeposit
+      objectReference: {fileID: 0}
+    - target: {fileID: 3897150325204676892, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: DebugDepositTest, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 3897150325204676892, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 4041376497050681363, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -34465,7 +34513,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8883875592996786877, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -10.107147
+      value: -10.114321
       objectReference: {fileID: 0}
     - target: {fileID: 8883875592996786877, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       propertyPath: m_LocalPosition.y
@@ -34577,7 +34625,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 377212692160446564, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
       insertIndex: 0
       addedObject: {fileID: 1949451912}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2244460697414391153, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1630965302}
   m_SourcePrefab: {fileID: 100100000, guid: 418a193a5f0cdc44bb2c4d580da53e55, type: 3}
 --- !u!19719996 &3028204319395372525
 TilemapCollider2D:

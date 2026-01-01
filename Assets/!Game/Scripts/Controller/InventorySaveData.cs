@@ -5,6 +5,7 @@ using UnityEngine;
 [System.Serializable]
 public class InventorySaveData
 {
+    public int dbID;
     public int itemID;
     public int slotIndex;
     public int quantity = 1;

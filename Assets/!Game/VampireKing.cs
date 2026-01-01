@@ -112,7 +112,6 @@ public class VampireKing : Enemy
             case 1:
                 if (!_isTrueForm)
                 {
-                    Debug.Log("[Phase 1] Frame 1: Summoning Motion");
                     if (Time.time >= _lastSummonTime + summonInterval)
                     {
                         SummonMinions();
@@ -151,30 +150,22 @@ public class VampireKing : Enemy
     {
         if (minionPrefab == null) return;
 
-        // Dọn dẹp danh sách
         _activeMinions.RemoveAll(item => item == null);
 
-        // 1. Xác định hướng quay mặt của Boss (hướng về phía Player)
-        Vector2 facingDir = Vector2.down; // Mặc định nếu mất player
+        Vector2 facingDir = Vector2.down;
         if (player != null)
         {
             facingDir = (player.position - transform.position).normalized;
         }
 
-        // 2. Góc lệch để tạo hình tam giác đều: +/- 30 độ so với hướng chính diện
-        // Boss là đỉnh, 2 minion là 2 đỉnh còn lại
         float[] angles = { -30f, 30f };
 
         foreach (float angle in angles)
         {
-            // Công thức xoay vector trong Unity (Quaternion * Vector)
-            // Xoay hướng nhìn đi 30 độ trái/phải
             Vector2 spawnDirection = Quaternion.Euler(0, 0, angle) * facingDir;
 
-            // Tính vị trí cuối cùng
             Vector3 spawnPos = transform.position + (Vector3)spawnDirection * summonDistance;
 
-            // Triệu hồi
             GameObject minion = Instantiate(minionPrefab, spawnPos, Quaternion.identity);
             _activeMinions.Add(minion);
 

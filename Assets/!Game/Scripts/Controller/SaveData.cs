@@ -17,24 +17,11 @@ public class SaveData
     public List<QuestProgress> questProgressData;
     public List<string> handInQuestIDs;
 
-    // Thêm các thông tin người chơi
-    public int lvl;
-    public int exp;
-    public int coin;
-    public int gem;
-
     public int currentKnightHP;
     public int currentmageHP;
     public int currentKnightMP;
     public int currentMageMP;
     public float currentStamina;
-
-    // Thêm thông tin chỉ số và tiềm năng
-    public int str;
-    public int dex;
-    public int con;
-    public int intStat;
-    public int potentialPoints;
 
     public List<EquippedSaveData> knightEquipSaveData;
     public List<EquippedSaveData> mageEquipSaveData;

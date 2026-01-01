@@ -5,15 +5,10 @@ public class RewardController : MonoBehaviour
     public static RewardController Instance { get; private set; }
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) { Instance = this; }
+        else { Destroy(gameObject); }
     }
+
     public void GiveQuestReward(Quest quest)
     {
         if (quest?.questRewards == null) return;
@@ -34,8 +29,6 @@ public class RewardController : MonoBehaviour
                 case RewardType.Experience:
                     GiveEXPReward(reward.amount);
                     break;
-                case RewardType.Custom:
-                    break;
             }
         }
     }
@@ -43,14 +36,13 @@ public class RewardController : MonoBehaviour
     public void GiveItemReward(int itemID, int amount = 1)
     {
         var itemPrefab = FindAnyObjectByType<ItemDictionary>()?.GetItemPrefab(itemID);
-
         if (itemPrefab == null) return;
 
         for (int i = 0; i < amount; i++)
         {
             GameObject itemInstance = Instantiate(itemPrefab);
-
             Item item = itemInstance.GetComponent<Item>();
+            
             if (item.itemType == ItemType.Equipment)
             {
                 item.rarity = ItemGenerationHelper.GetRandomRarity();
@@ -62,31 +54,36 @@ public class RewardController : MonoBehaviour
                 GameObject dropItem = Instantiate(itemPrefab, transform.position + Vector3.down, Quaternion.identity);
                 dropItem.GetComponent<BounceEffect>().StartBounce();
             }
-            else {
+            else 
+            {
                 itemPrefab.GetComponent<Item>().ShowPopUp();
                 Debug.Log($"Đã nhận phần thưởng: {itemInstance.name} x{amount}");
             }
         }
     }
+
     public void GiveCoinReward(int amount)
     {
-        PlayerStats playerStats = FindFirstObjectByType<PlayerStats>();
-        if (playerStats == null) return;
-        playerStats.AddCoin(amount);
-        Debug.Log($"Đã nhận phần thưởng: {amount} coin");
+        EconomyService.Instance.EarnCurrency("Coin", amount, "Reward", (success) => 
+        {
+            if (success) Debug.Log($"Đã nhận thưởng {amount} Coin từ Server.");
+        });
     }
+
     public void GiveGemReward(int amount)
     {
-        PlayerStats playerStats = FindFirstObjectByType<PlayerStats>();
-        if (playerStats == null) return;
-        playerStats.AddGem(amount);
-        Debug.Log($"Đã nhận phần thưởng: {amount} gem");
+        EconomyService.Instance.EarnCurrency("Gem", amount, "Reward", (success) => 
+        {
+            if (success) Debug.Log($"Đã nhận thưởng {amount} Gem từ Server.");
+        });
     }
+
     public void GiveEXPReward(int amount)
     {
-        PlayerStats playerStats = FindFirstObjectByType<PlayerStats>();
-        if (playerStats == null) return;
-        playerStats.AddEXP(amount);
-        Debug.Log($"Đã nhận phần thưởng: {amount} EXP");
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.AddEXP(amount);
+            Debug.Log($"Đã nhận thưởng: {amount} EXP");
+        }
     }
 }
