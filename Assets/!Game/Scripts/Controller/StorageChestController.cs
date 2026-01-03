@@ -66,7 +66,7 @@ public class StorageChestController : MonoBehaviour
     // ============================
     // MỞ / ĐÓNG HỆ THỐNG
     // ============================
-    public void OpenChest(StorageChest chest)
+    public void OpenChest(StorageChest chest, List<InventoryService.StorageItemDTO> preloadedItems)
     {
         if (chestPanel.activeSelf) return;
         if (!GameStateManager.CanProcessInput()) return;
@@ -74,19 +74,23 @@ public class StorageChestController : MonoBehaviour
         currentActiveChest = chest;
         IsViewingChest = true;
 
-        // 1. Reset UI Rương
         ClearChestUI();
 
-        // 2. Gọi API tải dữ liệu Rương từ Server
-        InventoryService.Instance.RequestSyncChest(chest.chestID, (items) =>
+        // Nếu có Cache thì hiển thị ngay
+        if (preloadedItems != null)
         {
-            PopulateChestUI(items);
-        });
+            PopulateChestUI(preloadedItems);
+        }
+        else
+        {
+            // Fallback: Nếu không có cache, gọi API load lẻ
+            RefreshChestContent();
+        }
 
         CommonUIController.Instance.SetUIVisible(false, CommonUIController.Instance.hotBar);
         chestPanel.SetActive(true);
 
-        // Mượn Inventory Panel
+        // Mượn Inventory Panel (Code UI cũ giữ nguyên)
         if (inventoryPanel != null && pageContainer != null)
         {
             if (inventoryPanel.transform.parent != pageContainer)
@@ -110,7 +114,6 @@ public class StorageChestController : MonoBehaviour
         currentActiveChest = null;
         if (chestPanel != null) chestPanel.SetActive(false);
 
-        // Trả Inventory Panel về chỗ cũ
         if (inventoryPanel != null && originalInventoryParent != null)
         {
             inventoryPanel.SetActive(false);
@@ -124,8 +127,6 @@ public class StorageChestController : MonoBehaviour
 
         MenuStateManager.Instance.CloseCurrentMenu();
         CommonUIController.Instance.SetUIVisible(true, CommonUIController.Instance.hotBar);
-
-        // Sync lại Inventory chính khi đóng rương cho chắc chắn
         InventoryController.Instance.ReBuildItemCounts();
     }
 
@@ -147,84 +148,74 @@ public class StorageChestController : MonoBehaviour
     // --- RÚT ĐỒ (CHEST -> INVENTORY) ---
     private void WithdrawItem(Item item)
     {
-        // 1. Tìm slot trống ở Inventory
+        if (item == null) return;
         Slot targetSlot = FindEmptySlot(inventoryPanel.transform);
-        if (targetSlot == null)
-        {
-            ShowErrorMessage("Túi đồ đã đầy!");
-            return;
-        }
+        if (targetSlot == null) { ShowErrorMessage("Túi đồ đã đầy!"); return; }
 
         int targetSlotIndex = targetSlot.transform.GetSiblingIndex();
+        int itemDbId = item.dbID;
+        bool isStackable = item.IsStackable;
 
-        // 2. Gọi API Withdraw
-        InventoryService.Instance.RequestWithdraw(item.dbID, targetSlotIndex, (success) =>
+        item.GetComponent<CanvasGroup>().alpha = 0.5f;
+        item.GetComponent<CanvasGroup>().blocksRaycasts = false;
+
+        InventoryService.Instance.RequestWithdraw(itemDbId, targetSlotIndex, isStackable, (success) =>
         {
             if (success)
             {
-                // 3. Move Visual (Thành công thì chuyển UI ngay)
-                item.transform.SetParent(targetSlot.transform);
-                item.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-                targetSlot.currentItem = item.gameObject;
+                if (item != null && item.gameObject != null) Destroy(item.gameObject);
+                if (InventoryController.Instance != null) InventoryController.Instance.RefreshInventory();
 
-                // Clear slot cũ bên rương (do set parent nên bên rương tự mất, chỉ cần null hóa slot)
-                // Tuy nhiên cần tìm slot cũ để set null
-                Slot oldSlot = storageChestPage.transform.GetChild(item.transform.parent.GetSiblingIndex()).GetComponent<Slot>();
-                // (Logic trên hơi sai vì item đã đổi parent, nên slot cũ ở Rương đã trống child)
-
-                // Refresh lại count
-                InventoryController.Instance.ReBuildItemCounts();
+                // Refresh lại rương để lấy data mới
+                RefreshChestContent();
             }
             else
             {
                 ShowErrorMessage("Lỗi kết nối Server!");
+                if (item != null && item.gameObject != null)
+                {
+                    item.GetComponent<CanvasGroup>().alpha = 1f;
+                    item.GetComponent<CanvasGroup>().blocksRaycasts = true;
+                }
             }
         });
     }
 
-    // --- CẤT ĐỒ (INVENTORY -> CHEST) ---
     private void DepositItem(Item item)
     {
-        if (item.dbID == 0)
-        {
-            ShowErrorMessage("Vật phẩm này bị lỗi dữ liệu (Chưa Sync), không thể cất!");
-            return;
-        }
+        if (item == null) return;
+        if (item.dbID == 0) { ShowErrorMessage("Lỗi dữ liệu item!"); return; }
+        if (item.itemType == ItemType.QuestItem || item.isEquipped) { ShowErrorMessage("Không thể cất!"); return; }
 
-        if (item.itemType == ItemType.QuestItem || item.isEquipped)
-        {
-            ShowErrorMessage("Không thể cất vật phẩm này!");
-            return;
-        }
-
-        // 1. Tìm slot trống ở Chest
         Slot targetSlot = FindEmptySlot(storageChestPage.transform);
-        if (targetSlot == null)
-        {
-            ShowErrorMessage("Rương đã đầy!");
-            return;
-        }
+        if (targetSlot == null) { ShowErrorMessage("Rương đầy!"); return; }
 
         int targetSlotIndex = targetSlot.transform.GetSiblingIndex();
+        int itemDbId = item.dbID;
+        string chestId = currentActiveChest.chestID;
+        bool isStackable = item.IsStackable;
 
-        // 2. Gọi API Deposit
-        InventoryService.Instance.RequestDeposit(item.dbID, currentActiveChest.chestID, targetSlotIndex, (success) =>
+        item.GetComponent<CanvasGroup>().alpha = 0.5f;
+        item.GetComponent<CanvasGroup>().blocksRaycasts = false;
+
+        InventoryService.Instance.RequestDeposit(itemDbId, chestId, targetSlotIndex, isStackable, (success) =>
         {
             if (success)
             {
-                // 3. Move Visual
-                Slot oldSlot = item.transform.parent.GetComponent<Slot>();
-                if (oldSlot) oldSlot.currentItem = null;
+                if (item != null && item.gameObject != null) Destroy(item.gameObject);
+                if (InventoryController.Instance != null) InventoryController.Instance.RefreshInventory();
 
-                item.transform.SetParent(targetSlot.transform);
-                item.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-                targetSlot.currentItem = item.gameObject;
-
-                InventoryController.Instance.ReBuildItemCounts();
+                // Refresh lại rương
+                RefreshChestContent();
             }
             else
             {
                 ShowErrorMessage("Lỗi kết nối Server!");
+                if (item != null && item.gameObject != null)
+                {
+                    item.GetComponent<CanvasGroup>().alpha = 1f;
+                    item.GetComponent<CanvasGroup>().blocksRaycasts = true;
+                }
             }
         });
     }
@@ -243,10 +234,10 @@ public class StorageChestController : MonoBehaviour
         return null;
     }
 
-    private void PopulateChestUI(List<InventoryService.ServerUserItem> items)
+    private void PopulateChestUI(List<InventoryService.StorageItemDTO> items)
     {
         if (storageChestPage == null) return;
-        ClearChestUI(); // Xóa sạch trước khi load
+        ClearChestUI();
 
         if (items == null) return;
 
@@ -263,7 +254,9 @@ public class StorageChestController : MonoBehaviour
                 itemObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
                 Item item = itemObj.GetComponent<Item>();
-                item.dbID = data.id; // Gán DB ID quan trọng
+
+                // --- QUAN TRỌNG: Mapping dữ liệu mới ---
+                item.dbID = data.id; // Đây là ID của bảng StorageItems
                 item.quantity = data.quantity;
                 item.rarity = (ItemRarity)data.rarity;
                 item.qualityFactor = data.qualityFactor;
@@ -299,6 +292,23 @@ public class StorageChestController : MonoBehaviour
                 foreach (Transform grandChild in child) Destroy(grandChild.gameObject);
             }
         }
+    }
+
+    public void RefreshChestContent()
+    {
+        if (currentActiveChest == null) return;
+        string requestingId = currentActiveChest.chestID;
+
+        // Gọi API load lẻ 1 rương (để lấy ID mới nhất sau khi transaction)
+        InventoryService.Instance.RequestLoadSingleChest(requestingId, (items) =>
+        {
+            if (this == null || currentActiveChest == null) return;
+            if (currentActiveChest.chestID != requestingId) return;
+
+            // items lúc này là List<StorageItemDTO>
+            PopulateChestUI(items);
+            currentActiveChest.SetCache(items);
+        });
     }
 
     // --- TAB SWITCHING ---

@@ -97,31 +97,35 @@ public class ShopController : MonoBehaviour
             return;
         }
 
+        bool isStackable = true;
+
+        GameObject itemPrefab = itemDictionary.GetItemPrefab(itemID);
+        if (itemPrefab != null)
+        {
+            Item itemScript = itemPrefab.GetComponent<Item>();
+            if (itemScript != null)
+            {
+                isStackable = itemScript.IsStackable;
+            }
+        }
+
         string currencyStr = isCoin ? "Coin" : "Gem";
 
-        InventoryService.Instance.RequestBuyItem(itemID, quantity, price, currencyStr, (success, serverItems) =>
+        InventoryService.Instance.RequestBuyItem(itemID, quantity, price, currencyStr, isStackable, (success, serverItems) =>
         {
             if (success)
             {
                 ShowNotification("Mua thành công!");
 
-                int newBalance = currentBalance - (price);
-                if (isCoin)
-                    PlayerStats.Instance.SyncCoinFromServer(newBalance);
-                else
-                    PlayerStats.Instance.SyncGemFromServer(newBalance);
+                int newBalance = currentBalance - price;
+                if (isCoin) PlayerStats.Instance.SyncCoinFromServer(newBalance);
+                else PlayerStats.Instance.SyncGemFromServer(newBalance);
 
-                if (InventoryController.Instance != null)
-                {
-                    InventoryController.Instance.RefreshInventory();
-                }
+                if (InventoryController.Instance != null) InventoryController.Instance.RefreshInventory();
             }
             else
             {
-                ShowNotification("Giao dịch thất bại! Vui lòng kiểm tra lại.");
-
-                // Mẹo: Nếu nghi ngờ lệch tiền, hãy sync lại tiền luôn
-                // PlayerStats.Instance.SyncStatsFromServer(...); 
+                ShowNotification("Giao dịch thất bại!");
             }
         });
     }

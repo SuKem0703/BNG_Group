@@ -1,12 +1,12 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class StorageChest : MonoBehaviour, IInteractable
 {
-    [Header("Save Settings")]
+    [Header("Settings")]
     public string chestID;
 
-    public List<StorageChestSaveData> chestData = new List<StorageChestSaveData>();
+    private List<InventoryService.StorageItemDTO> cachedItems = new List<InventoryService.StorageItemDTO>();
 
     void Awake()
     {
@@ -15,25 +15,31 @@ public class StorageChest : MonoBehaviour, IInteractable
             chestID = GlobalHelper.GenerateUniqueID(gameObject);
         }
     }
-
-    private void Start()
+    public void ClearCache()
     {
-        if (chestData == null)
-            chestData = new List<StorageChestSaveData>();
+        cachedItems.Clear();
     }
+
+    public void AddToCache(InventoryService.StorageItemDTO item)
+    {
+        cachedItems.Add(item);
+    }
+
+    public void SetCache(List<InventoryService.StorageItemDTO> items)
+    {
+        cachedItems = items;
+    }
+
+    public List<InventoryService.StorageItemDTO> GetItems() => cachedItems;
 
     public void Interact()
     {
-        StorageChestController.Instance.OpenChest(this);
+        StorageChestController.Instance.OpenChest(this, cachedItems);
     }
 
     public bool CanInteract()
     {
-        if (!GameStateManager.CanProcessInput())
-        {
-            return false;
-        }
-
+        if (!GameStateManager.CanProcessInput()) return false;
         return GameFlags.HasInteractedWithStorageChest();
     }
 }

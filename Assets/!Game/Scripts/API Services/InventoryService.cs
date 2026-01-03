@@ -24,7 +24,7 @@ public class InventoryService : MonoBehaviour
     [System.Serializable]
     public class ServerUserItem
     {
-        public int id;               // DB ID
+        public int id;
         public int itemId;
         public int quantity;
         public int slotIndex;
@@ -34,7 +34,8 @@ public class InventoryService : MonoBehaviour
     }
 
     [System.Serializable] public class EquipRequestDTO { public int ItemDbId; public bool IsEquipped; }
-    [System.Serializable] public class MoveRequestDTO { public int ItemDbId; public int NewSlotIndex; }
+    [System.Serializable] public class MoveRequestDTO { public int ItemDbId; public int NewSlotIndex; public bool IsStackable { get; set; } }
+
     [System.Serializable]
     public class BuyRequestDTO
     {
@@ -42,6 +43,20 @@ public class InventoryService : MonoBehaviour
         public int Quantity;
         public int Price;
         public string Currency;
+        public bool IsStackable;
+    }
+
+    [System.Serializable]
+    public class StorageItemDTO
+    {
+        public int id;          // Storage ID
+        public string accountId;
+        public string chestId;
+        public int itemId;
+        public int slotIndex;
+        public int quantity;
+        public int rarity;
+        public float qualityFactor;
     }
     [System.Serializable] public class UpdateQtyRequestDTO { public int ItemDbId; public int NewQuantity; }
 
@@ -65,12 +80,17 @@ public class InventoryService : MonoBehaviour
     [System.Serializable]
     public class RemoveRequestDTO { public int ItemDbId; }
 
-    [System.Serializable] public class DepositDTO { public int ItemDbId; public string ChestId; public int SlotIndex; }
-    [System.Serializable] public class WithdrawDTO { public int ItemDbId; public int SlotIndex; }
+    [System.Serializable] public class DepositDTO { public int ItemDbId; public string ChestId; public int SlotIndex; public bool IsStackable { get; set; } }
+    [System.Serializable] public class WithdrawDTO { public int ItemDbId; public int SlotIndex; public bool IsStackable { get; set; } }
 
     private class InventoryWrapper
     {
         public List<ServerUserItem> items;
+    }
+
+    private class StorageListWrapper
+    {
+        public List<StorageItemDTO> items;
     }
 
     #endregion
@@ -91,13 +111,16 @@ public class InventoryService : MonoBehaviour
         ));
     }
 
-    public void RequestMoveItem(int itemDbId, int newSlotIndex)
+    public void RequestMoveItem(int itemDbId, int newSlotIndex, bool isStackable, System.Action<bool> onComplete = null)
     {
-        StartCoroutine(PostRequest(
-            "api/Inventory/move",
-            new MoveRequestDTO { ItemDbId = itemDbId, NewSlotIndex = newSlotIndex },
-            null
-        ));
+        var body = new MoveRequestDTO
+        {
+            ItemDbId = itemDbId,
+            NewSlotIndex = newSlotIndex,
+            IsStackable = isStackable
+        };
+
+        StartCoroutine(PostRequest("api/Inventory/move", body, onComplete));
     }
 
     public void RequestUpdateQuantity(int dbId, int newQuantity)
@@ -109,9 +132,9 @@ public class InventoryService : MonoBehaviour
         ));
     }
 
-    public void RequestBuyItem(int itemId, int quantity, int price, string currency, System.Action<bool, List<ServerUserItem>> onComplete)
+    public void RequestBuyItem(int itemId, int quantity, int price, string currency, bool isStackable, System.Action<bool, List<ServerUserItem>> onComplete)
     {
-        StartCoroutine(BuyRoutine(itemId, quantity, price, currency, onComplete));
+        StartCoroutine(BuyRoutine(itemId, quantity, price, currency, isStackable, onComplete));
     }
 
     public void RequestAddItem(
@@ -138,19 +161,31 @@ public class InventoryService : MonoBehaviour
     }
 
     // Cất đồ (Deposit)
-    public void RequestDeposit(int itemDbId, string chestId, int slotIndex, System.Action<bool> onComplete)
+    public void RequestDeposit(int itemDbId, string chestId, int slotIndex, bool isStackable, System.Action<bool> onComplete)
     {
-        string endpoint = "api/Storage/deposit";
-        DepositDTO body = new DepositDTO { ItemDbId = itemDbId, ChestId = chestId, SlotIndex = slotIndex };
-        StartCoroutine(PostRequest(endpoint, body, onComplete));
+        var body = new DepositDTO { ItemDbId = itemDbId, ChestId = chestId, SlotIndex = slotIndex, IsStackable = isStackable };
+        StartCoroutine(PostRequest("api/Storage/deposit", body, onComplete));
     }
 
     // Rút đồ (Withdraw)
-    public void RequestWithdraw(int itemDbId, int targetSlotIndex, System.Action<bool> onComplete)
+    public void RequestWithdraw(int itemDbId, int targetSlotIndex, bool isStackable, System.Action<bool> onComplete)
     {
-        string endpoint = "api/Storage/withdraw";
-        WithdrawDTO body = new WithdrawDTO { ItemDbId = itemDbId, SlotIndex = targetSlotIndex };
-        StartCoroutine(PostRequest(endpoint, body, onComplete));
+        var body = new WithdrawDTO { ItemDbId = itemDbId, SlotIndex = targetSlotIndex, IsStackable = isStackable };
+        StartCoroutine(PostRequest("api/Storage/withdraw", body, onComplete));
+    }
+
+    public void RequestLoadMapStorage(string sceneName, System.Action<List<StorageItemDTO>> onComplete)
+    {
+        // sceneName ví dụ: "Map1" (Server sẽ tìm "Map1_%")
+        string url = NetworkConfig.GetUrl($"api/Storage/load-map-storage?sceneName={sceneName}");
+        StartCoroutine(GetStorageList(url, onComplete));
+    }
+
+    // Gọi khi muốn refresh 1 rương cụ thể (sau khi Deposit/Withdraw)
+    public void RequestLoadSingleChest(string chestId, System.Action<List<StorageItemDTO>> onComplete)
+    {
+        string url = NetworkConfig.GetUrl($"api/Storage/load-chest?chestId={chestId}");
+        StartCoroutine(GetStorageList(url, onComplete));
     }
 
     #endregion
@@ -188,7 +223,7 @@ public class InventoryService : MonoBehaviour
         }
     }
 
-    private IEnumerator BuyRoutine(int itemId, int quantity, int price, string currency, System.Action<bool, List<ServerUserItem>> onComplete)
+    private IEnumerator BuyRoutine(int itemId, int quantity, int price, string currency, bool isStackable, System.Action<bool, List<ServerUserItem>> onComplete)
     {
         string url = NetworkConfig.GetUrl("api/Shop/buy");
         string token = PlayerPrefs.GetString("AuthToken", "");
@@ -199,7 +234,8 @@ public class InventoryService : MonoBehaviour
             ItemId = itemId,
             Quantity = quantity,
             Price = price,
-            Currency = currency
+            Currency = currency,
+            IsStackable = isStackable
         };
 
         string json = JsonUtility.ToJson(body);
@@ -286,7 +322,7 @@ public class InventoryService : MonoBehaviour
                 onComplete?.Invoke(false);
             }
         }
-            
+
         onComplete?.Invoke(success);
     }
 
@@ -318,6 +354,35 @@ public class InventoryService : MonoBehaviour
             catch { onComplete?.Invoke(new List<ServerUserItem>()); }
         }
         else { onComplete?.Invoke(null); }
+    }
+
+    private IEnumerator GetStorageList(string url, System.Action<List<StorageItemDTO>> onComplete)
+    {
+        string token = PlayerPrefs.GetString("AuthToken", "");
+        UnityWebRequest request = UnityWebRequest.Get(url);
+        request.SetRequestHeader("Authorization", $"Bearer {token}");
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            // Bọc JSON lại vì API trả về mảng []
+            string json = "{\"items\":" + request.downloadHandler.text + "}";
+            try
+            {
+                var wrapper = JsonUtility.FromJson<StorageListWrapper>(json);
+                onComplete?.Invoke(wrapper.items);
+            }
+            catch
+            {
+                // Nếu rương rỗng hoặc lỗi parse
+                onComplete?.Invoke(new List<StorageItemDTO>());
+            }
+        }
+        else
+        {
+            Debug.LogError($"Load Storage Failed: {request.error}");
+            onComplete?.Invoke(null);
+        }
     }
 
     #endregion

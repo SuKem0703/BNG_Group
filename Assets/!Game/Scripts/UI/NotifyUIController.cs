@@ -25,7 +25,10 @@ public class NotifyUIController : MonoBehaviour
             notifyText = GetComponentInChildren<TextMeshProUGUI>(true);
         }
     }
-
+    void OnDestroy()
+    {
+        transform.DOKill();
+    }
     public void Show(string message)
     {
         if (notifyText != null)

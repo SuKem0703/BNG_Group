@@ -66,6 +66,7 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
         if (!itemAdded)
         {
             Debug.Log("Inventory đầy, không thể nhặt " + item.Name);
+            ShowNotification("Túi đồ đã đầy, không thể nhặt thêm.");
             return;
         }
 
@@ -87,7 +88,15 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
             Destroy(gameObject);
         }
     }
-
+    private void ShowNotification(string message)
+    {
+        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.NotifyUIPrefab != null)
+        {
+            GameObject notifyUIObj = Instantiate(LoadResourceManager.Instance.NotifyUIPrefab);
+            NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
+            if (notifyUI != null) notifyUI.Show(message);
+        }
+    }
     public TargetInfoData GetInfo()
     {
         Item itemData = GetComponent<Item>();

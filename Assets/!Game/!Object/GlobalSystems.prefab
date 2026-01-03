@@ -15121,6 +15121,7 @@ GameObject:
   - component: {fileID: 8616618341996019257}
   - component: {fileID: 1465733043003268331}
   - component: {fileID: 542164347076241702}
+  - component: {fileID: 90637804664571083}
   m_Layer: 5
   m_Name: StorageChestCanvas
   m_TagString: Untagged
@@ -15233,6 +15234,18 @@ MonoBehaviour:
   inventoryTabImage: {fileID: 2940326392758115481}
   activeTabColor: {r: 1, g: 1, b: 1, a: 1}
   inactiveTabColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+--- !u!114 &90637804664571083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4152689450873644377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50bffb92af1e15e448e873c412bf257e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1 &4272568999658991213
 GameObject:
   m_ObjectHideFlags: 0

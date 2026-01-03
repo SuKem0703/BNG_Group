@@ -165,19 +165,37 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
 
         // --- XỬ LÝ SWAP HOẶC MOVE ---
+        bool isStackable = draggedItem.IsStackable;
         Item targetItem = dropSlot.currentItem != null ? dropSlot.currentItem.GetComponent<Item>() : null;
 
         // Logic Stack (Gộp)
         if (targetItem != null && draggedItem.ID == targetItem.ID && draggedItem.itemType != ItemType.Equipment)
         {
-            // Client Side Update
+            // 1. Client Update (Visual - Mượt ngay lập tức)
             targetItem.AddToStack(draggedItem.quantity);
             originalSlot.currentItem = null;
             Destroy(gameObject);
 
-            // TODO: Call API Merge/Stack nếu Server hỗ trợ, hoặc Move item vào đè lên
-            // Hiện tại dùng tạm RequestMoveItem để Server tự xử lý gộp
-            InventoryService.Instance.RequestMoveItem(draggedItem.dbID, GetGlobalSlotIndex(dropSlot));
+            // 2. Gọi API Move (Kèm Callback)
+            InventoryService.Instance.RequestMoveItem(
+                draggedItem.dbID,
+                GetGlobalSlotIndex(dropSlot),
+                isStackable,
+                (success) => 
+                {
+                    if (success)
+                    {
+                        if (StorageChestController.Instance != null && StorageChestController.Instance.IsViewingChest)
+                        {
+                            // Kiểm tra xem slot đích có nằm trong rương không
+                            if (dropSlot.transform.IsChildOf(StorageChestController.Instance.storageChestPage.transform))
+                            {
+                                StorageChestController.Instance.RefreshChestContent();
+                            }
+                        }
+                    }
+                }
+            );
             return;
         }
 
@@ -219,18 +237,24 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
         else
         {
-            // B. Xử lý Move (Inventory -> Inventory / Hotbar)
-            // Gửi lệnh move cho item đang kéo
-            InventoryService.Instance.RequestMoveItem(draggedItem.dbID, GetGlobalSlotIndex(dropSlot));
+            InventoryService.Instance.RequestMoveItem(draggedItem.dbID, GetGlobalSlotIndex(dropSlot), isStackable);
 
-            // Nếu là Swap (targetItem bị đẩy về originalSlot), gửi lệnh move cho nó nữa
-            if (targetItem != null)
+            if (StorageChestController.Instance != null && StorageChestController.Instance.IsViewingChest)
             {
-                InventoryService.Instance.RequestMoveItem(targetItem.dbID, GetGlobalSlotIndex(originalSlot));
+                if (dropSlot.transform.IsChildOf(StorageChestController.Instance.storageChestPage.transform))
+                {
+                    StorageChestController.Instance.StartCoroutine(SyncChestAfterMoveDelay());
+                }
             }
         }
 
         TooltipManager.Instance.gameObject.SetActive(true);
+    }
+
+    private IEnumerator SyncChestAfterMoveDelay()
+    {
+        yield return new WaitForSeconds(0.2f);
+        StorageChestController.Instance.RefreshChestContent();
     }
 
     private FarmPlot GetFarmPlotAtMouse(PointerEventData eventData)

@@ -98,7 +98,7 @@ public class InventoryController : MonoBehaviour
         int quantityLeft = tempItem.quantity;
 
         // 1. STACK LOGIC (non-equipment)
-        if (tempItem.itemType != ItemType.Equipment)
+        if (tempItem.IsStackable)
         {
             quantityLeft = TryStackItem(tempItem, quantityLeft);
             if (quantityLeft <= 0) return true;

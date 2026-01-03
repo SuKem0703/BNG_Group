@@ -261,7 +261,7 @@ public class SaveController : MonoBehaviour
         {
             existingStorageData = serverSave.allChestsData;
         }
-        List<ChestStorageEntry> finalStorageData = MergeStorageChests(existingStorageData);
+        //List<ChestStorageEntry> finalStorageData = MergeStorageChests(existingStorageData);
 
         Vector3 savePos = GameObject.FindGameObjectWithTag("PlayerController").transform.position;
         string saveScene = SceneManager.GetActiveScene().name;
@@ -297,7 +297,7 @@ public class SaveController : MonoBehaviour
             currentStamina = playerStats.currentStamina,
 
             farmData = MergeFarmData(existingFarmData),
-            allChestsData = finalStorageData,
+            //allChestsData = finalStorageData,
             collectedByScene = collectedByScene
         };
 
@@ -473,29 +473,29 @@ public class SaveController : MonoBehaviour
     }
 
     // Gộp dữ liệu rương lưu trữ hiện tại vào dữ liệu tổng từ server
-    private List<ChestStorageEntry> MergeStorageChests(List<ChestStorageEntry> existingChestsData)
-    {
-        List<ChestStorageEntry> currentChests = GetStorageChestsState();
+    //private List<ChestStorageEntry> MergeStorageChests(List<ChestStorageEntry> existingChestsData)
+    //{
+    //    List<ChestStorageEntry> currentChests = GetStorageChestsState();
 
-        if (existingChestsData == null)
-            existingChestsData = new List<ChestStorageEntry>();
+    //    if (existingChestsData == null)
+    //        existingChestsData = new List<ChestStorageEntry>();
 
-        foreach (var newChest in currentChests)
-        {
-            var existingChest = existingChestsData.FirstOrDefault(c => c.chestID == newChest.chestID);
+    //    foreach (var newChest in currentChests)
+    //    {
+    //        var existingChest = existingChestsData.FirstOrDefault(c => c.chestID == newChest.chestID);
 
-            if (existingChest != null)
-            {
-                existingChest.items = newChest.items;
-            }
-            else
-            {
-                existingChestsData.Add(newChest);
-            }
-        }
+    //        if (existingChest != null)
+    //        {
+    //            existingChest.items = newChest.items;
+    //        }
+    //        else
+    //        {
+    //            existingChestsData.Add(newChest);
+    //        }
+    //    }
 
-        return existingChestsData;
-    }
+    //    return existingChestsData;
+    //}
     // Quy trình load dữ liệu từ server
     public IEnumerator LoadRoutine(System.Action<bool> onComplete)
     {
@@ -562,7 +562,7 @@ public class SaveController : MonoBehaviour
             inventoryController.slotCount = saveData.backPackSlotCount;
         }
 
-        LoadChestStates(saveData.chestSaveData);
+        //LoadChestStates(saveData.chestSaveData);
 
         if (knightEquipmentPanel != null) knightEquipmentPanel.SetEquipmentItems(saveData.knightEquipSaveData);
         if (mageEquipmentPanel != null) mageEquipmentPanel.SetEquipmentItems(saveData.mageEquipSaveData);
@@ -591,7 +591,7 @@ public class SaveController : MonoBehaviour
             farmController.LoadFarmData(saveData.farmData);
         }
 
-        LoadStorageChestStates(saveData.allChestsData);
+        //LoadStorageChestStates(saveData.allChestsData);
 
         collectedByScene = saveData.collectedByScene ?? new List<SceneCollected>();
 
@@ -610,99 +610,99 @@ public class SaveController : MonoBehaviour
         return false;
     }
 
-    // Load trạng thái rương lưu trữ
-    private void LoadStorageChestStates(List<ChestStorageEntry> allChestsData)
-    {
-        if (storageChests == null || storageChests.Length == 0) return;
+    //// Load trạng thái rương lưu trữ
+    //private void LoadStorageChestStates(List<ChestStorageEntry> allChestsData)
+    //{
+    //    if (storageChests == null || storageChests.Length == 0) return;
 
-        if (allChestsData == null) allChestsData = new List<ChestStorageEntry>();
+    //    if (allChestsData == null) allChestsData = new List<ChestStorageEntry>();
 
-        foreach (var chest in storageChests)
-        {
-            var data = allChestsData.FirstOrDefault(c => c.chestID == chest.chestID);
+    //    foreach (var chest in storageChests)
+    //    {
+    //        var data = allChestsData.FirstOrDefault(c => c.chestID == chest.chestID);
 
-            if (data != null && data.items != null)
-            {
-                List<StorageChestSaveData> loadedItems = new List<StorageChestSaveData>();
-                foreach (var itemData in data.items)
-                {
-                    loadedItems.Add(new StorageChestSaveData
-                    {
-                        itemID = itemData.itemID,
-                        slotIndex = itemData.slotIndex,
-                        quantity = itemData.quantity,
-                        rarity = itemData.rarity,
-                        qualityFactor = itemData.qualityFactor
-                    });
-                }
-                chest.chestData = loadedItems;
-            }
-            else
-            {
-                chest.chestData = new List<StorageChestSaveData>();
-            }
-        }
-    }
-    // Load trạng thái mở rương
-    private void LoadChestStates(List<ChestSaveData> chestState)
-    {
-        foreach (Chest chest in chests)
-        {
-            ChestSaveData chestSaveData = chestState.FirstOrDefault(c => c.chestID == chest.ChestID);
+    //        if (data != null && data.items != null)
+    //        {
+    //            List<StorageChestSaveData> loadedItems = new List<StorageChestSaveData>();
+    //            foreach (var itemData in data.items)
+    //            {
+    //                loadedItems.Add(new StorageChestSaveData
+    //                {
+    //                    itemID = itemData.itemID,
+    //                    slotIndex = itemData.slotIndex,
+    //                    quantity = itemData.quantity,
+    //                    rarity = itemData.rarity,
+    //                    qualityFactor = itemData.qualityFactor
+    //                });
+    //            }
+    //            chest.chestData = loadedItems;
+    //        }
+    //        else
+    //        {
+    //            chest.chestData = new List<StorageChestSaveData>();
+    //        }
+    //    }
+    //}
+    //// Load trạng thái mở rương
+    //private void LoadChestStates(List<ChestSaveData> chestState)
+    //{
+    //    foreach (Chest chest in chests)
+    //    {
+    //        ChestSaveData chestSaveData = chestState.FirstOrDefault(c => c.chestID == chest.ChestID);
 
-            if (chestSaveData != null)
-            {
-                chest.SetOpened(chestSaveData.isOpened);
-            }
-        }
-    }
+    //        if (chestSaveData != null)
+    //        {
+    //            chest.SetOpened(chestSaveData.isOpened);
+    //        }
+    //    }
+    //}
 
-    // Lấy trạng thái rương lưu trữ của scene hiện tại
-    private List<ChestStorageEntry> GetStorageChestsState()
-    {
-        List<ChestStorageEntry> currentSceneChests = new List<ChestStorageEntry>();
+    //// Lấy trạng thái rương lưu trữ của scene hiện tại
+    //private List<ChestStorageEntry> GetStorageChestsState()
+    //{
+    //    List<ChestStorageEntry> currentSceneChests = new List<ChestStorageEntry>();
 
-        // Nếu map không có rương nào thì trả về list rỗng ngay
-        if (storageChests == null || storageChests.Length == 0)
-        {
-            return currentSceneChests;
-        }
+    //    // Nếu map không có rương nào thì trả về list rỗng ngay
+    //    if (storageChests == null || storageChests.Length == 0)
+    //    {
+    //        return currentSceneChests;
+    //    }
 
-        foreach (var chest in storageChests)
-        {
-            // Bảo vệ null khi gọi Controller
-            if (StorageChestController.Instance != null)
-            {
-                StorageChestController.Instance.SyncDataIfOpen(chest);
-            }
+    //    foreach (var chest in storageChests)
+    //    {
+    //        // Bảo vệ null khi gọi Controller
+    //        if (StorageChestController.Instance != null)
+    //        {
+    //            StorageChestController.Instance.SyncDataIfOpen(chest);
+    //        }
 
-            List<StorageChestSaveData> savedItems = new List<StorageChestSaveData>();
+    //        List<StorageChestSaveData> savedItems = new List<StorageChestSaveData>();
 
-            // Bảo vệ null cho chestData
-            if (chest.chestData != null)
-            {
-                foreach (var item in chest.chestData)
-                {
-                    savedItems.Add(new StorageChestSaveData
-                    {
-                        itemID = item.itemID,
-                        slotIndex = item.slotIndex,
-                        quantity = item.quantity,
-                        rarity = item.rarity,
-                        qualityFactor = item.qualityFactor
-                    });
-                }
-            }
+    //        // Bảo vệ null cho chestData
+    //        if (chest.chestData != null)
+    //        {
+    //            foreach (var item in chest.chestData)
+    //            {
+    //                savedItems.Add(new StorageChestSaveData
+    //                {
+    //                    itemID = item.itemID,
+    //                    slotIndex = item.slotIndex,
+    //                    quantity = item.quantity,
+    //                    rarity = item.rarity,
+    //                    qualityFactor = item.qualityFactor
+    //                });
+    //            }
+    //        }
 
-            currentSceneChests.Add(new ChestStorageEntry
-            {
-                chestID = chest.chestID,
-                items = savedItems
-            });
-        }
+    //        currentSceneChests.Add(new ChestStorageEntry
+    //        {
+    //            chestID = chest.chestID,
+    //            items = savedItems
+    //        });
+    //    }
 
-        return currentSceneChests;
-    }
+    //    return currentSceneChests;
+    //}
 
     [System.Serializable]
     public class SaveDataRequest

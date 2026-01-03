@@ -105,6 +105,30 @@ public class Item : MonoBehaviour
 
     [SerializeField] private TMP_Text quantityTextOnUI;
     [SerializeField] private TMP_Text quantityTextOnWorld;
+
+    public bool IsStackable
+    {
+        get
+        {
+            switch (itemType)
+            {
+                case ItemType.Equipment:
+                    return false;
+
+                case ItemType.Consumable:
+                case ItemType.Seed:
+                case ItemType.Material:
+                    return true;
+
+                case ItemType.QuestItem:
+                    return true;
+
+                default:
+                    return true;
+            }
+        }
+    }
+
     protected virtual void Awake()
     {
         if (quantityTextOnUI == null || quantityTextOnWorld == null)
