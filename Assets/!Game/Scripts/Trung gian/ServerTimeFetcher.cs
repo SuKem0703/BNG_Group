@@ -3,9 +3,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
-/// <summary>
-/// Quản lý lấy giờ server, đồng bộ và auto-save.
-/// </summary>
 public class ServerTimeManager : MonoBehaviour
 {
     public static DateTime ServerTime { get; private set; }
@@ -13,11 +10,6 @@ public class ServerTimeManager : MonoBehaviour
 
     private const float REFRESH_INTERVAL = 300f;
     private bool autoSaveStarted = false;
-
-    void Awake()
-    {
-
-    }
 
     void OnEnable()
     {
@@ -50,21 +42,27 @@ public class ServerTimeManager : MonoBehaviour
 
     public IEnumerator FetchServerTime()
     {
-        const string url = "https://timeapi.io/api/Time/current/zone?timeZone=Asia/Ho_Chi_Minh";
+        string url = NetworkConfig.GetUrl("api/GameData/ping");
+
         using var request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            TimeApiResponse response = JsonUtility.FromJson<TimeApiResponse>(request.downloadHandler.text);
-            DateTime fetchedTime = DateTime.Parse(response.dateTime);
+            PingResponse response = JsonUtility.FromJson<PingResponse>(request.downloadHandler.text);
 
-            ServerTime = Math.Abs((fetchedTime - DateTime.Now).TotalSeconds) <= 10 ? DateTime.Now : fetchedTime;
-            LocalTimeAtFetch = Time.time;
+            if (DateTime.TryParse(response.serverTime, out DateTime fetchedTime))
+            {
+                ServerTime = Math.Abs((fetchedTime - DateTime.Now).TotalSeconds) <= 10 ? DateTime.Now : fetchedTime;
+                LocalTimeAtFetch = Time.time;
+
+                // Debug.Log($"[TimeSync] Server: {fetchedTime} | Local: {DateTime.Now}");
+            }
         }
         else
         {
             Debug.LogWarning($"Lỗi lấy giờ server: {request.error}");
+
             if (ServerTime == default)
             {
                 ServerTime = DateTime.Now;
@@ -73,9 +71,6 @@ public class ServerTimeManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Lưu game khi tab ra ngoài.
-    /// </summary>
     public void HandleAppFocusLoss(bool hasFocus)
     {
         if (!hasFocus)
@@ -83,11 +78,17 @@ public class ServerTimeManager : MonoBehaviour
             SaveController.Instance?.TriggerAutoSave();
         }
     }
+
+    public static DateTime GetCurrentTime()
+    {
+        if (LocalTimeAtFetch == 0) return DateTime.Now;
+        return ServerTime.AddSeconds(Time.time - LocalTimeAtFetch);
+    }
 }
 
 [System.Serializable]
-public class TimeApiResponse
+public class PingResponse
 {
-    public string dateTime;
-    // Các field khác giữ nguyên nếu cần, nhưng thực tế bạn chỉ dùng dateTime
+    public string message;
+    public string serverTime;
 }

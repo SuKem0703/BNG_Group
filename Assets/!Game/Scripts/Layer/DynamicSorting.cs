@@ -3,47 +3,51 @@ using UnityEngine.Tilemaps;
 
 public class DynamicSorting : MonoBehaviour
 {
-    [Header("Tên Layer")]
+    [Header("Sorting Layer")]
     [SerializeField] private string inFrontLayer = "Walk in front";
     [SerializeField] private string behindLayer = "Walk behind";
 
-    [Header("Cài đặt Vùng đệm")]
+    [Header("Y Offset")]
     [SerializeField] private float yOffset = -0.2f;
 
-    [Header("Renderers Cần Cập Nhật")]
-    [SerializeField] private TilemapRenderer behindRenderer;
-    [SerializeField] private TilemapRenderer frontRenderer;
+    [Header("Fade")]
+    [Range(0f, 1f)][SerializeField] private float fadedAlpha = 0.7f;
+    [SerializeField] private float normalAlpha = 1f;
+    [SerializeField] private float fadeSpeed = 6f;
 
-    [Header("Y-Sort (Fix chồng chéo)")]
+    [Header("Renderers")]
+    [SerializeField] private TilemapRenderer frontRenderer;
+    [SerializeField] private TilemapRenderer behindRenderer;
+
+    private Tilemap _frontTilemap;
+    private Tilemap _behindTilemap;
+    private float _targetAlpha;
+
+    [Header("Static Y Sort")]
     [SerializeField] private int sortingPrecision = 100;
+
     void Awake()
     {
-        if (behindRenderer == null)
-        {
-            Transform behindChild = transform.Find("Behind");
-            if (behindChild != null)
-                behindRenderer = behindChild.GetComponent<TilemapRenderer>();
-        }
         if (frontRenderer == null)
+            frontRenderer = transform.Find("Front")?.GetComponent<TilemapRenderer>();
+
+        if (behindRenderer == null)
+            behindRenderer = transform.Find("Behind")?.GetComponent<TilemapRenderer>();
+
+        if (frontRenderer == null || behindRenderer == null)
         {
-            Transform frontChild = transform.Find("Front");
-            if (frontChild != null)
-                frontRenderer = frontChild.GetComponent<TilemapRenderer>();
-        }
-        if (behindRenderer == null || frontRenderer == null)
-        {
-            Debug.LogError($"[{name}] Không tìm thấy TilemapRenderer cho Front/Behind.", this);
             enabled = false;
             return;
         }
 
-        int frontBaseOrder = frontRenderer.sortingOrder;
-        int behindBaseOrder = behindRenderer.sortingOrder;
+        _frontTilemap = frontRenderer.GetComponent<Tilemap>();
+        _behindTilemap = behindRenderer.GetComponent<Tilemap>();
 
-        int newYSortOrder = Mathf.RoundToInt(transform.position.y * -sortingPrecision);
+        _targetAlpha = normalAlpha;
 
-        behindRenderer.sortingOrder = behindBaseOrder + newYSortOrder;
-        frontRenderer.sortingOrder = frontBaseOrder + newYSortOrder;
+        int sortOrder = Mathf.RoundToInt(transform.position.y * -sortingPrecision);
+        frontRenderer.sortingOrder += sortOrder;
+        behindRenderer.sortingOrder += sortOrder;
     }
 
     void OnEnable()
@@ -54,20 +58,54 @@ public class DynamicSorting : MonoBehaviour
 
     void OnDisable()
     {
-        YSortController.OnPlayerYChanged -= HandleYChanged;
+        if (YSortController.Instance != null)
+            YSortController.OnPlayerYChanged -= HandleYChanged;
     }
 
+    void Update()
+    {
+        float current = _behindTilemap.color.a;
+        if (Mathf.Abs(current - _targetAlpha) > 0.01f)
+        {
+            float newAlpha = Mathf.MoveTowards(current, _targetAlpha, fadeSpeed * Time.deltaTime);
+            SetAlpha(newAlpha);
+        }
+    }
+
+    // --- SORTING ---
     private void HandleYChanged(float playerY)
     {
-        if (playerY < (transform.position.y + yOffset))
-            SetSortingLayer(behindRenderer, inFrontLayer);
+        if (playerY < transform.position.y + yOffset)
+            SetSortingLayer(inFrontLayer);
         else
-            SetSortingLayer(behindRenderer, behindLayer);
+            SetSortingLayer(behindLayer);
     }
 
-    private void SetSortingLayer(TilemapRenderer renderer, string layerName)
+    private void SetSortingLayer(string layer)
     {
-        if (renderer.sortingLayerName != layerName)
-            renderer.sortingLayerName = layerName;
+        if (frontRenderer.sortingLayerName != layer)
+            frontRenderer.sortingLayerName = layer;
+
+        if (behindRenderer.sortingLayerName != layer)
+            behindRenderer.sortingLayerName = layer;
+    }
+
+    // --- FADE API ---
+    public void SetFade(bool fade)
+    {
+        _targetAlpha = fade ? fadedAlpha : normalAlpha;
+    }
+
+    private void SetAlpha(float alpha)
+    {
+        Color c;
+
+        c = _frontTilemap.color;
+        c.a = alpha;
+        _frontTilemap.color = c;
+
+        c = _behindTilemap.color;
+        c.a = alpha;
+        _behindTilemap.color = c;
     }
 }
