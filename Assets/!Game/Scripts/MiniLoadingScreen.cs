@@ -17,6 +17,9 @@ public class MiniLoadingScreen : MonoBehaviour
     [SerializeField] private float spriteChangeInterval = 0.5f;
     [SerializeField] private float dotInterval = 0.5f;
 
+    [Header("Localization")]
+    [SerializeField] private string defaultLoadingKey = "MSG_CONNECTING";
+
     private int currentSpriteIndex = 0;
 
     private void OnEnable()
@@ -27,7 +30,15 @@ public class MiniLoadingScreen : MonoBehaviour
             blocker.gameObject.SetActive(true);
         }
 
-        if (loadingText != null) loadingText.text = "Đang kết nối";
+        string baseText = "Loading...";
+
+        if (LocalizationManager.Instance != null)
+        {
+            baseText = LocalizationManager.Instance.GetText(defaultLoadingKey);
+        }
+
+        if (loadingText != null) loadingText.text = baseText;
+
         currentSpriteIndex = 0;
         if (rotatingImage != null && loadingSprites.Count > 0)
             rotatingImage.sprite = loadingSprites[0];
@@ -54,12 +65,13 @@ public class MiniLoadingScreen : MonoBehaviour
             rotatingImage.transform.Rotate(Vector3.forward * -rotationSpeed * Time.unscaledDeltaTime);
         }
     }
+
     private IEnumerator SpriteRoutine()
     {
         if (loadingSprites == null || loadingSprites.Count == 0 || rotatingImage == null)
             yield break;
 
-        WaitForSeconds wait = new WaitForSeconds(spriteChangeInterval); // Cache lại để tối ưu
+        WaitForSecondsRealtime wait = new WaitForSecondsRealtime(spriteChangeInterval);
         while (true)
         {
             yield return wait;
@@ -74,7 +86,8 @@ public class MiniLoadingScreen : MonoBehaviour
 
         int dotCount = 0;
         string baseText = loadingText.text;
-        WaitForSeconds wait = new WaitForSeconds(dotInterval);
+
+        WaitForSecondsRealtime wait = new WaitForSecondsRealtime(dotInterval);
 
         while (true)
         {

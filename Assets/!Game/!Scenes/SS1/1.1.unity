@@ -42712,8 +42712,11 @@ MonoBehaviour:
   inFrontLayer: Walk in front
   behindLayer: Walk behind
   yOffset: -0.2
-  behindRenderer: {fileID: 1438037788}
+  fadedAlpha: 0.7
+  normalAlpha: 1
+  fadeSpeed: 6
   frontRenderer: {fileID: 1128501263}
+  behindRenderer: {fileID: 1438037788}
   sortingPrecision: 100
 --- !u!156049354 &979252329
 Grid:
@@ -51852,7 +51855,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1951193391199078760, guid: 401a35835383f324c82877669b25e38d, type: 3}
       propertyPath: playerPosition.y
-      value: -1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2391615279701976562, guid: 401a35835383f324c82877669b25e38d, type: 3}
       propertyPath: m_Sprite
@@ -52823,8 +52826,11 @@ MonoBehaviour:
   inFrontLayer: Walk in front
   behindLayer: Walk behind
   yOffset: -0.2
-  behindRenderer: {fileID: 1053171889}
+  fadedAlpha: 0.7
+  normalAlpha: 1
+  fadeSpeed: 6
   frontRenderer: {fileID: 1957866251}
+  behindRenderer: {fileID: 1053171889}
   sortingPrecision: 100
 --- !u!156049354 &1296646368
 Grid:
@@ -53513,8 +53519,11 @@ MonoBehaviour:
   inFrontLayer: Walk in front
   behindLayer: Walk behind
   yOffset: -0.2
-  behindRenderer: {fileID: 236091565}
+  fadedAlpha: 0.7
+  normalAlpha: 1
+  fadeSpeed: 6
   frontRenderer: {fileID: 415208749}
+  behindRenderer: {fileID: 236091565}
   sortingPrecision: 100
 --- !u!114 &1346088412
 MonoBehaviour:
@@ -57719,8 +57728,11 @@ MonoBehaviour:
   inFrontLayer: Walk in front
   behindLayer: Walk behind
   yOffset: -0.2
-  behindRenderer: {fileID: 1091689545}
+  fadedAlpha: 0.7
+  normalAlpha: 1
+  fadeSpeed: 6
   frontRenderer: {fileID: 1242533146}
+  behindRenderer: {fileID: 1091689545}
   sortingPrecision: 100
 --- !u!156049354 &1669509155
 Grid:
@@ -65060,8 +65072,11 @@ MonoBehaviour:
   inFrontLayer: Walk in front
   behindLayer: Walk behind
   yOffset: -0.2
-  behindRenderer: {fileID: 262008788}
+  fadedAlpha: 0.7
+  normalAlpha: 1
+  fadeSpeed: 6
   frontRenderer: {fileID: 772805818}
+  behindRenderer: {fileID: 262008788}
   sortingPrecision: 100
 --- !u!156049354 &2104299011
 Grid:
@@ -65675,8 +65690,11 @@ MonoBehaviour:
   inFrontLayer: Walk in front
   behindLayer: Walk behind
   yOffset: -0.2
-  behindRenderer: {fileID: 876466676100407627}
+  fadedAlpha: 0.7
+  normalAlpha: 1
+  fadeSpeed: 6
   frontRenderer: {fileID: 3655363021698108755}
+  behindRenderer: {fileID: 876466676100407627}
   sortingPrecision: 100
 --- !u!483693784 &2555004779675120739
 TilemapRenderer:

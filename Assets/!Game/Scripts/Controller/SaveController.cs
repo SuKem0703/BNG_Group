@@ -90,7 +90,19 @@ public class SaveController : MonoBehaviour
     {
         ShowMainLoadingScreen();
         StartCoroutine(LoadAndFinalize());
+
+        LocalizationManager.OnLanguageChanged += UpdateUIDText;
     }
+
+    private void UpdateUIDText()
+    {
+        if (uidText != null && IsDataLoaded)
+        {
+            string format = GetText("UI_UID");
+            uidText.text = string.Format(format, GetPlayerUID());
+        }
+    }
+
     IEnumerator LoadAndFinalize()
     {
         yield return InitializeComponents();
@@ -167,7 +179,7 @@ public class SaveController : MonoBehaviour
 
         IsDataLoaded = true;
 
-        if (uidText != null) uidText.text = "UID: " + GetPlayerUID();
+        UpdateUIDText();
 
         yield return new WaitForSecondsRealtime(0.5f);
         HideMainLoadingScreen();
@@ -311,12 +323,24 @@ public class SaveController : MonoBehaviour
                 pendingSceneName = null;
                 nextSpawnPosition = null;
             }
+
+            if (reason == SaveReason.Manual)
+            {
+                string msg = LocalizationManager.Instance.GetText("MSG_SAVE_SUCCESS");
+                GameNotify.Show(msg);
+            }
         }
         else
         {
             Debug.LogError("Lưu game thất bại! Hủy bỏ lệnh chuyển cảnh (nếu có).");
             pendingSceneName = null;
             nextSpawnPosition = null;
+
+            if (!isSilent)
+            {
+                string msg = LocalizationManager.Instance.GetText("MSG_SAVE_FAIL");
+                GameNotify.Show(msg);
+            }
         }
 
         if (!isSilent) HideMiniLoadingScreen();
@@ -472,30 +496,6 @@ public class SaveController : MonoBehaviour
         return existingFarmData;
     }
 
-    // Gộp dữ liệu rương lưu trữ hiện tại vào dữ liệu tổng từ server
-    //private List<ChestStorageEntry> MergeStorageChests(List<ChestStorageEntry> existingChestsData)
-    //{
-    //    List<ChestStorageEntry> currentChests = GetStorageChestsState();
-
-    //    if (existingChestsData == null)
-    //        existingChestsData = new List<ChestStorageEntry>();
-
-    //    foreach (var newChest in currentChests)
-    //    {
-    //        var existingChest = existingChestsData.FirstOrDefault(c => c.chestID == newChest.chestID);
-
-    //        if (existingChest != null)
-    //        {
-    //            existingChest.items = newChest.items;
-    //        }
-    //        else
-    //        {
-    //            existingChestsData.Add(newChest);
-    //        }
-    //    }
-
-    //    return existingChestsData;
-    //}
     // Quy trình load dữ liệu từ server
     public IEnumerator LoadRoutine(System.Action<bool> onComplete)
     {
@@ -610,99 +610,6 @@ public class SaveController : MonoBehaviour
         return false;
     }
 
-    //// Load trạng thái rương lưu trữ
-    //private void LoadStorageChestStates(List<ChestStorageEntry> allChestsData)
-    //{
-    //    if (storageChests == null || storageChests.Length == 0) return;
-
-    //    if (allChestsData == null) allChestsData = new List<ChestStorageEntry>();
-
-    //    foreach (var chest in storageChests)
-    //    {
-    //        var data = allChestsData.FirstOrDefault(c => c.chestID == chest.chestID);
-
-    //        if (data != null && data.items != null)
-    //        {
-    //            List<StorageChestSaveData> loadedItems = new List<StorageChestSaveData>();
-    //            foreach (var itemData in data.items)
-    //            {
-    //                loadedItems.Add(new StorageChestSaveData
-    //                {
-    //                    itemID = itemData.itemID,
-    //                    slotIndex = itemData.slotIndex,
-    //                    quantity = itemData.quantity,
-    //                    rarity = itemData.rarity,
-    //                    qualityFactor = itemData.qualityFactor
-    //                });
-    //            }
-    //            chest.chestData = loadedItems;
-    //        }
-    //        else
-    //        {
-    //            chest.chestData = new List<StorageChestSaveData>();
-    //        }
-    //    }
-    //}
-    //// Load trạng thái mở rương
-    //private void LoadChestStates(List<ChestSaveData> chestState)
-    //{
-    //    foreach (Chest chest in chests)
-    //    {
-    //        ChestSaveData chestSaveData = chestState.FirstOrDefault(c => c.chestID == chest.ChestID);
-
-    //        if (chestSaveData != null)
-    //        {
-    //            chest.SetOpened(chestSaveData.isOpened);
-    //        }
-    //    }
-    //}
-
-    //// Lấy trạng thái rương lưu trữ của scene hiện tại
-    //private List<ChestStorageEntry> GetStorageChestsState()
-    //{
-    //    List<ChestStorageEntry> currentSceneChests = new List<ChestStorageEntry>();
-
-    //    // Nếu map không có rương nào thì trả về list rỗng ngay
-    //    if (storageChests == null || storageChests.Length == 0)
-    //    {
-    //        return currentSceneChests;
-    //    }
-
-    //    foreach (var chest in storageChests)
-    //    {
-    //        // Bảo vệ null khi gọi Controller
-    //        if (StorageChestController.Instance != null)
-    //        {
-    //            StorageChestController.Instance.SyncDataIfOpen(chest);
-    //        }
-
-    //        List<StorageChestSaveData> savedItems = new List<StorageChestSaveData>();
-
-    //        // Bảo vệ null cho chestData
-    //        if (chest.chestData != null)
-    //        {
-    //            foreach (var item in chest.chestData)
-    //            {
-    //                savedItems.Add(new StorageChestSaveData
-    //                {
-    //                    itemID = item.itemID,
-    //                    slotIndex = item.slotIndex,
-    //                    quantity = item.quantity,
-    //                    rarity = item.rarity,
-    //                    qualityFactor = item.qualityFactor
-    //                });
-    //            }
-    //        }
-
-    //        currentSceneChests.Add(new ChestStorageEntry
-    //        {
-    //            chestID = chest.chestID,
-    //            items = savedItems
-    //        });
-    //    }
-
-    //    return currentSceneChests;
-    //}
 
     [System.Serializable]
     public class SaveDataRequest
@@ -752,8 +659,7 @@ public class SaveController : MonoBehaviour
     // Tải dữ liệu từ Server
     IEnumerator LoadFromServer(System.Action<SaveData> onLoaded)
     {
-        string url = "https://chronicles-of-knight-and-mage.onrender.com/api/GameData/get-save";
-
+        string url = NetworkConfig.GetUrl("api/GameData/get-save");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
@@ -779,6 +685,13 @@ public class SaveController : MonoBehaviour
     public string GetPlayerUID()
     {
         return PlayerPrefs.GetString("AccountId", "");
+    }
+
+    private string GetText(string key)
+    {
+        if (LocalizationManager.Instance != null)
+            return LocalizationManager.Instance.GetText(key);
+        return key;
     }
 
     public List<SceneCollected> collectedByScene = new List<SceneCollected>();

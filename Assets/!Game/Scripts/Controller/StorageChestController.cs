@@ -150,7 +150,7 @@ public class StorageChestController : MonoBehaviour
     {
         if (item == null) return;
         Slot targetSlot = FindEmptySlot(inventoryPanel.transform);
-        if (targetSlot == null) { ShowErrorMessage("Túi đồ đã đầy!"); return; }
+        if (targetSlot == null) { GameNotify.Show("Túi đồ đã đầy!"); return; }
 
         int targetSlotIndex = targetSlot.transform.GetSiblingIndex();
         int itemDbId = item.dbID;
@@ -171,7 +171,7 @@ public class StorageChestController : MonoBehaviour
             }
             else
             {
-                ShowErrorMessage("Lỗi kết nối Server!");
+                GameNotify.Show("Lỗi kết nối Server!");
                 if (item != null && item.gameObject != null)
                 {
                     item.GetComponent<CanvasGroup>().alpha = 1f;
@@ -184,11 +184,11 @@ public class StorageChestController : MonoBehaviour
     private void DepositItem(Item item)
     {
         if (item == null) return;
-        if (item.dbID == 0) { ShowErrorMessage("Lỗi dữ liệu item!"); return; }
-        if (item.itemType == ItemType.QuestItem || item.isEquipped) { ShowErrorMessage("Không thể cất!"); return; }
+        if (item.dbID == 0) { GameNotify.Show("Lỗi dữ liệu item!"); return; }
+        if (item.itemType == ItemType.QuestItem || item.isEquipped) { GameNotify.Show("Không thể cất!"); return; }
 
         Slot targetSlot = FindEmptySlot(storageChestPage.transform);
-        if (targetSlot == null) { ShowErrorMessage("Rương đầy!"); return; }
+        if (targetSlot == null) { GameNotify.Show("Rương đầy!"); return; }
 
         int targetSlotIndex = targetSlot.transform.GetSiblingIndex();
         int itemDbId = item.dbID;
@@ -210,7 +210,7 @@ public class StorageChestController : MonoBehaviour
             }
             else
             {
-                ShowErrorMessage("Lỗi kết nối Server!");
+                GameNotify.Show("Lỗi kết nối Server!");
                 if (item != null && item.gameObject != null)
                 {
                     item.GetComponent<CanvasGroup>().alpha = 1f;
@@ -323,12 +323,5 @@ public class StorageChestController : MonoBehaviour
 
         if (chestTabImage != null) chestTabImage.color = IsViewingChest ? activeTabColor : inactiveTabColor;
         if (inventoryTabImage != null) inventoryTabImage.color = !IsViewingChest ? activeTabColor : inactiveTabColor;
-    }
-
-    private void ShowErrorMessage(string message)
-    {
-        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.NotifyUIPrefab != null)
-            Instantiate(LoadResourceManager.Instance.NotifyUIPrefab).GetComponent<NotifyUIController>()?.Show(message);
-        else Debug.LogWarning(message);
     }
 }

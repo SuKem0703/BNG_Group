@@ -10,6 +10,10 @@ public class GameSettingController : MonoBehaviour
 {
     public static GameSettingController Instance;
 
+    [Header("Ngôn ngữ")]
+    public Button languageButton;
+    public TextMeshProUGUI languageText;
+
     [Header("Âm thanh")]
     public Slider sfxSlider;
     private float lastTestPlayTime = 0f;
@@ -36,7 +40,6 @@ public class GameSettingController : MonoBehaviour
     public GameObject settingUI;
 
     private UniversalAdditionalCameraData cameraData;
-    private SaveController saveController;
 
     void Awake()
     {
@@ -47,8 +50,11 @@ public class GameSettingController : MonoBehaviour
         }
         Instance = this;
 
-        // Tìm SaveController
-        saveController = FindFirstObjectByType<SaveController>();
+        // Tìm nút ngôn ngữ
+        if (languageButton == null)
+            languageButton = GameObject.Find("LanguageButton")?.GetComponent<Button>();
+        if (languageText == null)
+            languageText = GameObject.Find("LanguageText")?.GetComponent<TextMeshProUGUI>();
 
         // Tìm cài đặt âm thanh
         if (sfxSlider == null)
@@ -181,6 +187,25 @@ public class GameSettingController : MonoBehaviour
     {
         SaveController.Instance.SaveGame();
     }
+
+    public void OnLanguageToggle()
+    {
+        if (LocalizationManager.Instance != null)
+        {
+            LocalizationManager.Instance.ToggleLanguage();
+            UpdateLanguageUI();
+        }
+    }
+
+    public void UpdateLanguageUI()
+    {
+        if (LocalizationManager.Instance != null && languageText != null)
+        {
+            string code = LocalizationManager.Instance.CurrentLang;
+            languageText.text = (code == "vi") ? "Tiếng Việt" : "English";
+        }
+    }
+
     void UpdateLightIntensity(float value)
     {
         if (sunLight != null)
@@ -300,10 +325,7 @@ public class GameSettingController : MonoBehaviour
 
     public void QuitGame()
     {
-    if (saveController != null)
-        {
-            StartCoroutine(QuitAfterSave());
-        }
+        StartCoroutine(QuitAfterSave());
 
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
@@ -313,7 +335,7 @@ public class GameSettingController : MonoBehaviour
     }
     private IEnumerator QuitAfterSave()
     {
-        yield return StartCoroutine(saveController.SaveRoutine(SaveReason.Manual));
+        yield return StartCoroutine(SaveController.Instance.SaveRoutine(SaveReason.Manual));
 
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;

@@ -79,7 +79,7 @@ public class DeathManager : MonoBehaviour
         // Trừ local (để hiển thị) -> Hàm này sẽ queue vào pendingExpToAdd
         PlayerStats.Instance.AddEXP(-penalty);
 
-        ShowNotification($"Bạn đã mất {penalty} EXP!");
+        GameNotify.Show($"Bạn đã mất {penalty} EXP!");
     }
 
     private IEnumerator SaveAndShowGameOver()
@@ -171,15 +171,5 @@ public class DeathManager : MonoBehaviour
 
         // 3. Load Scene
         SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
-    }
-
-    private void ShowNotification(string message)
-    {
-        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.NotifyUIPrefab != null)
-        {
-            GameObject notifyUIObj = Instantiate(LoadResourceManager.Instance.NotifyUIPrefab);
-            NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
-            if (notifyUI != null) notifyUI.Show(message);
-        }
     }
 }

@@ -30,10 +30,12 @@ public class SaveSettingController : MonoBehaviour
             graphicsLevel = gameSettingController.lastValidGraphicsLevel,
 
             fxaaEnabled = gameSettingController.fxaaToggle != null ? gameSettingController.fxaaToggle.isOn : true,
-            isFullScreen = gameSettingController.fullscreenToggle != null ? gameSettingController.fullscreenToggle.isOn : true
+            isFullScreen = gameSettingController.fullscreenToggle != null ? gameSettingController.fullscreenToggle.isOn : true,
+            language = (LocalizationManager.Instance != null) ? LocalizationManager.Instance.CurrentLang : "vi"
         };
         File.WriteAllText(saveFilePath, JsonUtility.ToJson(saveSetting, true));
-        Debug.Log("Settings saved!");
+        string msg = LocalizationManager.Instance.GetText("MSG_SAVE_SETTING_SUCCESS");
+        GameNotify.Show(msg);
     }
 
     public void LoadSettings()
@@ -43,6 +45,12 @@ public class SaveSettingController : MonoBehaviour
             SaveSetting saveSetting = JsonUtility.FromJson<SaveSetting>(File.ReadAllText(saveFilePath));
 
             if (gameSettingController == null) return;
+
+            if (LocalizationManager.Instance != null && !string.IsNullOrEmpty(saveSetting.language))
+            {
+                LocalizationManager.Instance.LoadLanguage(saveSetting.language);
+                gameSettingController.UpdateLanguageUI();
+            }
 
             gameSettingController.sfxSlider.value = saveSetting.sfxVolume;
             gameSettingController.bgmSlider.value = saveSetting.bgmVolume;

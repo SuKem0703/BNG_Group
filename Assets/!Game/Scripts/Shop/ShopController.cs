@@ -14,7 +14,6 @@ public class ShopController : MonoBehaviour
     [SerializeField] private ShopItemPreview shopItemPreview;
 
     private GameObject ConfirmUIPrefab => LoadResourceManager.Instance.ConfirmUIPrefab;
-    private GameObject NotifyUIPrefab => LoadResourceManager.Instance.NotifyUIPrefab;
 
     private ItemDictionary itemDictionary;
     private TextMeshProUGUI coinText;
@@ -93,7 +92,7 @@ public class ShopController : MonoBehaviour
 
         if (currentBalance < price)
         {
-            ShowNotification("Số dư không đủ!");
+            GameNotify.Show("Số dư không đủ!");
             return;
         }
 
@@ -115,7 +114,7 @@ public class ShopController : MonoBehaviour
         {
             if (success)
             {
-                ShowNotification("Mua thành công!");
+                GameNotify.Show("Mua thành công!");
 
                 int newBalance = currentBalance - price;
                 if (isCoin) PlayerStats.Instance.SyncCoinFromServer(newBalance);
@@ -125,7 +124,7 @@ public class ShopController : MonoBehaviour
             }
             else
             {
-                ShowNotification("Giao dịch thất bại!");
+                GameNotify.Show("Giao dịch thất bại!");
             }
         });
     }
@@ -145,12 +144,6 @@ public class ShopController : MonoBehaviour
         {
             ExecuteBuyItem(itemID, price, currency, quantity);
         });
-    }
-
-    public void ShowNotification(string message)
-    {
-        if (NotifyUIPrefab == null) return;
-        Instantiate(NotifyUIPrefab).GetComponent<NotifyUIController>()?.Show(message);
     }
 
     TextMeshProUGUI FindTextByName(Transform p, string n)

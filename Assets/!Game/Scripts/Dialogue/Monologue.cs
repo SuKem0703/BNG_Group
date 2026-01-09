@@ -24,7 +24,6 @@ public class Monologue : MonoBehaviour, IInteractable
     [SerializeField] protected Sprite characterPortrait;
 
     protected DialogueController dialogueUI;
-    protected SaveController saveController;
     protected int dialogueIndex;
     protected bool isTyping;
     protected bool maintainPauseAfterDialogue = false;
@@ -77,6 +76,7 @@ public class Monologue : MonoBehaviour, IInteractable
 
     public virtual bool CanInteract()
     {
+        if (triggerOnEnter) return false;
         if (!SaveController.IsDataLoaded) return false;
         if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return false;
         return !GameStateManager.IsDialogueActive;
@@ -293,8 +293,7 @@ public class Monologue : MonoBehaviour, IInteractable
         }
         else
         {
-            saveController = Object.FindFirstObjectByType<SaveController>();
-            if (saveController != null) saveController.SaveGame();
+            SaveController.Instance?.TriggerAutoSave();
         }
     }
 

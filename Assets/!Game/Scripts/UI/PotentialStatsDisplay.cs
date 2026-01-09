@@ -40,7 +40,6 @@ public class PotentialStatsDisplay : MonoBehaviour
     private bool isDirty = false;
 
     private GameObject ConfirmUIPrefab => LoadResourceManager.Instance.ConfirmUIPrefab;
-    private GameObject NotifyUIPrefab => LoadResourceManager.Instance.NotifyUIPrefab;
     void Awake()
     {
         playerStats = FindFirstObjectByType<PlayerStats>();
@@ -205,7 +204,7 @@ public class PotentialStatsDisplay : MonoBehaviour
 
         if (playerStats.gem < 20)
         {
-            ShowNotification("Bạn không đủ 20 Gem để reset điểm!");
+            GameNotify.Show("Bạn không đủ 20 Gem để reset điểm!");
             return;
         }
 
@@ -249,27 +248,13 @@ public class PotentialStatsDisplay : MonoBehaviour
                 InitializeLocalValues();
                 playerStats.ApplyEquippedItems();
 
-                ShowNotification("Reset điểm thành công!");
+                GameNotify.Show("Reset điểm thành công!");
             }
             else
             {
-                ShowNotification("Reset thất bại! Vui lòng thử lại.");
+                GameNotify.Show("Reset thất bại! Vui lòng thử lại.");
             }
         });
-    }
-
-    // Hiển thị Notify UI
-    public void ShowNotification(string message)
-    {
-        if (NotifyUIPrefab == null) return;
-
-        GameObject obj = Instantiate(NotifyUIPrefab);
-        var controller = obj.GetComponent<NotifyUIController>();
-
-        if (controller != null)
-            controller.Show(message);
-        else
-            Destroy(obj);
     }
 
     void HandleTooltipPosition()

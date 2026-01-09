@@ -110,7 +110,7 @@ public class SceneMapMove : MonoBehaviour
                 else
                 {
                     Debug.LogError("Không thể chuyển map do lỗi lưu dữ liệu (Mất kết nối?)");
-                    ShowNotification("Lỗi kết nối! Không thể sang map.");
+                    GameNotify.Show("Lỗi kết nối! Không thể sang map.");
                 }
             });
 
@@ -132,7 +132,7 @@ public class SceneMapMove : MonoBehaviour
             if (monologueComponent.triggerOnEnter)
             {
                 monologueComponent.OpenDialogOnTrigger();
-                Debug.Log(reason + " (Monologue tự động)");
+                //Debug.Log(reason + " (Monologue tự động)");
             }
             else if (monologueComponent.CanInteract())
             {
@@ -141,19 +141,10 @@ public class SceneMapMove : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning(reason);
+            //Debug.LogWarning(reason);
         }
 
         if (CinemachineShaker.Instance != null)
             CinemachineShaker.Instance.TriggerShake(3f, 10f, 0.2f);
-    }
-    private void ShowNotification(string message)
-    {
-        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.NotifyUIPrefab != null)
-        {
-            GameObject notifyUIObj = Instantiate(LoadResourceManager.Instance.NotifyUIPrefab);
-            NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
-            if (notifyUI != null) notifyUI.Show(message);
-        }
     }
 }

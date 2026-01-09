@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class TabController : MonoBehaviour
 {
@@ -10,6 +11,9 @@ public class TabController : MonoBehaviour
 
     public Image[] tabImages;
     public GameObject[] pages;
+
+    [Header("Tab Localization Keys")]
+    [SerializeField] private string[] tabKeys;
 
     [Header("Tab Flag Checker")]
     private const int TAB_INDEX_EQUIPMENT = 3;
@@ -35,25 +39,50 @@ public class TabController : MonoBehaviour
     {
         if (Instance == this) Instance = null;
     }
+
     private void OnEnable()
     {
         SaveController.OnDataLoaded += HandleDataLoaded;
+        LocalizationManager.OnLanguageChanged += UpdateTabTexts;
 
         if (SaveController.IsDataLoaded)
         {
             HandleDataLoaded();
         }
+
+        UpdateTabTexts();
     }
 
     private void OnDisable()
     {
         SaveController.OnDataLoaded -= HandleDataLoaded;
+        LocalizationManager.OnLanguageChanged -= UpdateTabTexts;
     }
 
     private void HandleDataLoaded()
     {
         UpdateTabVisibility();
         ActivateTab(currentTabIndex);
+    }
+
+    // --- HÀM CẬP NHẬT NGÔN NGỮ TAB ---
+    private void UpdateTabTexts()
+    {
+        if (tabImages == null || tabKeys == null) return;
+        if (LocalizationManager.Instance == null) return;
+
+        for (int i = 0; i < tabImages.Length; i++)
+        {
+            if (i >= tabKeys.Length) break;
+            if (tabImages[i] == null) continue;
+
+            TextMeshProUGUI tabText = tabImages[i].GetComponentInChildren<TextMeshProUGUI>();
+
+            if (tabText != null && !string.IsNullOrEmpty(tabKeys[i]))
+            {
+                tabText.text = LocalizationManager.Instance.GetText(tabKeys[i]);
+            }
+        }
     }
 
     private void UpdateTabVisibility()

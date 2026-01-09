@@ -14,14 +14,14 @@ public class SleepCallMonologue : Monologue
     public bool autoTriggerAfterLoad = true;
 
     private bool _hasStartedCutsceneMode = false;
+    private bool _hasTriggered = false;
 
     protected override void Start()
     {
         isOneTimeOnly = true;
-
         base.Start();
 
-        if (this != null && gameObject != null && autoTriggerAfterLoad)
+        if (autoTriggerAfterLoad)
         {
             StartCoroutine(WaitAndAutoTrigger());
         }
@@ -29,42 +29,40 @@ public class SleepCallMonologue : Monologue
 
     private IEnumerator WaitAndAutoTrigger()
     {
+        // 1. Chờ Save load xong
         yield return new WaitUntil(() => SaveController.IsDataLoaded);
         yield return null;
 
-        if (this == null || gameObject == null) yield break;
+        if (this == null || !gameObject.activeInHierarchy)
+            yield break;
 
+        // 2. Chờ DialogueController
         yield return new WaitUntil(() => DialogueController.instance != null);
 
-        float timeout = 5f;
-        while (GameStateManager.IsLoading && timeout > 0)
-        {
-            timeout -= Time.deltaTime;
-            yield return null;
-        }
+        // 3. Chờ các intro / cutscene KẾT THÚC HOÀN TOÀN
+        yield return new WaitUntil(() => FindFirstObjectByType<ChapterIntroSequence>() == null);
+        yield return new WaitUntil(() => FindFirstObjectByType<StoryScrollController>() == null);
+        yield return new WaitUntil(() => FindFirstObjectByType<CameraPanIntro>() == null);
 
-        yield return new WaitUntil(() => string.IsNullOrEmpty(SaveController.pendingSceneName));
-
+        // 4. Chờ MapController thoát cutscene
         if (MapController.Instance != null)
         {
             yield return new WaitUntil(() => !MapController.Instance.IsCutsceneMode);
         }
 
-        yield return new WaitForSeconds(0.2f);
+        // 5. Đảm bảo GameState sạch
+        GameStateManager.IsDialogueActive = false;
+        GameStateManager.EndLoading();
 
-        if (this == null || !gameObject.activeInHierarchy) yield break;
+        yield return null; // buffer 1 frame
 
-        // --- TRIGGER ---
-        if (CanInteract())
-        {
-            OpenDialogOnTrigger();
-        }
-        else
-        {
-            Debug.Log("SleepCallMonologue: Cannot interact yet, waiting...");
-            yield return new WaitUntil(() => CanInteract());
-            OpenDialogOnTrigger();
-        }
+        if (this == null || !gameObject.activeInHierarchy || _hasTriggered)
+            yield break;
+
+        _hasTriggered = true;
+
+        // 6. ÉP MỞ DIALOG – KHÔNG CHỜ CanInteract
+        OpenDialogOnTrigger();
     }
 
     protected override void StartDialogue()
@@ -75,7 +73,7 @@ public class SleepCallMonologue : Monologue
             _hasStartedCutsceneMode = true;
         }
 
-        if (DialogueController.instance != null && _blackOverlay != null)
+        if (_blackOverlay != null)
         {
             _blackOverlay.color = Color.black;
             _blackOverlay.gameObject.SetActive(true);
@@ -98,17 +96,30 @@ public class SleepCallMonologue : Monologue
 
     protected override void OnDestroy()
     {
-        if (_hasStartedCutsceneMode) RestoreMapState();
+        if (_hasStartedCutsceneMode)
+        {
+            RestoreMapState();
+        }
+
         base.OnDestroy();
     }
 
     private void RestoreMapState()
     {
-        if (_hasStartedCutsceneMode && MapController.Instance != null)
+        if (MapController.Instance != null)
         {
             MapController.Instance.IsCutsceneMode = false;
             MapController.Instance.ShowMapNameUI();
-            _hasStartedCutsceneMode = false;
         }
+
+        _hasStartedCutsceneMode = false;
+    }
+
+    // OVERRIDE: Auto-trigger KHÔNG bị khóa bởi GameState cũ
+    public override bool CanInteract()
+    {
+        if (!SaveController.IsDataLoaded) return false;
+        if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return false;
+        return true;
     }
 }

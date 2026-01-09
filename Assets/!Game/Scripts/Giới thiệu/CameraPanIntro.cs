@@ -65,12 +65,21 @@ public class CameraPanIntro : MonoBehaviour
 
     IEnumerator PlayIntro()
     {
+        // Chờ hết các sequence khác nếu có
         var chapterIntro = FindFirstObjectByType<ChapterIntroSequence>();
         if (chapterIntro != null)
         {
             yield return new WaitUntil(() => chapterIntro == null);
         }
 
+        // Chờ hết story scroll nếu có
+        var storyScroll = FindFirstObjectByType<StoryScrollController>();
+        if (storyScroll != null)
+        {
+            yield return new WaitUntil(() => storyScroll == null);
+        }
+
+        // Bắt đầu quay camera
         GameStateManager.StartLoading();
 
         if (targetCamera != null) targetCamera.Priority = 20;

@@ -119,15 +119,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   loadingText: {fileID: 5886362718955263672}
   rotatingImage: {fileID: 6919519698278550250}
+  blocker: {fileID: 2165977241425318876}
   loadingSprites:
   - {fileID: 8961836850334082660, guid: 556a28b0c6f5108498db85c1af9f2517, type: 3}
   - {fileID: -544255263, guid: 556a28b0c6f5108498db85c1af9f2517, type: 3}
   - {fileID: 562772041, guid: 556a28b0c6f5108498db85c1af9f2517, type: 3}
   - {fileID: 692900595, guid: 556a28b0c6f5108498db85c1af9f2517, type: 3}
-  blocker: {fileID: 2165977241425318876}
   rotationSpeed: 120
   spriteChangeInterval: 0.5
   dotInterval: 0.5
+  defaultLoadingKey: MSG_CONNECTING
 --- !u!1 &2292325619392895741
 GameObject:
   m_ObjectHideFlags: 0

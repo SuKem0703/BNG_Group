@@ -11,4 +11,6 @@ public class SaveSetting
 
     public bool fxaaEnabled = true;
     public bool isFullScreen = true;
+
+    public string language;
 }

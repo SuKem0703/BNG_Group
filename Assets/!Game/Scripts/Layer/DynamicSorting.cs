@@ -58,12 +58,13 @@ public class DynamicSorting : MonoBehaviour
 
     void OnDisable()
     {
-        if (YSortController.Instance != null)
-            YSortController.OnPlayerYChanged -= HandleYChanged;
+        YSortController.OnPlayerYChanged -= HandleYChanged;
     }
 
     void Update()
     {
+        if (this == null) return;
+
         float current = _behindTilemap.color.a;
         if (Mathf.Abs(current - _targetAlpha) > 0.01f)
         {
@@ -75,6 +76,8 @@ public class DynamicSorting : MonoBehaviour
     // --- SORTING ---
     private void HandleYChanged(float playerY)
     {
+        if (this == null) return;
+
         if (playerY < transform.position.y + yOffset)
             SetSortingLayer(inFrontLayer);
         else

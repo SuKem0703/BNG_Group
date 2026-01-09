@@ -84,8 +84,12 @@ public class CheckPoint : MonoBehaviour, IInteractable
             transform.position
         );
 
-        Debug.Log($"[CheckPoint] Đã kích hoạt checkpoint: {checkpointName}");
-        ShowNotification($"Đã lưu tại {checkpointName}");
+        if (!string.IsNullOrEmpty(checkpointName))
+        {
+            Debug.Log($"[CheckPoint] Đã kích hoạt checkpoint: {checkpointName}");
+            GameNotify.Show($"Đã lưu tại {checkpointName}");
+
+        }
 
         if (SaveController.Instance != null)
         {
@@ -102,15 +106,5 @@ public class CheckPoint : MonoBehaviour, IInteractable
     {
         if (activeVisual != null) activeVisual.SetActive(isActivated);
         if (inactiveVisual != null) inactiveVisual.SetActive(!isActivated);
-    }
-
-    private void ShowNotification(string message)
-    {
-        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.NotifyUIPrefab != null)
-        {
-            GameObject notifyUIObj = Instantiate(LoadResourceManager.Instance.NotifyUIPrefab);
-            NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
-            if (notifyUI != null) notifyUI.Show(message);
-        }
     }
 }

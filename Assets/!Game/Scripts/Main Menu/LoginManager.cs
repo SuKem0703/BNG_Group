@@ -19,41 +19,55 @@ public class LoginManager : MonoBehaviour
 
     [SerializeField] MiniLoadingScreen miniLoadingScreen;
 
-    private string loginUrl = "https://chronicles-of-knight-and-mage.onrender.com/api/GameData/login";
-    private string registerUrl = "https://chronicles-of-knight-and-mage.onrender.com/Accounts/Create";
-    void Start()
-    {
-        loginUI.SetActive(false);
-
-        string token = PlayerPrefs.GetString("AuthToken", "");
-        if (!string.IsNullOrEmpty(token))
-        {
-            Debug.Log("Đã có token, giữ nguyên để người chơi bấm Play.");
-            string accountId = PlayerPrefs.GetString("AccountId", "");
-
-            if (!string.IsNullOrEmpty(accountId) && uidText != null)
-                uidText.text = $"UID: {accountId}";
-        }
-        else
-        {
-            uidText.text = "UID: Chưa đăng nhập";
-            Debug.Log("Chưa có token. Vui lòng đăng nhập.");
-        }
-        UpdateLoginUI();
-
-    }
-    private void Awake()
+    void Awake()
     {
         if (SceneManager.GetActiveScene().name == "MainMenu" && miniLoadingScreen == null)
         {
             miniLoadingScreen = FindFirstObjectByType<MiniLoadingScreen>();
-            miniLoadingScreen.gameObject.SetActive(false);
+            if (miniLoadingScreen != null) miniLoadingScreen.gameObject.SetActive(false);
+        }
+    }
+
+    void Start()
+    {
+        loginUI.SetActive(false);
+        CheckLoginStatus();
+        UpdateLoginUI();
+
+        // Đăng ký sự kiện đổi ngôn ngữ để cập nhật lại UID text nếu đang ở menu
+        LocalizationManager.OnLanguageChanged += CheckLoginStatus;
+    }
+
+    void OnDestroy()
+    {
+        LocalizationManager.OnLanguageChanged -= CheckLoginStatus;
+    }
+
+    // Hàm kiểm tra và hiển thị UID
+    private void CheckLoginStatus()
+    {
+        string token = PlayerPrefs.GetString("AuthToken", "");
+        if (!string.IsNullOrEmpty(token))
+        {
+            string accountId = PlayerPrefs.GetString("AccountId", "");
+            if (!string.IsNullOrEmpty(accountId) && uidText != null)
+            {
+                // [LOCALIZATION] Dùng string.Format để điền ID vào chuỗi "UID: {0}"
+                string format = GetText("UI_UID");
+                uidText.text = string.Format(format, accountId);
+            }
+        }
+        else
+        {
+            if (uidText != null)
+                uidText.text = GetText("UI_NOT_LOGGED_IN");
         }
     }
 
     public void OnRegisterButtonPressed()
     {
-        Application.OpenURL(registerUrl);
+        // [NETWORK] Dùng helper lấy URL đăng ký
+        Application.OpenURL(NetworkConfig.GetUrl("Accounts/Create"));
     }
 
     public void OnLoginButtonPressed()
@@ -63,19 +77,20 @@ public class LoginManager : MonoBehaviour
 
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
         {
-            feedbackText.text = "Vui lòng nhập tên đăng nhập và mật khẩu.";
+            feedbackText.text = GetText("MSG_INPUT_EMPTY");
             return;
         }
 
         StartCoroutine(Login(username, password));
     }
+
     public void OnPlayButtonPressed()
     {
         StartCoroutine(CheckServerConnection((isOnline) =>
         {
             if (!isOnline)
             {
-                feedbackText.text = "Không thể kết nối đến máy chủ.";
+                feedbackText.text = GetText("MSG_SERVER_ERROR");
                 return;
             }
 
@@ -88,15 +103,19 @@ public class LoginManager : MonoBehaviour
             else
             {
                 loginUI.SetActive(true);
-                feedbackText.text = "Bạn cần đăng nhập trước khi chơi.";
+                feedbackText.text = GetText("MSG_LOGIN_REQUIRED");
             }
         }));
     }
+
     IEnumerator CheckServerConnection(System.Action<bool> callback)
     {
         if (miniLoadingScreen != null) miniLoadingScreen.gameObject.SetActive(true);
 
-        using (UnityWebRequest request = UnityWebRequest.Get("https://chronicles-of-knight-and-mage.onrender.com/api/GameData/ping"))
+        // [NETWORK] URL Ping
+        string url = NetworkConfig.GetUrl("api/GameData/ping");
+
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
             request.timeout = 5;
             yield return request.SendWebRequest();
@@ -115,7 +134,10 @@ public class LoginManager : MonoBehaviour
         var requestData = new LoginRequest { username = username, password = password };
         string json = JsonUtility.ToJson(requestData);
 
-        UnityWebRequest request = new UnityWebRequest(loginUrl, "POST");
+        // [NETWORK] URL Login
+        string url = NetworkConfig.GetUrl("api/GameData/login");
+
+        UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
@@ -130,28 +152,26 @@ public class LoginManager : MonoBehaviour
             PlayerPrefs.SetString("Username", res.username);
             PlayerPrefs.SetString("AuthToken", res.token);
 
-            Debug.Log($"Đăng nhập thành công! ID: {res.userId}, Username: {res.username}");
+            Debug.Log($"Đăng nhập thành công! ID: {res.userId}");
 
             HideLoginPanel();
-
-            if (uidText != null)
-                uidText.text = $"UID: {res.userId}";
+            CheckLoginStatus();
             UpdateLoginUI();
-
         }
         else if (request.responseCode == 403)
         {
-            feedbackText.text = "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.";
-            Debug.LogWarning("Tài khoản bị khóa: " + request.downloadHandler.text);
+            feedbackText.text = GetText("MSG_ACCOUNT_LOCKED");
+            Debug.LogWarning("Tài khoản bị khóa.");
         }
-
         else
         {
-            feedbackText.text = "Sai tài khoản hoặc lỗi kết nối.";
-            Debug.Log("Response JSON: " + request.downloadHandler.text);
+            feedbackText.text = GetText("MSG_LOGIN_FAILED");
+            Debug.LogError("Lỗi đăng nhập: " + request.downloadHandler.text);
         }
+
         if (miniLoadingScreen != null) miniLoadingScreen.gameObject.SetActive(false);
     }
+
     IEnumerator FetchSaveData()
     {
         if (miniLoadingScreen != null) miniLoadingScreen.gameObject.SetActive(true);
@@ -159,11 +179,11 @@ public class LoginManager : MonoBehaviour
         string token = PlayerPrefs.GetString("AuthToken", "");
         if (string.IsNullOrEmpty(token))
         {
-            Debug.LogError("Không có token để xác thực.");
             yield break;
         }
 
-        string url = "https://chronicles-of-knight-and-mage.onrender.com/api/GameData/get-save";
+        // [NETWORK] URL Get Save
+        string url = NetworkConfig.GetUrl("api/GameData/get-save");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Authorization", $"Bearer {token}");
@@ -173,26 +193,25 @@ public class LoginManager : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             string saveJson = request.downloadHandler.text;
-            Debug.Log("Dữ liệu save: " + saveJson);
-
             SaveData saveData = JsonUtility.FromJson<SaveData>(saveJson);
+
             if (!string.IsNullOrEmpty(saveData.currentSceneName))
             {
                 SaveController.pendingSceneName = saveData.currentSceneName;
-                UnityEngine.SceneManagement.SceneManager.LoadScene(saveData.currentSceneName);
+                SceneManager.LoadScene(saveData.currentSceneName);
             }
             else
             {
-                Debug.LogWarning("Không có tên scene trong save data. Chuyển tới scene mặc định.");
+                Debug.LogWarning("Dữ liệu lưu trống.");
             }
         }
         else
         {
             Logout();
             loginUI.SetActive(true);
-            feedbackText.text = "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.";
-            Debug.LogError("Lỗi khi lấy save: " + request.downloadHandler.text);
+            feedbackText.text = GetText("MSG_SESSION_EXPIRED");
         }
+
         if (miniLoadingScreen != null) miniLoadingScreen.gameObject.SetActive(false);
     }
 
@@ -203,21 +222,20 @@ public class LoginManager : MonoBehaviour
         PlayerPrefs.DeleteKey("AccountId");
         PlayerPrefs.Save();
 
-        uidText.text = "UID: Chưa đăng nhập";
-
+        CheckLoginStatus();
         UpdateLoginUI();
         HideLoginPanel();
-        Debug.Log("Đã đăng xuất. Token và thông tin người dùng đã bị xoá.");
     }
+
     private void UpdateLoginUI()
     {
         string token = PlayerPrefs.GetString("AuthToken", "");
-
         bool isLoggedIn = !string.IsNullOrEmpty(token);
 
         buttonLogin.SetActive(!isLoggedIn);
         buttonLogout.SetActive(isLoggedIn);
     }
+
     public void ShowLoginPanel()
     {
         if (loginUI != null)
@@ -228,10 +246,18 @@ public class LoginManager : MonoBehaviour
             feedbackText.text = "";
         }
     }
+
     public void HideLoginPanel()
     {
         if (loginUI != null)
             loginUI.SetActive(false);
+    }
+
+    private string GetText(string key)
+    {
+        if (LocalizationManager.Instance != null)
+            return LocalizationManager.Instance.GetText(key);
+        return key;
     }
 
     [System.Serializable]

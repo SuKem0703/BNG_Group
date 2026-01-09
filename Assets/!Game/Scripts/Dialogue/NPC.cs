@@ -26,7 +26,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
     public NPCDialogue CurrentActiveDialogue { get; private set; }
 
     private DialogueController dialogueUI;
-    private SaveController saveController;
 
     private int dialogueIndex;
     private bool isTyping;
@@ -567,8 +566,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
         UpdateActiveDialogue();
         SyncQuestState();
-        saveController = Object.FindFirstObjectByType<SaveController>();
-        saveController.SaveGame();
+        SaveController.Instance?.SaveGame();
     }
 
     void HandleQuestCompletion(Quest quest)

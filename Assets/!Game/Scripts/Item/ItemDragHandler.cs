@@ -129,7 +129,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
                 if (draggedItem.isEquipped || draggedItem.itemType == ItemType.QuestItem || QuestController.Instance.IsItemNeededForActiveQuest(draggedItem.ID))
                 {
-                    ShowDropErrorMessage("Không thể vứt bỏ vật phẩm này!");
+                    GameNotify.Show("Không thể vứt bỏ vật phẩm này!");
                     SnapBack();
                     return;
                 }
@@ -313,30 +313,30 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
     }
     // ========== CONFIRMATION & NOTIFY UI ==========
-    private void ShowDropErrorMessage(string message)
-    {
-        GameObject notifyPrefab = LoadResourceManager.Instance.NotifyUIPrefab;
+    //private void ShowDropErrorMessage(string message)
+    //{
+    //    GameObject notifyPrefab = LoadResourceManager.Instance.NotifyUIPrefab;
 
-        if (notifyPrefab == null)
-        {
-            Debug.LogError("NotifyUIPrefab not loaded in LoadResourceManager. Không thể hiển thị thông báo. Canceling drop.");
-            SnapBack();
-            return;
-        }
+    //    if (notifyPrefab == null)
+    //    {
+    //        Debug.LogError("NotifyUIPrefab not loaded in LoadResourceManager. Không thể hiển thị thông báo. Canceling drop.");
+    //        SnapBack();
+    //        return;
+    //    }
 
-        GameObject notifyUIObj = Instantiate(notifyPrefab);
-        NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
+    //    GameObject notifyUIObj = Instantiate(notifyPrefab);
+    //    NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
 
-        if (notifyUI == null)
-        {
-            Debug.LogError("Prefab NotifyUICanvas thiếu script NotifyUIController!");
-            Destroy(notifyUIObj);
-            SnapBack();
-            return;
-        }
+    //    if (notifyUI == null)
+    //    {
+    //        Debug.LogError("Prefab NotifyUICanvas thiếu script NotifyUIController!");
+    //        Destroy(notifyUIObj);
+    //        SnapBack();
+    //        return;
+    //    }
 
-        notifyUI.Show(message);
-    }
+    //    notifyUI.Show(message);
+    //}
     private void RequestDropItemConfirmation(Slot slotToEmpty, Item itemToDrop, Vector2 dragEndMousePosition)
     {
         GameObject confirmPrefab = LoadResourceManager.Instance.ConfirmUIPrefab;
@@ -528,7 +528,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 if (thisItem.dbID == 0)
                 {
                     Debug.LogWarning("Vật phẩm đang được đồng bộ với Server, vui lòng đợi giây lát rồi thử lại.");
-                    ShowDropErrorMessage("Đang đồng bộ...");
+                    GameNotify.Show("Đang đồng bộ...");
                     return;
                 }
 
