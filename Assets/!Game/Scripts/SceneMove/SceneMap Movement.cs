@@ -24,10 +24,6 @@ public class SceneMapMove : MonoBehaviour
     private void Awake()
     {
         monologueComponent = GetComponent<Monologue>();
-        if (monologueComponent == null)
-        {
-            Debug.Log($"SceneMapMove trên '{gameObject.name}' không có Monologue (Optional).");
-        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -35,25 +31,42 @@ public class SceneMapMove : MonoBehaviour
         if (!other.CompareTag("Player"))
             return;
 
+        // ========================================================================
+        // 1. KIỂM TRA TRẠNG THÁI KỸ THUẬT (Dùng Notify + Return ngay)
+        // ========================================================================
+
         if (!SaveController.IsDataLoaded)
         {
-            Debug.LogWarning($"[SceneMapMove] Dữ liệu chưa load xong. Chặn chuyển sang '{sceneName}'.");
+            string data_loading = GetText("NOTIFY_DATA_LOADING");
+            GameNotify.Show(data_loading);
             return;
         }
 
         if (!string.IsNullOrEmpty(SaveController.pendingSceneName))
         {
-            Debug.LogWarning($"[SceneMapMove] Đang chuyển cảnh sang '{SaveController.pendingSceneName}'. Chặn chuyển sang '{sceneName}'.");
+            // GameNotify.Show(LocalizationManager.GetText("NOTIFY_SCENE_SWITCHING")); 
             return;
         }
+
+        // Check 3: Hệ thống đang bận lưu (tránh corrupt save file)
+        if (SaveController.IsSaving)
+        {
+            Debug.LogWarning($"[SceneMapMove] Blocked '{sceneName}' due to saving.");
+            string system_busy = GetText("NOTIFY_SYSTEM_BUSY");
+            GameNotify.Show(system_busy);
+            return;
+        }
+
+        // ========================================================================
+        // 2. KIỂM TRA LOGIC GAME (Dùng Dialogue/Monologue)
+        // ========================================================================
 
         if (!canEnter)
         {
-            HandleBlockedEntry($"Không thể vào map '{sceneName}' vì canEnter = false!");
+            HandleBlockedEntry($"Blocked: canEnter = false");
             return;
         }
 
-        // --- Logic Quest ---
         if (!string.IsNullOrEmpty(requiredQuestID) && (requireNotStarted || requireInProgress || requireCompleted || requireNoMoreQuests))
         {
             bool noMoreQuests = false;
@@ -81,27 +94,25 @@ public class SceneMapMove : MonoBehaviour
 
             if (!matches)
             {
-                HandleBlockedEntry($"Không thể vào map '{sceneName}': Yêu cầu nhiệm vụ không khớp.");
+                HandleBlockedEntry($"Blocked: Quest Requirements not met");
                 return;
             }
         }
 
-        // --- Logic Save & Move ---
+        // ========================================================================
+        // 3. THỰC HIỆN CHUYỂN MAP (Hợp lệ)
+        // ========================================================================
+
         SaveController saveController = FindFirstObjectByType<SaveController>();
         if (saveController != null)
         {
-            if (SaveController.IsSaving)
-            {
-                Debug.LogWarning($"Không thể chuyển sang '{sceneName}' vì hệ thống đang bận lưu game.");
-                return;
-            }
-
-            //Debug.Log($"Bắt đầu quy trình Lưu và Chuyển sang map '{sceneName}'...");
+            string saving_game = GetText("NOTIFY_SAVING_GAME");
+            GameNotify.Show(saving_game);
 
             SaveController.nextSpawnPosition = playerPosition;
             SaveController.pendingSceneName = sceneName;
 
-            saveController.SaveGame(SaveReason.SceneTransition ,(isSuccess) =>
+            saveController.SaveGame(SaveReason.SceneTransition, (isSuccess) =>
             {
                 if (isSuccess)
                 {
@@ -109,42 +120,38 @@ public class SceneMapMove : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("Không thể chuyển map do lỗi lưu dữ liệu (Mất kết nối?)");
-                    GameNotify.Show("Lỗi kết nối! Không thể sang map.");
+                    SaveController.pendingSceneName = "";
+                    Debug.LogError("Scene transition failed: Save error.");
+                    string format = GetText("NOTIFY_SAVE_FAILED");
+                    GameNotify.Show(format);
                 }
             });
-
             return;
         }
 
-        Debug.Log("Switching Scene to " + sceneName + " (No SaveController found)");
+        Debug.Log("Switching Scene (No SaveController)");
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 
-    private void HandleBlockedEntry(string reason)
+    /// <summary>
+    /// Xử lý khi bị chặn bởi Logic Game (Hiện Dialogue + Rung màn hình)
+    /// </summary>
+    private void HandleBlockedEntry(string debugReason)
     {
-        if (!SaveController.IsDataLoaded) return;
-
-        if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return;
+        if (CinemachineShaker.Instance != null)
+            CinemachineShaker.Instance.TriggerShake(3f, 10f, 0.2f);
 
         if (monologueComponent != null)
         {
-            if (monologueComponent.triggerOnEnter)
-            {
-                monologueComponent.OpenDialogOnTrigger();
-                //Debug.Log(reason + " (Monologue tự động)");
-            }
-            else if (monologueComponent.CanInteract())
-            {
-                monologueComponent.Interact();
-            }
+            monologueComponent.OpenDialogOnTrigger();
         }
-        else
-        {
-            //Debug.LogWarning(reason);
-        }
+    }
 
-        if (CinemachineShaker.Instance != null)
-            CinemachineShaker.Instance.TriggerShake(3f, 10f, 0.2f);
+    // Helper tĩnh để lấy text từ LocalizationManager
+    private string GetText(string key)
+    {
+        if (LocalizationManager.Instance != null)
+            return LocalizationManager.Instance.GetText(key);
+        return key;
     }
 }

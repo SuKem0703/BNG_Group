@@ -52,9 +52,12 @@ public class EconomyService : MonoBehaviour
         request.SetRequestHeader("Content-Type", "application/json");
         request.SetRequestHeader("Authorization", $"Bearer {token}");
 
+        float startTime = Time.realtimeSinceStartup;
+
         yield return request.SendWebRequest();
 
-        // [LOG 2] Kiểm tra phản hồi thô từ Server
+        ServerTimeManager.ReportPing(Time.realtimeSinceStartup - startTime);
+
         Debug.Log($"[Economy] Server Status: {request.responseCode}");
         Debug.Log($"[Economy] Raw Response: {request.downloadHandler.text}");
 
@@ -74,7 +77,6 @@ public class EconomyService : MonoBehaviour
             }
             else
             {
-                // [LOG 3] Server từ chối và trả về số dư thật
                 Debug.LogWarning($"[Economy] Giao dịch thất bại: {response.message}");
                 Debug.LogWarning($"[Economy] Server Balance: {response.newBalance} | Client Balance: {(type == "Coin" ? PlayerStats.Instance.coin : PlayerStats.Instance.gem)}");
 
@@ -114,7 +116,10 @@ public class EconomyService : MonoBehaviour
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Authorization", $"Bearer {token}");
 
+        float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         if (request.result == UnityWebRequest.Result.Success)
         {
@@ -140,7 +145,7 @@ public class EconomyService : MonoBehaviour
 
     private IEnumerator EarnRoutine(string type, int amount, string reason, System.Action<bool> onComplete)
     {
-        string url = "https://chronicles-of-knight-and-mage.onrender.com/api/Economy/earn";
+        string url = NetworkConfig.GetUrl("api/Economy/earn");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         SpendRequest reqBody = new SpendRequest { CurrencyType = type, Amount = amount, Reason = reason };
@@ -153,7 +158,11 @@ public class EconomyService : MonoBehaviour
         request.SetRequestHeader("Content-Type", "application/json");
         request.SetRequestHeader("Authorization", $"Bearer {token}");
 
+        float startTime = Time.realtimeSinceStartup;
+
         yield return request.SendWebRequest();
+
+        ServerTimeManager.ReportPing(Time.realtimeSinceStartup - startTime);
 
         if (request.result == UnityWebRequest.Result.Success)
         {

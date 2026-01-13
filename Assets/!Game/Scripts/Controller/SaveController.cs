@@ -637,7 +637,10 @@ public class SaveController : MonoBehaviour
         request.SetRequestHeader("Content-Type", "application/json");
         request.SetRequestHeader("Authorization", $"Bearer {token}");
 
+        float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         bool isSuccess = false;
 
@@ -665,7 +668,10 @@ public class SaveController : MonoBehaviour
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Authorization", $"Bearer {token}");
 
+        float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         if (request.result == UnityWebRequest.Result.Success)
         {

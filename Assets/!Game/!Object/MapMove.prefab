@@ -173,7 +173,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Monologue
   monologueData: {fileID: 11400000, guid: 76222a6f39f69e041a84e0b88922030e, type: 2}
-  triggerOnEnter: 1
+  triggerOnEnter: 0
+  disableManualInteraction: 1
   isOneTimeOnly: 0
   uniqueID: 
   characterName: Elric
@@ -190,4 +191,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6b184dfb3398c145854234d271eb6b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SnapToGrid
-  gridSize: 1
+  gridSize: 0.5

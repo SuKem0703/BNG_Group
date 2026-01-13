@@ -131,6 +131,13 @@ MonoBehaviour:
   spriteChangeInterval: 0.5
   tipChangeInterval: 4
   dotInterval: 0.5
+  tipKeys:
+  - QUOTE_01
+  - QUOTE_02
+  - QUOTE_03
+  - QUOTE_04
+  - QUOTE_05
+  connectKey: MSG_LOADING
 --- !u!1 &2221531661597293977
 GameObject:
   m_ObjectHideFlags: 0
@@ -409,7 +416,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u0110ang k\u1EBFt n\u1ED1i..."
+  m_text: "\u0110ang t\u1EA3i..."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: c140818cb180f76488cbd05ace0444d7, type: 2}
   m_sharedMaterial: {fileID: -3968359637268153238, guid: c140818cb180f76488cbd05ace0444d7, type: 2}
@@ -443,7 +450,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 4
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0

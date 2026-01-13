@@ -1,5 +1,4 @@
-﻿using NUnit.Framework.Internal;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -20,6 +19,11 @@ public class LoadingScreen : MonoBehaviour
     [SerializeField] private float tipChangeInterval = 4f;
     [SerializeField] private float dotInterval = 0.5f;
 
+    [Header("Localization Keys")]
+    [Tooltip("Danh sách các Key của Mẹo trong file ngôn ngữ (VD: TIP_01, TIP_02...)")]
+    [SerializeField] private List<string> tipKeys = new List<string>();
+    [SerializeField] private string connectKey = "MSG_LOADING";
+
     private int currentSpriteIndex = 0;
     private Coroutine tipCoroutine;
     private Coroutine spriteCoroutine;
@@ -38,7 +42,11 @@ public class LoadingScreen : MonoBehaviour
             blocker.gameObject.SetActive(true);
         }
 
-        loadingText.text = "Đang kết nối";
+        if (loadingText != null)
+        {
+            loadingText.text = GetLocalizedText(connectKey);
+        }
+
         ChangeTip();
 
         tipCoroutine = StartCoroutine(TipRoutine());
@@ -67,33 +75,28 @@ public class LoadingScreen : MonoBehaviour
 
     private void FindObjectsFirst()
     {
-        // Dò tự động, không crash nếu thiếu
         if (loadingText == null)
         {
             Transform t = transform.Find("loadingText");
             if (t) loadingText = t.GetComponent<TMP_Text>();
-            else Debug.LogWarning("[LoadingScreen] Không tìm thấy loadingText trong hierarchy!");
         }
 
         if (tipText == null)
         {
             Transform t = transform.Find("tipText");
             if (t) tipText = t.GetComponent<TMP_Text>();
-            else Debug.LogWarning("[LoadingScreen] Không tìm thấy tipText trong hierarchy!");
         }
 
         if (rotatingImage == null)
         {
             Transform t = transform.Find("rotatingImage");
             if (t) rotatingImage = t.GetComponent<Image>();
-            else Debug.LogWarning("[LoadingScreen] Không tìm thấy rotatingImage trong hierarchy!");
         }
 
         if (blocker == null)
         {
             Transform t = transform.Find("blocker");
             if (t) blocker = t.GetComponent<Image>();
-            else Debug.LogWarning("[LoadingScreen] Không tìm thấy blocker trong hierarchy!");
         }
     }
 
@@ -122,11 +125,16 @@ public class LoadingScreen : MonoBehaviour
     private IEnumerator LoadingDotsRoutine()
     {
         int dotCount = 0;
-        string baseText = "Đang kết nối";
+
+        string baseText = GetLocalizedText(connectKey);
+
         while (true)
         {
             dotCount = (dotCount % 3) + 1;
-            loadingText.text = baseText + new string('.', dotCount);
+            if (loadingText != null)
+            {
+                loadingText.text = baseText + new string('.', dotCount);
+            }
             yield return new WaitForSeconds(dotInterval);
         }
     }
@@ -135,7 +143,15 @@ public class LoadingScreen : MonoBehaviour
     {
         if (tipText != null)
         {
-            tipText.text = TipData.GetRandomTip();
+            if (tipKeys != null && tipKeys.Count > 0)
+            {
+                string randomKey = tipKeys[Random.Range(0, tipKeys.Count)];
+                tipText.text = GetLocalizedText(randomKey);
+            }
+            else
+            {
+                tipText.text = "";
+            }
         }
     }
 
@@ -143,5 +159,15 @@ public class LoadingScreen : MonoBehaviour
     {
         if (loadingText != null)
             loadingText.text = text;
+    }
+
+    // Hàm phụ trợ để gọi LocalizationManager an toàn
+    private string GetLocalizedText(string key)
+    {
+        if (LocalizationManager.Instance != null)
+        {
+            return LocalizationManager.Instance.GetText(key);
+        }
+        return key;
     }
 }

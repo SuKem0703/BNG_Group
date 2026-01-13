@@ -21,10 +21,7 @@ public class PlayerStatsService : MonoBehaviour
         public int potentialPoints;
         public int str;
         public int dex;
-        public int intStat; // Lưu ý: Server trả về "int" hoặc "Int", cần map đúng tên biến JSON nếu dùng JsonUtility
-        // Để an toàn, ở server trả về PascalCase, nhưng JsonUtility Unity hơi kén. 
-        // Tốt nhất dùng thư viện Newtonsoft.Json hoặc sửa DTO server trả về chữ thường.
-        // Ở đây giả định bạn đã handle mapping (xem lưu ý dưới).
+        public int intStat;
         public int con;
     }
 
@@ -40,13 +37,16 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator SyncRoutine(System.Action<bool> onComplete)
     {
-        string url = "https://chronicles-of-knight-and-mage.onrender.com/api/PlayerStats/profile";
+        string url = NetworkConfig.GetUrl("api/PlayerStats/profile");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Authorization", $"Bearer {token}");
 
+        float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         if (request.result == UnityWebRequest.Result.Success)
         {
@@ -76,7 +76,7 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator DistributeRoutine(string statType, int amount, System.Action<bool> onComplete)
     {
-        string url = "https://chronicles-of-knight-and-mage.onrender.com/api/PlayerStats/distribute";
+        string url = NetworkConfig.GetUrl("api/PlayerStats/distribute");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         // Gửi amount động thay vì hardcode số 1
@@ -89,7 +89,10 @@ public class PlayerStatsService : MonoBehaviour
         request.SetRequestHeader("Content-Type", "application/json");
         request.SetRequestHeader("Authorization", $"Bearer {token}");
 
+        float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         if (request.result == UnityWebRequest.Result.Success)
         {
@@ -118,7 +121,7 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator ResetStatsRoutine(System.Action<bool> onComplete)
     {
-        string url = "https://chronicles-of-knight-and-mage.onrender.com/api/PlayerStats/reset";
+        string url = NetworkConfig.GetUrl("api/PlayerStats/reset");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         // Gửi POST rỗng (Server tự biết trừ 20 Gem)
@@ -127,7 +130,10 @@ public class PlayerStatsService : MonoBehaviour
         request.SetRequestHeader("Authorization", $"Bearer {token}");
         request.SetRequestHeader("Content-Length", "0"); // Quan trọng với POST rỗng
 
+        float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         if (request.result == UnityWebRequest.Result.Success)
         {
@@ -188,7 +194,7 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator AddExpRoutine(int amount)
     {
-        string url = "https://chronicles-of-knight-and-mage.onrender.com/api/PlayerStats/add-exp";
+        string url = NetworkConfig.GetUrl("api/PlayerStats/add-exp");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         AddExpBody body = new AddExpBody { Amount = amount };
@@ -201,7 +207,10 @@ public class PlayerStatsService : MonoBehaviour
         request.SetRequestHeader("Content-Type", "application/json");
         request.SetRequestHeader("Authorization", $"Bearer {token}");
 
+        float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         Debug.Log($"[Server Response] Code: {request.responseCode} | Body: {request.downloadHandler.text}");
 

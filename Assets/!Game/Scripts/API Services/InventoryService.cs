@@ -200,7 +200,12 @@ public class InventoryService : MonoBehaviour
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Authorization", $"Bearer {token}");
 
+        float startTime = Time.realtimeSinceStartup;
+
         yield return request.SendWebRequest();
+
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         if (request.result == UnityWebRequest.Result.Success)
         {
@@ -243,7 +248,13 @@ public class InventoryService : MonoBehaviour
         Debug.Log($"[Client Shop] Gửi yêu cầu mua: {json}");
 
         UnityWebRequest request = CreatePostRequest(url, token, json);
+
+        float startTime = Time.realtimeSinceStartup;
+
         yield return request.SendWebRequest();
+
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         if (request.result == UnityWebRequest.Result.Success)
         {
@@ -310,7 +321,13 @@ public class InventoryService : MonoBehaviour
         string json = JsonUtility.ToJson(body);
 
         UnityWebRequest request = CreatePostRequest(url, token, json);
+
+        float startTime = Time.realtimeSinceStartup;
+
         yield return request.SendWebRequest();
+
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         bool success = request.result == UnityWebRequest.Result.Success;
         if (!success)
@@ -341,7 +358,11 @@ public class InventoryService : MonoBehaviour
         string token = PlayerPrefs.GetString("AuthToken", "");
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Authorization", $"Bearer {token}");
+
+        float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         if (request.result == UnityWebRequest.Result.Success)
         {
@@ -361,7 +382,11 @@ public class InventoryService : MonoBehaviour
         string token = PlayerPrefs.GetString("AuthToken", "");
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Authorization", $"Bearer {token}");
+
+        float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
+        float duration = Time.realtimeSinceStartup - startTime;
+        ServerTimeManager.ReportPing(duration);
 
         if (request.result == UnityWebRequest.Result.Success)
         {

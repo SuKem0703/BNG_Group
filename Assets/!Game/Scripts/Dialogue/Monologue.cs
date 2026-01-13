@@ -13,6 +13,10 @@ public class Monologue : MonoBehaviour, IInteractable
 
     [Header("Settings")]
     public bool triggerOnEnter = false;
+
+    [Tooltip("Nếu true, người chơi sẽ không thể Aim hay bấm nút tương tác (dùng cho các object do script khác điều khiển).")]
+    public bool disableManualInteraction = false;
+
     [Tooltip("Nếu true, monologue sẽ tự hủy sau khi hoàn tất và lưu lại trạng thái.")]
     public bool isOneTimeOnly = false;
 
@@ -77,6 +81,7 @@ public class Monologue : MonoBehaviour, IInteractable
     public virtual bool CanInteract()
     {
         if (triggerOnEnter) return false;
+        if (disableManualInteraction) return false;
         if (!SaveController.IsDataLoaded) return false;
         if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return false;
         return !GameStateManager.IsDialogueActive;
