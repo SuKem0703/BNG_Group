@@ -184,22 +184,14 @@ public class FarmController : MonoBehaviour
     }
     private void RespawnCrop(FarmPlot plot, CropSaveData data)
     {
-        // 1. Tìm Prefab hạt giống dựa vào ID đã lưu
-        if (InventoryController.Instance == null) return;
-
         GameObject seedPrefab = InventoryController.Instance.itemDictionary.GetItemPrefab(data.seedItemID);
         if (seedPrefab == null) return;
 
         SeedItem seedScript = seedPrefab.GetComponent<SeedItem>();
-        if (seedScript == null || seedScript.cropPrefab == null) return;
-
-        // 2. Instantiate Cây
         GameObject cropObj = Instantiate(seedScript.cropPrefab, plot.transform);
         cropObj.transform.localPosition = Vector3.zero;
 
         Crop crop = cropObj.GetComponent<Crop>();
-
-        // 3. Restore dữ liệu
         crop.seedItemID = data.seedItemID;
         crop.plot = plot;
         crop.RestoreState(data.currentStage, data.currentTimer);
