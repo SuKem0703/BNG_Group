@@ -16,6 +16,7 @@ public class KnightComboNormalAttack : MonoBehaviour
 
     private float minComboInterval = 0.5f;
     private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
+    private PlayerMovement playerMovement => GetComponentInParent<PlayerMovement>();
     private int attackStaminaCost = 1;
 
     public bool isAttacking => ani.GetBool("isAttacking");
@@ -49,6 +50,7 @@ public class KnightComboNormalAttack : MonoBehaviour
         if (PauseController.IsGamePause)
         {
             ani.SetBool("isAttacking", false);
+            ani.SetBool("isRunAttacking", false);
             return;
         }
 
@@ -64,7 +66,7 @@ public class KnightComboNormalAttack : MonoBehaviour
             }
         }
 
-        if (ani.GetBool("isAttacking"))
+        if (ani.GetBool("isAttacking") && !ani.GetBool("isRunAttacking"))
         {
             ani.SetBool("isWalking", false);
         }
@@ -98,8 +100,6 @@ public class KnightComboNormalAttack : MonoBehaviour
 
         if (playerStats != null && playerStats.currentStamina >= attackStaminaCost)
         {
-            playerStats.UseStamina(attackStaminaCost);
-            SoundEffectManager.Play("Melee Effect", true);
             Combo();
         }
     }
@@ -112,8 +112,18 @@ public class KnightComboNormalAttack : MonoBehaviour
             return;
         }
 
+        playerStats.UseStamina(attackStaminaCost);
+        SoundEffectManager.Play("Melee Effect", true);
+
         ani.SetBool("isAttacking", true);
-        ani.SetBool("isWalking", false);
+
+        bool isMoving = playerMovement != null && playerMovement.moveInput.magnitude > 0.1f;
+        ani.SetBool("isRunAttacking", isMoving);
+
+        if (!isMoving)
+        {
+            ani.SetBool("isWalking", false);
+        }
 
         ani.SetFloat("LookX", attackDirection.x);
         ani.SetFloat("LookY", attackDirection.y);
@@ -148,10 +158,18 @@ public class KnightComboNormalAttack : MonoBehaviour
     public void EndAttack()
     {
         ani.SetBool("isAttacking", false);
+        ani.SetBool("isRunAttacking", false);
     }
+
     public void DealDamageEvent()
     {
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayer);
+
+        // Kiểm tra trạng thái đang chạy hay đứng im dựa trên Animator
+        bool isRunAttacking = ani.GetBool("isRunAttacking");
+
+        // Nếu đứng im (không phải Run Attack) thì nhân 1.5 damage, ngược lại giữ nguyên 1.0
+        float stanceMultiplier = isRunAttacking ? 1.0f : 1.5f;
 
         foreach (Collider2D enemy in hitEnemies)
         {
@@ -163,17 +181,18 @@ public class KnightComboNormalAttack : MonoBehaviour
             Enemy enemyChase = enemy.GetComponent<Enemy>();
             if (enemyChase != null)
             {
-                float scale = checkCombo(currentComboCache);
-                float rawDamage = playerStats.finalPhysicalAttack * scale;
-                bool isCritical = false;
+                float comboScale = checkCombo(currentComboCache);
 
+                // Áp dụng công thức: BaseAttack * ComboScale * StanceMultiplier
+                float rawDamage = playerStats.finalPhysicalAttack * comboScale * stanceMultiplier;
+
+                bool isCritical = false;
                 float critChance = playerStats.finalCritRate;
 
                 if (UnityEngine.Random.Range(0f, 100f) < critChance)
                 {
                     isCritical = true;
                     rawDamage *= 2;
-
                     // SoundEffectManager.Play("CriticalHit"); 
                 }
 
@@ -193,8 +212,6 @@ public class KnightComboNormalAttack : MonoBehaviour
 
         Vector3 direction = (worldMousePos - transform.position).normalized;
 
-        //attackPoint.position = transform.position + direction * attackRange;
-
         attackDirection = direction;
 
         attackPoint.position = transform.position + (Vector3)attackDirection * attackRange;
@@ -204,11 +221,9 @@ public class KnightComboNormalAttack : MonoBehaviour
     {
         if (attackPoint == null) return;
 
-        // 1. Vẽ vùng tấn công (Màu đỏ)
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
 
-        // 2. Vẽ đường hướng tấn công (Màu vàng - Tuỳ chọn)
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(transform.position, attackPoint.position);
     }

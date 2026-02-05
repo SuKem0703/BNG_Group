@@ -32,28 +32,22 @@ public class PlayerMovement : MonoBehaviour
             rb.linearVelocity = Vector2.zero;
             animator.SetBool("isWalking", false);
             animator.SetBool("isAttacking", false);
+            animator.SetBool("isRunAttacking", false); // Reset trạng thái này khi game dừng
             return;
         }
 
         bool isCurrentlyAttacking = animator.GetBool("isAttacking");
+        // Kiểm tra xem có đang thực hiện đòn tấn công vừa chạy vừa đánh không
+        bool isRunAttacking = animator.GetBool("isRunAttacking");
 
         if (!isDashing)
         {
-            //bool canMove = !animator.GetBool("isAttacking") && (comboAttack == null || !comboAttack.isAttacking);
-            //rb.linearVelocity = canMove ? moveInput * moveSpeed : Vector2.zero;
-
-            bool canMove = !isCurrentlyAttacking;
+            // Cho phép di chuyển nếu KHÔNG tấn công HOẶC đang thực hiện Run Attack
+            bool canMove = !isCurrentlyAttacking || isRunAttacking;
             rb.linearVelocity = canMove ? moveInput * moveSpeed : Vector2.zero;
         }
 
         animator.SetBool("isWalking", rb.linearVelocity.magnitude > 0.1f);
-
-        //if (!isCurrentlyAttacking && !isDashing && !lockLookDirection && rb.linearVelocity.magnitude < 0.1f)
-        //{
-        //    Vector2 lookDir = (Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.parent.position).normalized;
-        //    animator.SetFloat("LookX", lookDir.x);
-        //    animator.SetFloat("LookY", lookDir.y);
-        //}
 
         if (playerStats != null)
         {
@@ -62,7 +56,10 @@ public class PlayerMovement : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if (PauseController.IsGamePause || isDashing || (comboAttack != null && comboAttack.isAttacking) || !SaveController.IsDataLoaded)
+        // Cho phép physics cập nhật nếu đang Run Attack
+        bool isRunAttacking = animator.GetBool("isRunAttacking");
+
+        if (PauseController.IsGamePause || isDashing || (!isRunAttacking && comboAttack != null && comboAttack.isAttacking) || !SaveController.IsDataLoaded)
             return;
 
         rb.linearVelocity = moveInput * moveSpeed;
@@ -95,9 +92,6 @@ public class PlayerMovement : MonoBehaviour
             animator.SetFloat("LastInputX", moveInput.x);
             animator.SetFloat("LastInputY", moveInput.y);
         }
-
-        //moveInput = context.ReadValue<Vector2>();
-        
     }
 
     public void Dash(InputAction.CallbackContext context)
