@@ -17,7 +17,7 @@ public class KnightComboNormalAttack : MonoBehaviour
     private float minComboInterval = 0.5f;
     private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
     private PlayerMovement playerMovement => GetComponentInParent<PlayerMovement>();
-    private int attackStaminaCost = 1;
+    private int attackStaminaCost = 0;
 
     public bool isAttacking => ani.GetBool("isAttacking");
 
@@ -86,12 +86,18 @@ public class KnightComboNormalAttack : MonoBehaviour
     {
         if (PauseController.IsGamePause || !context.performed) return;
 
+        // Prevent attack input if player is dead (so death animation cannot be interrupted)
+        if (playerMovement != null && playerMovement.IsDead) return;
+
         attackPressed = true;
     }
 
     private void TryAttack()
     {
         if (comboTempo < minComboInterval) return;
+
+        // Don't allow attacks while dead
+        if (playerMovement != null && playerMovement.IsDead) return;
 
         if (!PlayerStats.Instance.CanAttack || !GameStateManager.CanProcessInput())
         {
@@ -113,7 +119,6 @@ public class KnightComboNormalAttack : MonoBehaviour
         }
 
         playerStats.UseStamina(attackStaminaCost);
-        SoundEffectManager.Play("Melee Effect", true);
 
         ani.SetBool("isAttacking", true);
 
@@ -145,6 +150,12 @@ public class KnightComboNormalAttack : MonoBehaviour
         comboTempo = 0f;
         comboTiming = 2f;
     }
+
+    public void StartAttack()
+    {
+        SoundEffectManager.Play("Melee Effect", true);
+    }
+
     private float checkCombo(int c)
     {
         switch (c)
@@ -155,6 +166,7 @@ public class KnightComboNormalAttack : MonoBehaviour
             default: return 1.0f;
         }
     }
+
     public void EndAttack()
     {
         ani.SetBool("isAttacking", false);
@@ -165,10 +177,7 @@ public class KnightComboNormalAttack : MonoBehaviour
     {
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayer);
 
-        // Kiểm tra trạng thái đang chạy hay đứng im dựa trên Animator
         bool isRunAttacking = ani.GetBool("isRunAttacking");
-
-        // Nếu đứng im (không phải Run Attack) thì nhân 1.5 damage, ngược lại giữ nguyên 1.0
         float stanceMultiplier = isRunAttacking ? 1.0f : 1.5f;
 
         foreach (Collider2D enemy in hitEnemies)
@@ -182,8 +191,6 @@ public class KnightComboNormalAttack : MonoBehaviour
             if (enemyChase != null)
             {
                 float comboScale = checkCombo(currentComboCache);
-
-                // Áp dụng công thức: BaseAttack * ComboScale * StanceMultiplier
                 float rawDamage = playerStats.finalPhysicalAttack * comboScale * stanceMultiplier;
 
                 bool isCritical = false;
@@ -193,7 +200,6 @@ public class KnightComboNormalAttack : MonoBehaviour
                 {
                     isCritical = true;
                     rawDamage *= 2;
-                    // SoundEffectManager.Play("CriticalHit"); 
                 }
 
                 int finalDamage = Mathf.RoundToInt(rawDamage);

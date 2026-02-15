@@ -184,6 +184,17 @@ public class SaveController : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.5f);
         HideMainLoadingScreen();
         OnDataLoaded?.Invoke();
+
+        // If this load was triggered by a respawn, finalize respawn protections
+        if (DeathManager.IsRespawningFlag)
+        {
+            DeathManager.IsRespawningFlag = false;
+            var ps = GameObject.FindGameObjectWithTag("PlayerController")?.GetComponent<PlayerStats>();
+            if (ps != null)
+            {
+                StartCoroutine(ps.FinalizeRespawnProtection(0.5f));
+            }
+        }
     }
 
     // Tìm kiếm và gán các reference component trong scene
@@ -231,14 +242,14 @@ public class SaveController : MonoBehaviour
 
     // Hàm gọi lưu game công khai, sử dụng cho các thao tác quan trọng cần chặn màn hình
     // Thêm tham số reason, mặc định là Manual nếu không truyền
-    public void SaveGame(SaveReason reason = SaveReason.Manual, System.Action<bool> onSaveFinished = null)
+    public void SaveGame(SaveReason reason = SaveReason.Manual, System.Action<bool> onSaveFinished = null, bool isSilent = false)
     {
         if (IsSaving) return;
 
         if (autoSaveCoroutine != null) StopCoroutine(autoSaveCoroutine);
         isAutoSavePending = false;
 
-        StartCoroutine(SaveRoutine(reason, onSaveFinished, false));
+        StartCoroutine(SaveRoutine(reason, onSaveFinished, isSilent));
     }
 
     // Logic cốt lõi của việc lưu dữ liệu, hỗ trợ chế độ im lặng hoặc chặn màn hình
@@ -522,7 +533,7 @@ public class SaveController : MonoBehaviour
         }
         else if (string.IsNullOrEmpty(targetScene))
         {
-            targetScene = "1.1"; // Fallback map
+            targetScene = "MAP_CH1_1_ROOM_START"; // Fallback map
         }
 
         // Kiểm tra Scene có tồn tại không
@@ -530,7 +541,7 @@ public class SaveController : MonoBehaviour
             .Select(SceneUtility.GetScenePathByBuildIndex)
             .Any(scenePath => scenePath.EndsWith($"{targetScene}.unity"));
 
-        if (!sceneExists) targetScene = "1.1";
+        if (!sceneExists) targetScene = "MAP_CH1_1_ROOM_START";
 
         // Nếu khác Scene -> Chuyển Scene (Return true để báo hiệu cho LoadRoutine dừng lại)
         if (SceneManager.GetActiveScene().name != targetScene)

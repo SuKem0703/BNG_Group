@@ -5775,10 +5775,14 @@ MonoBehaviour:
   dashSpeed: 10
   dashDuration: 0.2
   dashCooldown: 1
-  dashStaminaCost: 3
+  dashStaminaCost: 2
+  runSpeedMultiplier: 1.5
+  runStaminaCostPerSec: 10
+  runHoldThreshold: 0.5
   moveInput: {x: 0, y: 0}
   animator: {fileID: 0}
   isDashing: 0
+  isRunning: 0
 --- !u!114 &366934284778579620
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7247,9 +7251,13 @@ MonoBehaviour:
   dashDuration: 0.2
   dashCooldown: 1
   dashStaminaCost: 3
+  runSpeedMultiplier: 1.5
+  runStaminaCostPerSec: 10
+  runHoldThreshold: 1
   moveInput: {x: 0, y: 0}
   animator: {fileID: 0}
   isDashing: 0
+  isRunning: 0
 --- !u!114 &123018037826651668
 MonoBehaviour:
   m_ObjectHideFlags: 0

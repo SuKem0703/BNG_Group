@@ -241,8 +241,12 @@ public class Enemy : MonoBehaviour
             var health = player.GetComponentInParent<PlayerStats>();
             if (health != null)
             {
-                health.TakeDamage((int)damage);
-                hasDealtDamageThisAttack = true;
+                // Respect invincibility and death-processing flags on player
+                if (!health.isInvincible && !health.IsProcessingDeath)
+                {
+                    health.TakeDamage((int)damage);
+                    hasDealtDamageThisAttack = true;
+                }
             }
         }
     }

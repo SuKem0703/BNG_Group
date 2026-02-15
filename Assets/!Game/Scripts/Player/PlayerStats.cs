@@ -174,6 +174,9 @@ public class PlayerStats : MonoBehaviour
     public static event System.Action<PlayerStats> OnInitialized;
 
     public bool isInvincible = false;
+    // Flag to prevent processing additional incoming damage while death handling is in progress
+    private bool isProcessingDeath = false;
+    public bool IsProcessingDeath => isProcessingDeath;
 
     public float potionCooldownDuration = 2.0f;
     [SerializeField] private float potionCooldownTimer;
@@ -204,7 +207,7 @@ public class PlayerStats : MonoBehaviour
     // Init Logic
     void Start()
     {
-        PauseController.SetPause(false);
+        //PauseController.SetPause(false);
 
         IsOnBattle = false;
 
@@ -528,7 +531,8 @@ public class PlayerStats : MonoBehaviour
     // Nhận sát thương
     public int TakeDamage(int damage)
     {
-        if (isInvincible) return 0;
+        // Ignore damage if player is currently invincible or death flow is processing
+        if (isInvincible || isProcessingDeath) return 0;
 
         float mitigation = finalDefense / (finalDefense + 100f);
         float reductionFactor = (1f - mitigation) * (1f - damageReduction);
@@ -555,7 +559,11 @@ public class PlayerStats : MonoBehaviour
         else mageHealth = currentHP;
 
         if (currentHP <= 0)
+        {
+            // Mark we are processing death to avoid further hits interrupting the flow
+            isProcessingDeath = true;
             HandleDeath(isKnight ? "Knight" : "Mage");
+        }
 
         return dmgTaken;
     }
@@ -574,6 +582,9 @@ public class PlayerStats : MonoBehaviour
         ClassController classController = GetComponent<ClassController>();
         if (classController == null) return;
 
+        // Ensure we don't accept damage while we decide next steps (switch class or game over)
+        isProcessingDeath = true;
+
         bool knightAlive = knightHealth > 0;
         bool mageAlive = mageHealth > 0;
         bool hasLyria = GameFlags.HasRecruitedLyria();
@@ -583,6 +594,8 @@ public class PlayerStats : MonoBehaviour
             if (hasLyria && mageAlive)
             {
                 classController.SwitchClass(classController.mageObject);
+                // After switching class, allow damage processing again for the newly active class
+                isProcessingDeath = false;
             }
             else
             {
@@ -594,6 +607,8 @@ public class PlayerStats : MonoBehaviour
             if (knightAlive)
             {
                 classController.SwitchClass(classController.knightObject);
+                // After switching class, allow damage processing again for the newly active class
+                isProcessingDeath = false;
             }
             else
             {
@@ -624,7 +639,7 @@ public class PlayerStats : MonoBehaviour
     }
 
     // Sử dụng Stamina
-    public void UseStamina(int amount)
+    public void UseStamina(float amount)
     {
         currentStamina = Mathf.Max(currentStamina - amount, 0);
         currentStamina = (float)System.Math.Round(currentStamina, 2);
@@ -675,6 +690,21 @@ public class PlayerStats : MonoBehaviour
     public void SyncGemFromServer(int serverGem)
     {
         gem = serverGem;
+    }
+
+    // Called after scene load / respawn to finalize respawn protections
+    public IEnumerator FinalizeRespawnProtection(float invincibilityDuration = 0.5f)
+    {
+        // Ensure player cannot take damage immediately after respawn
+        SetInvincible(true);
+        if (playerCollider != null) playerCollider.enabled = false;
+
+        yield return new WaitForSeconds(invincibilityDuration);
+
+        SetInvincible(false);
+        if (playerCollider != null) playerCollider.enabled = true;
+        // Allow damage processing again after respawn protection
+        isProcessingDeath = false;
     }
 
     // --- LOGIC TIÊU TIỀN (RMI) ---

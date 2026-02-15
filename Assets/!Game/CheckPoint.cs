@@ -86,10 +86,11 @@ public class CheckPoint : MonoBehaviour, IInteractable
 
         if (!string.IsNullOrEmpty(checkpointName))
         {
-            Debug.Log($"[CheckPoint] Đã kích hoạt checkpoint: {checkpointName}");
             GameNotify.Show($"Đã lưu tại {checkpointName}");
 
         }
+
+        Debug.Log($"[CheckPoint] Đã kích hoạt checkpoint: {transform.position}");
 
         if (SaveController.Instance != null)
         {

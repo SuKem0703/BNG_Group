@@ -15,7 +15,6 @@ public class DeathManager : MonoBehaviour
     public float fadeDuration = 1.0f;
     public GameObject gameOverUI;
 
-    // Biến để chặn spam nút khi đang load scene
     private bool isRespawning = false;
 
     private void Awake()
@@ -27,24 +26,52 @@ public class DeathManager : MonoBehaviour
         if (gameOverUI != null) gameOverUI.SetActive(false);
     }
 
+    // Flag set when a respawn is requested so newly loaded Player can apply protection
+    public static bool IsRespawningFlag = false;
+
     public void HandlePlayerDeath()
     {
         if (PlayerStats.Instance == null) return;
 
-        Debug.Log("DeathManager: Xử lý tử vong...");
+        Debug.Log("DeathManager: Bắt đầu quy trình xử lý tử vong...");
         isRespawning = false;
 
-        // 1. Tính toán và Trừ EXP
+        // Make player invincible immediately and disable collider to avoid further hits
+        PlayerStats.Instance.SetInvincible(true);
+        if (PlayerStats.Instance.playerCollider != null)
+        {
+            PlayerStats.Instance.playerCollider.enabled = false;
+        }
+
         ApplyDeathPenalty();
-
-        // 2. [QUAN TRỌNG] Đẩy EXP lên Server NGAY LẬP TỨC
-        // Để đảm bảo Server ghi nhận việc trừ EXP trước khi Save
         PlayerStats.Instance.ForceSyncExpImmediate();
-
-        // 3. Hồi phục HP/MP về Max (để chuẩn bị Save trạng thái "Sống")
         PlayerStats.Instance.RefreshStats();
+        UpdateCheckpointInfo();
 
-        // 4. Update thông tin SaveData (Vị trí spawn...)
+        // Tìm component PlayerMovement trên nhân vật hiện tại (Knight hoặc Mage)
+        PlayerMovement playerMovement = PlayerStats.Instance.GetComponentInChildren<PlayerMovement>();
+        if (playerMovement != null)
+        {
+            playerMovement.TriggerDeath();
+        }
+        else
+        {
+            Debug.LogWarning("Không tìm thấy PlayerMovement, sẽ hiện UI ngay lập tức.");
+            ShowGameOverUI();
+        }
+
+        if (SaveController.Instance != null)
+        {
+            SaveController.Instance.SaveGame(SaveReason.Death, (isSuccess) =>
+            {
+                if (isSuccess) Debug.Log("DeathManager: Đã lưu dữ liệu ngầm thành công.");
+                else Debug.LogError("DeathManager: Lưu dữ liệu thất bại!");
+            }, true);
+        }
+    }
+
+    private void UpdateCheckpointInfo()
+    {
         if (SaveController.Instance != null)
         {
             if (SaveController.currentCheckpointPos != null && !string.IsNullOrEmpty(SaveController.currentCheckpointScene))
@@ -54,20 +81,9 @@ public class DeathManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("Chưa có checkpoint! Sẽ hồi sinh tại chỗ.");
                 SaveController.nextSpawnPosition = PlayerStats.Instance.transform.position;
                 SaveController.pendingSceneName = SceneManager.GetActiveScene().name;
             }
-        }
-
-        // 5. Lưu Game (Lúc này EXP đã trừ, HP đã đầy)
-        if (SaveController.Instance != null)
-        {
-            StartCoroutine(SaveAndShowGameOver());
-        }
-        else
-        {
-            ShowGameOverUI();
         }
     }
 
@@ -75,50 +91,20 @@ public class DeathManager : MonoBehaviour
     {
         int currentExp = PlayerStats.Instance.exp;
         int penalty = Mathf.FloorToInt(currentExp * expPenaltyPercentage);
-
-        // Trừ local (để hiển thị) -> Hàm này sẽ queue vào pendingExpToAdd
         PlayerStats.Instance.AddEXP(-penalty);
-
         GameNotify.Show($"Bạn đã mất {penalty} EXP!");
     }
 
-    private IEnumerator SaveAndShowGameOver()
+    // [UPDATE] Hàm này giờ là Public để PlayerMovement gọi qua Animation Event
+    public void ShowGameOverUI()
     {
-        bool saveCompleted = false;
+        // Đảm bảo game pause khi UI hiện lên (sau khi animation xong)
+        PauseController.SetPause(true);
 
-        // Gọi save
-        SaveController.Instance.SaveGame(SaveReason.Death, (isSuccess) =>
-        {
-            saveCompleted = true;
-            if (isSuccess) Debug.Log("Đã lưu dữ liệu sau khi chết (bao gồm trừ EXP).");
-            else Debug.LogError("Lưu dữ liệu thất bại!");
-        });
-
-        // Chờ save xong (hoặc timeout sau 3 giây để tránh treo game nếu mạng lag)
-        float timeout = 3f;
-        while (!saveCompleted && timeout > 0)
-        {
-            timeout -= Time.unscaledDeltaTime; // Dùng unscaled vì game có thể đang pause
-            yield return null;
-        }
-
-        if (!saveCompleted) Debug.LogWarning("Save quá lâu, bỏ qua chờ đợi để hiện UI.");
-
-        // Hiện UI sau khi save xong
-        ShowGameOverUI();
-    }
-
-    private void ShowGameOverUI()
-    {
-        PauseController.SetPause(true); // Pause game
         if (CommonUIController.Instance != null) CommonUIController.Instance.SetUIVisible(false);
 
-        // Ẩn nhân vật
-        if (ClassController.Instance != null)
-        {
-            if (ClassController.Instance.knightObject) ClassController.Instance.knightObject.SetActive(false);
-            if (ClassController.Instance.mageObject) ClassController.Instance.mageObject.SetActive(false);
-        }
+        // [TÙY CHỌN] Có thể ẩn nhân vật ở đây nếu muốn, hoặc để xác xác nhân vật nằm đó
+        // if (ClassController.Instance != null) ...
 
         if (gameOverUI != null)
         {
@@ -126,50 +112,48 @@ public class DeathManager : MonoBehaviour
             if (canvasGroup == null) canvasGroup = gameOverUI.AddComponent<CanvasGroup>();
 
             canvasGroup.alpha = 0f;
-            canvasGroup.blocksRaycasts = false; // Chặn bấm khi đang fade
+            canvasGroup.blocksRaycasts = false;
             gameOverUI.SetActive(true);
 
-            // Dùng SetUpdate(true) để chạy tween kể cả khi Time.timeScale = 0
             canvasGroup.DOFade(1f, fadeDuration).SetUpdate(true).OnComplete(() =>
             {
-                canvasGroup.blocksRaycasts = true; // Cho phép bấm nút
+                canvasGroup.blocksRaycasts = true;
             });
         }
         else
         {
-            // Fallback nếu không có UI
             OnRespawnClicked();
         }
     }
 
-    // Gắn hàm này vào nút "Hồi sinh" / "Tiếp tục"
     public void OnRespawnClicked()
     {
-        // Chặn bấm liên tục
         if (isRespawning) return;
         isRespawning = true;
 
-        // [FIX] Bỏ dòng check SaveController.IsSaving ở đây
-        // Vì UI chỉ hiện sau khi Save xong. Nếu check ở đây có thể gây kẹt nút.
-
         Debug.Log("Nút Hồi sinh đã được bấm!");
-
-        // 1. Unpause game trước khi load
         PauseController.SetPause(false);
         DOTween.KillAll();
 
-        // 2. Xác định scene cần load
         string targetScene = SaveController.pendingSceneName;
-
-        // Fallback nếu tên scene rỗng
         if (string.IsNullOrEmpty(targetScene))
         {
             targetScene = SceneManager.GetActiveScene().name;
         }
 
-        Debug.Log($"[RESPAWN] Đang load về scene: {targetScene}");
-
-        // 3. Load Scene
+        // Mark global flag so newly loaded scene can apply respawn protection
+        IsRespawningFlag = true;
         SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
+    }
+
+    // Called by animation event or after scene load to finalize respawn state
+    public void FinalizeRespawn()
+    {
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.SetInvincible(false);
+            if (PlayerStats.Instance.playerCollider != null)
+                PlayerStats.Instance.playerCollider.enabled = true;
+        }
     }
 }
