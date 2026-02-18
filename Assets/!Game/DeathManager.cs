@@ -43,9 +43,14 @@ public class DeathManager : MonoBehaviour
             PlayerStats.Instance.playerCollider.enabled = false;
         }
 
+        if (CommonUIController.Instance != null)
+        {
+            CommonUIController.Instance.SetUIVisible(false);
+        }
+
         ApplyDeathPenalty();
+
         PlayerStats.Instance.ForceSyncExpImmediate();
-        PlayerStats.Instance.RefreshStats();
         UpdateCheckpointInfo();
 
         // Tìm component PlayerMovement trên nhân vật hiện tại (Knight hoặc Mage)

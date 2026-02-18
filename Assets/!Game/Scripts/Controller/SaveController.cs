@@ -313,11 +313,13 @@ public class SaveController : MonoBehaviour
             mageEquipSaveData = mageEquipmentPanel.GetEquipmentItems(),
             shareEquipSaveData = sharedEquipmentPanel.GetEquipmentItems(),
 
-            currentKnightHP = playerStats.knightHealth,
-            currentmageHP = playerStats.mageHealth,
-            currentKnightMP = playerStats.knightMP,
-            currentMageMP = playerStats.mageMP,
-            currentStamina = playerStats.currentStamina,
+            // If saving due to Death, persist full stats for respawn while leaving
+            // the in-memory PlayerStats unchanged so the UI still shows 0 HP until respawn.
+            currentKnightHP = (reason == SaveReason.Death) ? playerStats.finalKnightMaxHP : playerStats.knightHealth,
+            currentmageHP = (reason == SaveReason.Death) ? playerStats.finalMageMaxHP : playerStats.mageHealth,
+            currentKnightMP = (reason == SaveReason.Death) ? playerStats.finalKnightMaxMP : playerStats.knightMP,
+            currentMageMP = (reason == SaveReason.Death) ? playerStats.finalMageMaxMP : playerStats.mageMP,
+            currentStamina = (reason == SaveReason.Death) ? playerStats.finalStamina : playerStats.currentStamina,
 
             farmData = MergeFarmData(existingFarmData),
             //allChestsData = finalStorageData,

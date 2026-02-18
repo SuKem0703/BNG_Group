@@ -262,7 +262,7 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, Transform attacker = null, bool isCritical = false)
+    public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, Transform attacker = null, bool isCritical = false, bool forceKnockback = false)
     {
         if (isDead || isTransitioning) return;
 
@@ -310,27 +310,22 @@ public class Enemy : MonoBehaviour
             isStunned = false;
             bool shouldStun = false;
 
-            // 1. KIỂM TRA ĐIỀU KIỆN STUN (Chênh lệch Level + Crit)
             bool isLevelHighEnough = playerStats != null && playerStats.level > levelEnemy + 5;
+            if (isLevelHighEnough && isCritical) shouldStun = true;
 
-            if (isLevelHighEnough && isCritical)
+            bool triggerKnockback = shouldStun || forceKnockback;
+
+            if (attacker != null && !isDead && enemyRank != EnemyRank.Boss && triggerKnockback)
             {
+                ApplyKnockback(attacker);
                 shouldStun = true;
             }
 
-            // 2. LOGIC ĐẨY LÙI (Phải thỏa mãn shouldStun mới được đẩy)
-            if (attacker != null && !isDead && enemyRank != EnemyRank.Boss && shouldStun)
-            {
-                ApplyKnockback(attacker);
-            }
-
-            // 3. Rung Camera (Vẫn giữ nguyên khi Crit)
             if (isCritical && CinemachineShaker.Instance != null)
             {
                 CinemachineShaker.Instance.TriggerShake(2f, 2f, 0.2f);
             }
 
-            // 4. Kích hoạt Animation Stun
             if (shouldStun)
             {
                 if (isAttacking) isAttacking = false;

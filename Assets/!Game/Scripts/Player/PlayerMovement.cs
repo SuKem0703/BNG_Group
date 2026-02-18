@@ -98,8 +98,10 @@ public class PlayerMovement : MonoBehaviour
         if (!isDashing)
         {
             bool isCurrentlyAttacking = animator.GetBool("isAttacking");
+            bool isWalkAttacking = animator.GetBool("isWalkAttacking");
             bool isRunAttacking = animator.GetBool("isRunAttacking");
-            bool canMove = !isCurrentlyAttacking || isRunAttacking;
+            // Allow movement during walk-attacking or run-attacking
+            bool canMove = !isCurrentlyAttacking || isWalkAttacking || isRunAttacking;
 
             float currentSpeed = isRunning ? (moveSpeed * runSpeedMultiplier) : moveSpeed;
             rb.linearVelocity = canMove ? moveInput * currentSpeed : Vector2.zero;
@@ -141,8 +143,10 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         if (isDead) { rb.linearVelocity = Vector2.zero; return; }
+        bool isWalkAttacking = animator.GetBool("isWalkAttacking");
         bool isRunAttacking = animator.GetBool("isRunAttacking");
-        if (PauseController.IsGamePause || isDashing || (!isRunAttacking && comboAttack != null && comboAttack.isAttacking) || !SaveController.IsDataLoaded) return;
+        bool attackAllowsMovement = isWalkAttacking || isRunAttacking;
+        if (PauseController.IsGamePause || isDashing || (!attackAllowsMovement && comboAttack != null && comboAttack.isAttacking) || !SaveController.IsDataLoaded) return;
 
         float currentSpeed = isRunning ? (moveSpeed * runSpeedMultiplier) : moveSpeed;
         rb.linearVelocity = moveInput * currentSpeed;
@@ -257,7 +261,7 @@ public class PlayerMovement : MonoBehaviour
         ResetMovementState();
 
         animator.SetBool("isAttacking", false);
-        animator.SetBool("isRunAttacking", false);
+        animator.SetBool("isWalkAttacking", false);
         animator.ResetTrigger("Attack");
 
         try { animator.Play("Die", -1, 0f); } catch { animator.SetTrigger("Die"); }
