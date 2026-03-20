@@ -12,7 +12,6 @@ public class PlayerStatsService : MonoBehaviour
         Instance = this;
     }
 
-    // Class khớp với JSON từ Server UserStat
     [System.Serializable]
     public class ServerUserStat
     {
@@ -25,11 +24,9 @@ public class PlayerStatsService : MonoBehaviour
         public int con;
     }
 
-    // DTO Request
     [System.Serializable]
-    public class DistributeRequest { public string StatType; public int Amount; }
+    public class DistributeRequest { public string statType; public int amount; }
 
-    // 1. Lấy thông tin (Sync)
     public void SyncProfile(System.Action<bool> onComplete = null)
     {
         StartCoroutine(SyncRoutine(onComplete));
@@ -50,7 +47,6 @@ public class PlayerStatsService : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            // MẸO: Thay thế "int": thành "intStat": để JsonUtility hiểu được
             string json = request.downloadHandler.text.Replace("\"int\":", "\"intStat\":");
 
             var data = JsonUtility.FromJson<ServerUserStat>(json);
@@ -68,7 +64,6 @@ public class PlayerStatsService : MonoBehaviour
         }
     }
 
-    // 2. Cộng điểm
     public void DistributePoint(string statType, int amount, System.Action<bool> onComplete)
     {
         StartCoroutine(DistributeRoutine(statType, amount, onComplete));
@@ -79,8 +74,7 @@ public class PlayerStatsService : MonoBehaviour
         string url = NetworkConfig.GetUrl("api/PlayerStats/distribute");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
-        // Gửi amount động thay vì hardcode số 1
-        string json = JsonUtility.ToJson(new DistributeRequest { StatType = statType, Amount = amount });
+        string json = JsonUtility.ToJson(new DistributeRequest { statType = statType, amount = amount });
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
@@ -96,8 +90,6 @@ public class PlayerStatsService : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            // Update lại stats chuẩn từ server trả về
-            // Mẹo: Replace để fix vụ intStat nếu cần
             string responseJson = request.downloadHandler.text.Replace("\"int\":", "\"intStat\":");
             var newData = JsonUtility.FromJson<ServerUserStat>(responseJson);
 
@@ -113,7 +105,6 @@ public class PlayerStatsService : MonoBehaviour
         }
     }
 
-    // API Reset Stats
     public void ResetStats(System.Action<bool> onComplete)
     {
         StartCoroutine(ResetStatsRoutine(onComplete));
@@ -124,11 +115,10 @@ public class PlayerStatsService : MonoBehaviour
         string url = NetworkConfig.GetUrl("api/PlayerStats/reset");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
-        // Gửi POST rỗng (Server tự biết trừ 20 Gem)
         UnityWebRequest request = new UnityWebRequest(url, "POST");
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Authorization", $"Bearer {token}");
-        request.SetRequestHeader("Content-Length", "0"); // Quan trọng với POST rỗng
+        request.SetRequestHeader("Content-Length", "0");
 
         float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();
@@ -137,12 +127,10 @@ public class PlayerStatsService : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            // Server trả về cấu trúc gồm cả Stats mới và Balance mới
             var response = JsonUtility.FromJson<ResetResponse>(request.downloadHandler.text);
 
             if (response.success)
             {
-                // Cập nhật Stats
                 if (PlayerStats.Instance != null)
                 {
                     PlayerStats.Instance.SyncStatsFromServer(response.newStats);
@@ -163,15 +151,14 @@ public class PlayerStatsService : MonoBehaviour
         }
     }
 
-    // Class nhận phản hồi Reset
     [System.Serializable]
     public class ResetResponse
     {
         public bool success;
         public string message;
-        public ServerUserStat newStats; // Stats mới sau khi reset
+        public ServerUserStat newStats;
         public int coin;
-        public int gem; // Gem mới sau khi trừ
+        public int gem;
     }
 
     [System.Serializable]
@@ -185,8 +172,9 @@ public class PlayerStatsService : MonoBehaviour
     [System.Serializable]
     public class AddExpBody
     {
-        public int Amount;
+        public int amount;
     }
+
     public void AddExp(int amount)
     {
         StartCoroutine(AddExpRoutine(amount));
@@ -197,7 +185,7 @@ public class PlayerStatsService : MonoBehaviour
         string url = NetworkConfig.GetUrl("api/PlayerStats/add-exp");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
-        AddExpBody body = new AddExpBody { Amount = amount };
+        AddExpBody body = new AddExpBody { amount = amount };
         string json = JsonUtility.ToJson(body);
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");

@@ -38,7 +38,7 @@ public class KnightComboNormalAttack : MonoBehaviour
     public bool isRunAttacking => ani.GetBool("isRunAttacking");
 
     public Transform attackPoint;
-    public float attackRange = 0.75f;
+    public float attackRange = 0.6f;
     public LayerMask enemyLayer;
 
     private bool attackPressed = false;
@@ -277,13 +277,17 @@ public class KnightComboNormalAttack : MonoBehaviour
 
     private void UpdateAttackPointDirection()
     {
-        Vector3 mousePos = Mouse.current.position.ReadValue();
-        Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(mousePos);
-        worldMousePos.z = 0;
-
-        Vector3 direction = (worldMousePos - transform.position).normalized;
-
-        attackDirection = direction;
+        if (playerMovement != null && playerMovement.isRunning && playerMovement.moveInput.magnitude > 0.01f)
+        {
+            attackDirection = playerMovement.moveInput.normalized;
+        }
+        else
+        {
+            Vector3 mousePos = Mouse.current.position.ReadValue();
+            Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(mousePos);
+            worldMousePos.z = 0;
+            attackDirection = (worldMousePos - transform.position).normalized;
+        }
 
         attackPoint.position = transform.position + (Vector3)attackDirection * attackRange;
     }

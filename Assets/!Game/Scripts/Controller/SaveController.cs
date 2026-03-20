@@ -298,6 +298,8 @@ public class SaveController : MonoBehaviour
             checkpointPosition = currentCheckpointPos ?? GameObject.FindGameObjectWithTag("PlayerController").transform.position,
             checkpointSceneName = currentCheckpointScene ?? SceneManager.GetActiveScene().name,
 
+            mapBoundary = FindFirstObjectByType<CinemachineConfiner2D>().BoundingShape2D.gameObject.name,
+
             // --- INVENTORY SECTION ---
             // Gửi list RỖNG vì ta dùng bảng riêng, nhưng vẫn gửi slotCount
             backPackSlotCount = inventoryController.slotCount,
@@ -543,7 +545,7 @@ public class SaveController : MonoBehaviour
             .Select(SceneUtility.GetScenePathByBuildIndex)
             .Any(scenePath => scenePath.EndsWith($"{targetScene}.unity"));
 
-        if (!sceneExists) targetScene = "MAP_CH1_1_ROOM_START";
+        if (!sceneExists) targetScene = "MAP_CH1_01";
 
         // Nếu khác Scene -> Chuyển Scene (Return true để báo hiệu cho LoadRoutine dừng lại)
         if (SceneManager.GetActiveScene().name != targetScene)
@@ -564,6 +566,19 @@ public class SaveController : MonoBehaviour
             pendingSceneName = null;
         }
 
+        //FindFirstObjectByType<CinemachineConfiner2D>().BoundingShape2D = GameObject.Find(saveData.mapBoundary).GetComponent<PolygonCollider2D>();
+
+        var boundary = GameObject.Find(saveData?.mapBoundary)?.GetComponent<PolygonCollider2D>();
+
+        if (boundary != null)
+        {
+            var confiner = FindFirstObjectByType<CinemachineConfiner2D>();
+            if (confiner != null)
+            {
+                confiner.BoundingShape2D = boundary;
+            }
+        }
+
         if (!string.IsNullOrEmpty(saveData.checkpointSceneName))
         {
             currentCheckpointScene = saveData.checkpointSceneName;
@@ -575,7 +590,7 @@ public class SaveController : MonoBehaviour
             inventoryController.slotCount = saveData.backPackSlotCount;
         }
 
-        //LoadChestStates(saveData.chestSaveData);
+        LoadChestStates(saveData.chestSaveData);
 
         if (knightEquipmentPanel != null) knightEquipmentPanel.SetEquipmentItems(saveData.knightEquipSaveData);
         if (mageEquipmentPanel != null) mageEquipmentPanel.SetEquipmentItems(saveData.mageEquipSaveData);
@@ -623,12 +638,23 @@ public class SaveController : MonoBehaviour
         return false;
     }
 
+    private void LoadChestStates(List<ChestSaveData> chestState)
+    {
+        foreach (Chest chest in chests)
+        {
+            ChestSaveData chestSaveData = chestState.FirstOrDefault(c => c.chestID == chest.ChestID);
+            if (chestSaveData != null)
+            {
+                chest.SetOpened(chestSaveData.isOpened);
+            }
+        }
+    }
 
     [System.Serializable]
     public class SaveDataRequest
     {
-        public string DataSave;
-        public string Reason;
+        public string dataSave;
+        public string reason;
     }
 
     // Gửi dữ liệu lên Server
@@ -636,8 +662,8 @@ public class SaveController : MonoBehaviour
     {
         string json = JsonUtility.ToJson(new SaveDataRequest
         {
-            DataSave = JsonUtility.ToJson(saveData),
-            Reason = reason.ToString()
+            dataSave = JsonUtility.ToJson(saveData),
+            reason = reason.ToString()
         });
 
         string url = NetworkConfig.GetUrl("api/GameData/save-data");

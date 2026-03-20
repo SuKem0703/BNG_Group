@@ -14,6 +14,7 @@ public class ServerTimeManager : MonoBehaviour
     public static int CurrentPing { get; private set; } = 0;
 
     public TMPro.TextMeshProUGUI pingText;
+    public TMPro.TextMeshProUGUI fpsText;
 
     // Configs
     private const float REFRESH_INTERVAL = 300f;
@@ -21,30 +22,70 @@ public class ServerTimeManager : MonoBehaviour
 
     private bool autoSaveStarted = false;
 
+    // Biến phục vụ cập nhật FPS động
+    private float fpsAccumulator = 0f;
+    private int fpsFrames = 0;
+    private float fpsNextUpdateTime = 0f;
+    private float currentFpsInterval = 0.5f;
+
     private void Start()
     {
         if (pingText == null)
         {
-            pingText = GameObject.Find("PingText").GetComponent<TMPro.TextMeshProUGUI>();
+            pingText = GameObject.Find("PingText")?.GetComponent<TMPro.TextMeshProUGUI>();
+        }
+
+        if (fpsText == null)
+        {
+            fpsText = GameObject.Find("FPSText")?.GetComponent<TMPro.TextMeshProUGUI>();
         }
     }
 
     void Update()
     {
+        // --- XỬ LÝ PING UI ---
         int ping = ServerTimeManager.CurrentPing;
-        pingText.text = $"Ping: {ping} ms";
+        if (pingText != null)
+        {
+            pingText.text = $"Ping: {ping} ms";
 
-        if (ping < 100)
-        {
-            pingText.color = Color.green;
+            if (ping < 100)
+            {
+                pingText.color = Color.green;
+            }
+            else if (ping < 200) // 100–199
+            {
+                pingText.color = Color.yellow;
+            }
+            else // >= 200
+            {
+                pingText.color = Color.red;
+            }
         }
-        else if (ping < 200) // 100–199
+
+        // --- XỬ LÝ FPS ĐỘNG ---
+        fpsAccumulator += Time.unscaledDeltaTime;
+        fpsFrames++;
+
+        if (Time.realtimeSinceStartup >= fpsNextUpdateTime)
         {
-            pingText.color = Color.yellow;
-        }
-        else // >= 200
-        {
-            pingText.color = Color.red;
+            float currentFps = fpsFrames / fpsAccumulator;
+
+            if (fpsText != null)
+            {
+                fpsText.text = $"FPS: {Mathf.RoundToInt(currentFps)}";
+            }
+
+            if (currentFps >= 60f)
+                currentFpsInterval = 0.1f;
+            else if (currentFps >= 30f)
+                currentFpsInterval = 0.5f;
+            else
+                currentFpsInterval = 1.0f;
+
+            fpsNextUpdateTime = Time.realtimeSinceStartup + currentFpsInterval;
+            fpsAccumulator = 0f;
+            fpsFrames = 0;
         }
     }
 
@@ -105,8 +146,6 @@ public class ServerTimeManager : MonoBehaviour
                 LocalTimeAtFetch = Time.time;
 
                 CheckTimeTampering(preciseServerTime);
-
-                // Debug.Log($"[TimeSync] Ping: {CurrentPing}ms | Server: {ServerTime}");
             }
         }
         else
@@ -135,9 +174,6 @@ public class ServerTimeManager : MonoBehaviour
                                 $"Diff: {driftSeconds:F2}s, Ping: {CurrentPing}ms";
 
             Debug.LogWarning(warningMsg);
-
-            // TODO: Gửi log về server hoặc Crash game trong tương lai
-            // Application.Quit(); 
         }
     }
 
@@ -158,7 +194,6 @@ public class ServerTimeManager : MonoBehaviour
     public static void ReportPing(float requestDurationSeconds)
     {
         int newPing = Mathf.RoundToInt(requestDurationSeconds * 1000f);
-        // CurrentPing = newPing;
 
         if (CurrentPing == 0) CurrentPing = newPing;
         else CurrentPing = Mathf.RoundToInt(Mathf.Lerp(CurrentPing, newPing, 0.5f));

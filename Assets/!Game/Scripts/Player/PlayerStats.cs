@@ -641,6 +641,8 @@ public class PlayerStats : MonoBehaviour
     // Sử dụng Stamina
     public void UseStamina(float amount)
     {
+        if (amount <= 0) return;
+
         currentStamina = Mathf.Max(currentStamina - amount, 0);
         currentStamina = (float)System.Math.Round(currentStamina, 2);
         staminaRegenCooldown = staminaRegenDelay;

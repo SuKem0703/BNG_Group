@@ -15,9 +15,9 @@ public class EconomyService : MonoBehaviour
     [System.Serializable]
     public class SpendRequest
     {
-        public string CurrencyType;
-        public int Amount;
-        public string Reason;
+        public string currencyType;
+        public int amount;
+        public string reason;
     }
 
     [System.Serializable]
@@ -28,7 +28,6 @@ public class EconomyService : MonoBehaviour
         public string message;
     }
 
-    // Hàm gọi RMI Spend (Remote Method Invocation)
     public void SpendCurrency(string type, int amount, string reason, System.Action<bool> onComplete)
     {
         StartCoroutine(SpendRoutine(type, amount, reason, onComplete));
@@ -39,10 +38,9 @@ public class EconomyService : MonoBehaviour
         string url = NetworkConfig.GetUrl("api/Economy/spend");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
-        SpendRequest reqBody = new SpendRequest { CurrencyType = type, Amount = amount, Reason = reason };
+        SpendRequest reqBody = new SpendRequest { currencyType = type, amount = amount, reason = reason };
         string json = JsonUtility.ToJson(reqBody);
 
-        // [LOG 1] Kiểm tra dữ liệu gửi đi có đúng không
         Debug.Log($"[Economy] Requesting Spend: {json}");
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");
@@ -80,7 +78,6 @@ public class EconomyService : MonoBehaviour
                 Debug.LogWarning($"[Economy] Giao dịch thất bại: {response.message}");
                 Debug.LogWarning($"[Economy] Server Balance: {response.newBalance} | Client Balance: {(type == "Coin" ? PlayerStats.Instance.coin : PlayerStats.Instance.gem)}");
 
-                // Đồng bộ lại số dư thật để Client không bị ảo tưởng nữa
                 if (type == "Coin")
                     PlayerStats.Instance.SyncCoinFromServer(response.newBalance);
                 else
@@ -125,7 +122,6 @@ public class EconomyService : MonoBehaviour
         {
             var res = JsonUtility.FromJson<BalanceResponse>(request.downloadHandler.text);
 
-            // Cập nhật UI
             if (PlayerStats.Instance != null)
             {
                 PlayerStats.Instance.SyncCurrency(res.coin, res.gem);
@@ -137,7 +133,6 @@ public class EconomyService : MonoBehaviour
         }
     }
 
-    // 2. Kiếm tiền (Add/Earn) - Dùng cho bán đồ
     public void EarnCurrency(string type, int amount, string reason, System.Action<bool> onComplete)
     {
         StartCoroutine(EarnRoutine(type, amount, reason, onComplete));
@@ -148,7 +143,7 @@ public class EconomyService : MonoBehaviour
         string url = NetworkConfig.GetUrl("api/Economy/earn");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
-        SpendRequest reqBody = new SpendRequest { CurrencyType = type, Amount = amount, Reason = reason };
+        SpendRequest reqBody = new SpendRequest { currencyType = type, amount = amount, reason = reason };
         string json = JsonUtility.ToJson(reqBody);
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");

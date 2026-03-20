@@ -33,17 +33,17 @@ public class InventoryService : MonoBehaviour
         public float qualityFactor;
     }
 
-    [System.Serializable] public class EquipRequestDTO { public int ItemDbId; public bool IsEquipped; }
-    [System.Serializable] public class MoveRequestDTO { public int ItemDbId; public int NewSlotIndex; public bool IsStackable { get; set; } }
+    [System.Serializable] public class EquipRequestDTO { public int itemDbId; public bool isEquipped; }
+    [System.Serializable] public class MoveRequestDTO { public int itemDbId; public int newSlotIndex; public bool isStackable; }
 
     [System.Serializable]
     public class BuyRequestDTO
     {
-        public int ItemId;
-        public int Quantity;
-        public int Price;
-        public string Currency;
-        public bool IsStackable;
+        public int itemId;
+        public int quantity;
+        public int price;
+        public string currency;
+        public bool isStackable;
     }
 
     [System.Serializable]
@@ -58,16 +58,16 @@ public class InventoryService : MonoBehaviour
         public int rarity;
         public float qualityFactor;
     }
-    [System.Serializable] public class UpdateQtyRequestDTO { public int ItemDbId; public int NewQuantity; }
+    [System.Serializable] public class UpdateQtyRequestDTO { public int itemDbId; public int newQuantity; }
 
     [System.Serializable]
     public class AddItemRequestDTO
     {
-        public int ItemId;
-        public int Quantity;
-        public int SlotIndex;
-        public int Rarity;
-        public float QualityFactor;
+        public int itemId;
+        public int quantity;
+        public int slotIndex;
+        public int rarity;
+        public float qualityFactor;
     }
 
     [System.Serializable]
@@ -78,10 +78,10 @@ public class InventoryService : MonoBehaviour
     }
 
     [System.Serializable]
-    public class RemoveRequestDTO { public int ItemDbId; }
+    public class RemoveRequestDTO { public int itemDbId; }
 
-    [System.Serializable] public class DepositDTO { public int ItemDbId; public string ChestId; public int SlotIndex; public bool IsStackable { get; set; } }
-    [System.Serializable] public class WithdrawDTO { public int ItemDbId; public int SlotIndex; public bool IsStackable { get; set; } }
+    [System.Serializable] public class DepositDTO { public int itemDbId; public string chestId; public int slotIndex; public bool isStackable; }
+    [System.Serializable] public class WithdrawDTO { public int itemDbId; public int slotIndex; public bool isStackable; }
 
     private class InventoryWrapper
     {
@@ -106,7 +106,7 @@ public class InventoryService : MonoBehaviour
     {
         StartCoroutine(PostRequest(
             "api/Inventory/equip",
-            new EquipRequestDTO { ItemDbId = itemDbId, IsEquipped = isEquipped },
+            new EquipRequestDTO { itemDbId = itemDbId, isEquipped = isEquipped },
             null
         ));
     }
@@ -115,9 +115,9 @@ public class InventoryService : MonoBehaviour
     {
         var body = new MoveRequestDTO
         {
-            ItemDbId = itemDbId,
-            NewSlotIndex = newSlotIndex,
-            IsStackable = isStackable
+            itemDbId = itemDbId,
+            newSlotIndex = newSlotIndex,
+            isStackable = isStackable
         };
 
         StartCoroutine(PostRequest("api/Inventory/move", body, onComplete));
@@ -127,7 +127,7 @@ public class InventoryService : MonoBehaviour
     {
         StartCoroutine(PostRequest(
             "api/Inventory/update-quantity",
-            new UpdateQtyRequestDTO { ItemDbId = dbId, NewQuantity = newQuantity },
+            new UpdateQtyRequestDTO { itemDbId = dbId, newQuantity = newQuantity },
             null
         ));
     }
@@ -150,38 +150,33 @@ public class InventoryService : MonoBehaviour
 
     public void RequestRemoveItem(int itemDbId)
     {
-        StartCoroutine(PostRequest("api/Inventory/remove", new RemoveRequestDTO { ItemDbId = itemDbId }, null));
+        StartCoroutine(PostRequest("api/Inventory/remove", new RemoveRequestDTO { itemDbId = itemDbId }, null));
     }
 
-    // Lấy đồ trong rương
     public void RequestSyncChest(string chestId, System.Action<List<ServerUserItem>> onComplete)
     {
         string url = NetworkConfig.GetUrl($"api/Storage/sync/{chestId}");
         StartCoroutine(GetRequestList(url, onComplete));
     }
 
-    // Cất đồ (Deposit)
     public void RequestDeposit(int itemDbId, string chestId, int slotIndex, bool isStackable, System.Action<bool> onComplete)
     {
-        var body = new DepositDTO { ItemDbId = itemDbId, ChestId = chestId, SlotIndex = slotIndex, IsStackable = isStackable };
+        var body = new DepositDTO { itemDbId = itemDbId, chestId = chestId, slotIndex = slotIndex, isStackable = isStackable };
         StartCoroutine(PostRequest("api/Storage/deposit", body, onComplete));
     }
 
-    // Rút đồ (Withdraw)
     public void RequestWithdraw(int itemDbId, int targetSlotIndex, bool isStackable, System.Action<bool> onComplete)
     {
-        var body = new WithdrawDTO { ItemDbId = itemDbId, SlotIndex = targetSlotIndex, IsStackable = isStackable };
+        var body = new WithdrawDTO { itemDbId = itemDbId, slotIndex = targetSlotIndex, isStackable = isStackable };
         StartCoroutine(PostRequest("api/Storage/withdraw", body, onComplete));
     }
 
     public void RequestLoadMapStorage(string sceneName, System.Action<List<StorageItemDTO>> onComplete)
     {
-        // sceneName ví dụ: "Map1" (Server sẽ tìm "Map1_%")
         string url = NetworkConfig.GetUrl($"api/Storage/load-map-storage?sceneName={sceneName}");
         StartCoroutine(GetStorageList(url, onComplete));
     }
 
-    // Gọi khi muốn refresh 1 rương cụ thể (sau khi Deposit/Withdraw)
     public void RequestLoadSingleChest(string chestId, System.Action<List<StorageItemDTO>> onComplete)
     {
         string url = NetworkConfig.GetUrl($"api/Storage/load-chest?chestId={chestId}");
@@ -233,14 +228,13 @@ public class InventoryService : MonoBehaviour
         string url = NetworkConfig.GetUrl("api/Shop/buy");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
-        // Đóng gói dữ liệu gửi đi
         var body = new BuyRequestDTO
         {
-            ItemId = itemId,
-            Quantity = quantity,
-            Price = price,
-            Currency = currency,
-            IsStackable = isStackable
+            itemId = itemId,
+            quantity = quantity,
+            price = price,
+            currency = currency,
+            isStackable = isStackable
         };
 
         string json = JsonUtility.ToJson(body);
@@ -289,11 +283,11 @@ public class InventoryService : MonoBehaviour
 
         var body = new AddItemRequestDTO
         {
-            ItemId = itemId,
-            Quantity = quantity,
-            SlotIndex = slotIndex,
-            Rarity = rarity,
-            QualityFactor = quality
+            itemId = itemId,
+            quantity = quantity,
+            slotIndex = slotIndex,
+            rarity = rarity,
+            qualityFactor = quality
         };
 
         UnityWebRequest request = CreatePostRequest(url, token, JsonUtility.ToJson(body));
@@ -390,7 +384,6 @@ public class InventoryService : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            // Bọc JSON lại vì API trả về mảng []
             string json = "{\"items\":" + request.downloadHandler.text + "}";
             try
             {
@@ -399,7 +392,6 @@ public class InventoryService : MonoBehaviour
             }
             catch
             {
-                // Nếu rương rỗng hoặc lỗi parse
                 onComplete?.Invoke(new List<StorageItemDTO>());
             }
         }

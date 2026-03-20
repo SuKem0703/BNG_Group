@@ -93,6 +93,9 @@ public class CameraZoomController : MonoBehaviour
                 float t = distToBorder / borderThreshold;
                 float borderOverrideSize = Mathf.Lerp(sizeAtBorder, userDesiredSize, t);
 
+                // Nếu bạn muốn CHO PHÉP người chơi zoom vào gần ngay cả khi ở sát tường,
+                // hãy đổi Mathf.Max thành Mathf.Min ở dòng dưới. 
+                // Nếu dùng Max, họ sẽ bị khóa cứng ở sizeAtBorder (không thể zoom gần hơn mức này).
                 finalTargetSize = Mathf.Max(userDesiredSize, borderOverrideSize);
                 finalTargetSize = Mathf.Min(finalTargetSize, safeMaxSize);
             }
@@ -108,6 +111,13 @@ public class CameraZoomController : MonoBehaviour
                 currentVelocity = 0f;
             }
             virtualCamera.Lens.OrthographicSize = newSize;
+
+            if (confiner != null)
+            {
+                confiner.InvalidateBoundingShapeCache();
+                // Lưu ý: Nếu phiên bản Cinemachine của bạn báo lỗi dòng trên, 
+                // hãy đổi thành: confiner.InvalidateCache();
+            }
         }
     }
 

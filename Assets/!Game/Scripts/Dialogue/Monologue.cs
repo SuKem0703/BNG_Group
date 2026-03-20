@@ -33,6 +33,8 @@ public class Monologue : MonoBehaviour, IInteractable
     protected bool maintainPauseAfterDialogue = false;
     protected float lastSkipTime = -99f;
 
+    private SceneMapMove mapTransition => GetComponent<SceneMapMove>();
+
     private enum MonologueQuestState
     {
         NotStarted,
@@ -84,6 +86,9 @@ public class Monologue : MonoBehaviour, IInteractable
         if (disableManualInteraction) return false;
         if (!SaveController.IsDataLoaded) return false;
         if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return false;
+
+        if (mapTransition != null && mapTransition.IsEntryAllowed()) return false;
+
         return !GameStateManager.IsDialogueActive;
     }
 
@@ -91,6 +96,7 @@ public class Monologue : MonoBehaviour, IInteractable
     {
         if (!SaveController.IsDataLoaded) return;
         if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return;
+        if (mapTransition != null && mapTransition.IsEntryAllowed()) return;
         if (monologueData == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive)) return;
 
         if (GameStateManager.IsDialogueActive) NextLine();
@@ -103,6 +109,7 @@ public class Monologue : MonoBehaviour, IInteractable
         if (!SaveController.IsDataLoaded) return;
         if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return;
         if (collision.GetComponent<PlayerItemCollector>() != null) return;
+        if (mapTransition != null && mapTransition.IsEntryAllowed()) return;
 
         OpenDialogOnTrigger();
     }

@@ -40,6 +40,7 @@ public class StorageChest : MonoBehaviour, IInteractable
     public bool CanInteract()
     {
         if (!GameStateManager.CanProcessInput()) return false;
-        return GameFlags.HasInteractedWithStorageChest();
+        return true;
+        //return GameFlags.HasInteractedWithStorageChest();
     }
 }

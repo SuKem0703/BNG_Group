@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13b75c95f34a00d4e8c04f76b73312e6, type: 3}
+  m_Name: Behind Boiler Animation
+  m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.Tilemaps.AnimatedTile
+  m_AnimatedSprites:
+  - {fileID: -1323026488, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 302794627, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -1360768364, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1052813870, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -903518010, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -532176907, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -1578059421, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -560053359, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -1025468398, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1841951865, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -37604037, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -878524415, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  m_MinSpeed: 6
+  m_MaxSpeed: 6
+  m_AnimationStartTime: 0
+  m_AnimationStartFrame: 0
+  m_TileColliderType: 0
+  m_TileAnimationFlags: 0

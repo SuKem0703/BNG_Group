@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -17,7 +18,10 @@ public class PlayerMovement : MonoBehaviour
     [Header("Run (Sprint) Settings")]
     [SerializeField] public float runSpeedMultiplier = 1.5f;
     [SerializeField] public float runStaminaCostPerSec = 10f;
-    [SerializeField] public float runHoldThreshold = 0.5f; // Thời gian giữ để khóa chạy
+    [SerializeField] public float runHoldThreshold = 0.5f;
+
+    [Header("UI Settings")]
+    [SerializeField] public Image staminaCircle; 
 
     private Rigidbody2D rb;
     public Vector2 moveInput;
@@ -57,6 +61,7 @@ public class PlayerMovement : MonoBehaviour
         if (isDead || !GameStateManager.CanProcessInput() || !SaveController.IsDataLoaded)
         {
             ResetMovementState();
+            UpdateStaminaUI(); // Cập nhật UI ngay cả khi đứng im/chết
             return;
         }
 
@@ -114,6 +119,58 @@ public class PlayerMovement : MonoBehaviour
         {
             moveSpeed = playerStats.finalMoveSpeed;
         }
+
+        // Gọi hàm cập nhật hiển thị Stamina mỗi frame
+        UpdateStaminaUI();
+    }
+
+    // Logic xử lý UI Stamina
+    private void UpdateStaminaUI()
+    {
+        if (staminaCircle == null || playerStats == null) return;
+
+        // Tránh lỗi chia cho 0 nếu finalStamina chưa được khởi tạo
+        if (playerStats.finalStamina <= 0) return;
+
+        float percent = playerStats.currentStamina / playerStats.finalStamina;
+
+        // Ẩn vòng Stamina nếu đầy hoặc nhân vật đã chết, hiện lại khi bị tiêu hao
+        if (percent >= 1f || isDead)
+        {
+            staminaCircle.gameObject.SetActive(false);
+            return;
+        }
+        else
+        {
+            staminaCircle.gameObject.SetActive(true);
+        }
+
+        staminaCircle.fillAmount = percent;
+
+        if (percent >= 0.75f)
+        {
+            staminaCircle.color = HexToColor("#7CFF4D");     // Full
+        }
+        else if (percent >= 0.50f)
+        {
+            staminaCircle.color = HexToColor("#44C530");     // Medium
+        }
+        else if (percent >= 0.25f)
+        {
+            staminaCircle.color = HexToColor("#FFCC00");     // Low
+        }
+        else
+        {
+            staminaCircle.color = HexToColor("#FF4422");     // Critical
+        }
+    }
+
+    private Color HexToColor(string hex)
+    {
+        Color color;
+        if (ColorUtility.TryParseHtmlString(hex, out color))
+            return color;
+        return Color.white;
     }
 
     private void ResetMovementState()

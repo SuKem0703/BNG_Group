@@ -6,6 +6,7 @@ public class SaveData
 {
     public Vector3 playerPosition;
     public string currentSceneName;
+    public string mapBoundary;
 
     public Vector3 checkpointPosition;
     public string checkpointSceneName;

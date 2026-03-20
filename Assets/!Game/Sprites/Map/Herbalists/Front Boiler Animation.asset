@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13b75c95f34a00d4e8c04f76b73312e6, type: 3}
+  m_Name: Front Boiler Animation
+  m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.Tilemaps.AnimatedTile
+  m_AnimatedSprites:
+  - {fileID: -970329528, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1611950489, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1703723635, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1315643274, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1803401635, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1222438166, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1038626282, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1271612789, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 272047588, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: 1359874935, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -89067924, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  - {fileID: -760715518, guid: 7979ccc2a30f52d48a3c013342532407, type: 3}
+  m_MinSpeed: 5
+  m_MaxSpeed: 5
+  m_AnimationStartTime: 0
+  m_AnimationStartFrame: 0
+  m_TileColliderType: 1
+  m_TileAnimationFlags: 0

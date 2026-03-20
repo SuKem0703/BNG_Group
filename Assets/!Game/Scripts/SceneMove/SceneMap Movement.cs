@@ -2,11 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Unity.Cinemachine;
 
 public class SceneMapMove : MonoBehaviour
 {
     public string sceneName;
     public Vector2 playerPosition;
+
+    [Header("Internal Move Settings (Optional)")]
+    public PolygonCollider2D newMapBoundary;
 
     [Header("Access Settings")]
     public bool canEnter = true;
@@ -26,46 +30,10 @@ public class SceneMapMove : MonoBehaviour
         monologueComponent = GetComponent<Monologue>();
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    public bool IsEntryAllowed()
     {
-        if (!other.CompareTag("Player"))
-            return;
-
-        // ========================================================================
-        // 1. KIỂM TRA TRẠNG THÁI KỸ THUẬT (Dùng Notify + Return ngay)
-        // ========================================================================
-
-        if (!SaveController.IsDataLoaded)
-        {
-            string data_loading = GetText("NOTIFY_DATA_LOADING");
-            GameNotify.Show(data_loading);
-            return;
-        }
-
-        if (!string.IsNullOrEmpty(SaveController.pendingSceneName))
-        {
-            // GameNotify.Show(LocalizationManager.GetText("NOTIFY_SCENE_SWITCHING")); 
-            return;
-        }
-
-        // Check 3: Hệ thống đang bận lưu (tránh corrupt save file)
-        if (SaveController.IsSaving)
-        {
-            Debug.LogWarning($"[SceneMapMove] Blocked '{sceneName}' due to saving.");
-            string system_busy = GetText("NOTIFY_SYSTEM_BUSY");
-            GameNotify.Show(system_busy);
-            return;
-        }
-
-        // ========================================================================
-        // 2. KIỂM TRA LOGIC GAME (Dùng Dialogue/Monologue)
-        // ========================================================================
-
         if (!canEnter)
-        {
-            HandleBlockedEntry($"Blocked: canEnter = false");
-            return;
-        }
+            return false;
 
         if (!string.IsNullOrEmpty(requiredQuestID) && (requireNotStarted || requireInProgress || requireCompleted || requireNoMoreQuests))
         {
@@ -92,17 +60,68 @@ public class SceneMapMove : MonoBehaviour
                            || (requireCompleted && completed)
                            || (requireNoMoreQuests && noMoreQuests);
 
-            if (!matches)
-            {
-                HandleBlockedEntry($"Blocked: Quest Requirements not met");
-                return;
-            }
+            return matches;
         }
 
-        // ========================================================================
-        // 3. THỰC HIỆN CHUYỂN MAP (Hợp lệ)
-        // ========================================================================
+        return true;
+    }
 
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!other.CompareTag("PlayerController"))
+            return;
+
+        if (!SaveController.IsDataLoaded)
+        {
+            string data_loading = GetText("NOTIFY_DATA_LOADING");
+            GameNotify.Show(data_loading);
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(SaveController.pendingSceneName))
+        {
+            return;
+        }
+
+        if (SaveController.IsSaving)
+        {
+            Debug.LogWarning($"[SceneMapMove] Blocked '{sceneName}' due to saving.");
+            string system_busy = GetText("NOTIFY_SYSTEM_BUSY");
+            GameNotify.Show(system_busy);
+            return;
+        }
+
+        if (!IsEntryAllowed())
+        {
+            HandleBlockedEntry($"Blocked: Entry conditions not met");
+            return;
+        }
+
+        // --- XỬ LÝ DỊCH CHUYỂN NỘI BỘ (CÙNG SCENE) ---
+        bool isInternalMove = string.IsNullOrEmpty(sceneName) || sceneName == "-1";
+
+        if (isInternalMove)
+        {
+            other.transform.position = playerPosition;
+
+            if (newMapBoundary != null)
+            {
+                var confiner = FindFirstObjectByType<CinemachineConfiner2D>();
+                if (confiner != null)
+                {
+                    confiner.BoundingShape2D = newMapBoundary;
+                    confiner.InvalidateBoundingShapeCache();
+                }
+            }
+
+            var cam = FindFirstObjectByType<CinemachineCamera>();
+            if (cam != null) cam.PreviousStateIsValid = false;
+
+            Debug.Log($"[SceneMapMove] Đã dịch chuyển nội bộ tới {playerPosition}");
+            return;
+        }
+
+        // --- XỬ LÝ CHUYỂN SANG SCENE KHÁC ---
         SaveController saveController = FindFirstObjectByType<SaveController>();
         if (saveController != null)
         {
@@ -133,9 +152,7 @@ public class SceneMapMove : MonoBehaviour
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 
-    /// <summary>
-    /// Xử lý khi bị chặn bởi Logic Game (Hiện Dialogue + Rung màn hình)
-    /// </summary>
+    /// Xử lý khi bị chặn bởi Logic Game
     private void HandleBlockedEntry(string debugReason)
     {
         if (CinemachineShaker.Instance != null)
