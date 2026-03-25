@@ -17,12 +17,11 @@ public class BossPhaseInfo
     public int maxHealth = 1000;
 }
 
-public class Enemy : MonoBehaviour
+public class Enemy : AutoIDBehaviour
 {
     [Header("Quest Settings")]
     public string questTargetID;
     public bool isQuestEnemy = false;
-    public string uniqueSaveID;
 
     [Header("Enemy Info")]
     public EnemyRank enemyRank = EnemyRank.Normal;
@@ -54,7 +53,6 @@ public class Enemy : MonoBehaviour
     [Header("Hurt & Knockback Settings")]
     public float hurtDuration = 0.5f;
 
-    // Các biến cho Knockback
     public float knockbackForce = 5f;
     public float knockbackDuration = 0.2f;
     protected bool isKnockedBack = false;
@@ -75,7 +73,6 @@ public class Enemy : MonoBehaviour
 
     protected virtual void Awake()
     {
-        if (string.IsNullOrEmpty(uniqueSaveID)) uniqueSaveID = GlobalHelper.GenerateUniqueID(gameObject);
         if (string.IsNullOrEmpty(questTargetID)) questTargetID = enemyName;
     }
 
@@ -138,12 +135,11 @@ public class Enemy : MonoBehaviour
 
     protected virtual void Update()
     {
-        // Check chết
         if (!isDead && !isTransitioning && currentHealth <= 0)
         {
             isAttacking = false;
             isStunned = false;
-            isKnockedBack = false; // Reset knockback nếu chết
+            isKnockedBack = false;
 
             if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
             {
@@ -159,22 +155,16 @@ public class Enemy : MonoBehaviour
 
         if (player == null) return;
 
-        // Failsafe Attack
         if (isAttacking && Time.time - lastAttackTime > 3.0f) EndAttack();
 
-        // [QUAN TRỌNG] Logic chặn di chuyển
-        // Thêm isKnockedBack vào điều kiện chặn
         if (PauseController.IsGamePause || isStunned || isDead || isAttacking || isTransitioning || isKnockedBack)
         {
-            // [FIX LOGIC] Nếu đang bị đẩy lùi (KnockedBack) thì KHÔNG gọi StopMovement() 
-            // Vì StopMovement() set vận tốc = 0, làm mất lực đẩy ngay lập tức.
             if (!isKnockedBack) StopMovement();
 
             if (!isAttacking && !isTransitioning && enemyAnimator != null) enemyAnimator.SetWalking(false);
             return;
         }
 
-        // Logic AI di chuyển bình thường
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
         float actualTriggerDistance = attackRange - attackTriggerBuffer;
 
@@ -241,7 +231,6 @@ public class Enemy : MonoBehaviour
             var health = player.GetComponentInParent<PlayerStats>();
             if (health != null)
             {
-                // Respect invincibility and death-processing flags on player
                 if (!health.isInvincible && !health.IsProcessingDeath)
                 {
                     health.TakeDamage((int)damage);
@@ -272,7 +261,6 @@ public class Enemy : MonoBehaviour
 
         currentHealth -= finalDamage;
 
-        // --- POPUP ---
         GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
         if (popupPrefab != null)
         {
@@ -282,7 +270,6 @@ public class Enemy : MonoBehaviour
             if (popupScript != null) popupScript.Setup(finalDamage, damageSourceType, isCritical);
         }
 
-        // --- XỬ LÝ CHẾT ---
         if (currentHealth <= 0 && !isDead)
         {
             isAttacking = false;
@@ -302,7 +289,6 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        // --- XỬ LÝ KHI CÒN SỐNG (HURT / KNOCKBACK / SHAKE) ---
         if (currentHealth > 0)
         {
             if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
@@ -334,7 +320,6 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    // --- COROUTINE KNOCKBACK MỚI ---
     public void ApplyKnockback(Transform attackerTransform)
     {
         if (isDead || isTransitioning) return;
@@ -346,15 +331,12 @@ public class Enemy : MonoBehaviour
         isKnockedBack = true;
         isAttacking = false;
 
-        // Tính hướng từ người đánh -> quái
         Vector2 direction = (transform.position - attackerTransform.position).normalized;
 
-        // Đẩy đi
         rb.linearVelocity = direction * knockbackForce;
 
         yield return new WaitForSeconds(knockbackDuration);
 
-        // Dừng lại
         rb.linearVelocity = Vector2.zero;
         isKnockedBack = false;
     }
@@ -396,7 +378,6 @@ public class Enemy : MonoBehaviour
 
         if (enemyAnimator != null) enemyAnimator.TriggerHurt();
 
-        // Nếu không bị knockback thì mới StopMovement ở đây, còn đang knockback thì để lực đẩy lo
         if (!isKnockedBack) StopMovement();
 
         yield return new WaitForSeconds(hurtDuration);
@@ -451,17 +432,13 @@ public class Enemy : MonoBehaviour
                 }
             });
         }
-        else
-        {
-            
-        }
 
         if (QuestController.Instance != null && !string.IsNullOrEmpty(questTargetID))
             QuestController.Instance.MarkEnemyDefeated(questTargetID);
 
-        if (isQuestEnemy && SaveController.Instance != null && !string.IsNullOrEmpty(uniqueSaveID))
+        if (isQuestEnemy && SaveController.Instance != null && !string.IsNullOrEmpty(UniqueID))
         {
-            SaveController.Instance.MarkCollected(SceneManager.GetActiveScene().name, uniqueSaveID);
+            SaveController.Instance.MarkCollected(SceneManager.GetActiveScene().name, UniqueID);
             SaveController.Instance.TriggerAutoSave();
         }
     }
@@ -472,5 +449,5 @@ public class Enemy : MonoBehaviour
 
     private void OnDestroy() { if (isQuestEnemy) SaveController.OnDataLoaded -= HandleDataLoaded; }
     private void HandleDataLoaded() { SaveController.OnDataLoaded -= HandleDataLoaded; CheckPersistence(); }
-    private void CheckPersistence() { if (SaveController.Instance != null && !string.IsNullOrEmpty(uniqueSaveID)) { if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, uniqueSaveID)) Destroy(gameObject); } }
+    private void CheckPersistence() { if (SaveController.Instance != null && !string.IsNullOrEmpty(UniqueID)) { if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, UniqueID)) Destroy(gameObject); } }
 }

@@ -8,25 +8,20 @@ public class ServerTimeManager : MonoBehaviour
     public static DateTime ServerTime { get; private set; }
     public static float LocalTimeAtFetch { get; private set; }
 
-    /// <summary>
-    /// Ping hiện tại (ms)
-    /// </summary>
     public static int CurrentPing { get; private set; } = 0;
 
     public TMPro.TextMeshProUGUI pingText;
     public TMPro.TextMeshProUGUI fpsText;
 
-    // Configs
     private const float REFRESH_INTERVAL = 300f;
     private const double TIME_CHEAT_THRESHOLD = 120.0f;
 
     private bool autoSaveStarted = false;
 
-    // Biến phục vụ cập nhật FPS động
     private float fpsAccumulator = 0f;
     private int fpsFrames = 0;
     private float fpsNextUpdateTime = 0f;
-    private float currentFpsInterval = 0.5f;
+    private float currentFpsInterval = 5.0f;
 
     private void Start()
     {
@@ -43,7 +38,6 @@ public class ServerTimeManager : MonoBehaviour
 
     void Update()
     {
-        // --- XỬ LÝ PING UI ---
         int ping = ServerTimeManager.CurrentPing;
         if (pingText != null)
         {
@@ -53,17 +47,16 @@ public class ServerTimeManager : MonoBehaviour
             {
                 pingText.color = Color.green;
             }
-            else if (ping < 200) // 100–199
+            else if (ping < 200)
             {
                 pingText.color = Color.yellow;
             }
-            else // >= 200
+            else
             {
                 pingText.color = Color.red;
             }
         }
 
-        // --- XỬ LÝ FPS ĐỘNG ---
         fpsAccumulator += Time.unscaledDeltaTime;
         fpsFrames++;
 
@@ -76,19 +69,19 @@ public class ServerTimeManager : MonoBehaviour
                 fpsText.text = $"FPS: {Mathf.RoundToInt(currentFps)}";
             }
 
+            // Cập nhật lại logic thời gian làm mới FPS
             if (currentFps >= 60f)
-                currentFpsInterval = 0.1f;
-            else if (currentFps >= 30f)
-                currentFpsInterval = 0.5f;
-            else
                 currentFpsInterval = 1.0f;
+            else if (currentFps >= 30f)
+                currentFpsInterval = 2.0f;
+            else
+                currentFpsInterval = 5.0f;
 
             fpsNextUpdateTime = Time.realtimeSinceStartup + currentFpsInterval;
             fpsAccumulator = 0f;
             fpsFrames = 0;
         }
     }
-
 
     void OnEnable()
     {
@@ -111,12 +104,23 @@ public class ServerTimeManager : MonoBehaviour
     {
         yield return FetchServerTime();
 
+        // Tách riêng luồng gọi Ping mỗi 5 giây
+        StartCoroutine(PingRoutine());
+
         while (true)
         {
             yield return new WaitForSeconds(REFRESH_INTERVAL);
-            yield return FetchServerTime();
-
             SaveController.Instance?.TriggerAutoSave();
+        }
+    }
+
+    // Coroutine cập nhật Ping liên tục mỗi 5 giây
+    private IEnumerator PingRoutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(5.0f);
+            yield return FetchServerTime();
         }
     }
 

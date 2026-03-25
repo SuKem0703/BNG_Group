@@ -192,7 +192,7 @@ public class StorageChestController : MonoBehaviour
 
         int targetSlotIndex = targetSlot.transform.GetSiblingIndex();
         int itemDbId = item.dbID;
-        string chestId = currentActiveChest.chestID;
+        string chestId = currentActiveChest.UniqueID;
         bool isStackable = item.IsStackable;
 
         item.GetComponent<CanvasGroup>().alpha = 0.5f;
@@ -297,13 +297,13 @@ public class StorageChestController : MonoBehaviour
     public void RefreshChestContent()
     {
         if (currentActiveChest == null) return;
-        string requestingId = currentActiveChest.chestID;
+        string requestingId = currentActiveChest.UniqueID;
 
         // Gọi API load lẻ 1 rương (để lấy ID mới nhất sau khi transaction)
         InventoryService.Instance.RequestLoadSingleChest(requestingId, (items) =>
         {
             if (this == null || currentActiveChest == null) return;
-            if (currentActiveChest.chestID != requestingId) return;
+            if (currentActiveChest.UniqueID != requestingId) return;
 
             // items lúc này là List<StorageItemDTO>
             PopulateChestUI(items);

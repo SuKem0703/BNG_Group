@@ -14,18 +14,19 @@ public enum QualityFactorMode
 }
 
 [RequireComponent(typeof(SpriteRenderer), typeof(BoxCollider2D))]
-public class Chest : MonoBehaviour, IInteractable, ITargetableInfo
+public class Chest : AutoIDBehaviour, IInteractable, ITargetableInfo
 {
     [Header("Chest Identity")]
-    [field: SerializeField] public string ChestID { get; private set; }
     public string chestName = "";
     public Sprite chestIcon;
+    public ItemRarity chestRarity = ItemRarity.Common;
 
     [Header("Item Drop Settings")]
     public GameObject itemPrefab;
     public RarityMode rarityMode = RarityMode.Random;
     public ItemRarity fixedRarity = ItemRarity.Common;
     public QualityFactorMode qualityMode = QualityFactorMode.Random;
+    public Vector3 dropOffset = Vector3.down;
 
     [Header("Animation Settings")]
     public Sprite[] openFrames;
@@ -45,11 +46,6 @@ public class Chest : MonoBehaviour, IInteractable, ITargetableInfo
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         boxCol = GetComponent<BoxCollider2D>();
-
-        if (string.IsNullOrEmpty(ChestID))
-        {
-            ChestID = GlobalHelper.GenerateUniqueID(gameObject);
-        }
     }
 
     public bool CanInteract()
@@ -94,7 +90,7 @@ public class Chest : MonoBehaviour, IInteractable, ITargetableInfo
     {
         if (itemPrefab)
         {
-            GameObject droppedItem = Instantiate(itemPrefab, transform.position + Vector3.down, Quaternion.identity);
+            GameObject droppedItem = Instantiate(itemPrefab, transform.position + dropOffset, Quaternion.identity);
 
             Item item = droppedItem.GetComponent<Item>();
             if (item != null)
@@ -146,6 +142,6 @@ public class Chest : MonoBehaviour, IInteractable, ITargetableInfo
 
     public TargetInfoData GetInfo()
     {
-        return new TargetInfoData(chestName, chestIcon, "Mở rương", TargetType.NPC);
+        return new TargetInfoData(chestName, chestIcon, "Mở rương", TargetType.NPC, chestRarity);
     }
 }

@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f2a72aeb33766d42868f6d9de333142, type: 3}
+  m_Name: 1.1_2
+  m_EditorClassIdentifier: Assembly-CSharp::NPCDialogue
+  npcName: Martha
+  npcPortrait: {fileID: 222144225264086075, guid: 546d5a915985c3349a0997bfff98b79e, type: 3}
+  dialogueLines:
+  - "Con h\xE3y \u0111i nh\u1EB7t c\xE0 r\u1ED1t"
+  - "Nh\u1EB7t \u0111\xE3 \u0111\u1EE7 ch\u01B0a"
+  - "Nh\u1EB7t ho\xE0n th\xE0nh"
+  - No More Quest
+  autoProgressLines: 00010101
+  endDialogueLines: 00010101
+  autoProgressDelay: 1.5
+  typingSpeed: 0.05
+  choices:
+  - dialogueIndex: 0
+    choices:
+    - Nhan Quest
+    nextDialogueIndexes: 
+    endDialogues: 01
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 01
+  questInProgressIndex: 1
+  questCompletedIndex: 2
+  noMoreQuestsIndex: 3
+  quest: {fileID: 11400000, guid: 50fd270389fe2cc49acb4214c9a886ee, type: 2}
+  hideWhenInProgress: 0
+  hideWhenCompleted: 0
+  hideWhenHandedIn: 0
+  triggerOnEnter_NotStarted: 0
+  triggerOnEnter_InProgress: 0
+  triggerOnEnter_Completed: 0
+  triggerOnEnter_NoMoreQuests: 0

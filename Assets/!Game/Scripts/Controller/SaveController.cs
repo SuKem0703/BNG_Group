@@ -126,6 +126,11 @@ public class SaveController : MonoBehaviour
             PlayerStatsService.Instance.SyncProfile((success) => { });
         }
 
+        if (FarmController.Instance != null)
+        {
+            FarmController.Instance.FetchFarmDataFromServer();
+        }
+
         bool inventoryLoaded = false;
         if (InventoryService.Instance != null)
         {
@@ -323,7 +328,7 @@ public class SaveController : MonoBehaviour
             currentMageMP = (reason == SaveReason.Death) ? playerStats.finalMageMaxMP : playerStats.mageMP,
             currentStamina = (reason == SaveReason.Death) ? playerStats.finalStamina : playerStats.currentStamina,
 
-            farmData = MergeFarmData(existingFarmData),
+            //farmData = MergeFarmData(existingFarmData),
             //allChestsData = finalStorageData,
             collectedByScene = collectedByScene
         };
@@ -455,7 +460,7 @@ public class SaveController : MonoBehaviour
         {
             ChestSaveData chestSaveData = new ChestSaveData
             {
-                chestID = chest.ChestID,
+                chestID = chest.UniqueID,
                 isOpened = chest.IsOpened,
             };
             chestStates.Add(chestSaveData);
@@ -484,6 +489,8 @@ public class SaveController : MonoBehaviour
         return existingChestStates;
     }
 
+    /*
+
     // Gộp dữ liệu nông trại hiện tại vào dữ liệu tổng từ server
     private FarmData MergeFarmData(FarmData existingFarmData)
     {
@@ -510,6 +517,8 @@ public class SaveController : MonoBehaviour
 
         return existingFarmData;
     }
+
+    */
 
     // Quy trình load dữ liệu từ server
     public IEnumerator LoadRoutine(System.Action<bool> onComplete)
@@ -614,10 +623,14 @@ public class SaveController : MonoBehaviour
             playerStats.currentStamina = saveData.currentStamina;
         }
 
+        /*
+
         if (farmController != null && saveData.farmData != null)
         {
             farmController.LoadFarmData(saveData.farmData);
         }
+
+        */
 
         //LoadStorageChestStates(saveData.allChestsData);
 
@@ -642,7 +655,7 @@ public class SaveController : MonoBehaviour
     {
         foreach (Chest chest in chests)
         {
-            ChestSaveData chestSaveData = chestState.FirstOrDefault(c => c.chestID == chest.ChestID);
+            ChestSaveData chestSaveData = chestState.FirstOrDefault(c => c.chestID == chest.UniqueID);
             if (chestSaveData != null)
             {
                 chest.SetOpened(chestSaveData.isOpened);

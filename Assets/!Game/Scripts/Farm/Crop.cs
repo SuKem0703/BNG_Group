@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Crop : MonoBehaviour, IInteractable, ITargetableInfo
@@ -7,18 +8,11 @@ public class Crop : MonoBehaviour, IInteractable, ITargetableInfo
     public struct StageData
     {
         public Sprite sprite;
-        public float timeToNextStage; // Thời gian cần để lớn lên giai đoạn tiếp theo
+        public float timeToNextStage;
     }
 
-    [Header("Save Data")]
     public int seedItemID;
-
-    [Header("Growth Settings")]
-    // List chứa thông tin từng giai đoạn (Sprite + Thời gian)
     public List<StageData> cropStages;
-
-    [HideInInspector] public float timer = 0f;
-    [HideInInspector] public int stage = 0;
 
     [Header("Harvest Settings")]
     public GameObject harvestItemPrefab;
@@ -28,87 +22,89 @@ public class Crop : MonoBehaviour, IInteractable, ITargetableInfo
     public bool isRegrowable = false;
     public int regrowStage = 0;
 
+    [HideInInspector] public FarmPlot plot;
+
+    public DateTime PlantedAt { get; private set; }
+    public int stage = 0;
+
     private Item _cachedHarvestItemData;
     private SpriteRenderer sr;
 
-    [HideInInspector] public FarmPlot plot;
-
-    private void Start()
+    private void Awake()
     {
         sr = GetComponent<SpriteRenderer>();
-
-        // Cập nhật hiển thị ban đầu
-        if (cropStages != null && stage < cropStages.Count)
-        {
-            sr.sprite = cropStages[stage].sprite;
-        }
-
-        if (harvestItemPrefab != null)
-        {
-            _cachedHarvestItemData = harvestItemPrefab.GetComponent<Item>();
-        }
-        else
-        {
-            Debug.LogError($"Crop '{gameObject.name}' chưa được gán Harvest Item Prefab!");
-        }
+        if (harvestItemPrefab != null) _cachedHarvestItemData = harvestItemPrefab.GetComponent<Item>();
     }
 
     private void Update()
     {
-        // Chỉ chạy timer nếu chưa đến giai đoạn cuối cùng
-        if (stage < cropStages.Count - 1)
+        if (PlantedAt != default && stage < cropStages.Count - 1)
         {
-            timer += Time.deltaTime;
+            CalculateCurrentStage();
+        }
+    }
 
-            // Kiểm tra thời gian dựa trên cấu hình của giai đoạn hiện tại
-            if (timer >= cropStages[stage].timeToNextStage)
+    public void InitializeGrowth(DateTime plantedAt)
+    {
+        this.PlantedAt = plantedAt;
+        CalculateCurrentStage();
+    }
+
+    private void CalculateCurrentStage()
+    {
+        if (cropStages == null || cropStages.Count == 0) return;
+
+        double totalSecondsElapsed = (ServerTimeManager.GetCurrentTime() - PlantedAt).TotalSeconds;
+
+        double accumulatedTime = 0;
+        int newStage = 0;
+
+        for (int i = 0; i < cropStages.Count - 1; i++)
+        {
+            accumulatedTime += cropStages[i].timeToNextStage;
+            if (totalSecondsElapsed >= accumulatedTime)
             {
-                timer = 0f;
-                stage++;
-                UpdateSprite();
+                newStage = i + 1;
             }
+            else
+            {
+                break;
+            }
+        }
+
+        // Cập nhật lại nếu stage thay đổi HOẶC ảnh hiện tại chưa khớp với cấu hình
+        if (newStage != stage || sr.sprite != cropStages[newStage].sprite)
+        {
+            stage = newStage;
+            UpdateSprite();
         }
     }
 
     private void UpdateSprite()
     {
         if (sr != null && stage < cropStages.Count)
-        {
             sr.sprite = cropStages[stage].sprite;
-        }
     }
 
-    // Cây sẵn sàng khi ở giai đoạn cuối cùng của List
-    public bool IsReady() => stage == cropStages.Count - 1;
+    public bool IsReady() => stage >= cropStages.Count - 1;
 
-    public void RestoreState(int loadedStage, float loadedTimer)
+    public float GetRegrowOffsetSeconds()
     {
-        this.stage = loadedStage;
-        this.timer = loadedTimer;
-
-        if (sr == null) sr = GetComponent<SpriteRenderer>();
-        UpdateSprite();
+        float offset = 0f;
+        for (int i = 0; i < regrowStage; i++)
+        {
+            offset += cropStages[i].timeToNextStage;
+        }
+        return offset;
     }
 
     public void Regrow()
     {
-        // Quay về giai đoạn regrowStage
-        if (regrowStage < 0 || regrowStage >= cropStages.Count - 1)
-        {
-            stage = 0;
-        }
-        else
-        {
-            stage = regrowStage;
-        }
-
-        timer = 0f;
-        UpdateSprite();
+        float offset = GetRegrowOffsetSeconds();
+        PlantedAt = ServerTimeManager.GetCurrentTime().AddSeconds(-offset);
+        CalculateCurrentStage();
     }
 
-    // ============================
-    // Interactions
-    // ============================
     public void Interact()
     {
         if (!IsReady()) return;
@@ -119,25 +115,9 @@ public class Crop : MonoBehaviour, IInteractable, ITargetableInfo
 
     public TargetInfoData GetInfo()
     {
-        if (_cachedHarvestItemData == null)
-            return new TargetInfoData("Cây trồng (Lỗi Data)", null, "...", TargetType.Item);
+        if (_cachedHarvestItemData == null) return new TargetInfoData("Lỗi", null, "...", TargetType.Item);
+        if (IsReady()) return new TargetInfoData(_cachedHarvestItemData.Name, _cachedHarvestItemData.icon, "Thu hoạch", TargetType.Item, _cachedHarvestItemData.rarity);
 
-        if (IsReady())
-        {
-            return new TargetInfoData(
-                _cachedHarvestItemData.Name,
-                _cachedHarvestItemData.icon,
-                "Thu hoạch",
-                TargetType.Item,
-                _cachedHarvestItemData.rarity
-            );
-        }
-
-        return new TargetInfoData(
-            _cachedHarvestItemData.Name,
-            _cachedHarvestItemData.icon,
-            "Đang lớn...",
-            TargetType.Item
-        );
+        return new TargetInfoData(_cachedHarvestItemData.Name, _cachedHarvestItemData.icon, "Đang lớn...", TargetType.Item);
     }
 }

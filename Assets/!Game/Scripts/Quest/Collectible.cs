@@ -2,23 +2,13 @@
 using UnityEngine.SceneManagement;
 using static NPC;
 
-public class Collectible : MonoBehaviour
+public class Collectible : AutoIDBehaviour
 {
     [Header("Quest Condition (Để trống nếu là Item thường)")]
     public string requiredQuestID;
     public QuestState requiredState;
 
-    [Header("Save Data Settings")]
-    [Tooltip("ID duy nhất để lưu game. Nếu để trống sẽ tự sinh theo toạ độ.")]
-    public string uniqueID;
-
     private bool isCollected = false;
-
-    private void Awake()
-    {
-        if (string.IsNullOrEmpty(uniqueID))
-            uniqueID = GlobalHelper.GenerateUniqueID(gameObject);
-    }
 
     private void OnEnable()
     {
@@ -44,7 +34,7 @@ public class Collectible : MonoBehaviour
     private void CheckSaveData()
     {
         var save = SaveController.Instance;
-        if (save != null && save.IsCollected(SceneManager.GetActiveScene().name, uniqueID))
+        if (save != null && save.IsCollected(SceneManager.GetActiveScene().name, UniqueID))
         {
             isCollected = true;
             Destroy(gameObject);
@@ -59,9 +49,9 @@ public class Collectible : MonoBehaviour
             return;
         }
 
-        if (SaveController.Instance != null && !string.IsNullOrEmpty(uniqueID))
+        if (SaveController.Instance != null && !string.IsNullOrEmpty(UniqueID))
         {
-            if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, uniqueID))
+            if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, UniqueID))
             {
                 Destroy(gameObject);
                 return;
@@ -104,10 +94,7 @@ public class Collectible : MonoBehaviour
 
     public void OnPickedUp()
     {
-        if (string.IsNullOrEmpty(uniqueID))
-            uniqueID = GlobalHelper.GenerateUniqueID(gameObject);
-
-        SaveController.Instance?.MarkCollected(SceneManager.GetActiveScene().name, uniqueID);
+        SaveController.Instance?.MarkCollected(SceneManager.GetActiveScene().name, UniqueID);
 
         SaveController.Instance?.TriggerAutoSave();
 

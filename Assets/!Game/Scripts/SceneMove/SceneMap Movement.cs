@@ -97,27 +97,11 @@ public class SceneMapMove : MonoBehaviour
             return;
         }
 
-        // --- XỬ LÝ DỊCH CHUYỂN NỘI BỘ (CÙNG SCENE) ---
         bool isInternalMove = string.IsNullOrEmpty(sceneName) || sceneName == "-1";
 
         if (isInternalMove)
         {
-            other.transform.position = playerPosition;
-
-            if (newMapBoundary != null)
-            {
-                var confiner = FindFirstObjectByType<CinemachineConfiner2D>();
-                if (confiner != null)
-                {
-                    confiner.BoundingShape2D = newMapBoundary;
-                    confiner.InvalidateBoundingShapeCache();
-                }
-            }
-
-            var cam = FindFirstObjectByType<CinemachineCamera>();
-            if (cam != null) cam.PreviousStateIsValid = false;
-
-            Debug.Log($"[SceneMapMove] Đã dịch chuyển nội bộ tới {playerPosition}");
+            StartCoroutine(InternalMoveRoutine(other.transform));
             return;
         }
 
@@ -152,7 +136,59 @@ public class SceneMapMove : MonoBehaviour
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 
-    /// Xử lý khi bị chặn bởi Logic Game
+    private IEnumerator InternalMoveRoutine(Transform playerTransform)
+    {
+        GameStateManager.StartLoading();
+
+        GameObject faderObj = new GameObject("InternalMoveFader");
+        Canvas canvas = faderObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 9999;
+
+        UnityEngine.UI.Image fadeImage = faderObj.AddComponent<UnityEngine.UI.Image>();
+        fadeImage.color = new Color(0, 0, 0, 0);
+
+        float fadeDuration = 0.5f;
+        float elapsed = 0f;
+
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            fadeImage.color = new Color(0, 0, 0, Mathf.Clamp01(elapsed / fadeDuration));
+            yield return null;
+        }
+        fadeImage.color = Color.black;
+
+        playerTransform.position = playerPosition;
+
+        if (newMapBoundary != null)
+        {
+            var confiner = FindFirstObjectByType<CinemachineConfiner2D>();
+            if (confiner != null)
+            {
+                confiner.BoundingShape2D = newMapBoundary;
+                confiner.InvalidateBoundingShapeCache();
+            }
+        }
+
+        var cam = FindFirstObjectByType<CinemachineCamera>();
+        if (cam != null) cam.PreviousStateIsValid = false;
+
+        Debug.Log($"[SceneMapMove] Đã dịch chuyển nội bộ tới {playerPosition}");
+
+        elapsed = 0f;
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            fadeImage.color = new Color(0, 0, 0, 1f - Mathf.Clamp01(elapsed / fadeDuration));
+            yield return null;
+        }
+
+        Destroy(faderObj);
+
+        GameStateManager.EndLoading();
+    }
+
     private void HandleBlockedEntry(string debugReason)
     {
         if (CinemachineShaker.Instance != null)
@@ -164,7 +200,6 @@ public class SceneMapMove : MonoBehaviour
         }
     }
 
-    // Helper tĩnh để lấy text từ LocalizationManager
     private string GetText(string key)
     {
         if (LocalizationManager.Instance != null)

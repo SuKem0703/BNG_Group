@@ -1,20 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class StorageChest : MonoBehaviour, IInteractable
+public class StorageChest : AutoIDBehaviour, IInteractable
 {
-    [Header("Settings")]
-    public string chestID;
-
     private List<InventoryService.StorageItemDTO> cachedItems = new List<InventoryService.StorageItemDTO>();
 
-    void Awake()
-    {
-        if (string.IsNullOrEmpty(chestID))
-        {
-            chestID = GlobalHelper.GenerateUniqueID(gameObject);
-        }
-    }
     public void ClearCache()
     {
         cachedItems.Clear();
@@ -41,6 +31,5 @@ public class StorageChest : MonoBehaviour, IInteractable
     {
         if (!GameStateManager.CanProcessInput()) return false;
         return true;
-        //return GameFlags.HasInteractedWithStorageChest();
     }
 }

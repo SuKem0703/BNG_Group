@@ -221,7 +221,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         // A. Xử lý Equip/Unequip
         if (dropSlot.isEquipmentSlot)
         {
-            // Đeo vào -> Gọi Equip TRUE
             UpdateAllEquipmentItems(draggedItem);
             draggedItem.isEquipped = true;
             InventoryService.Instance.RequestEquip(draggedItem.dbID, true);
@@ -442,10 +441,12 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 Item item = slot.currentItem.GetComponent<Item>();
                 if (item != null
                     && item.itemType == draggedItem.itemType
+                    && item.isEquipped
                     && item.classRestriction == draggedItem.classRestriction
                     && item.equipSlot == draggedItem.equipSlot)
                 {
                     item.isEquipped = false;
+                    InventoryService.Instance.RequestEquip(item.dbID, false);
                     Debug.Log($"Đã bỏ trang bị: {item.Name}");
                 }
             }

@@ -28,11 +28,11 @@ public class StorageMapLoader : MonoBehaviour
         Dictionary<string, StorageChest> chestMap = new Dictionary<string, StorageChest>();
         foreach (var chest in allChests)
         {
-            if (!string.IsNullOrEmpty(chest.chestID))
+            if (!string.IsNullOrEmpty(chest.UniqueID))
             {
                 chest.ClearCache(); // Xóa cache cũ
-                if (!chestMap.ContainsKey(chest.chestID))
-                    chestMap.Add(chest.chestID, chest);
+                if (!chestMap.ContainsKey(chest.UniqueID))
+                    chestMap.Add(chest.UniqueID, chest);
             }
         }
 
