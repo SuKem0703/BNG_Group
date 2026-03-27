@@ -218,7 +218,7 @@ public class MageEquipmentPanel : MonoBehaviour
         foreach (Transform child in scrollViewGrid.transform)
         {
             Item item = child.GetComponent<Item>();
-            if (item != null && item.ID == itemID)
+            if (item != null && item.ID == itemID && item.isEquipped)
             {
                 return item;
             }

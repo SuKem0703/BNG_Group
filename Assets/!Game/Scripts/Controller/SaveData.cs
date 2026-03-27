@@ -12,8 +12,8 @@ public class SaveData
     public string checkpointSceneName;
 
     public int backPackSlotCount;
-    public List<InventorySaveData> inventorySaveData;
-    public List<InventorySaveData> hotbarSaveData;
+    // public List<InventorySaveData> inventorySaveData;
+    // public List<InventorySaveData> hotbarSaveData;
     public List<ChestSaveData> chestSaveData;
     public List<QuestProgress> questProgressData;
     public List<string> handInQuestIDs;
@@ -24,9 +24,13 @@ public class SaveData
     public int currentMageMP;
     public float currentStamina;
 
+    /*
+     
     public List<EquippedSaveData> knightEquipSaveData;
     public List<EquippedSaveData> mageEquipSaveData;
     public List<EquippedSaveData> shareEquipSaveData;
+
+    */
 
     public FarmData farmData;
 

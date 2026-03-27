@@ -25,7 +25,13 @@ public class PlayerStatsService : MonoBehaviour
     }
 
     [System.Serializable]
-    public class DistributeRequest { public string statType; public int amount; }
+    public class DistributeRequest
+    {
+        public int str;
+        public int dex;
+        public int intStat;
+        public int con;
+    }
 
     public void SyncProfile(System.Action<bool> onComplete = null)
     {
@@ -48,13 +54,10 @@ public class PlayerStatsService : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             string json = request.downloadHandler.text.Replace("\"int\":", "\"intStat\":");
-
             var data = JsonUtility.FromJson<ServerUserStat>(json);
 
             if (PlayerStats.Instance != null)
-            {
                 PlayerStats.Instance.SyncStatsFromServer(data);
-            }
             onComplete?.Invoke(true);
         }
         else
@@ -64,17 +67,25 @@ public class PlayerStatsService : MonoBehaviour
         }
     }
 
-    public void DistributePoint(string statType, int amount, System.Action<bool> onComplete)
+    public void DistributePoints(int addStr, int addDex, int addInt, int addCon, System.Action<bool> onComplete)
     {
-        StartCoroutine(DistributeRoutine(statType, amount, onComplete));
+        StartCoroutine(DistributeRoutine(addStr, addDex, addInt, addCon, onComplete));
     }
 
-    private IEnumerator DistributeRoutine(string statType, int amount, System.Action<bool> onComplete)
+    private IEnumerator DistributeRoutine(int addStr, int addDex, int addInt, int addCon, System.Action<bool> onComplete)
     {
         string url = NetworkConfig.GetUrl("api/PlayerStats/distribute");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
-        string json = JsonUtility.ToJson(new DistributeRequest { statType = statType, amount = amount });
+        DistributeRequest reqBody = new DistributeRequest
+        {
+            str = addStr,
+            dex = addDex,
+            intStat = addInt,
+            con = addCon
+        };
+
+        string json = JsonUtility.ToJson(reqBody);
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);

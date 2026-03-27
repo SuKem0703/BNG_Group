@@ -36,6 +36,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4369468331323731034
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -81,6 +82,7 @@ SpriteRenderer:
   m_SortingLayerID: -1831009817
   m_SortingLayer: 3
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -1483848513177272139, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -90,7 +92,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1385748091153698923
 MonoBehaviour:
@@ -105,16 +106,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Crop
   seedItemID: 1
-  growTime: 6
-  growStages:
-  - {fileID: -1483848513177272139, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
-  - {fileID: 8223153036986676925, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
-  - {fileID: 4030886375324548428, guid: ec7a9a8d253e6dd46839174cde7a3fdf, type: 3}
-  timer: 0
-  stage: 0
+  cropStages: []
   harvestItemPrefab: {fileID: 6731583872353999336, guid: 52fca917bd9812a4cbfaaa12e355cb08, type: 3}
   harvestAmount: 1
+  isRegrowable: 0
+  regrowStage: 0
   plot: {fileID: 0}
+  stage: 0
 --- !u!58 &8268784225592187116
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -150,4 +148,4 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
+  m_Radius: 0.75

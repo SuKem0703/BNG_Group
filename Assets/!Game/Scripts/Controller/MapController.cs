@@ -7,6 +7,18 @@ public enum MapType
     Dungeon
 }
 
+public enum MapEnvironment
+{
+    City,
+    Indoor,
+    Outdoor,
+    Dungeon,
+    Village,
+    Forest,
+    Cave,
+    Castle
+}
+
 public class MapController : MonoBehaviour
 {
     public static MapController Instance { get; private set; }
@@ -14,6 +26,7 @@ public class MapController : MonoBehaviour
     [Header("Cấu hình Map")]
     public string mapName = "";
     [SerializeField] private MapType mapType = MapType.SafeZone;
+    [SerializeField] private MapEnvironment mapEnvironment = MapEnvironment.Outdoor;
     public AudioClip bgmClip;
     public bool IsCutsceneMode = false;
 

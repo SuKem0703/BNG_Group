@@ -161,37 +161,36 @@ public class PotentialStatsDisplay : MonoBehaviour
     {
         if (!isDirty) return;
 
-        foreach (var kvp in pendingPoints)
-        {
-            string stat = kvp.Key;
-            int amount = kvp.Value;
+        // Lấy toàn bộ số lượng điểm đã cộng tạm
+        int addStr = pendingPoints["STR"];
+        int addDex = pendingPoints["DEX"];
+        int addCon = pendingPoints["CON"];
+        int addInt = pendingPoints["INT"];
 
-            if (amount > 0)
-            {
-                // Disable nút để tránh spam lúc đang gửi (Optional)
-                // SetInteractable(false); 
-
-                PlayerStatsService.Instance.DistributePoint(stat, amount, (success) =>
-                {
-                    if (success)
-                    {
-
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Lỗi đồng bộ! Hoàn trả lại điểm.");
-                        InitializeLocalValues();
-                    }
-                });
-            }
-        }
-
-        // Reset trạng thái
+        // Reset trạng thái VÀO LÚC NÀY để ngăn spam
         pendingPoints["STR"] = 0;
         pendingPoints["DEX"] = 0;
         pendingPoints["CON"] = 0;
         pendingPoints["INT"] = 0;
         isDirty = false;
+
+        // Chỉ gửi nếu thực sự có cộng ít nhất 1 điểm
+        if (addStr > 0 || addDex > 0 || addCon > 0 || addInt > 0)
+        {
+            // Gọi API mới với 4 chỉ số truyền vào cùng lúc
+            PlayerStatsService.Instance.DistributePoints(addStr, addDex, addInt, addCon, (success) =>
+            {
+                if (success)
+                {
+                    // Thành công, UI đã được cập nhật từ Server Response
+                }
+                else
+                {
+                    Debug.LogWarning("Lỗi đồng bộ! Hoàn trả lại điểm.");
+                    InitializeLocalValues();
+                }
+            });
+        }
     }
 
     // --- LOGIC RESET ---

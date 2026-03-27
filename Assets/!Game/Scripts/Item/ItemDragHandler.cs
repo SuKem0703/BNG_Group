@@ -31,6 +31,12 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (!AntiSpam.CanPerformAction())
+        {
+            eventData.pointerDrag = null;
+            return;
+        }
+
         Slot parentSlot = transform.parent.GetComponent<Slot>();
         if (parentSlot != null && (parentSlot.isEquipmentSlot || parentSlot.isShopSlot)) return;
 
@@ -180,7 +186,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 draggedItem.dbID,
                 GetGlobalSlotIndex(dropSlot),
                 isStackable,
-                (success) => 
+                (success) =>
                 {
                     if (success)
                     {
@@ -205,6 +211,15 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             dropSlot.currentItem.transform.SetParent(originalSlot.transform);
             originalSlot.currentItem = dropSlot.currentItem;
             dropSlot.currentItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+            // ĐẢM BẢO CẬP NHẬT ROOT CHO ITEM BỊ TRÁO RA NGOÀI (SWAP)
+            Item targetItemComp = dropSlot.currentItem.GetComponent<Item>();
+            if (targetItemComp != null)
+            {
+                targetItemComp.isEquipped = originalSlot.isEquipmentSlot;
+                if (targetItemComp.sourceItem != null)
+                    targetItemComp.sourceItem.isEquipped = targetItemComp.isEquipped;
+            }
         }
         else
         {
@@ -222,7 +237,12 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (dropSlot.isEquipmentSlot)
         {
             UpdateAllEquipmentItems(draggedItem);
+
             draggedItem.isEquipped = true;
+            // Cập nhật item gốc trong túi đồ
+            if (draggedItem.sourceItem != null)
+                draggedItem.sourceItem.isEquipped = true;
+
             InventoryService.Instance.RequestEquip(draggedItem.dbID, true);
             playerStats.ApplyEquippedItems();
         }
@@ -230,6 +250,10 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             // Tháo ra -> Gọi Equip FALSE
             draggedItem.isEquipped = false;
+            // Cập nhật item gốc trong túi đồ
+            if (draggedItem.sourceItem != null)
+                draggedItem.sourceItem.isEquipped = false;
+
             InventoryService.Instance.RequestEquip(draggedItem.dbID, false);
             playerStats.ApplyEquippedItems();
         }
@@ -310,31 +334,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             currentSelectionBox.SetActive(false);
         }
     }
-    // ========== CONFIRMATION & NOTIFY UI ==========
-    //private void ShowDropErrorMessage(string message)
-    //{
-    //    GameObject notifyPrefab = LoadResourceManager.Instance.NotifyUIPrefab;
 
-    //    if (notifyPrefab == null)
-    //    {
-    //        Debug.LogError("NotifyUIPrefab not loaded in LoadResourceManager. Không thể hiển thị thông báo. Canceling drop.");
-    //        SnapBack();
-    //        return;
-    //    }
-
-    //    GameObject notifyUIObj = Instantiate(notifyPrefab);
-    //    NotifyUIController notifyUI = notifyUIObj.GetComponent<NotifyUIController>();
-
-    //    if (notifyUI == null)
-    //    {
-    //        Debug.LogError("Prefab NotifyUICanvas thiếu script NotifyUIController!");
-    //        Destroy(notifyUIObj);
-    //        SnapBack();
-    //        return;
-    //    }
-
-    //    notifyUI.Show(message);
-    //}
     private void RequestDropItemConfirmation(Slot slotToEmpty, Item itemToDrop, Vector2 dragEndMousePosition)
     {
         GameObject confirmPrefab = LoadResourceManager.Instance.ConfirmUIPrefab;
@@ -386,36 +386,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             SnapBack();
         }
     }
-    //private bool IsItemNeededForActiveQuest(int itemID)
-    //{
-    //    if (QuestController.Instance == null) return false;
 
-    //    // Duyệt qua tất cả các Quest đang kích hoạt (active)
-    //    foreach (QuestProgress quest in QuestController.Instance.activeQuests)
-    //    {
-    //        foreach (QuestObject obj in quest.questObjects)
-    //        {
-    //            // Nếu nhiệm vụ là CollectItem
-    //            if (obj.objectType == ObjectType.CollectItem)
-    //            {
-    //                // Parse ID từ string sang int để so sánh
-    //                if (int.TryParse(obj.objectID, out int questItemID))
-    //                {
-    //                    if (questItemID == itemID)
-    //                    {
-    //                        // Nếu tìm thấy item này trong 1 quest đang active
-    //                        // Bạn có thể check thêm điều kiện obj.IsCompleted nếu muốn cho phép vứt khi đã gom đủ
-    //                        // Nhưng an toàn nhất là không cho vứt khi chưa trả quest.
-    //                        return true;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //    return false;
-    //}
-
-    // ========== HELPER METHODS ==========
     private void SnapBack()
     {
         transform.SetParent(originalParent);
@@ -446,6 +417,9 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                     && item.equipSlot == draggedItem.equipSlot)
                 {
                     item.isEquipped = false;
+                    if (item.sourceItem != null)
+                        item.sourceItem.isEquipped = false;
+
                     InventoryService.Instance.RequestEquip(item.dbID, false);
                     Debug.Log($"Đã bỏ trang bị: {item.Name}");
                 }
@@ -516,6 +490,8 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (!AntiSpam.CanPerformAction()) return;
+
         if (Time.time - lastClickTime < doubleClickThreshold)
         {
             if (StorageChestController.Instance != null &&
@@ -541,43 +517,4 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         lastClickTime = Time.time;
     }
-
-    //public void OnPointerClick(PointerEventData eventData)
-    //{
-    //    if (eventData.button == PointerEventData.InputButton.Right)
-    //    {
-    //        DropItem(originalSlot);
-    //    }
-    //}
-    //private void SplitStack()
-    //{
-    //    if (isFromShop) return; // 🚫 Không cho chia nếu là từ shop
-
-    //    Item item = GetComponent<Item>();
-    //    if (item == null || item.quantity <= 1 || item.itemType == ItemType.Equipment) return;
-
-    //    int splitAmount = item.quantity / 2;
-    //    if (splitAmount <= 0) return;
-
-    //    item.RemoveFromStack(splitAmount);
-    //    GameObject newItem = item.CloneItem(splitAmount);
-
-    //    if (inventoryController == null || newItem == null) return;
-
-    //    foreach (Transform slotTransform in inventoryController.inventoryPanel.transform)
-    //    {
-    //        Slot slot = slotTransform.GetComponent<Slot>();
-    //        if (slot != null && slot.currentItem == null)
-    //        {
-    //            slot.currentItem = newItem;
-    //            newItem.transform.SetParent(slot.transform);
-    //            newItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-    //            return;
-    //        }
-    //    }
-
-    //    //Không có Slot trống thì không Stack
-    //    item.AddToStack(splitAmount);
-    //    Destroy(newItem);
-    //}
 }
