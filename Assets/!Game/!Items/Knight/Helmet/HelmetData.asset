@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be9f6c50889fade4c991c91e4c39d786, type: 3}
+  m_Name: HelmetData
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentDatabase
+  dataRows:
+  - itemId: 301
+    itemName: Ki?m g?
+    reqLevel: 1
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 2
+    value2: 2
+    value3: 10
+  - itemId: 302
+    itemName: Ki?m g?
+    reqLevel: 20
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 7
+    value2: 7
+    value3: 35
+  - itemId: 303
+    itemName: Ki?m g?
+    reqLevel: 40
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 16
+    value2: 16
+    value3: 80
+  - itemId: 304
+    itemName: Ki?m g?
+    reqLevel: 60
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 30
+    value2: 28
+    value3: 150
+  - itemId: 305
+    itemName: Ki?m g?
+    reqLevel: 85
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 50
+    value2: 45
+    value3: 250
+  - itemId: 306
+    itemName: Ki?m g?
+    reqLevel: 110
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 80
+    value2: 70
+    value3: 400
+  - itemId: 307
+    itemName: Ki?m g?
+    reqLevel: 135
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 120
+    value2: 105
+    value3: 650
+  - itemId: 308
+    itemName: Ki?m g?
+    reqLevel: 160
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 170
+    value2: 150
+    value3: 950
+  - itemId: 309
+    itemName: Ki?m g?
+    reqLevel: 185
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 240
+    value2: 210
+    value3: 1400
+  - itemId: 310
+    itemName: Ki?m g?
+    reqLevel: 200
+    classRestriction: 1
+    equipSlot: 3
+    statGuide: '1: DEF | 2: CON | 3: HP (Knight)'
+    value1: 320
+    value2: 280
+    value3: 1800

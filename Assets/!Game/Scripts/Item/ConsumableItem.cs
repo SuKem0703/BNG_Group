@@ -2,6 +2,9 @@
 
 public class ConsumableItem : Item
 {
+    public override ItemType ItemType => ItemType.Consumable;
+    public override bool IsStackable => true;
+
     [Header("Consumable Effect")]
     [Tooltip("ID phải khớp với Effect.cs, ví dụ: 'HEAL_INSTANT'")]
     public string effectID;
@@ -18,10 +21,10 @@ public class ConsumableItem : Item
 
     private PlayerStats playerStats;
 
-    private new void Awake()
+    protected override void Awake()
     {
         base.Awake();
-        itemType = ItemType.Consumable;
+
         playerStats = FindFirstObjectByType<PlayerStats>();
         if (playerStats == null)
             Debug.LogError("ConsumableItem: Không tìm thấy PlayerStats trong Scene!");
@@ -82,6 +85,7 @@ public class ConsumableItem : Item
             InventoryController.Instance.ScheduleConsumableSync(this.dbID, this.quantity);
             InventoryController.Instance.ReBuildItemCounts();
         }
+
         if (quantity <= 0)
         {
             Slot parentSlot = GetComponentInParent<Slot>();

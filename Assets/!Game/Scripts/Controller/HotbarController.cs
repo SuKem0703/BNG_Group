@@ -64,13 +64,26 @@ public class HotbarController : MonoBehaviour
         if (slot.currentItem != null)
         {
             Item item = slot.currentItem.GetComponent<Item>();
-            if (item != null && item.itemType == ItemType.Consumable)
+
+            if (item is ConsumableItem consumable)
             {
-                item.UseItem();
-                if (item.quantity <= 0)
+                if (consumable.dbID == 0)
                 {
+                    GameNotify.Show("Vật phẩm đang đồng bộ, vui lòng chờ!");
+                    return;
+                }
+
+                consumable.UseItem();
+
+                if (consumable.quantity <= 0)
+                {
+                    InventoryService.Instance.RequestRemoveItem(consumable.dbID);
                     Destroy(slot.currentItem);
                     slot.currentItem = null;
+                }
+                else
+                {
+                    InventoryService.Instance.RequestUpdateQuantity(consumable.dbID, consumable.quantity);
                 }
             }
         }

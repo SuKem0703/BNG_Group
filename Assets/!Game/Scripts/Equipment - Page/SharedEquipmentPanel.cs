@@ -32,8 +32,8 @@ public class SharedEquipmentPanel : MonoBehaviour
         if (Necklace == null) Necklace = GameObject.Find("Necklace");
 
         scrollViewGrid ??= GameObject.Find("EquipmentList")?.GetComponent<GridLayoutGroup>();
-
     }
+
     public void RefreshEquipmentDisplay(ClassRestriction classRestriction)
     {
         if (itemDictionary == null) return;
@@ -43,15 +43,14 @@ public class SharedEquipmentPanel : MonoBehaviour
 
         foreach (Item itemPrefab in itemDictionary.itemPrefabs)
         {
-            if (itemPrefab == null) continue;
-            if (itemPrefab.isEquipped) continue;
+            if (itemPrefab is not EquipmentItem equipPrefab) continue;
+            if (equipPrefab.isEquipped) continue;
 
-            // Chỉ cho phép item dùng chung hoặc item thuộc class đang xét
-            if (itemPrefab.classRestriction != ClassRestriction.None &&
-                itemPrefab.classRestriction != classRestriction)
+            if (equipPrefab.classRestriction != ClassRestriction.None &&
+                equipPrefab.classRestriction != classRestriction)
                 continue;
 
-            GameObject targetSlot = GetAvailableSlot(itemPrefab.equipSlot);
+            GameObject targetSlot = GetAvailableSlot(equipPrefab.equipSlot);
             if (targetSlot == null) continue;
 
             Item equippedItem = Instantiate(itemPrefab.gameObject, targetSlot.transform).GetComponent<Item>();
@@ -59,8 +58,12 @@ public class SharedEquipmentPanel : MonoBehaviour
 
             equippedItem.quantity = 1;
             equippedItem.UpdateQuantityDisplay();
-            equippedItem.isEquipped = true;
-            equippedItem.sourceItem = itemPrefab;
+
+            if (equippedItem is EquipmentItem eItem)
+            {
+                eItem.isEquipped = true;
+                eItem.sourceItem = itemPrefab;
+            }
 
             Slot slotComponent = targetSlot.GetComponent<Slot>();
             if (slotComponent != null)
@@ -107,23 +110,20 @@ public class SharedEquipmentPanel : MonoBehaviour
 
     private void AddSlotData(GameObject slotGO, int slotIndex, List<EquippedSaveData> list)
     {
-        if (slotGO == null)
-        {
-            Debug.LogWarning($"[SharedEquipmentPanel] Slot {slotIndex} bị null. Không thể lưu. Hãy gán nó trong Inspector.");
-            return;
-        }
+        if (slotGO == null) return;
 
         if (slotGO != null && slotGO.transform.childCount > 0)
         {
             Item item = slotGO.transform.GetChild(0).GetComponent<Item>();
             if (item != null)
             {
+                bool equippedStatus = item is EquipmentItem eq && eq.isEquipped;
                 list.Add(new EquippedSaveData
                 {
                     itemID = item.ID,
                     slotIndex = slotIndex,
                     quantity = item.quantity,
-                    isEquipped = item.isEquipped,
+                    isEquipped = equippedStatus,
                     rarity = item.rarity,
                     qualityFactor = item.qualityFactor,
                     sourceItemID = item.sourceItem != null ? item.sourceItem.ID : -1
@@ -136,6 +136,8 @@ public class SharedEquipmentPanel : MonoBehaviour
     {
         foreach (var slot in GetAllSlots())
             ClearSlot(slot);
+
+        if (savedData == null) return;
 
         foreach (EquippedSaveData data in savedData)
         {
@@ -152,16 +154,21 @@ public class SharedEquipmentPanel : MonoBehaviour
             if (itemComponent != null)
             {
                 itemComponent.quantity = data.quantity;
-                itemComponent.isEquipped = data.isEquipped;
                 itemComponent.rarity = data.rarity;
                 itemComponent.qualityFactor = data.qualityFactor;
                 itemComponent.UpdateQuantityDisplay();
 
-                Item sourceItemInInventory = FindItemInInventory(itemComponent.ID);
-                if (sourceItemInInventory != null)
+                if (itemComponent is EquipmentItem equipComp)
                 {
-                    itemComponent.sourceItem = sourceItemInInventory;
-                    sourceItemInInventory.isEquipped = true;
+                    equipComp.isEquipped = data.isEquipped;
+
+                    Item sourceItemInInventory = FindItemInInventory(itemComponent.ID);
+                    if (sourceItemInInventory != null)
+                    {
+                        equipComp.sourceItem = sourceItemInInventory;
+                        if (sourceItemInInventory is EquipmentItem sourceEq)
+                            sourceEq.isEquipped = true;
+                    }
                 }
             }
 
@@ -181,10 +188,9 @@ public class SharedEquipmentPanel : MonoBehaviour
         foreach (Transform child in scrollViewGrid.transform)
         {
             Item item = child.GetComponent<Item>();
-            if (item != null && item.ID == itemID && item.isEquipped)
+            if (item != null && item.ID == itemID && item is EquipmentItem eq && eq.isEquipped)
                 return item;
         }
-
         return null;
     }
 
@@ -196,9 +202,6 @@ public class SharedEquipmentPanel : MonoBehaviour
 
     private GameObject[] GetAllSlots()
     {
-        return new GameObject[]
-        {
-            Legs, Boots, Gloves, Belt, Ring, Necklace
-        };
+        return new GameObject[] { Legs, Boots, Gloves, Belt, Ring, Necklace };
     }
 }

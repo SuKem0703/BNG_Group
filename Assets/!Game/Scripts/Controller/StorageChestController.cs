@@ -185,7 +185,14 @@ public class StorageChestController : MonoBehaviour
     {
         if (item == null) return;
         if (item.dbID == 0) { GameNotify.Show("Lỗi dữ liệu item!"); return; }
-        if (item.itemType == ItemType.QuestItem || item.isEquipped) { GameNotify.Show("Không thể cất!"); return; }
+
+        bool isEquipped = item is EquipmentItem equip && equip.isEquipped;
+
+        if (item.ItemType == ItemType.QuestItem || isEquipped)
+        {
+            GameNotify.Show("Không thể cất!");
+            return;
+        }
 
         Slot targetSlot = FindEmptySlot(storageChestPage.transform);
         if (targetSlot == null) { GameNotify.Show("Rương đầy!"); return; }
@@ -205,7 +212,6 @@ public class StorageChestController : MonoBehaviour
                 if (item != null && item.gameObject != null) Destroy(item.gameObject);
                 if (InventoryController.Instance != null) InventoryController.Instance.RefreshInventory();
 
-                // Refresh lại rương
                 RefreshChestContent();
             }
             else
@@ -255,12 +261,16 @@ public class StorageChestController : MonoBehaviour
 
                 Item item = itemObj.GetComponent<Item>();
 
-                // --- QUAN TRỌNG: Mapping dữ liệu mới ---
-                item.dbID = data.id; // Đây là ID của bảng StorageItems
+                item.dbID = data.id;
                 item.quantity = data.quantity;
                 item.rarity = (ItemRarity)data.rarity;
                 item.qualityFactor = data.qualityFactor;
-                item.isEquipped = false;
+
+                if (item is EquipmentItem equipItem)
+                {
+                    equipItem.isEquipped = false;
+                }
+
                 item.UpdateQuantityDisplay();
 
                 slot.currentItem = itemObj;

@@ -42,22 +42,29 @@ public class RewardController : MonoBehaviour
         {
             GameObject itemInstance = Instantiate(itemPrefab);
             Item item = itemInstance.GetComponent<Item>();
-            
-            if (item.itemType == ItemType.Equipment)
+
+            if (item is EquipmentItem equip)
             {
-                item.rarity = ItemGenerationHelper.GetRandomRarity();
-                item.qualityFactor = ItemGenerationHelper.GetWeightedQualityFactor();
+                equip.rarity = ItemGenerationHelper.GetRandomRarity();
+                equip.qualityFactor = ItemGenerationHelper.GetWeightedQualityFactor();
             }
 
             if (!InventoryController.Instance.AddItem(itemInstance))
             {
                 GameObject dropItem = Instantiate(itemPrefab, transform.position + Vector3.down, Quaternion.identity);
-                dropItem.GetComponent<BounceEffect>().StartBounce();
+
+                if (dropItem.GetComponent<Item>() is EquipmentItem dropEquip && item is EquipmentItem sourceEquip)
+                {
+                    dropEquip.rarity = sourceEquip.rarity;
+                    dropEquip.qualityFactor = sourceEquip.qualityFactor;
+                }
+
+                dropItem.GetComponent<BounceEffect>()?.StartBounce();
             }
-            else 
+            else
             {
-                itemPrefab.GetComponent<Item>().ShowPopUp();
-                Debug.Log($"Đã nhận phần thưởng: {itemInstance.name} x{amount}");
+                item.ShowPopUp();
+                Debug.Log($"Đã nhận phần thưởng: {item.Name} x{amount}");
             }
         }
     }

@@ -40,7 +40,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         Slot parentSlot = transform.parent.GetComponent<Slot>();
         if (parentSlot != null && (parentSlot.isEquipmentSlot || parentSlot.isShopSlot)) return;
 
-        // Selection box logic
         Item draggedItem = GetComponent<Item>();
         if (draggedItem != null && draggedItem.dbID == 0)
         {
@@ -48,7 +47,8 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        if (draggedItem != null && draggedItem.itemType == ItemType.Seed && LoadResourceManager.Instance.SelectionBoxPrefab != null)
+        // [CẬP NHẬT] Type checking Hạt giống
+        if (draggedItem is SeedItem && LoadResourceManager.Instance.SelectionBoxPrefab != null)
         {
             currentSelectionBox = Instantiate(LoadResourceManager.Instance.SelectionBoxPrefab);
             selectionBoxRenderer = currentSelectionBox.GetComponent<SpriteRenderer>();
@@ -98,41 +98,34 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         Item draggedItem = GetComponent<Item>();
         if (draggedItem == null) { SnapBack(); return; }
 
-        // 1. Kéo vào chính nó -> Snapback
         if (dropSlot == originalSlot) { SnapBack(); return; }
 
-        // 2. Kéo ra ngoài Inventory -> Vứt đồ
+        // 1. Vứt đồ ra ngoài
         if (dropSlot == null)
         {
             if (!IsWithinInventory(eventData.position))
             {
-                // Logic gieo hạt
                 FarmPlot plot = GetFarmPlotAtMouse(eventData);
-                if (plot != null && draggedItem.itemType == ItemType.Seed)
+                if (plot != null && draggedItem is SeedItem seedItem)
                 {
                     if (InteractionDetector.Instance != null && InteractionDetector.Instance.IsPlotInRange(plot))
                     {
-                        FarmController.Instance.TryPlantSeed(plot, (SeedItem)draggedItem);
-
-                        if (InventoryService.Instance != null)
-                        {
-                            InventoryService.Instance.RequestUpdateQuantity(draggedItem.dbID, draggedItem.quantity);
-                        }
+                        FarmController.Instance.TryPlantSeed(plot, seedItem);
+                        if (InventoryService.Instance != null) InventoryService.Instance.RequestUpdateQuantity(draggedItem.dbID, draggedItem.quantity);
 
                         if (draggedItem.quantity <= 0)
                         {
                             originalSlot.currentItem = null;
                             Destroy(gameObject);
                         }
-                        else
-                        {
-                            SnapBack();
-                        }
+                        else SnapBack();
+
                         return;
                     }
                 }
 
-                if (draggedItem.isEquipped || draggedItem.itemType == ItemType.QuestItem || QuestController.Instance.IsItemNeededForActiveQuest(draggedItem.ID))
+                bool isEquipped = draggedItem is EquipmentItem eq && eq.isEquipped;
+                if (isEquipped || draggedItem is QuestItem || QuestController.Instance.IsItemNeededForActiveQuest(draggedItem.ID))
                 {
                     GameNotify.Show("Không thể vứt bỏ vật phẩm này!");
                     SnapBack();
@@ -145,13 +138,11 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        // 3. Kéo vào Slot hợp lệ
         if (dropSlot.isShopSlot) { SnapBack(); return; }
 
-        // --- LOGIC HOTBAR ---
         if (dropSlot.isHotBarSlot)
         {
-            if (draggedItem.itemType == ItemType.Equipment || draggedItem.itemType == ItemType.QuestItem)
+            if (draggedItem is EquipmentItem || draggedItem is QuestItem)
             {
                 SnapBack(); return;
             }
@@ -160,65 +151,47 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         // --- LOGIC EQUIP (Trang bị) ---
         if (dropSlot.isEquipmentSlot)
         {
-            if (draggedItem.itemType == ItemType.QuestItem ||
-                draggedItem.equipSlot != dropSlot.acceptedEquipSlot ||
-                (dropSlot.classRestriction != ClassRestriction.None && draggedItem.classRestriction != dropSlot.classRestriction) ||
-                (playerStats != null && playerStats.level < draggedItem.requiredLevel))
+            if (draggedItem is not EquipmentItem equipItem ||
+                equipItem.equipSlot != dropSlot.acceptedEquipSlot ||
+                (dropSlot.classRestriction != ClassRestriction.None && equipItem.classRestriction != dropSlot.classRestriction) ||
+                (playerStats != null && playerStats.level < equipItem.requiredLevel))
             {
                 SnapBack(); return;
             }
         }
 
-        // --- XỬ LÝ SWAP HOẶC MOVE ---
         bool isStackable = draggedItem.IsStackable;
         Item targetItem = dropSlot.currentItem != null ? dropSlot.currentItem.GetComponent<Item>() : null;
 
-        // Logic Stack (Gộp)
-        if (targetItem != null && draggedItem.ID == targetItem.ID && draggedItem.itemType != ItemType.Equipment)
+        if (targetItem != null && draggedItem.ID == targetItem.ID && draggedItem is not EquipmentItem)
         {
-            // 1. Client Update (Visual - Mượt ngay lập tức)
             targetItem.AddToStack(draggedItem.quantity);
             originalSlot.currentItem = null;
             Destroy(gameObject);
 
-            // 2. Gọi API Move (Kèm Callback)
-            InventoryService.Instance.RequestMoveItem(
-                draggedItem.dbID,
-                GetGlobalSlotIndex(dropSlot),
-                isStackable,
-                (success) =>
+            InventoryService.Instance.RequestMoveItem(draggedItem.dbID, GetGlobalSlotIndex(dropSlot), isStackable, (success) =>
+            {
+                if (success && StorageChestController.Instance != null && StorageChestController.Instance.IsViewingChest)
                 {
-                    if (success)
-                    {
-                        if (StorageChestController.Instance != null && StorageChestController.Instance.IsViewingChest)
-                        {
-                            // Kiểm tra xem slot đích có nằm trong rương không
-                            if (dropSlot.transform.IsChildOf(StorageChestController.Instance.storageChestPage.transform))
-                            {
-                                StorageChestController.Instance.RefreshChestContent();
-                            }
-                        }
-                    }
+                    if (dropSlot.transform.IsChildOf(StorageChestController.Instance.storageChestPage.transform))
+                        StorageChestController.Instance.RefreshChestContent();
                 }
-            );
+            });
             return;
         }
 
-        // Thực hiện Swap UI
+        // --- Swap UI ---
         if (dropSlot.currentItem != null)
         {
-            // Move target về slot cũ
             dropSlot.currentItem.transform.SetParent(originalSlot.transform);
             originalSlot.currentItem = dropSlot.currentItem;
             dropSlot.currentItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
-            // ĐẢM BẢO CẬP NHẬT ROOT CHO ITEM BỊ TRÁO RA NGOÀI (SWAP)
-            Item targetItemComp = dropSlot.currentItem.GetComponent<Item>();
-            if (targetItemComp != null)
+            // Đồng bộ isEquipped cho item bị swap ra ngoài
+            if (dropSlot.currentItem.GetComponent<Item>() is EquipmentItem targetEquip)
             {
-                targetItemComp.isEquipped = originalSlot.isEquipmentSlot;
-                if (targetItemComp.sourceItem != null)
-                    targetItemComp.sourceItem.isEquipped = targetItemComp.isEquipped;
+                targetEquip.isEquipped = originalSlot.isEquipmentSlot;
+                if (targetEquip.sourceItem is EquipmentItem srcEq) srcEq.isEquipped = targetEquip.isEquipped;
             }
         }
         else
@@ -226,35 +199,27 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             originalSlot.currentItem = null;
         }
 
-        // Move dragged đến slot mới
         transform.SetParent(dropSlot.transform);
         dropSlot.currentItem = gameObject;
         GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
         // --- GỌI API CẬP NHẬT DB ---
-
-        // A. Xử lý Equip/Unequip
-        if (dropSlot.isEquipmentSlot)
+        if (dropSlot.isEquipmentSlot && draggedItem is EquipmentItem equipToWear)
         {
-            UpdateAllEquipmentItems(draggedItem);
+            UpdateAllEquipmentItems(equipToWear);
 
-            draggedItem.isEquipped = true;
-            // Cập nhật item gốc trong túi đồ
-            if (draggedItem.sourceItem != null)
-                draggedItem.sourceItem.isEquipped = true;
+            equipToWear.isEquipped = true;
+            if (equipToWear.sourceItem is EquipmentItem srcEqWear) srcEqWear.isEquipped = true;
 
-            InventoryService.Instance.RequestEquip(draggedItem.dbID, true);
+            InventoryService.Instance.RequestEquip(equipToWear.dbID, true);
             playerStats.ApplyEquippedItems();
         }
-        else if (originalSlot.isEquipmentSlot)
+        else if (originalSlot.isEquipmentSlot && draggedItem is EquipmentItem equipToTakeOff)
         {
-            // Tháo ra -> Gọi Equip FALSE
-            draggedItem.isEquipped = false;
-            // Cập nhật item gốc trong túi đồ
-            if (draggedItem.sourceItem != null)
-                draggedItem.sourceItem.isEquipped = false;
+            equipToTakeOff.isEquipped = false;
+            if (equipToTakeOff.sourceItem is EquipmentItem srcEqTakeOff) srcEqTakeOff.isEquipped = false;
 
-            InventoryService.Instance.RequestEquip(draggedItem.dbID, false);
+            InventoryService.Instance.RequestEquip(equipToTakeOff.dbID, false);
             playerStats.ApplyEquippedItems();
         }
         else
@@ -264,15 +229,14 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             if (StorageChestController.Instance != null && StorageChestController.Instance.IsViewingChest)
             {
                 if (dropSlot.transform.IsChildOf(StorageChestController.Instance.storageChestPage.transform))
-                {
                     StorageChestController.Instance.StartCoroutine(SyncChestAfterMoveDelay());
-                }
             }
         }
 
         TooltipManager.Instance.gameObject.SetActive(true);
     }
 
+    
     private IEnumerator SyncChestAfterMoveDelay()
     {
         yield return new WaitForSeconds(0.2f);
@@ -402,26 +366,24 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         return index;
     }
 
-    private void UpdateAllEquipmentItems(Item draggedItem)
+    private void UpdateAllEquipmentItems(EquipmentItem draggedItem)
     {
         foreach (Transform slotTransform in inventoryController.inventoryPanel.transform)
         {
             Slot slot = slotTransform.GetComponent<Slot>();
             if (slot != null && slot.currentItem != null)
             {
-                Item item = slot.currentItem.GetComponent<Item>();
-                if (item != null
-                    && item.itemType == draggedItem.itemType
-                    && item.isEquipped
-                    && item.classRestriction == draggedItem.classRestriction
-                    && item.equipSlot == draggedItem.equipSlot)
+                if (slot.currentItem.GetComponent<Item>() is EquipmentItem eqItem
+                    && eqItem != draggedItem
+                    && eqItem.isEquipped
+                    && eqItem.classRestriction == draggedItem.classRestriction
+                    && eqItem.equipSlot == draggedItem.equipSlot)
                 {
-                    item.isEquipped = false;
-                    if (item.sourceItem != null)
-                        item.sourceItem.isEquipped = false;
+                    eqItem.isEquipped = false;
+                    if (eqItem.sourceItem is EquipmentItem srcEq) srcEq.isEquipped = false;
 
-                    InventoryService.Instance.RequestEquip(item.dbID, false);
-                    Debug.Log($"Đã bỏ trang bị: {item.Name}");
+                    InventoryService.Instance.RequestEquip(eqItem.dbID, false);
+                    Debug.Log($"Đã bỏ trang bị: {eqItem.Name}");
                 }
             }
         }
@@ -441,11 +403,11 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (item == null || item.dbID == 0)
         {
             Debug.LogWarning("Item chưa đồng bộ, không thể vứt.");
-            SnapBack();
-            return;
+            SnapBack(); return;
         }
 
-        if (item.isDisplayOnly || item.isEquipped)
+        bool isEquipped = item is EquipmentItem eq && eq.isEquipped;
+        if (item.isDisplayOnly || isEquipped)
         {
             SnapBack(); return;
         }
@@ -459,8 +421,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (playerTransform == null) return;
 
         Vector2 playerPosition = (Vector2)playerTransform.position;
-        Vector2 mouseScreenPosition = dragEndMousePosition;
-        Vector2 mouseWorldPosition = Camera.main.ScreenToWorldPoint(mouseScreenPosition);
+        Vector2 mouseWorldPosition = Camera.main.ScreenToWorldPoint(dragEndMousePosition);
         Vector2 dropDirection = (mouseWorldPosition - playerPosition).normalized;
         if (dropDirection == Vector2.zero) dropDirection = Vector2.up;
         float randomDistance = Random.Range(minDropDistance, maxDropDistance);
@@ -469,7 +430,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         GameObject dropItem = Instantiate(gameObject, dropPosition, Quaternion.identity);
         Item droppedItem = dropItem.GetComponent<Item>();
 
-        droppedItem.isEquipped = false;
+        if (droppedItem is EquipmentItem dropEq) dropEq.isEquipped = false;
         droppedItem.isDisplayOnly = false;
         droppedItem.dbID = 0;
         droppedItem.quantity = dropQuantity;
@@ -478,10 +439,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         dropItem.GetComponent<BounceEffect>()?.StartBounce();
 
         InventoryService.Instance.RequestRemoveItem(itemDbIdToRemove);
-
         Destroy(gameObject);
-        Debug.Log($"Đã vứt item: {item.Name} (ID: {itemDbIdToRemove})");
-
         InventoryController.Instance.ReBuildItemCounts();
     }
 

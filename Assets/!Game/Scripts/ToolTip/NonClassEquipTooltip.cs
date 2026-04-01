@@ -25,27 +25,28 @@ public class NecklaceEquipTooltip : MonoBehaviour
     public void Show(Item item)
     {
         if (item == null) return;
+        if (item is not EquipmentItem equipItem) return;
 
         tooltipPanel.SetActive(true);
         tooltipPanel.transform.position = Input.mousePosition + new Vector3(10, -10);
 
-        nameText.text = item.Name;
-        itemPortrait.sprite = item.icon;
+        nameText.text = equipItem.Name;
+        itemPortrait.sprite = equipItem.icon;
 
-        slotText.text = "Loại: " + item.equipSlot.ToString();
-        lvl.text = "Lvl: " + item.requiredLevel.ToString();
-        classText.text = "Class: " + item.classRestriction.ToString();
+        slotText.text = "Loại: " + equipItem.equipSlot.ToString();
+        lvl.text = "Lvl: " + equipItem.requiredLevel.ToString();
+        classText.text = "Class: " + equipItem.classRestriction.ToString();
 
-        mpBonus.text = (item.classRestriction == ClassRestriction.Knight
-    ? item.mpKnightBonus
-    : item.mpMageBonus).ToString();
+        mpBonus.text = (equipItem.classRestriction == ClassRestriction.Knight
+    ? equipItem.mpKnightBonus
+    : equipItem.mpMageBonus).ToString();
 
-        strBonus.text = item.bonusSTR.ToString();
-        dexBonus.text = item.bonusDEX.ToString();
-        conBonus.text = item.bonusCON.ToString();
-        intBonus.text = item.bonusINT.ToString();
+        strBonus.text = equipItem.bonusSTR.ToString();
+        dexBonus.text = equipItem.bonusDEX.ToString();
+        conBonus.text = equipItem.bonusCON.ToString();
+        intBonus.text = equipItem.bonusINT.ToString();
 
-        descriptionText.text = item.description;
+        descriptionText.text = equipItem.description;
     }
 
     public void Hide()

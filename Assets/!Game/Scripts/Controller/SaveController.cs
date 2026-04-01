@@ -164,8 +164,7 @@ public class SaveController : MonoBehaviour
                             GameObject prefab = itemDict.GetItemPrefab(svItem.itemId);
                             if (prefab != null)
                             {
-                                Item itemComp = prefab.GetComponent<Item>();
-                                if (itemComp != null)
+                                if (prefab.GetComponent<Item>() is EquipmentItem equipComp)
                                 {
                                     EquippedSaveData equipData = new EquippedSaveData
                                     {
@@ -177,9 +176,9 @@ public class SaveController : MonoBehaviour
                                         sourceItemID = svItem.itemId
                                     };
 
-                                    if (itemComp.classRestriction == ClassRestriction.Knight)
+                                    if (equipComp.classRestriction == ClassRestriction.Knight)
                                     {
-                                        switch (itemComp.equipSlot)
+                                        switch (equipComp.equipSlot)
                                         {
                                             case EquipSlot.Swords: equipData.slotIndex = 0; break;
                                             case EquipSlot.Shield: equipData.slotIndex = 1; break;
@@ -189,12 +188,12 @@ public class SaveController : MonoBehaviour
                                         }
                                         if (equipData.slotIndex != -1) knightEquips.Add(equipData);
                                     }
-                                    else if (itemComp.classRestriction == ClassRestriction.Mage)
+                                    else if (equipComp.classRestriction == ClassRestriction.Mage)
                                     {
-                                        switch (itemComp.equipSlot)
+                                        switch (equipComp.equipSlot)
                                         {
-                                            case EquipSlot.Staff: equipData.slotIndex = 0; break;
-                                            case EquipSlot.Catalyst: equipData.slotIndex = 1; break;
+                                            case EquipSlot.Scepter: equipData.slotIndex = 0; break;
+                                            case EquipSlot.Amulet: equipData.slotIndex = 1; break;
                                             case EquipSlot.Hat: equipData.slotIndex = 2; break;
                                             case EquipSlot.Robe: equipData.slotIndex = 3; break;
                                             default: equipData.slotIndex = -1; break;
@@ -203,7 +202,7 @@ public class SaveController : MonoBehaviour
                                     }
                                     else
                                     {
-                                        switch (itemComp.equipSlot)
+                                        switch (equipComp.equipSlot)
                                         {
                                             case EquipSlot.Legs: equipData.slotIndex = 0; break;
                                             case EquipSlot.Boots: equipData.slotIndex = 1; break;

@@ -1,28 +1,34 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class ItemDictionary : MonoBehaviour
 {
+    [Header("Danh sách tự động cập nhật")]
     public List<Item> itemPrefabs;
+
     private Dictionary<int, GameObject> itemDictionary;
 
     private void Awake()
     {
         itemDictionary = new Dictionary<int, GameObject>();
 
-        // AutoIncrementIds
-        for (int i = 0; i < itemPrefabs.Count; i++)
-        {
-            if (itemPrefabs[i] != null)
-            {
-                itemPrefabs[i].ID = i + 1;
-            }
-        }
-
         foreach (Item item in itemPrefabs)
         {
-            itemDictionary[item.ID] = item.gameObject;
+            if (item != null)
+            {
+                if (itemDictionary.ContainsKey(item.ID))
+                {
+                    Debug.LogError($"[ItemDictionary] PHÁT HIỆN TRÙNG ID {item.ID} giữa '{item.Name}' và '{itemDictionary[item.ID].name}'");
+                }
+                else
+                {
+                    itemDictionary[item.ID] = item.gameObject;
+                }
+            }
         }
     }
 
@@ -35,4 +41,35 @@ public class ItemDictionary : MonoBehaviour
         }
         return prefab;
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("Auto Load All Item Prefabs")]
+    private void LoadAllItemsFromProject()
+    {
+        itemPrefabs = new List<Item>();
+
+        // Tìm tất cả các file có định dạng là Prefab trong Project
+        string[] guids = AssetDatabase.FindAssets("t:Prefab");
+
+        foreach (string guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+
+            GameObject obj = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+
+            if (obj != null)
+            {
+                Item itemComp = obj.GetComponent<Item>();
+                if (itemComp != null)
+                {
+                    itemPrefabs.Add(itemComp);
+                }
+            }
+        }
+
+        EditorUtility.SetDirty(this);
+
+        Debug.Log($"<color=green>[Thành công]</color> Đã tự động nạp {itemPrefabs.Count} Item Prefabs vào Dictionary!");
+    }
+#endif
 }

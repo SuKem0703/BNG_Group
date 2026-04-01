@@ -356,25 +356,27 @@ public class PlayerStats : MonoBehaviour
             foreach (Slot slot in equipmentKnightSlots)
             {
                 if (!slot.isEquipmentSlot || slot.currentItem == null) continue;
-                Item item = slot.currentItem.GetComponent<Item>();
-                if (item == null) continue;
 
-                bonusSTR += item.bonusSTR;
-                bonusDEX += item.bonusDEX;
-                bonusCON += item.bonusCON;
-                bonusINT += item.bonusINT;
+                // [CẬP NHẬT] Ép kiểu sang EquipmentItem
+                if (slot.currentItem.GetComponent<Item>() is EquipmentItem equip)
+                {
+                    bonusSTR += equip.bonusSTR;
+                    bonusDEX += equip.bonusDEX;
+                    bonusCON += equip.bonusCON;
+                    bonusINT += equip.bonusINT;
 
-                bonusPhysicalAttack += item.physDamageBonus;
-                bonusMagicAttack += item.magicDamageBonus;
-                bonusDefense += item.defenseBonus;
-                bonusCritRate += item.critRateBonus;
-                bonusKnightMaxHP += item.hpKnightBonus;
-                bonusKnightMaxMP += item.mpKnightBonus;
-                bonusHPRegen += item.hpRegenBonus;
-                bonusMPRegen += item.mpRegenBonus;
-                bonusMoveSpeed += item.moveSpeedBonus;
-                bonusStaminaRegen += item.staminaRegenBonus;
-                damageReduction += item.damageReduction;
+                    bonusPhysicalAttack += equip.physDamageBonus;
+                    bonusMagicAttack += equip.magicDamageBonus;
+                    bonusDefense += equip.defenseBonus;
+                    bonusCritRate += equip.critRateBonus;
+                    bonusKnightMaxHP += equip.hpKnightBonus;
+                    bonusKnightMaxMP += equip.mpKnightBonus;
+                    bonusHPRegen += equip.hpRegenBonus;
+                    bonusMPRegen += equip.mpRegenBonus;
+                    bonusMoveSpeed += equip.moveSpeedBonus;
+                    bonusStaminaRegen += equip.staminaRegenBonus;
+                    damageReduction += equip.damageReduction;
+                }
             }
 
             bonusMageMaxHP = cachedMageFinalMaxHP - baseMaxHP;
@@ -385,25 +387,27 @@ public class PlayerStats : MonoBehaviour
             foreach (Slot slot in equipmentMageSlots)
             {
                 if (!slot.isEquipmentSlot || slot.currentItem == null) continue;
-                Item item = slot.currentItem.GetComponent<Item>();
-                if (item == null) continue;
 
-                bonusSTR += item.bonusSTR;
-                bonusDEX += item.bonusDEX;
-                bonusCON += item.bonusCON;
-                bonusINT += item.bonusINT;
+                // [CẬP NHẬT] Ép kiểu sang EquipmentItem
+                if (slot.currentItem.GetComponent<Item>() is EquipmentItem equip)
+                {
+                    bonusSTR += equip.bonusSTR;
+                    bonusDEX += equip.bonusDEX;
+                    bonusCON += equip.bonusCON;
+                    bonusINT += equip.bonusINT;
 
-                bonusPhysicalAttack += item.physDamageBonus;
-                bonusMagicAttack += item.magicDamageBonus;
-                bonusDefense += item.defenseBonus;
-                bonusCritRate += item.critRateBonus;
-                bonusMageMaxHP += item.hpMageBonus;
-                bonusMageMaxMP += item.mpMageBonus;
-                bonusHPRegen += item.hpRegenBonus;
-                bonusMPRegen += item.mpRegenBonus;
-                bonusMoveSpeed += item.moveSpeedBonus;
-                bonusStaminaRegen += item.staminaRegenBonus;
-                damageReduction += item.damageReduction;
+                    bonusPhysicalAttack += equip.physDamageBonus;
+                    bonusMagicAttack += equip.magicDamageBonus;
+                    bonusDefense += equip.defenseBonus;
+                    bonusCritRate += equip.critRateBonus;
+                    bonusMageMaxHP += equip.hpMageBonus;
+                    bonusMageMaxMP += equip.mpMageBonus;
+                    bonusHPRegen += equip.hpRegenBonus;
+                    bonusMPRegen += equip.mpRegenBonus;
+                    bonusMoveSpeed += equip.moveSpeedBonus;
+                    bonusStaminaRegen += equip.staminaRegenBonus;
+                    damageReduction += equip.damageReduction;
+                }
             }
 
             bonusKnightMaxHP = cachedKnightFinalMaxHP - baseMaxHP;

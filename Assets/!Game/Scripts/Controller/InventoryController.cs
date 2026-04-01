@@ -146,13 +146,16 @@ public class InventoryController : MonoBehaviour
             Item item = slot.currentItem.GetComponent<Item>();
             if (item == null) continue;
 
+            bool equippedStatus = false;
+            if (item is EquipmentItem equip) equippedStatus = equip.isEquipped;
+
             data.Add(new InventorySaveData
             {
                 dbID = item.dbID,
                 itemID = item.ID,
                 slotIndex = slotTransform.GetSiblingIndex(),
                 quantity = item.quantity,
-                isEquipped = item.isEquipped,
+                isEquipped = equippedStatus, // Gán an toàn
                 rarity = item.rarity,
                 qualityFactor = item.qualityFactor
             });
@@ -170,7 +173,6 @@ public class InventoryController : MonoBehaviour
         }
 
         int requiredSlots = Mathf.Max(slotCount, maxSlotIndexFromData + 1);
-
         EnsureSlotCount(requiredSlots);
 
         foreach (Transform slotTrans in inventoryPanel.transform)
@@ -208,7 +210,11 @@ public class InventoryController : MonoBehaviour
             item.quantity = Mathf.Max(1, data.quantity);
             item.rarity = data.rarity;
             item.qualityFactor = data.qualityFactor;
-            item.isEquipped = data.isEquipped;
+
+            if (item is EquipmentItem equip)
+            {
+                equip.isEquipped = data.isEquipped;
+            }
 
             item.UpdateQuantityDisplay();
             slot.currentItem = itemObj;
@@ -268,7 +274,9 @@ public class InventoryController : MonoBehaviour
 
             Item newItem = itemObj.GetComponent<Item>();
             newItem.dbID = 0;
-            newItem.quantity = tempItem.itemType == ItemType.Equipment ? 1 : quantity;
+
+            // Gọi thuộc tính ItemType
+            newItem.quantity = tempItem.ItemType == ItemType.Equipment ? 1 : quantity;
             newItem.rarity = tempItem.rarity;
             newItem.qualityFactor = tempItem.qualityFactor;
 

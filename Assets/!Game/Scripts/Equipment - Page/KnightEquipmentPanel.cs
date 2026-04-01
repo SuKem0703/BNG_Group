@@ -21,9 +21,7 @@ public class KnightEquipmentPanel : MonoBehaviour
         itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
 
         if (itemDictionary == null)
-        {
             Debug.LogError("[KnightEquipmentPanel] Không tìm thấy ItemDictionary!");
-        }
 
         if (Swords == null) Swords = GameObject.Find("Swords");
         if (Shield == null) Shield = GameObject.Find("Shield");
@@ -31,7 +29,6 @@ public class KnightEquipmentPanel : MonoBehaviour
         if (Armor == null) Armor = GameObject.Find("Armor");
 
         if (scrollViewGrid == null) scrollViewGrid = GameObject.Find("EquipmentList")?.GetComponent<GridLayoutGroup>();
-
     }
 
     public void RefreshEquipmentDisplay()
@@ -45,11 +42,11 @@ public class KnightEquipmentPanel : MonoBehaviour
 
         foreach (Item itemPrefab in itemDictionary.itemPrefabs)
         {
-            if (itemPrefab == null) continue;
-            if (itemPrefab.classRestriction != ClassRestriction.Knight) continue;
-            if (itemPrefab.isEquipped) continue;
+            if (itemPrefab is not EquipmentItem equipPrefab) continue;
+            if (equipPrefab.classRestriction != ClassRestriction.Knight) continue;
+            if (equipPrefab.isEquipped) continue;
 
-            GameObject targetSlot = GetAvailableSlot(itemPrefab.equipSlot);
+            GameObject targetSlot = GetAvailableSlot(equipPrefab.equipSlot);
             if (targetSlot == null) continue;
 
             Item equippedItem = Instantiate(itemPrefab.gameObject, targetSlot.transform).GetComponent<Item>();
@@ -58,8 +55,11 @@ public class KnightEquipmentPanel : MonoBehaviour
             equippedItem.quantity = 1;
             equippedItem.UpdateQuantityDisplay();
 
-            equippedItem.isEquipped = true;
-            equippedItem.sourceItem = itemPrefab;
+            if (equippedItem is EquipmentItem eItem)
+            {
+                eItem.isEquipped = true;
+                eItem.sourceItem = itemPrefab;
+            }
 
             Slot slotComponent = targetSlot.GetComponent<Slot>();
             if (slotComponent != null)
@@ -75,27 +75,18 @@ public class KnightEquipmentPanel : MonoBehaviour
     {
         switch (equipSlot)
         {
-            case EquipSlot.Swords:
-                return Swords.transform.childCount == 0 ? Swords : null;
-            case EquipSlot.Shield:
-                return Shield.transform.childCount == 0 ? Shield : null;
-            case EquipSlot.Helmet:
-                return Helmet.transform.childCount == 0 ? Helmet : null;
-            case EquipSlot.Armor:
-                return Armor.transform.childCount == 0 ? Armor : null;
-            default:
-                return null;
+            case EquipSlot.Swords: return Swords.transform.childCount == 0 ? Swords : null;
+            case EquipSlot.Shield: return Shield.transform.childCount == 0 ? Shield : null;
+            case EquipSlot.Helmet: return Helmet.transform.childCount == 0 ? Helmet : null;
+            case EquipSlot.Armor: return Armor.transform.childCount == 0 ? Armor : null;
+            default: return null;
         }
     }
 
     private void ClearSlot(GameObject slotGO)
     {
         if (slotGO == null) return;
-
-        foreach (Transform child in slotGO.transform)
-        {
-            Destroy(child.gameObject);
-        }
+        foreach (Transform child in slotGO.transform) Destroy(child.gameObject);
     }
 
     public List<EquippedSaveData> GetEquipmentItems()
@@ -112,23 +103,20 @@ public class KnightEquipmentPanel : MonoBehaviour
 
     private void AddSlotData(GameObject slotGO, int slotIndex, List<EquippedSaveData> list)
     {
-        if (slotGO == null)
-        {
-            Debug.LogWarning($"[KnightEquipmentPanel] Slot {slotIndex} bị null. Không thể lưu. Hãy gán nó trong Inspector.");
-            return;
-        }
+        if (slotGO == null) return;
 
         if (slotGO.transform.childCount > 0)
         {
             Item item = slotGO.transform.GetChild(0).GetComponent<Item>();
             if (item != null)
             {
+                bool equippedStatus = item is EquipmentItem eq && eq.isEquipped;
                 list.Add(new EquippedSaveData
                 {
                     itemID = item.ID,
                     slotIndex = slotIndex,
                     quantity = item.quantity,
-                    isEquipped = item.isEquipped,
+                    isEquipped = equippedStatus,
                     rarity = item.rarity,
                     qualityFactor = item.qualityFactor,
                     sourceItemID = item.sourceItem != null ? item.sourceItem.ID : -1
@@ -136,32 +124,25 @@ public class KnightEquipmentPanel : MonoBehaviour
             }
         }
     }
+
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
         if (itemDictionary == null)
         {
             itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
-            if (itemDictionary == null)
-            {
-                Debug.LogError("[KnightEquipmentPanel] ItemDictionary is missing! Cannot load equipment.");
-                return;
-            }
-        }
-
-        if (savedData == null)
-        {
-            ClearSlot(Swords);
-            ClearSlot(Shield);
-            ClearSlot(Helmet);
-            ClearSlot(Armor);
-            UpdateWeaponStatus();
-            return;
+            if (itemDictionary == null) return;
         }
 
         ClearSlot(Swords);
         ClearSlot(Shield);
         ClearSlot(Helmet);
         ClearSlot(Armor);
+
+        if (savedData == null)
+        {
+            UpdateWeaponStatus();
+            return;
+        }
 
         foreach (EquippedSaveData data in savedData)
         {
@@ -180,16 +161,21 @@ public class KnightEquipmentPanel : MonoBehaviour
                     if (itemComponent != null)
                     {
                         itemComponent.quantity = data.quantity;
-                        itemComponent.isEquipped = data.isEquipped;
                         itemComponent.rarity = data.rarity;
                         itemComponent.qualityFactor = data.qualityFactor;
                         itemComponent.UpdateQuantityDisplay();
 
-                        Item sourceItemInInventory = FindItemInInventory(itemComponent.ID);
-                        if (sourceItemInInventory != null)
+                        if (itemComponent is EquipmentItem equipComp)
                         {
-                            itemComponent.sourceItem = sourceItemInInventory;
-                            sourceItemInInventory.isEquipped = true;
+                            equipComp.isEquipped = data.isEquipped;
+
+                            Item sourceItemInInventory = FindItemInInventory(itemComponent.ID);
+                            if (sourceItemInInventory != null)
+                            {
+                                equipComp.sourceItem = sourceItemInInventory;
+                                if (sourceItemInInventory is EquipmentItem sourceEq)
+                                    sourceEq.isEquipped = true;
+                            }
                         }
                     }
 
@@ -204,6 +190,7 @@ public class KnightEquipmentPanel : MonoBehaviour
         }
         UpdateWeaponStatus();
     }
+
     private Item FindItemInInventory(int itemID)
     {
         if (scrollViewGrid == null) return null;
@@ -211,12 +198,11 @@ public class KnightEquipmentPanel : MonoBehaviour
         foreach (Transform child in scrollViewGrid.transform)
         {
             Item item = child.GetComponent<Item>();
-            if (item != null && item.ID == itemID && item.isEquipped)
+            if (item != null && item.ID == itemID && item is EquipmentItem eq && eq.isEquipped)
             {
                 return item;
             }
         }
-
         return null;
     }
 
@@ -231,9 +217,9 @@ public class KnightEquipmentPanel : MonoBehaviour
             default: return null;
         }
     }
+
     public void UpdateWeaponStatus()
     {
         HasWeaponEquipped = Swords != null && Swords.transform.childCount > 0;
     }
-
 }

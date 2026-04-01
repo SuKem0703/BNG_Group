@@ -95,10 +95,11 @@ public class EquipTooltip : MonoBehaviour
     public void Show(Item item, Slot slot)
     {
         if (item == null) return;
+        if (item is not EquipmentItem equipItem) return;
         gameObject.SetActive(true);
 
         // ---- Load khung theo phẩm ----
-        ItemRarity rarity = item.rarity;
+        ItemRarity rarity = equipItem.rarity;
         string path = $"Vertical Card/{rarity}";
         Sprite raritySprite = Resources.Load<Sprite>(path);
         if (raritySprite != null)
@@ -107,25 +108,25 @@ public class EquipTooltip : MonoBehaviour
             Debug.LogWarning($"Không tìm thấy sprite cho rarity '{rarity}' tại: {path}");
 
         // ==== Hiển thị cơ bản ====
-        nameText.text = item.Name;
-        backGround.color = RarityColorHelper.GetColorByRarity(item.rarity);
-        itemPortrait.sprite = item.icon;
-        slotText.text = "Loại: " + item.equipSlot;
-        lvl.text = "Lvl: " + item.requiredLevel;
-        classText.text = "Class: " + item.classRestriction;
-        descriptionText.text = item.description;
+        nameText.text = equipItem.Name;
+        backGround.color = RarityColorHelper.GetColorByRarity(equipItem.rarity);
+        itemPortrait.sprite = equipItem.icon;
+        slotText.text = "Loại: " + equipItem.equipSlot;
+        lvl.text = "Lvl: " + equipItem.requiredLevel;
+        classText.text = "Class: " + equipItem.classRestriction;
+        descriptionText.text = equipItem.description;
 
         // Cập nhật trạng thái Trang bị (isEquip)
         // ===============================================
         if (isEquip != null)
         {
-            if (item.isDisplayOnly == true && item.isEquipped == false || slot.isShopSlot == true)
+            if (item.isDisplayOnly == true && equipItem.isEquipped == false || slot.isShopSlot == true)
             {
                 string dotSpriteName = "";
 
                 PlayerStats playerStats = FindFirstObjectByType<PlayerStats>();
 
-                if (item.requiredLevel <= playerStats.level)
+                if (equipItem.requiredLevel <= playerStats.level)
                 {
                     dotSpriteName = "IconFlag/Green_Dot";
                 }
@@ -150,7 +151,7 @@ public class EquipTooltip : MonoBehaviour
             else
             {
                 string togglePath = "IconFlag/";
-                string spriteName = item.isEquipped ? "Toggle_ON" : "Toggle_OFF";
+                string spriteName = equipItem.isEquipped ? "Toggle_ON" : "Toggle_OFF";
                 Sprite equipSprite = Resources.Load<Sprite>(togglePath + spriteName);
 
                 if (equipSprite != null)
@@ -180,6 +181,8 @@ public class EquipTooltip : MonoBehaviour
 
     private void FillStatLine(TMP_Text nameField, TMP_Text valueField, string statType, Item item)
     {
+        if (item is not EquipmentItem equipItem) return;
+
         if (statType == null)
         {
             nameField.text = "";
@@ -191,71 +194,71 @@ public class EquipTooltip : MonoBehaviour
         {
             case "PhysDmg":
                 nameField.text = "PHYSICAL DMG:";
-                valueField.text = item.physDamageBonus.ToString();
+                valueField.text = equipItem.physDamageBonus.ToString();
                 break;
 
             case "MagicDmg":
                 nameField.text = "MAGIC DMG:";
-                valueField.text = item.magicDamageBonus.ToString();
+                valueField.text = equipItem.magicDamageBonus.ToString();
                 break;
 
             case "DEF":
                 nameField.text = "DEF:";
-                valueField.text = item.defenseBonus.ToString();
+                valueField.text = equipItem.defenseBonus.ToString();
                 break;
 
             case "HP":
                 nameField.text = "HP:";
-                valueField.text = (item.classRestriction == ClassRestriction.Knight
-                    ? item.hpKnightBonus
-                    : item.hpMageBonus).ToString();
+                valueField.text = (equipItem.classRestriction == ClassRestriction.Knight
+                    ? equipItem.hpKnightBonus
+                    : equipItem.hpMageBonus).ToString();
                 break;
 
             case "MP":
                 nameField.text = "MP:";
-                valueField.text = (item.classRestriction == ClassRestriction.Knight
-                    ? item.mpKnightBonus
-                    : item.mpMageBonus).ToString();
+                valueField.text = (equipItem.classRestriction == ClassRestriction.Knight
+                    ? equipItem.mpKnightBonus
+                    : equipItem.mpMageBonus).ToString();
                 break;
 
             case "STR":
                 nameField.text = "STR:";
-                valueField.text = item.bonusSTR.ToString();
+                valueField.text = equipItem.bonusSTR.ToString();
                 break;
 
             case "DEX":
                 nameField.text = "DEX:";
-                valueField.text = item.bonusDEX.ToString();
+                valueField.text = equipItem.bonusDEX.ToString();
                 break;
 
             case "CON":
                 nameField.text = "CON:";
-                valueField.text = item.bonusCON.ToString();
+                valueField.text = equipItem.bonusCON.ToString();
                 break;
 
             case "INT":
                 nameField.text = "INT:";
-                valueField.text = item.bonusINT.ToString();
+                valueField.text = equipItem.bonusINT.ToString();
                 break;
 
             case "HPRegen":
                 nameField.text = "HP REGEN:";
-                valueField.text = item.hpRegenBonus.ToString();
+                valueField.text = equipItem.hpRegenBonus.ToString();
                 break;
 
             case "MPRegen":
                 nameField.text = "MP REGEN:";
-                valueField.text = item.mpRegenBonus.ToString();
+                valueField.text = equipItem.mpRegenBonus.ToString();
                 break;
 
             case "CritRate":
                 nameField.text = "CRIT RATE:";
-                valueField.text = item.critRateBonus.ToString("F1") + "%";
+                valueField.text = equipItem.critRateBonus.ToString("F1") + "%";
                 break;
 
             case "DmgReduction":
                 nameField.text = "DMG REDUCTION:";
-                valueField.text = (item.damageReduction * 100f).ToString("F1") + "%";
+                valueField.text = (equipItem.damageReduction * 100f).ToString("F1") + "%";
                 break;
 
             default:
@@ -267,9 +270,14 @@ public class EquipTooltip : MonoBehaviour
 
     private string[] GetStatsFor(Item item)
     {
-        if (item.classRestriction == ClassRestriction.Knight)
+        if (item is not EquipmentItem equip)
         {
-            switch (item.equipSlot)
+            return new string[] { null, null, null };
+        }
+
+        if (equip.classRestriction == ClassRestriction.Knight)
+        {
+            switch (equip.equipSlot)
             {
                 case EquipSlot.Swords: return new[] { "PhysDmg", "HP", "STR" };
                 case EquipSlot.Shield: return new[] { "DEF", "DEX", "HPRegen" };
@@ -277,16 +285,17 @@ public class EquipTooltip : MonoBehaviour
                 case EquipSlot.Armor: return new[] { "DEF", "DEX", "DmgReduction" };
             }
         }
-        else if (item.classRestriction == ClassRestriction.Mage)
+        else if (equip.classRestriction == ClassRestriction.Mage)
         {
-            switch (item.equipSlot)
+            switch (equip.equipSlot)
             {
-                case EquipSlot.Staff: return new[] { "MagicDmg", "MP", "INT" };
-                case EquipSlot.Catalyst: return new[] { "CritRate", "CON", "MPRegen" };
+                case EquipSlot.Scepter: return new[] { "MagicDmg", "MP", "INT" };
+                case EquipSlot.Amulet: return new[] { "CritRate", "CON", "MPRegen" };
                 case EquipSlot.Hat: return new[] { "DEF", "DEX", "HP" };
                 case EquipSlot.Robe: return new[] { "CON", "HPRegen", "DmgReduction" };
             }
         }
+
         return new string[] { null, null, null };
     }
 }

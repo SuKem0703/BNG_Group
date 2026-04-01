@@ -22,9 +22,7 @@ public class MageEquipmentPanel : MonoBehaviour
         itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
 
         if (itemDictionary == null)
-        {
             Debug.LogError("[MageEquipmentPanel] Không tìm thấy ItemDictionary!");
-        }
 
         if (Staff == null) Staff = GameObject.Find("Staff");
         if (Catalyst == null) Catalyst = GameObject.Find("Catalyst");
@@ -32,8 +30,8 @@ public class MageEquipmentPanel : MonoBehaviour
         if (Robe == null) Robe = GameObject.Find("Robe");
 
         if (scrollViewGrid == null) scrollViewGrid = GameObject.Find("EquipmentList")?.GetComponent<GridLayoutGroup>();
-
     }
+
     public void RefreshEquipmentDisplay()
     {
         if (itemDictionary == null) return;
@@ -45,11 +43,11 @@ public class MageEquipmentPanel : MonoBehaviour
 
         foreach (Item itemPrefab in itemDictionary.itemPrefabs)
         {
-            if (itemPrefab == null) continue;
-            if (itemPrefab.classRestriction != ClassRestriction.Mage) continue;
-            if (itemPrefab.isEquipped) continue;
+            if (itemPrefab is not EquipmentItem equipPrefab) continue;
+            if (equipPrefab.classRestriction != ClassRestriction.Mage) continue;
+            if (equipPrefab.isEquipped) continue;
 
-            GameObject targetSlot = GetAvailableSlot(itemPrefab.equipSlot);
+            GameObject targetSlot = GetAvailableSlot(equipPrefab.equipSlot);
             if (targetSlot == null) continue;
 
             Item equippedItem = Instantiate(itemPrefab.gameObject, targetSlot.transform).GetComponent<Item>();
@@ -58,8 +56,11 @@ public class MageEquipmentPanel : MonoBehaviour
             equippedItem.quantity = 1;
             equippedItem.UpdateQuantityDisplay();
 
-            equippedItem.isEquipped = true;
-            equippedItem.sourceItem = itemPrefab;
+            if (equippedItem is EquipmentItem eItem)
+            {
+                eItem.isEquipped = true;
+                eItem.sourceItem = itemPrefab;
+            }
 
             Slot slotComponent = targetSlot.GetComponent<Slot>();
             if (slotComponent != null)
@@ -76,27 +77,18 @@ public class MageEquipmentPanel : MonoBehaviour
     {
         switch (equipSlot)
         {
-            case EquipSlot.Staff:
-                return Staff.transform.childCount == 0 ? Staff : null;
-            case EquipSlot.Catalyst:
-                return Catalyst.transform.childCount == 0 ? Catalyst : null;
-            case EquipSlot.Hat:
-                return Hat.transform.childCount == 0 ? Hat : null;
-            case EquipSlot.Robe:
-                return Robe.transform.childCount == 0 ? Robe : null;
-            default:
-                return null;
+            case EquipSlot.Scepter: return Staff.transform.childCount == 0 ? Staff : null;
+            case EquipSlot.Amulet: return Catalyst.transform.childCount == 0 ? Catalyst : null;
+            case EquipSlot.Hat: return Hat.transform.childCount == 0 ? Hat : null;
+            case EquipSlot.Robe: return Robe.transform.childCount == 0 ? Robe : null;
+            default: return null;
         }
     }
 
     private void ClearSlot(GameObject slotGO)
     {
         if (slotGO == null) return;
-
-        foreach (Transform child in slotGO.transform)
-        {
-            Destroy(child.gameObject);
-        }
+        foreach (Transform child in slotGO.transform) Destroy(child.gameObject);
     }
 
     public List<EquippedSaveData> GetEquipmentItems()
@@ -113,23 +105,20 @@ public class MageEquipmentPanel : MonoBehaviour
 
     private void AddSlotData(GameObject slotGO, int slotIndex, List<EquippedSaveData> list)
     {
-        if (slotGO == null)
-        {
-            Debug.LogWarning($"[MageEquipmentPanel] Slot {slotIndex} bị null. Không thể lưu. Hãy gán nó trong Inspector.");
-            return;
-        }
+        if (slotGO == null) return;
 
         if (slotGO.transform.childCount > 0)
         {
             Item item = slotGO.transform.GetChild(0).GetComponent<Item>();
             if (item != null)
             {
+                bool equippedStatus = item is EquipmentItem eq && eq.isEquipped;
                 list.Add(new EquippedSaveData
                 {
                     itemID = item.ID,
                     slotIndex = slotIndex,
                     quantity = item.quantity,
-                    isEquipped = item.isEquipped,
+                    isEquipped = equippedStatus,
                     rarity = item.rarity,
                     qualityFactor = item.qualityFactor,
                     sourceItemID = item.sourceItem != null ? item.sourceItem.ID : -1
@@ -140,21 +129,14 @@ public class MageEquipmentPanel : MonoBehaviour
 
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
-        // Defensive checks
-        if (savedData == null)
+        if (savedData == null || itemDictionary == null)
         {
-            Debug.LogWarning("[MageEquipmentPanel] SetEquipmentItems called with null savedData.");
+            ClearSlot(Staff);
+            ClearSlot(Catalyst);
+            ClearSlot(Hat);
+            ClearSlot(Robe);
+            UpdateWeaponStatus();
             return;
-        }
-
-        if (itemDictionary == null)
-        {
-            itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
-            if (itemDictionary == null)
-            {
-                Debug.LogError("[MageEquipmentPanel] ItemDictionary not found. Cannot SetEquipmentItems.");
-                return;
-            }
         }
 
         ClearSlot(Staff);
@@ -177,16 +159,21 @@ public class MageEquipmentPanel : MonoBehaviour
                     if (itemComponent != null)
                     {
                         itemComponent.quantity = data.quantity;
-                        itemComponent.isEquipped = data.isEquipped;
                         itemComponent.rarity = data.rarity;
                         itemComponent.qualityFactor = data.qualityFactor;
                         itemComponent.UpdateQuantityDisplay();
 
-                        Item sourceItemInInventory = FindItemInInventory(itemComponent.ID);
-                        if (sourceItemInInventory != null)
+                        if (itemComponent is EquipmentItem equipComp)
                         {
-                            itemComponent.sourceItem = sourceItemInInventory;
-                            sourceItemInInventory.isEquipped = true;
+                            equipComp.isEquipped = data.isEquipped;
+
+                            Item sourceItemInInventory = FindItemInInventory(itemComponent.ID);
+                            if (sourceItemInInventory != null)
+                            {
+                                equipComp.sourceItem = sourceItemInInventory;
+                                if (sourceItemInInventory is EquipmentItem sourceEq)
+                                    sourceEq.isEquipped = true;
+                            }
                         }
                     }
 
@@ -197,17 +184,8 @@ public class MageEquipmentPanel : MonoBehaviour
                         slotComponent.currentItem = itemGO;
                     }
                 }
-                else
-                {
-                    Debug.LogWarning($"[MageEquipmentPanel] Item prefab not found for ID {data.itemID}");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[MageEquipmentPanel] No target slot for slotIndex {data.slotIndex}");
             }
         }
-
         UpdateWeaponStatus();
     }
 
@@ -218,12 +196,11 @@ public class MageEquipmentPanel : MonoBehaviour
         foreach (Transform child in scrollViewGrid.transform)
         {
             Item item = child.GetComponent<Item>();
-            if (item != null && item.ID == itemID && item.isEquipped)
+            if (item != null && item.ID == itemID && item is EquipmentItem eq && eq.isEquipped)
             {
                 return item;
             }
         }
-
         return null;
     }
 
@@ -238,6 +215,7 @@ public class MageEquipmentPanel : MonoBehaviour
             default: return null;
         }
     }
+
     public void UpdateWeaponStatus()
     {
         HasWeaponEquipped = Staff != null && Staff.transform.childCount > 0;

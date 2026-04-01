@@ -53,41 +53,30 @@ public class EquipmentScrollViewController : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        // Duyệt qua tất cả các Slot trong inventoryPanel
         foreach (Transform slotTransform in inventoryPanel.transform)
         {
             Slot slot = slotTransform.GetComponent<Slot>();
             if (slot != null && slot.currentItem != null)
             {
                 Item itemInInventory = slot.currentItem.GetComponent<Item>();
-                if (itemInInventory != null && itemInInventory.itemType == ItemType.Equipment)
-                {
-                    // Tạo một slot mới để chứa bản hiển thị
-                    GameObject slotGO = Instantiate(itemSlotPrefab, equipmentList.transform);
 
-                    // Clone bản hiển thị từ item thực
-                    GameObject itemClone = Instantiate(itemInInventory.gameObject);
+                if (itemInInventory is EquipmentItem equipInInventory)
+                {
+                    GameObject slotGO = Instantiate(itemSlotPrefab, equipmentList.transform);
+                    GameObject itemClone = Instantiate(equipInInventory.gameObject);
                     itemClone.transform.SetParent(slotGO.transform, false);
                     itemClone.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
-                    // Đánh dấu bản clone là hiển thị (không phải bản thực)
-                    Item displayItem = itemClone.GetComponent<Item>();
+                    EquipmentItem displayItem = itemClone.GetComponent<EquipmentItem>();
                     if (displayItem != null)
                     {
                         displayItem.isDisplayOnly = true;
                         displayItem.isEquipped = false;
-
-                        // 🌟 Gán sourceItem là item thực từ Inventory
-                        displayItem.sourceItem = itemInInventory;
+                        displayItem.sourceItem = equipInInventory;
                     }
 
-
-                    // Gán item vào slot nếu slot có component Slot
                     Slot newSlot = slotGO.GetComponent<Slot>();
-                    if (newSlot != null)
-                    {
-                        newSlot.currentItem = itemClone;
-                    }
+                    if (newSlot != null) newSlot.currentItem = itemClone;
                 }
             }
         }
