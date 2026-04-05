@@ -22,7 +22,7 @@ public class ItemDictionary : MonoBehaviour
             {
                 if (itemDictionary.ContainsKey(item.ID))
                 {
-                    Debug.LogError($"[ItemDictionary] PHÁT HIỆN TRÙNG ID {item.ID} giữa '{item.Name}' và '{itemDictionary[item.ID].name}'");
+                    Debug.LogWarning($"[ItemDictionary] PHÁT HIỆN TRÙNG ID {item.ID} giữa '{item.Name}' và '{itemDictionary[item.ID].name}'");
                 }
                 else
                 {

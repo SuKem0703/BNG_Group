@@ -396,6 +396,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         RectTransform inventoryRect = originalParent.parent.GetComponent<RectTransform>();
         return RectTransformUtility.RectangleContainsScreenPoint(inventoryRect, mousePosition);
     }
+
     void DropItem(Slot originalSlot, Vector2 dragEndMousePosition)
     {
         Item item = GetComponent<Item>();
@@ -415,32 +416,49 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         int dropQuantity = item.quantity;
         int itemDbIdToRemove = item.dbID;
 
-        originalSlot.currentItem = null;
+        if (canvasGroup != null) canvasGroup.blocksRaycasts = false;
 
-        Transform playerTransform = GameObject.FindGameObjectWithTag("Player")?.transform;
-        if (playerTransform == null) return;
+        InventoryService.Instance.RequestRemoveItem(itemDbIdToRemove, (success) =>
+        {
+            if (success)
+            {
+                originalSlot.currentItem = null;
 
-        Vector2 playerPosition = (Vector2)playerTransform.position;
-        Vector2 mouseWorldPosition = Camera.main.ScreenToWorldPoint(dragEndMousePosition);
-        Vector2 dropDirection = (mouseWorldPosition - playerPosition).normalized;
-        if (dropDirection == Vector2.zero) dropDirection = Vector2.up;
-        float randomDistance = Random.Range(minDropDistance, maxDropDistance);
-        Vector2 dropPosition = playerPosition + (dropDirection * randomDistance);
+                Transform playerTransform = GameObject.FindGameObjectWithTag("Player")?.transform;
+                if (playerTransform != null)
+                {
+                    Vector2 playerPosition = (Vector2)playerTransform.position;
+                    Vector2 mouseWorldPosition = Camera.main.ScreenToWorldPoint(dragEndMousePosition);
+                    Vector2 dropDirection = (mouseWorldPosition - playerPosition).normalized;
+                    if (dropDirection == Vector2.zero) dropDirection = Vector2.up;
+                    float randomDistance = Random.Range(minDropDistance, maxDropDistance);
+                    Vector2 dropPosition = playerPosition + (dropDirection * randomDistance);
 
-        GameObject dropItem = Instantiate(gameObject, dropPosition, Quaternion.identity);
-        Item droppedItem = dropItem.GetComponent<Item>();
+                    GameObject dropItem = Instantiate(gameObject, dropPosition, Quaternion.identity);
+                    Item droppedItem = dropItem.GetComponent<Item>();
 
-        if (droppedItem is EquipmentItem dropEq) dropEq.isEquipped = false;
-        droppedItem.isDisplayOnly = false;
-        droppedItem.dbID = 0;
-        droppedItem.quantity = dropQuantity;
-        droppedItem.UpdateQuantityDisplay();
+                    if (droppedItem is EquipmentItem dropEq) dropEq.isEquipped = false;
+                    droppedItem.isDisplayOnly = false;
+                    droppedItem.dbID = 0;
+                    droppedItem.quantity = dropQuantity;
+                    droppedItem.UpdateQuantityDisplay();
 
-        dropItem.GetComponent<BounceEffect>()?.StartBounce();
+                    dropItem.GetComponent<BounceEffect>()?.StartBounce();
+                }
 
-        InventoryService.Instance.RequestRemoveItem(itemDbIdToRemove);
-        Destroy(gameObject);
-        InventoryController.Instance.ReBuildItemCounts();
+                Destroy(gameObject);
+                InventoryController.Instance.ReBuildItemCounts();
+            }
+            else
+            {
+                Debug.LogWarning("Vứt đồ thất bại do dữ liệu không tồn tại trên Server.");
+                GameNotify.Show("Không thể vứt đồ! Dữ liệu bị lệch.");
+
+                SnapBack();
+
+                InventoryController.Instance.RefreshInventory();
+            }
+        });
     }
 
     float lastClickTime = 0f;
@@ -448,10 +466,11 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (!AntiSpam.CanPerformAction()) return;
 
         if (Time.time - lastClickTime < doubleClickThreshold)
         {
+            if (!AntiSpam.CanPerformAction()) return;
+
             if (StorageChestController.Instance != null &&
                 StorageChestController.Instance.chestPanel.activeSelf)
             {

@@ -103,6 +103,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -239,6 +240,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -688,6 +690,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -824,6 +827,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1055,8 +1059,7 @@ MonoBehaviour:
   slotPrefab: {fileID: 480783112922435392, guid: cd7cdb39d80fc0742bea59cf64228937, type: 3}
   slotCount: 28
   shopItems: []
-  confirmUIPrefab: {fileID: 0}
-  notifyUIPrefab: {fileID: 0}
+  shopItemPreview: {fileID: 2755126808481791930}
 --- !u!1 &4137116877001787057
 GameObject:
   m_ObjectHideFlags: 0
@@ -1161,6 +1164,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1297,6 +1301,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1471,6 +1476,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1719,6 +1725,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1967,6 +1974,7 @@ MonoBehaviour:
   m_VerticalAlignment: 1024
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2103,6 +2111,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2239,6 +2248,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2578,6 +2588,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2714,6 +2725,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2840,19 +2852,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6bc951f4f41ed04e96eb9889d2924d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  nameText: {fileID: 0}
-  itemPortrait: {fileID: 0}
-  lvl: {fileID: 0}
-  classText: {fileID: 0}
-  slotText: {fileID: 0}
-  statName1: {fileID: 0}
-  statValue1: {fileID: 0}
-  statName2: {fileID: 0}
-  statValue2: {fileID: 0}
-  statName3: {fileID: 0}
-  statValue3: {fileID: 0}
-  priceText: {fileID: 0}
-  currencyImage: {fileID: 0}
+  nameText: {fileID: 4191434745263023039}
+  itemPortrait: {fileID: 2907580141264259490}
+  lvl: {fileID: 2210522532474820628}
+  classText: {fileID: 3272068165744598563}
+  slotText: {fileID: 9096810976566110703}
+  statsPanel: {fileID: 1495675936551476328}
+  statName1: {fileID: 2240724873349538024}
+  statValue1: {fileID: 2686574587965100380}
+  statName2: {fileID: 673948309916967769}
+  statValue2: {fileID: 1515170606063782866}
+  statName3: {fileID: 4247691831898722741}
+  statValue3: {fileID: 9061666526044947289}
+  priceText: {fileID: 3670632294235352804}
+  currencyImage: {fileID: 2832843922119518965}
   coinSprite: {fileID: -5337090024257511082, guid: d90a56aad1d67d54da4a5d275aaca0b1, type: 3}
   gemSprite: {fileID: -412932683, guid: d90a56aad1d67d54da4a5d275aaca0b1, type: 3}
 --- !u!1001 &561300559536918232

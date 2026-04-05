@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f2a72aeb33766d42868f6d9de333142, type: 3}
+  m_Name: SHOPDEMO
+  m_EditorClassIdentifier: Assembly-CSharp::NPCDialogue
+  npcName: Herbalist
+  npcPortrait: {fileID: 7381991923113728854, guid: 781428f430048be48aaf3e0ef5bf8765, type: 3}
+  dialogueLines:
+  - OPEN SHOP
+  - "T\u1EA1m bi\u1EC7t"
+  autoProgressLines: 0001
+  endDialogueLines: 0001
+  autoProgressDelay: 1.5
+  typingSpeed: 0.05
+  choices:
+  - dialogueIndex: 0
+    choices:
+    - YES
+    - NO
+    nextDialogueIndexes: 0000000001000000
+    endDialogues: 01
+    specialActions: 01000000
+    specialTargetNames:
+    - Herbalist
+    - Herbalist
+    giveQuest: 
+  questInProgressIndex: 0
+  questCompletedIndex: 0
+  noMoreQuestsIndex: 0
+  quest: {fileID: 0}
+  hideWhenInProgress: 0
+  hideWhenCompleted: 0
+  hideWhenHandedIn: 0
+  triggerOnEnter_NotStarted: 0
+  triggerOnEnter_InProgress: 0
+  triggerOnEnter_Completed: 0
+  triggerOnEnter_NoMoreQuests: 0

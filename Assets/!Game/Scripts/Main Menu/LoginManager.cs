@@ -135,7 +135,7 @@ public class LoginManager : MonoBehaviour
         string json = JsonUtility.ToJson(requestData);
 
         // [NETWORK] URL Login
-        string url = NetworkConfig.GetUrl("api/GameData/login");
+        string url = NetworkConfig.GetUrl("api/Accounts/login");
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
@@ -148,11 +148,12 @@ public class LoginManager : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             LoginResponse res = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
-            PlayerPrefs.SetString("AccountId", res.userId);
-            PlayerPrefs.SetString("Username", res.username);
             PlayerPrefs.SetString("AuthToken", res.token);
+            PlayerPrefs.SetString("AccountId", res.accountId);
+            PlayerPrefs.SetString("Username", res.username);
+            PlayerPrefs.SetString("Role", res.role);
 
-            Debug.Log($"Đăng nhập thành công! ID: {res.userId}");
+            Debug.Log($"Đăng nhập thành công! ID: {res.accountId}");
 
             HideLoginPanel();
             CheckLoginStatus();
@@ -270,8 +271,9 @@ public class LoginManager : MonoBehaviour
     [System.Serializable]
     public class LoginResponse
     {
-        public string userId;
-        public string username;
         public string token;
+        public string accountId;
+        public string username;
+        public string role;
     }
 }

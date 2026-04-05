@@ -41,9 +41,6 @@ public class InventoryService : MonoBehaviour
     {
         public int itemId;
         public int quantity;
-        public int price;
-        public string currency;
-        public bool isStackable;
     }
 
     [System.Serializable]
@@ -74,7 +71,7 @@ public class InventoryService : MonoBehaviour
     public class AddItemResponse
     {
         public bool success;
-        public int newDbId;
+        public int dbId;
     }
 
     [System.Serializable]
@@ -132,9 +129,9 @@ public class InventoryService : MonoBehaviour
         ));
     }
 
-    public void RequestBuyItem(int itemId, int quantity, int price, string currency, bool isStackable, System.Action<bool, List<ServerUserItem>> onComplete)
+    public void RequestBuyItem(int itemId, int quantity, System.Action<bool, List<ServerUserItem>> onComplete)
     {
-        StartCoroutine(BuyRoutine(itemId, quantity, price, currency, isStackable, onComplete));
+        StartCoroutine(BuyRoutine(itemId, quantity, onComplete));
     }
 
     public void RequestAddItem(
@@ -148,9 +145,9 @@ public class InventoryService : MonoBehaviour
         StartCoroutine(AddItemRoutine(itemId, quantity, slotIndex, rarity, quality, onSuccess));
     }
 
-    public void RequestRemoveItem(int itemDbId)
+    public void RequestRemoveItem(int itemDbId, System.Action<bool> onComplete = null)
     {
-        StartCoroutine(PostRequest("api/Inventory/remove", new RemoveRequestDTO { itemDbId = itemDbId }, null));
+        StartCoroutine(PostRequest("api/Inventory/remove", new RemoveRequestDTO { itemDbId = itemDbId }, onComplete));
     }
 
     public void RequestSyncChest(string chestId, System.Action<List<ServerUserItem>> onComplete)
@@ -223,7 +220,7 @@ public class InventoryService : MonoBehaviour
         }
     }
 
-    private IEnumerator BuyRoutine(int itemId, int quantity, int price, string currency, bool isStackable, System.Action<bool, List<ServerUserItem>> onComplete)
+    private IEnumerator BuyRoutine(int itemId, int quantity, System.Action<bool, List<ServerUserItem>> onComplete)
     {
         string url = NetworkConfig.GetUrl("api/Shop/buy");
         string token = PlayerPrefs.GetString("AuthToken", "");
@@ -231,10 +228,7 @@ public class InventoryService : MonoBehaviour
         var body = new BuyRequestDTO
         {
             itemId = itemId,
-            quantity = quantity,
-            price = price,
-            currency = currency,
-            isStackable = isStackable
+            quantity = quantity
         };
 
         string json = JsonUtility.ToJson(body);
@@ -296,7 +290,7 @@ public class InventoryService : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             var res = JsonUtility.FromJson<AddItemResponse>(request.downloadHandler.text);
-            if (res.success) onSuccess?.Invoke(res.newDbId);
+            if (res.success) onSuccess?.Invoke(res.dbId);
         }
         else
         {

@@ -90,33 +90,24 @@ public class ShopController : MonoBehaviour
         bool isCoin = currency == CurrencyType.Coin;
         int currentBalance = isCoin ? PlayerStats.Instance.coin : PlayerStats.Instance.gem;
 
-        if (currentBalance < price)
+        int totalCost = price * quantity;
+
+        if (currentBalance < totalCost)
         {
             GameNotify.Show("Số dư không đủ!");
             return;
         }
 
-        bool isStackable = true;
-
-        GameObject itemPrefab = itemDictionary.GetItemPrefab(itemID);
-        if (itemPrefab != null)
-        {
-            Item itemScript = itemPrefab.GetComponent<Item>();
-            if (itemScript != null)
-            {
-                isStackable = itemScript.IsStackable;
-            }
-        }
-
         string currencyStr = isCoin ? "Coin" : "Gem";
 
-        InventoryService.Instance.RequestBuyItem(itemID, quantity, price, currencyStr, isStackable, (success, serverItems) =>
+        InventoryService.Instance.RequestBuyItem(itemID, quantity, (success, serverItems) =>
         {
             if (success)
             {
                 GameNotify.Show("Mua thành công!");
 
-                int newBalance = currentBalance - price;
+                int newBalance = currentBalance - totalCost;
+
                 if (isCoin) PlayerStats.Instance.SyncCoinFromServer(newBalance);
                 else PlayerStats.Instance.SyncGemFromServer(newBalance);
 
@@ -124,7 +115,7 @@ public class ShopController : MonoBehaviour
             }
             else
             {
-                GameNotify.Show("Giao dịch thất bại!");
+                GameNotify.Show("Giao dịch thất bại! Có thể túi đồ đã đầy hoặc dữ liệu lệch.");
             }
         });
     }
