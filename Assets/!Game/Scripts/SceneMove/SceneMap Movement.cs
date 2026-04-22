@@ -10,7 +10,7 @@ public class SceneMapMove : MonoBehaviour
     public Vector2 playerPosition;
 
     [Header("Internal Move Settings (Optional)")]
-    public PolygonCollider2D newMapBoundary;
+    public BoxCollider2D newMapBoundary;
 
     [Header("Access Settings")]
     public bool canEnter = true;

@@ -347,7 +347,7 @@ public class SaveController : MonoBehaviour
         if (reason == SaveReason.SceneTransition && nextSpawnPosition != null) savePos = nextSpawnPosition.Value;
         if (reason == SaveReason.SceneTransition && !string.IsNullOrEmpty(pendingSceneName)) saveScene = pendingSceneName;
 
-        SaveData saveData = new SaveData
+        SaveData saveData = new SaveData 
         {
             playerPosition = nextSpawnPosition ?? GameObject.FindGameObjectWithTag("PlayerController").transform.position,
             currentSceneName = pendingSceneName ?? SceneManager.GetActiveScene().name,

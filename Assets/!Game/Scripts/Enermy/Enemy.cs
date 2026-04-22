@@ -65,6 +65,7 @@ public class Enemy : AutoIDBehaviour
     protected bool isAttacking = false;
     protected bool isStunned = false;
     protected bool isDead = false;
+    public bool IsDead => isDead;
     protected bool hasDealtDamageThisAttack = false;
     protected bool isTransitioning = false;
     protected Coroutine hurtCoroutine;
@@ -261,13 +262,16 @@ public class Enemy : AutoIDBehaviour
 
         currentHealth -= finalDamage;
 
-        GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
-        if (popupPrefab != null)
+        if (LoadResourceManager.Instance != null)
         {
-            Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
-            GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
-            DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
-            if (popupScript != null) popupScript.Setup(finalDamage, damageSourceType, isCritical);
+            GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
+            if (popupPrefab != null)
+            {
+                Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
+                GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
+                DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
+                if (popupScript != null) popupScript.Setup(finalDamage, damageSourceType, isCritical);
+            }
         }
 
         if (currentHealth <= 0 && !isDead)

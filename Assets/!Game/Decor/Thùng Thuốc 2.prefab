@@ -102,11 +102,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 742414813261065175, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 742414813261065175, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 742414813261065175, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
       propertyPath: m_LocalPosition.z
@@ -118,15 +118,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 742414813261065175, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 742414813261065175, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 742414813261065175, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 742414813261065175, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -142,7 +142,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1507868262410311520, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
       propertyPath: m_Name
-      value: "Th\xF9ng Thu\u1ED1c 2 Variant"
+      value: "Th\xF9ng Thu\u1ED1c 2"
+      objectReference: {fileID: 0}
+    - target: {fileID: 2975524140806243595, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
+      propertyPath: prefabID
+      value: "Th\xF9ng Thu\u1ED1c 2"
       objectReference: {fileID: 0}
     - target: {fileID: 3703075262959812879, guid: 2b96359bec6e85c4e9b3a0d1b08c5af8, type: 3}
       propertyPath: m_Tiles.Array.size

@@ -63,8 +63,8 @@ public class InventoryController : MonoBehaviour
     {
         if (inventoryPanel != null) return;
 
-        inventoryPanel = Resources.FindObjectsOfTypeAll<GameObject>()
-            .FirstOrDefault(x => x.name == "InventoryPage");
+        inventoryPanel = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            .FirstOrDefault(x => x.name == "InventoryPage")?.gameObject;
 
         if (inventoryPanel == null)
             Debug.LogError("Inventory panel not found!");

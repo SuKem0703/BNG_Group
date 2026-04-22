@@ -178,6 +178,7 @@ Tilemap:
     e33: 1
 --- !u!483693784 &5585825569015739591
 TilemapRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -223,6 +224,7 @@ TilemapRenderer:
   m_SortingLayerID: 1926694469
   m_SortingLayer: 8
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -230,7 +232,6 @@ TilemapRenderer:
   m_SortOrder: 0
   m_Mode: 0
   m_DetectChunkCullingBounds: 0
-  m_MaskInteraction: 0
 --- !u!19719996 &2272719167967067645
 TilemapCollider2D:
   m_ObjectHideFlags: 0
@@ -456,6 +457,7 @@ Tilemap:
     e33: 1
 --- !u!483693784 &177643243990321589
 TilemapRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -501,6 +503,7 @@ TilemapRenderer:
   m_SortingLayerID: -1780988441
   m_SortingLayer: 2
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -508,7 +511,6 @@ TilemapRenderer:
   m_SortOrder: 0
   m_Mode: 0
   m_DetectChunkCullingBounds: 0
-  m_MaskInteraction: 0
 --- !u!19719996 &1572659044243300644
 TilemapCollider2D:
   m_ObjectHideFlags: 0
@@ -559,6 +561,7 @@ GameObject:
   - component: {fileID: 8472839936854941859}
   - component: {fileID: 1353613611194124272}
   - component: {fileID: 254684689959175370}
+  - component: {fileID: -5783198903686680818}
   m_Layer: 0
   m_Name: "Gi\xE1 treo 2"
   m_TagString: Untagged
@@ -629,3 +632,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SnapToGrid
   gridSize: 1
+--- !u!114 &-5783198903686680818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1507626842279812333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc6a7a9adee76254784c1fd9f2ebe79d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChunkEntityMarker
+  prefabID: "Gi\xE1 treo 2"
+  entityType: 0

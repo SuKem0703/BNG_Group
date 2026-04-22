@@ -51,20 +51,14 @@ public class RewardController : MonoBehaviour
 
             if (!InventoryController.Instance.AddItem(itemInstance))
             {
-                GameObject dropItem = Instantiate(itemPrefab, transform.position + Vector3.down, Quaternion.identity);
-
-                if (dropItem.GetComponent<Item>() is EquipmentItem dropEquip && item is EquipmentItem sourceEquip)
-                {
-                    dropEquip.rarity = sourceEquip.rarity;
-                    dropEquip.qualityFactor = sourceEquip.qualityFactor;
-                }
-
-                dropItem.GetComponent<BounceEffect>()?.StartBounce();
+                itemInstance.transform.position = transform.position + Vector3.down;
+                itemInstance.GetComponent<BounceEffect>()?.StartBounce();
             }
             else
             {
                 item.ShowPopUp();
                 Debug.Log($"Đã nhận phần thưởng: {item.Name} x{amount}");
+                Destroy(itemInstance);
             }
         }
     }

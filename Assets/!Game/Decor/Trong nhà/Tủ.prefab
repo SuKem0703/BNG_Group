@@ -667,6 +667,7 @@ GameObject:
   - component: {fileID: 1702355153833196958}
   - component: {fileID: 5943505803736093773}
   - component: {fileID: 3497552794089382590}
+  - component: {fileID: 673882562826468224}
   m_Layer: 0
   m_Name: "T\u1EE7"
   m_TagString: Untagged
@@ -737,3 +738,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SnapToGrid
   gridSize: 1
+--- !u!114 &673882562826468224
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8777135189841333351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc6a7a9adee76254784c1fd9f2ebe79d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChunkEntityMarker
+  prefabID: "T\u1EE7"
+  entityType: 0

@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 677900337286569430, guid: e9628a65f1887384882338d97ca6d323, type: 3}
       propertyPath: m_Name
-      value: "Th\xF9ng Thu\u1ED1c 1 Variant"
+      value: "Th\xF9ng Thu\u1ED1c 1"
       objectReference: {fileID: 0}
     - target: {fileID: 1450384601952933686, guid: e9628a65f1887384882338d97ca6d323, type: 3}
       propertyPath: m_Size.x
@@ -130,11 +130,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1713886457765159265, guid: e9628a65f1887384882338d97ca6d323, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1713886457765159265, guid: e9628a65f1887384882338d97ca6d323, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1713886457765159265, guid: e9628a65f1887384882338d97ca6d323, type: 3}
       propertyPath: m_LocalPosition.z
@@ -283,6 +283,10 @@ PrefabInstance:
     - target: {fileID: 3379550908094974905, guid: e9628a65f1887384882338d97ca6d323, type: 3}
       propertyPath: m_Tiles.Array.data[2].second.m_TileObjectToInstantiateIndex
       value: 65535
+      objectReference: {fileID: 0}
+    - target: {fileID: 3805061753155555261, guid: e9628a65f1887384882338d97ca6d323, type: 3}
+      propertyPath: prefabID
+      value: "Th\xF9ng Thu\u1ED1c 1"
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

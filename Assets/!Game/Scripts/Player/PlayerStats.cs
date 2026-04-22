@@ -356,8 +356,7 @@ public class PlayerStats : MonoBehaviour
             foreach (Slot slot in equipmentKnightSlots)
             {
                 if (!slot.isEquipmentSlot || slot.currentItem == null) continue;
-
-                // [CẬP NHẬT] Ép kiểu sang EquipmentItem
+                
                 if (slot.currentItem.GetComponent<Item>() is EquipmentItem equip)
                 {
                     bonusSTR += equip.bonusSTR;
@@ -388,7 +387,6 @@ public class PlayerStats : MonoBehaviour
             {
                 if (!slot.isEquipmentSlot || slot.currentItem == null) continue;
 
-                // [CẬP NHẬT] Ép kiểu sang EquipmentItem
                 if (slot.currentItem.GetComponent<Item>() is EquipmentItem equip)
                 {
                     bonusSTR += equip.bonusSTR;
