@@ -77,9 +77,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 946148091
-  m_SortingLayer: 5
-  m_SortingOrder: 1
+  m_SortingLayerID: 1730221035
+  m_SortingLayer: 10
+  m_SortingOrder: -10
   m_MaskInteraction: 0
   m_Sprite: {fileID: 8147004107710021074, guid: 2303e70181e57db4398456a2e6c6b043, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -108,6 +108,7 @@ GameObject:
   - component: {fileID: 5637482189399178007}
   - component: {fileID: 8833251898576531316}
   - component: {fileID: 8657469189403248438}
+  - component: {fileID: 4689900677014188505}
   m_Layer: 8
   m_Name: NPC
   m_TagString: Untagged
@@ -224,9 +225,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f09b87ed534d1624cae7cd3564493884, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <UniqueID>k__BackingField: NPC_-38_-23
   dialogueDataList: []
   playerName: Elric
-  playerPortrait: {fileID: 0}
+  playerPortrait: {fileID: 1942528367, guid: 346b5f769ed1fe948b5ff84bf1d4a1dd, type: 3}
   triggerOnEnter: 0
 --- !u!114 &3197673541645581489
 MonoBehaviour:
@@ -346,5 +348,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpriteDynamicSorting
   inFrontLayer: Walk in front
   behindLayer: Walk behind
+  sortingBuffer: 0
   yOffset: -0.2
   sortingPrecision: 100
+--- !u!114 &4689900677014188505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8757576948480836762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc6a7a9adee76254784c1fd9f2ebe79d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChunkEntityMarker
+  prefabID: 
+  entityType: 2

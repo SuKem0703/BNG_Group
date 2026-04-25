@@ -134,7 +134,7 @@ public class Enemy : AutoIDBehaviour
     }
     public bool IsDefeated() => isDead;
 
-    protected virtual void Update()
+    protected override void Update()
     {
         if (!isDead && !isTransitioning && currentHealth <= 0)
         {

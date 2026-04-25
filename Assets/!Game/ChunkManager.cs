@@ -143,14 +143,18 @@ public class ChunkManager : MonoBehaviour
             allChunkData[coord] = data;
         }
 
-        foreach (var entity in data.entities)
+        for (int i = 0; i < data.entities.Count; i++)
         {
+            var entity = data.entities[i];
             if (string.IsNullOrEmpty(entity.entityID)) continue;
             GameObject prefab = worldDictionary.GetPrefab(entity.entityID);
 
             if (prefab != null)
             {
                 GameObject spawnedObj = Instantiate(prefab, entity.position, Quaternion.identity, chunkGO.transform);
+
+                // Sử dụng công thức dùng chung để đồng nhất định dạng ID
+                string deterministicID = GlobalHelper.GenerateUniqueID(spawnedObj);
 
                 var marker = spawnedObj.GetComponent<ChunkEntityMarker>();
                 if (marker != null)
@@ -159,12 +163,26 @@ public class ChunkManager : MonoBehaviour
                     marker.entityType = entity.entityType;
                 }
 
-                SetupEntityLogic(spawnedObj, entity);
+                SetupEntityLogic(spawnedObj, entity, deterministicID);
+
+                var dynamicSort = spawnedObj.GetComponent<DynamicSorting>();
+                if (dynamicSort != null)
+                {
+                    dynamicSort.InitSorting(entity.sortingBuffer);
+                }
+                else
+                {
+                    var spriteSort = spawnedObj.GetComponent<SpriteDynamicSorting>();
+                    if (spriteSort != null)
+                    {
+                        spriteSort.InitSorting(entity.sortingBuffer);
+                    }
+                }
             }
         }
     }
 
-    private void SetupEntityLogic(GameObject obj, EntitySaveData data)
+    private void SetupEntityLogic(GameObject obj, EntitySaveData data, string uniqueID)
     {
         switch (data.entityType)
         {
@@ -183,22 +201,51 @@ public class ChunkManager : MonoBehaviour
                 break;
 
             case EntityType.NPC:
-                var npc = obj.AddComponent<NPC>();
-                npc.triggerOnEnter = data.triggerOnEnter;
-
-                if (data.npcDialoguePaths != null && data.npcDialoguePaths.Length > 0)
+                var npc = obj.GetComponent<NPC>();
+                if (npc != null)
                 {
-                    npc.dialogueDataList = new NPCDialogue[data.npcDialoguePaths.Length];
-                    for (int i = 0; i < data.npcDialoguePaths.Length; i++)
+                    npc.InitChunkData(uniqueID, data.triggerOnEnter);
+
+                    if (data.npcDialoguePaths != null && data.npcDialoguePaths.Length > 0)
                     {
-                        npc.dialogueDataList[i] = Resources.Load<NPCDialogue>(data.npcDialoguePaths[i]);
+                        npc.dialogueDataList = new NPCDialogue[data.npcDialoguePaths.Length];
+                        for (int i = 0; i < data.npcDialoguePaths.Length; i++)
+                        {
+                            npc.dialogueDataList[i] = Resources.Load<NPCDialogue>(data.npcDialoguePaths[i]);
+                        }
                     }
                 }
+                break;
 
+            case EntityType.Container:
+                var chest = obj.GetComponent<Chest>();
+                if (chest != null)
+                {
+                    chest.InitChunkData(data, uniqueID);
+
+                    chest.rarityMode = data.rarityMode;
+                    chest.fixedRarity = data.fixedRarity;
+                    chest.qualityMode = data.qualityMode;
+
+                    if (!string.IsNullOrEmpty(data.rewardItemPath))
+                    {
+                        chest.itemPrefab = Resources.Load<GameObject>(data.rewardItemPath);
+
+                        if (chest.itemPrefab == null)
+                        {
+                            Debug.LogWarning($"[Rương] Không tìm thấy Item Prefab tại: {data.rewardItemPath}. Hãy chắc chắn vật phẩm nằm trong thư mục Resources.");
+                        }
+                    }
+                }
                 EnsureCollider(obj, data);
                 break;
 
             case EntityType.Static:
+                var storageChest = obj.GetComponent<StorageChest>();
+                if (storageChest != null)
+                {
+                    storageChest.InitChunkData(uniqueID);
+                }
                 break;
         }
     }
@@ -244,7 +291,6 @@ public class ChunkManager : MonoBehaviour
         chunkGO.name += "_Unloading";
         chunkGO.SetActive(false);
 
-        // Sử dụng Queue để quản lý danh sách cần hủy
         Queue<GameObject> childrenQueue = new Queue<GameObject>();
         foreach (Transform child in chunkGO.transform)
         {

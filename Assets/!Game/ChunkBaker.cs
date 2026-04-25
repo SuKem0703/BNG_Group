@@ -30,6 +30,20 @@ public class ChunkBaker : MonoBehaviour
                 position = marker.transform.position
             };
 
+            var dynamicSort = marker.GetComponent<DynamicSorting>();
+            if (dynamicSort != null)
+            {
+                data.sortingBuffer = dynamicSort.sortingBuffer;
+            }
+            else
+            {
+                var spriteSort = marker.GetComponent<SpriteDynamicSorting>();
+                if (spriteSort != null)
+                {
+                    data.sortingBuffer = spriteSort.sortingBuffer;
+                }
+            }
+
             if (marker.entityType == EntityType.Interactable || marker.entityType == EntityType.NPC)
             {
                 BoxCollider2D[] colliders = marker.GetComponents<BoxCollider2D>();
@@ -71,6 +85,21 @@ public class ChunkBaker : MonoBehaviour
                     }
                 }
             }
+            else if (marker.entityType == EntityType.Container)
+            {
+                var chest = marker.GetComponent<Chest>();
+                if (chest != null)
+                {
+                    data.rarityMode = chest.rarityMode;
+                    data.fixedRarity = chest.fixedRarity;
+                    data.qualityMode = chest.qualityMode;
+
+                    if (chest.itemPrefab != null)
+                    {
+                        data.rewardItemPath = GetResourcePath(chest.itemPrefab);
+                    }
+                }
+            }
 
             mapData[coord].entities.Add(data);
             count++;
@@ -99,7 +128,6 @@ public class ChunkBaker : MonoBehaviour
         return new Vector2Int(x, y);
     }
 
-    // Hàm tiện ích hỗ trợ trích xuất đường dẫn Resources từ ScriptableObject
     private string GetResourcePath(Object obj)
     {
         if (obj == null) return string.Empty;
@@ -111,7 +139,14 @@ public class ChunkBaker : MonoBehaviour
         if (resIndex >= 0)
         {
             string pathWithoutRes = fullPath.Substring(resIndex + 10);
-            return pathWithoutRes.Replace(".asset", "");
+
+            int dotIndex = pathWithoutRes.LastIndexOf('.');
+            if (dotIndex > 0)
+            {
+                return pathWithoutRes.Substring(0, dotIndex);
+            }
+
+            return pathWithoutRes;
         }
         Debug.LogWarning($"<color=orange>[Cảnh Báo]</color> Asset '{obj.name}' không nằm trong thư mục Resources! Hãy di chuyển nó vào thư mục Resources để game có thể Load ở Runtime.");
 #endif

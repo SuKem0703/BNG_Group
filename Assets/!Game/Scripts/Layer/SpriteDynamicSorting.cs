@@ -3,32 +3,44 @@
 [RequireComponent(typeof(SpriteRenderer))]
 public class SpriteDynamicSorting : MonoBehaviour
 {
-    [Header("Tên Layer (Phải khớp trong Project Settings)")]
+    [Header("Renderers")]
     [SerializeField] private string inFrontLayer = "Walk in front";
     [SerializeField] private string behindLayer = "Walk behind";
 
-    [Header("Cài đặt Vùng đệm")]
-    [Tooltip("Điểm mốc để so sánh với chân Player. Với ô 1x1 thường là thấp hơn tâm một chút.")]
+    [Header("Y Offset")]
     [SerializeField] private float yOffset = -0.2f;
 
-    [Header("Y-Sort Tĩnh (Để xếp chồng các vật tĩnh với nhau)")]
+    [Header("Static Y Sort")]
     [SerializeField] private int sortingPrecision = 100;
 
+    public int sortingBuffer = 0;
+
     private SpriteRenderer spriteRenderer;
+    private bool isInitialized = false;
 
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+    }
 
-        int baseOrder = spriteRenderer.sortingOrder;
-        int newYSortOrder = Mathf.RoundToInt(transform.position.y * -sortingPrecision);
-        spriteRenderer.sortingOrder = baseOrder + newYSortOrder;
+    public void InitSorting(int buffer)
+    {
+        sortingBuffer = buffer;
+
+        int sortOrder = Mathf.RoundToInt(transform.position.y * -sortingPrecision) + sortingBuffer;
+        spriteRenderer.sortingOrder = sortOrder;
+
+        isInitialized = true;
+
+        UpdateLayerImmediate();
     }
 
     void OnEnable()
     {
         if (YSortController.Instance != null)
             YSortController.OnPlayerYChanged += HandleYChanged;
+
+        if (isInitialized) UpdateLayerImmediate();
     }
 
     void OnDisable()
@@ -37,27 +49,29 @@ public class SpriteDynamicSorting : MonoBehaviour
             YSortController.OnPlayerYChanged -= HandleYChanged;
     }
 
+    private void UpdateLayerImmediate()
+    {
+        if (YSortController.Instance == null) return;
+
+        GameObject player = GameObject.FindGameObjectWithTag(YSortController.Instance.playerTag);
+        if (player != null)
+        {
+            HandleYChanged(player.transform.position.y);
+        }
+    }
+
     private void HandleYChanged(float playerY)
     {
         if (this == null || transform == null) return;
 
-        if (playerY < (transform.position.y + yOffset))
+        string targetLayer = (playerY < (transform.position.y + yOffset)) ? inFrontLayer : behindLayer;
+
+        if (spriteRenderer.sortingLayerName != targetLayer)
         {
-            SetSortingLayer(inFrontLayer);
-        }
-        else
-        {
-            SetSortingLayer(behindLayer);
+            spriteRenderer.sortingLayerName = targetLayer;
         }
     }
 
-    private void SetSortingLayer(string layerName)
-    {
-        if (spriteRenderer.sortingLayerName != layerName)
-        {
-            spriteRenderer.sortingLayerName = layerName;
-        }
-    }
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;

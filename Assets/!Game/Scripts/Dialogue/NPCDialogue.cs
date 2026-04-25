@@ -37,6 +37,10 @@ public class NPCDialogue : ScriptableObject
     public bool triggerOnEnter_Completed = false;
     [Tooltip("Tự kích hoạt hội thoại khi Quest này 'NoMoreQuests' (đã trả)")]
     public bool triggerOnEnter_NoMoreQuests = false;
+
+    [Header("Tự động nhận Quest")]
+    [Tooltip("Tự động nhận Quest sau khi đọc hết dòng thoại cuối cùng (Không cần qua Choice)")]
+    public bool autoGiveQuestOnEnd = false;
 }
 
 [System.Serializable]

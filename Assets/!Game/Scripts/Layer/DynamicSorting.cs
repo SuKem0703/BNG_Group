@@ -26,6 +26,9 @@ public class DynamicSorting : MonoBehaviour
     [Header("Static Y Sort")]
     [SerializeField] private int sortingPrecision = 100;
 
+    public int sortingBuffer = 0;
+    private bool isInitialized = false;
+
     void Awake()
     {
         if (frontRenderer == null)
@@ -44,21 +47,33 @@ public class DynamicSorting : MonoBehaviour
         _behindTilemap = behindRenderer.GetComponent<Tilemap>();
 
         _targetAlpha = normalAlpha;
+    }
 
-        int sortOrder = Mathf.RoundToInt(transform.position.y * -sortingPrecision);
-        frontRenderer.sortingOrder += sortOrder;
-        behindRenderer.sortingOrder += sortOrder;
+    public void InitSorting(int buffer)
+    {
+        sortingBuffer = buffer;
+
+        int sortOrder = Mathf.RoundToInt(transform.position.y * -sortingPrecision) + sortingBuffer;
+        frontRenderer.sortingOrder = sortOrder;
+        behindRenderer.sortingOrder = sortOrder;
+
+        isInitialized = true;
+
+        UpdateLayerImmediate();
     }
 
     void OnEnable()
     {
         if (YSortController.Instance != null)
             YSortController.OnPlayerYChanged += HandleYChanged;
+
+        if (isInitialized) UpdateLayerImmediate();
     }
 
     void OnDisable()
     {
-        YSortController.OnPlayerYChanged -= HandleYChanged;
+        if (YSortController.Instance != null)
+            YSortController.OnPlayerYChanged -= HandleYChanged;
     }
 
     void Update()
@@ -73,7 +88,17 @@ public class DynamicSorting : MonoBehaviour
         }
     }
 
-    // --- SORTING ---
+    private void UpdateLayerImmediate()
+    {
+        if (YSortController.Instance == null) return;
+
+        GameObject player = GameObject.FindGameObjectWithTag(YSortController.Instance.playerTag);
+        if (player != null)
+        {
+            HandleYChanged(player.transform.position.y);
+        }
+    }
+
     private void HandleYChanged(float playerY)
     {
         if (this == null) return;
@@ -93,22 +118,12 @@ public class DynamicSorting : MonoBehaviour
             behindRenderer.sortingLayerName = layer;
     }
 
-    // --- FADE API ---
-    public void SetFade(bool fade)
-    {
-        _targetAlpha = fade ? fadedAlpha : normalAlpha;
-    }
+    public void SetFade(bool fade) => _targetAlpha = fade ? fadedAlpha : normalAlpha;
 
     private void SetAlpha(float alpha)
     {
         Color c;
-
-        c = _frontTilemap.color;
-        c.a = alpha;
-        _frontTilemap.color = c;
-
-        c = _behindTilemap.color;
-        c.a = alpha;
-        _behindTilemap.color = c;
+        c = _frontTilemap.color; c.a = alpha; _frontTilemap.color = c;
+        c = _behindTilemap.color; c.a = alpha; _behindTilemap.color = c;
     }
 }

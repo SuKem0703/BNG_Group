@@ -48,8 +48,8 @@ public class Monologue : MonoBehaviour, IInteractable
     {
         dialogueUI = DialogueController.instance;
 
-        if (characterPortrait == null)
-            characterPortrait = Resources.Load<Sprite>("Elric_Portrait");
+        //if (characterPortrait == null)
+        //    characterPortrait = Resources.Load<Sprite>("Elric_Portrait");
 
         if (isOneTimeOnly)
         {
@@ -333,4 +333,19 @@ public class Monologue : MonoBehaviour, IInteractable
 
         currentQuestState = MonologueQuestState.NoMoreQuests;
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (characterPortrait == null && !string.IsNullOrEmpty(characterName))
+        {
+            characterPortrait = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Resources/{characterName}_Portrait.png");
+
+            if (characterPortrait == null)
+            {
+                characterPortrait = Resources.Load<Sprite>($"{characterName}_Portrait");
+            }
+        }
+    }
+#endif
 }

@@ -277,6 +277,12 @@ public class KnightComboNormalAttack : MonoBehaviour
 
     private void UpdateAttackPointDirection()
     {
+        if (Camera.main == null)
+        {
+            Debug.LogError("Main Camera not found. Please ensure there is a camera tagged as 'MainCamera' in the scene.");
+            return;
+        }
+
         if (playerMovement != null && playerMovement.isRunning && playerMovement.moveInput.magnitude > 0.01f)
         {
             attackDirection = playerMovement.moveInput.normalized;

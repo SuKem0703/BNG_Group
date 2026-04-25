@@ -17,6 +17,13 @@ public class SaveController : MonoBehaviour
 {
     public static SaveController Instance { get; private set; }
 
+    private static HashSet<Chest> _activeChests = new HashSet<Chest>();
+    private Dictionary<string, bool> _sessionChestStates = new Dictionary<string, bool>();
+    private List<ChestSaveData> _cachedChestStates = new List<ChestSaveData>();
+
+    public static void RegisterChest(Chest chest) => _activeChests.Add(chest);
+    public static void UnregisterChest(Chest chest) => _activeChests.Remove(chest);
+
     public static event System.Action OnDataLoaded;
     public static bool IsDataLoaded { get; private set; } = false;
     public static bool IsSaving { get; private set; } = false;
@@ -28,7 +35,6 @@ public class SaveController : MonoBehaviour
 
     private InventoryController inventoryController;
     private HotbarController hotbarController;
-    private Chest[] chests;
     private PlayerStats playerStats;
     private KnightEquipmentPanel knightEquipmentPanel;
     private MageEquipmentPanel mageEquipmentPanel;
@@ -46,7 +52,6 @@ public class SaveController : MonoBehaviour
     private float autoSaveDebounceTime = 3.0f;
     private bool isAutoSavePending = false;
 
-    // Biến lưu trữ tạm thời SaveData
     private SaveData tempSaveData;
 
     void Awake()
@@ -59,6 +64,9 @@ public class SaveController : MonoBehaviour
 
         Instance = this;
         IsDataLoaded = false;
+
+        _activeChests.Clear();
+        _sessionChestStates.Clear();
 
         if (uidText == null)
             uidText = GameObject.Find("UIDText")?.GetComponent<TextMeshProUGUI>();
@@ -103,7 +111,6 @@ public class SaveController : MonoBehaviour
         if (EconomyService.Instance != null)
             EconomyService.Instance.RefreshBalance();
 
-        // CHỜ ĐỒNG BỘ CHỈ SỐ CƠ BẢN
         bool profileLoaded = false;
         if (PlayerStatsService.Instance != null)
         {
@@ -113,11 +120,9 @@ public class SaveController : MonoBehaviour
 
         while (!profileLoaded) yield return null;
 
-        // ĐỒNG BỘ NÔNG TRẠI
         if (FarmController.Instance != null)
             FarmController.Instance.FetchFarmDataFromServer();
 
-        // CHỜ ĐỒNG BỘ TÚI ĐỒ VÀ TRANG BỊ
         bool inventoryLoaded = false;
         if (InventoryService.Instance != null)
         {
@@ -229,7 +234,6 @@ public class SaveController : MonoBehaviour
                     if (mageEquipmentPanel != null) mageEquipmentPanel.SetEquipmentItems(mageEquips);
                     if (sharedEquipmentPanel != null) sharedEquipmentPanel.SetEquipmentItems(sharedEquips);
 
-                    // Ép tính toán lại Max HP / Damage dựa trên đồ vừa mặc
                     if (playerStats != null)
                     {
                         playerStats.ApplyAllClassEquippedItems();
@@ -242,7 +246,6 @@ public class SaveController : MonoBehaviour
 
         while (!inventoryLoaded) yield return null;
 
-        // BƠM CHỈ SỐ CURRENT HP/MP
         if (playerStats != null && tempSaveData != null)
         {
             playerStats.knightHealth = tempSaveData.currentKnightHP;
@@ -251,7 +254,7 @@ public class SaveController : MonoBehaviour
             playerStats.mageMP = tempSaveData.currentMageMP;
             playerStats.currentStamina = tempSaveData.currentStamina;
 
-            tempSaveData = null; // Dọn dẹp RAM
+            tempSaveData = null;
         }
 
         IsDataLoaded = true;
@@ -274,7 +277,6 @@ public class SaveController : MonoBehaviour
     {
         inventoryController = FindFirstObjectByType<InventoryController>(FindObjectsInactive.Include);
         hotbarController = FindFirstObjectByType<HotbarController>();
-        chests = FindObjectsByType<Chest>(FindObjectsSortMode.None);
         playerStats = GameObject.FindGameObjectWithTag("PlayerController").GetComponent<PlayerStats>();
         knightEquipmentPanel = FindFirstObjectByType<KnightEquipmentPanel>(FindObjectsInactive.Include);
         mageEquipmentPanel = FindFirstObjectByType<MageEquipmentPanel>(FindObjectsInactive.Include);
@@ -347,7 +349,7 @@ public class SaveController : MonoBehaviour
         if (reason == SaveReason.SceneTransition && nextSpawnPosition != null) savePos = nextSpawnPosition.Value;
         if (reason == SaveReason.SceneTransition && !string.IsNullOrEmpty(pendingSceneName)) saveScene = pendingSceneName;
 
-        SaveData saveData = new SaveData 
+        SaveData saveData = new SaveData
         {
             playerPosition = nextSpawnPosition ?? GameObject.FindGameObjectWithTag("PlayerController").transform.position,
             currentSceneName = pendingSceneName ?? SceneManager.GetActiveScene().name,
@@ -471,17 +473,30 @@ public class SaveController : MonoBehaviour
         }
     }
 
+    public void MarkChestAsOpened(string chestID)
+    {
+        if (!string.IsNullOrEmpty(chestID))
+        {
+            _sessionChestStates[chestID] = true;
+        }
+    }
+
     private List<ChestSaveData> GetChestsState()
     {
-        List<ChestSaveData> chestStates = new List<ChestSaveData>();
-        foreach (Chest chest in chests)
+        foreach (Chest chest in _activeChests)
         {
-            ChestSaveData chestSaveData = new ChestSaveData
+            if (string.IsNullOrEmpty(chest.UniqueID)) continue;
+            _sessionChestStates[chest.UniqueID] = chest.IsOpened;
+        }
+
+        List<ChestSaveData> chestStates = new List<ChestSaveData>();
+        foreach (var kvp in _sessionChestStates)
+        {
+            chestStates.Add(new ChestSaveData
             {
-                chestID = chest.UniqueID,
-                isOpened = chest.IsOpened,
-            };
-            chestStates.Add(chestSaveData);
+                chestID = kvp.Key,
+                isOpened = kvp.Value,
+            });
         }
         return chestStates;
     }
@@ -514,7 +529,6 @@ public class SaveController : MonoBehaviour
 
     private bool ApplySaveData(SaveData saveData)
     {
-        // Cache dữ liệu lại để dùng sau cùng
         tempSaveData = saveData;
 
         string targetScene = saveData.currentSceneName;
@@ -553,12 +567,16 @@ public class SaveController : MonoBehaviour
             pendingSceneName = null;
         }
 
-        var boundary = GameObject.Find(saveData?.mapBoundary)?.GetComponent<PolygonCollider2D>();
+        var boundary = GameObject.Find(saveData?.mapBoundary)?.GetComponent<BoxCollider2D>();
 
         if (boundary != null)
         {
             var confiner = FindFirstObjectByType<CinemachineConfiner2D>();
-            if (confiner != null) confiner.BoundingShape2D = boundary;
+            if (confiner != null)
+            {
+                confiner.BoundingShape2D = boundary;
+                confiner.InvalidateBoundingShapeCache();
+            }
         }
 
         if (!string.IsNullOrEmpty(saveData.checkpointSceneName))
@@ -570,7 +588,9 @@ public class SaveController : MonoBehaviour
         if (inventoryController != null)
             inventoryController.slotCount = saveData.backPackSlotCount;
 
-        LoadChestStates(saveData.chestSaveData);
+        // Lưu vào cache để rương đẻ sau có thể truy cập
+        _cachedChestStates = saveData.chestSaveData ?? new List<ChestSaveData>();
+        LoadChestStates(_cachedChestStates);
 
         if (QuestController.Instance != null)
         {
@@ -591,13 +611,32 @@ public class SaveController : MonoBehaviour
         return false;
     }
 
-    private void LoadChestStates(List<ChestSaveData> chestState)
+    public void LoadChestStates(List<ChestSaveData> chestState)
     {
-        foreach (Chest chest in chests)
+        _sessionChestStates.Clear();
+        if (chestState != null)
         {
-            ChestSaveData chestSaveData = chestState.FirstOrDefault(c => c.chestID == chest.UniqueID);
-            if (chestSaveData != null) chest.SetOpened(chestSaveData.isOpened);
+            foreach (var state in chestState)
+            {
+                _sessionChestStates[state.chestID] = state.isOpened;
+            }
         }
+
+        foreach (Chest chest in _activeChests.ToList())
+        {
+            var state = chestState?.FirstOrDefault(c => c.chestID == chest.UniqueID);
+            if (state != null)
+            {
+                chest.SetOpened(state.isOpened);
+            }
+        }
+    }
+
+    // Hàm truy xuất trạng thái nhanh cho rương sinh ra từ Chunk
+    public bool IsChestOpened(string chestID)
+    {
+        var state = _cachedChestStates.FirstOrDefault(c => c.chestID == chestID);
+        return state != null && state.isOpened;
     }
 
     [System.Serializable]

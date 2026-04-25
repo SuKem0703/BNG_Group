@@ -12,7 +12,7 @@ public enum SpecialActionType
 }
 
 [RequireComponent(typeof(CapsuleCollider2D), typeof(CircleCollider2D))]
-public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
+public class NPC : AutoIDBehaviour, IInteractable, ITargetableInfo
 {
     public event System.Action<QuestState> OnQuestStateUpdated;
 
@@ -46,6 +46,12 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
     }
     public QuestState CurrentQuestState { get; private set; } = QuestState.NotStarted;
 
+    public void InitChunkData(string customID, bool triggerEnter)
+    {
+        UniqueID = customID;
+        triggerOnEnter = triggerEnter;
+    }
+
     private void Awake()
     {
         if (dialogueDataList == null) return;
@@ -77,11 +83,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
                     }
                 }
             }
-        }
-
-        if (playerPortrait == null)
-        {
-            playerPortrait = Resources.Load<Sprite>("Elric_Portrait");
         }
     }
 
@@ -339,7 +340,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             return;
         }
 
-        // Kiểm tra Choice
         foreach (DialogueChoice dialogueChoice in CurrentActiveDialogue.choices)
         {
             if (dialogueChoice.dialogueIndex == dialogueIndex)
@@ -349,7 +349,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             }
         }
 
-        // Nếu không có choice thì tăng dòng
         if (++dialogueIndex < CurrentActiveDialogue.dialogueLines.Length)
         {
             DisplayCurrentLine();
@@ -362,8 +361,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
 
     void CheckForChoices()
     {
-        // Hàm này có thể bỏ nếu không dùng trong Auto Progress
-        // Hoặc giữ lại nếu bạn muốn Auto Progress tự chuyển sang Choice
         foreach (DialogueChoice dialogueChoice in CurrentActiveDialogue.choices)
         {
             if (dialogueChoice.dialogueIndex == dialogueIndex)
@@ -400,7 +397,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         isTyping = false;
         dialogueUI.continueIndicator.gameObject.SetActive(true);
 
-        // Auto Progress Logic
         if (CurrentActiveDialogue.autoProgressLines.Length > dialogueIndex && CurrentActiveDialogue.autoProgressLines[dialogueIndex])
         {
             dialogueUI.continueIndicator.gameObject.SetActive(false);
@@ -413,7 +409,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
     {
         dialogueUI.continueIndicator.gameObject.SetActive(false);
 
-        // Nếu chỉ có 1 lựa chọn, tự động chọn luôn
         if (choice.choices.Length == 1)
         {
             string choiceText = choice.choices[0];
@@ -426,7 +421,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             return;
         }
 
-        // Nếu có nhiều lựa chọn, hiển thị nút bấm
         for (int i = 0; i < choice.choices.Length; i++)
         {
             int nextIndex = (choice.nextDialogueIndexes != null && i < choice.nextDialogueIndexes.Length) ? choice.nextDialogueIndexes[i] : -1;
@@ -479,11 +473,6 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
         isPlayerTalking = false;
         pendingChoiceLogic = null;
 
-        //if (CurrentActiveDialogue != null)
-        //{
-        //    dialogueUI.SetNPCInfo(CurrentActiveDialogue.npcName, CurrentActiveDialogue.npcPortrait);
-        //}
-
         if (action != SpecialActionType.None)
         {
             maintainPauseAfterDialogue = true;
@@ -495,7 +484,7 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             QuestController.Instance.AcceptQuest(CurrentActiveDialogue.quest);
             justAcceptedQuest = true;
             EndDialogue();
-            Debug.Log($"Đã nhận nhiệm vụ: {CurrentActiveDialogue.quest.questName}");
+            Debug.Log($"Đã nhận nhiệm vụ (Qua Choice): {CurrentActiveDialogue.quest.questName}");
         }
 
         if (nextIndex == -1)
@@ -538,10 +527,18 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
     {
         if (!GameStateManager.IsDialogueActive) return;
 
-        if (CurrentActiveDialogue != null && CurrentActiveDialogue.quest != null &&
-            CurrentQuestState == QuestState.Completed && !QuestController.Instance.IsQuestHandedIn(CurrentActiveDialogue.quest.questID))
+        if (CurrentActiveDialogue != null && CurrentActiveDialogue.quest != null)
         {
-            HandleQuestCompletion(CurrentActiveDialogue.quest);
+            if (CurrentQuestState == QuestState.Completed && !QuestController.Instance.IsQuestHandedIn(CurrentActiveDialogue.quest.questID))
+            {
+                HandleQuestCompletion(CurrentActiveDialogue.quest);
+            }
+            else if (CurrentQuestState == QuestState.NotStarted && CurrentActiveDialogue.autoGiveQuestOnEnd)
+            {
+                QuestController.Instance.AcceptQuest(CurrentActiveDialogue.quest);
+                justAcceptedQuest = true;
+                Debug.Log($"[NPC] Đã tự động nhận nhiệm vụ: {CurrentActiveDialogue.quest.questName} sau khi hội thoại kết thúc.");
+            }
         }
 
         StopAllCoroutines();
@@ -582,4 +579,19 @@ public class NPC : MonoBehaviour, IInteractable, ITargetableInfo
             return new TargetInfoData(CurrentActiveDialogue.npcName, CurrentActiveDialogue.npcPortrait, "Nói chuyện", TargetType.NPC);
         return new TargetInfoData(gameObject.name, null, "Nói chuyện", TargetType.NPC);
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (playerPortrait == null && !string.IsNullOrEmpty(playerName))
+        {
+            playerPortrait = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Resources/{playerName}_Portrait.png");
+
+            if (playerPortrait == null)
+            {
+                playerPortrait = Resources.Load<Sprite>($"{playerName}_Portrait");
+            }
+        }
+    }
+#endif
 }

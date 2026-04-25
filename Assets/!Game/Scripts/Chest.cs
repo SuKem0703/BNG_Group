@@ -38,6 +38,7 @@ public class Chest : AutoIDBehaviour, IInteractable, ITargetableInfo
 
     [field: SerializeField] public bool IsOpened { get; private set; }
 
+    private EntitySaveData _chunkDataRef;
     private SpriteRenderer spriteRenderer;
     private BoxCollider2D boxCol;
     private bool isProcessing = false;
@@ -46,6 +47,32 @@ public class Chest : AutoIDBehaviour, IInteractable, ITargetableInfo
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         boxCol = GetComponent<BoxCollider2D>();
+    }
+
+    private void Start()
+    {
+        SaveController.RegisterChest(this);
+
+        if (SaveController.IsDataLoaded && SaveController.Instance != null)
+        {
+            if (SaveController.Instance.IsChestOpened(UniqueID))
+            {
+                SetOpened(true);
+            }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        SaveController.UnregisterChest(this);
+    }
+
+    public void InitChunkData(EntitySaveData data, string customID)
+    {
+        _chunkDataRef = data;
+        UniqueID = customID;
+
+        Debug.Log($"[Chest] Đã nạp ID từ Chunk: {UniqueID} cho Rương: {gameObject.name}");
     }
 
     public bool CanInteract()
@@ -63,6 +90,16 @@ public class Chest : AutoIDBehaviour, IInteractable, ITargetableInfo
     {
         isProcessing = true;
         IsOpened = true;
+
+        if (_chunkDataRef != null)
+        {
+            _chunkDataRef.isOpened = true;
+        }
+
+        if (SaveController.Instance != null && !string.IsNullOrEmpty(UniqueID))
+        {
+            SaveController.Instance.MarkChestAsOpened(UniqueID);
+        }
 
         GameStateManager.IsDialogueActive = true;
         SoundEffectManager.Play("ChestOpen");
@@ -111,13 +148,24 @@ public class Chest : AutoIDBehaviour, IInteractable, ITargetableInfo
                 saveController.SaveGame();
             }
         }
+        else
+        {
+            Debug.LogWarning($"[Rương] Không có vật phẩm để rớt! Rương: {gameObject.name}");
+        }
     }
 
     public void SetOpened(bool opened)
     {
-        IsOpened = opened;
-        if (IsOpened)
+        if (opened)
         {
+            IsOpened = true;
+            if (_chunkDataRef != null) _chunkDataRef.isOpened = true;
+
+            if (SaveController.Instance != null && !string.IsNullOrEmpty(UniqueID))
+            {
+                SaveController.Instance.MarkChestAsOpened(UniqueID);
+            }
+
             Destroy(gameObject);
         }
     }

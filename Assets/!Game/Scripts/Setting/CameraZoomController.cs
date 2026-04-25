@@ -69,7 +69,7 @@ public class CameraZoomController : MonoBehaviour
         if (virtualCamera == null) return;
 
         float mapLimit = CalculateMaxOrthoSizeFromBound();
-        float safeMaxSize = Mathf.Min(maxSize, mapLimit - 0.05f);
+        float safeMaxSize = Mathf.Max(minSize, Mathf.Min(maxSize, mapLimit - 0.05f));
 
         if (GameStateManager.CanProcessInput())
         {

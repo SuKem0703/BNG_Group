@@ -17,6 +17,8 @@ public class EntitySaveData
     public EntityType entityType;
     public Vector3 position;
 
+    public int sortingBuffer;
+
     // --- Dữ liệu cho Monologue ---
     public string monologueDataPath;
     public bool isOneTimeOnly;
@@ -25,6 +27,13 @@ public class EntitySaveData
 
     // --- Dữ liệu cho NPC ---
     public string[] npcDialoguePaths;
+
+    // --- Dữ liệu cho Reward Chest ---
+    public bool isOpened;
+    public string rewardItemPath;
+    public RarityMode rarityMode;
+    public ItemRarity fixedRarity;
+    public QualityFactorMode qualityMode;
 
     // --- Dữ liệu Collider Tương Tác ---
     public Vector2 triggerSize;

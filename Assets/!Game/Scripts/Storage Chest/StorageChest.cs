@@ -5,6 +5,11 @@ public class StorageChest : AutoIDBehaviour, IInteractable
 {
     private List<InventoryService.StorageItemDTO> cachedItems = new List<InventoryService.StorageItemDTO>();
 
+    public void InitChunkData(string customID)
+    {
+        UniqueID = customID;
+    }
+
     public void ClearCache()
     {
         cachedItems.Clear();
