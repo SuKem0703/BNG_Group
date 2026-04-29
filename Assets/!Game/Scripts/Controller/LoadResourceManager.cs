@@ -30,7 +30,8 @@ public class LoadResourceManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+
+        // DontDestroyOnLoad(gameObject);
 
         LoadResources();
         CheckLoadResources();

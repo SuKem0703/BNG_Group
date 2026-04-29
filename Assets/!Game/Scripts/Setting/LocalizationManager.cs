@@ -23,7 +23,8 @@ public class LocalizationManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+
+        // DontDestroyOnLoad(gameObject);
 
         saveFilePath = Application.persistentDataPath + "/game_settings.json";
 

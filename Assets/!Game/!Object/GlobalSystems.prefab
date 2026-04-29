@@ -5758,7 +5758,6 @@ GameObject:
   - component: {fileID: 1473663592954474464}
   - component: {fileID: 366934284778579620}
   - component: {fileID: 4341726287597272542}
-  - component: {fileID: 2737585240263512024}
   - component: {fileID: 3995202798128533498}
   - component: {fileID: 5761752981759816038}
   - component: {fileID: 7521437424049403733}
@@ -5831,8 +5830,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -1710315361
-  m_SortingLayer: 6
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -6122717232585327129, guid: 88b0f1d51e44ec5409129141134fefd0, type: 3}
@@ -6091,19 +6090,6 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: -0.53}
   m_Size: {x: 0.7, y: 0.7}
   m_Direction: 0
---- !u!114 &2737585240263512024
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1595925321534887211}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54a7f9762e2401d4285b144a83964b3a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  offset: 0
 --- !u!114 &3995202798128533498
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6147,7 +6133,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   sortingPrecision: 100
   yOffset: 0
-  baseOrder: 0
+  entityWeight: 3
+  onlySortWhenVisible: 1
 --- !u!1 &1613147982817909628
 GameObject:
   m_ObjectHideFlags: 0
@@ -7175,7 +7162,6 @@ GameObject:
   - component: {fileID: 1793697175896315932}
   - component: {fileID: 123018037826651668}
   - component: {fileID: 6210579691141492912}
-  - component: {fileID: 6539426268813604833}
   - component: {fileID: 2220764060547966399}
   - component: {fileID: 4745095281037677025}
   - component: {fileID: 7532748826025911318}
@@ -7248,8 +7234,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -1710315361
-  m_SortingLayer: 6
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7410960421204419672, guid: e36c5d7afe0a2c7448bc86aba3681acd, type: 3}
@@ -7451,10 +7437,6 @@ MonoBehaviour:
     m_ActionName: 'Player/Attack[/Mouse/leftButton]'
   - m_PersistentCalls:
       m_Calls: []
-    m_ActionId: 4662e0cb-41e6-495c-b51c-9932b4da859c
-    m_ActionName: 'Player/Skill1[/Keyboard/1]'
-  - m_PersistentCalls:
-      m_Calls: []
     m_ActionId: 55f7c94f-a898-411c-a2cb-1a876ec1b4bc
     m_ActionName: 'Player/Swap[/Keyboard/tab]'
   m_NeverAutoSwitchControlSchemes: 0
@@ -7499,19 +7481,6 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: -0.53}
   m_Size: {x: 0.7, y: 0.7}
   m_Direction: 0
---- !u!114 &6539426268813604833
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1784960951971407369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54a7f9762e2401d4285b144a83964b3a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  offset: 0
 --- !u!114 &2220764060547966399
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7555,7 +7524,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   sortingPrecision: 100
   yOffset: 0
-  baseOrder: 0
+  entityWeight: 3
+  onlySortWhenVisible: 1
 --- !u!1 &1799487022363148896
 GameObject:
   m_ObjectHideFlags: 0
@@ -9348,7 +9318,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1710315361
-  m_SortingLayer: 6
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2122837972990275081, guid: 6a2896e398fd4e049904a827775fff97, type: 3}
@@ -9732,7 +9702,7 @@ Transform:
   m_GameObject: {fileID: 2524661319489946267}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: -2, y: -1, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10560,7 +10530,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1710315361
-  m_SortingLayer: 6
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2122837972990275081, guid: 6a2896e398fd4e049904a827775fff97, type: 3}
@@ -21234,7 +21204,6 @@ GameObject:
   - component: {fileID: 6176788853723849960}
   - component: {fileID: 7089025771583806475}
   - component: {fileID: 6100323139993295561}
-  - component: {fileID: 1507598847299703259}
   - component: {fileID: 7832694068043120012}
   m_Layer: 0
   m_Name: GameController
@@ -21363,20 +21332,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96fe6a9e2979c4747aa5b154181ca093, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraShaker
---- !u!114 &1507598847299703259
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5770386255020000470}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ae57978f06801d42948cd1c684e96bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::YSortController
-  playerTag: PlayerController
-  minDeltaY: 0.01
 --- !u!114 &7832694068043120012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26394,12 +26349,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 048f55220262e4a45929320ffa63f84b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  backGround: {fileID: 0}
-  borderFrame: {fileID: 0}
-  nameText: {fileID: 0}
-  itemPortrait: {fileID: 0}
-  descriptionText: {fileID: 0}
-  quantityText: {fileID: 0}
+  backGround: {fileID: 3345711444436023159}
+  borderFrame: {fileID: 8966455986955512577}
+  nameText: {fileID: 7742058843667312477}
+  itemPortrait: {fileID: 2051341744307828766}
+  descriptionText: {fileID: 2554686325335624146}
+  quantityText: {fileID: 3786941553521928105}
 --- !u!1 &7034191379052126019
 GameObject:
   m_ObjectHideFlags: 0
@@ -28666,21 +28621,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4282292944547df4488522e386c9d4cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  backGround: {fileID: 0}
-  borderFrame: {fileID: 0}
-  nameText: {fileID: 0}
-  itemPortrait: {fileID: 0}
-  slotText: {fileID: 0}
-  lvl: {fileID: 0}
-  classText: {fileID: 0}
-  isEquip: {fileID: 0}
-  statName1: {fileID: 0}
-  statValue1: {fileID: 0}
-  statName2: {fileID: 0}
-  statValue2: {fileID: 0}
-  statName3: {fileID: 0}
-  statValue3: {fileID: 0}
-  descriptionText: {fileID: 0}
+  backGround: {fileID: 2820056948323857712}
+  borderFrame: {fileID: 4047007937118600740}
+  nameText: {fileID: 9214390466044673837}
+  itemPortrait: {fileID: 145363973107176529}
+  slotText: {fileID: 3597862275037991286}
+  lvl: {fileID: 7850033426512231309}
+  classText: {fileID: 4573946088784401814}
+  isEquip: {fileID: 1362770103718865182}
+  statName1: {fileID: 257788719809063580}
+  statValue1: {fileID: 2686595542503910978}
+  statName2: {fileID: 7929656849577023163}
+  statValue2: {fileID: 1887503600535236604}
+  statName3: {fileID: 8341089359819541909}
+  statValue3: {fileID: 6125631432929748813}
+  descriptionText: {fileID: 2059013862274606352}
 --- !u!1 &7857159041638621511
 GameObject:
   m_ObjectHideFlags: 0

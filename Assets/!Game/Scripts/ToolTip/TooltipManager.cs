@@ -15,12 +15,11 @@ public class TooltipManager : MonoBehaviour
 
         if (slot.isShopSlot == true) return;
 
-        // Nếu là trang bị (vũ khí, giáp, mũ, v.v…)
         if (item is EquipmentItem)
         {
             EquipTooltip.Instance.Show(item, slot);
         }
-        // Nếu là vật phẩm tiêu hao hoặc vật phẩm nhiệm vụ
+
         else if (item is ConsumableItem || item is QuestItem)
         {
             ConsumableTooltip.Instance.Show(item);
