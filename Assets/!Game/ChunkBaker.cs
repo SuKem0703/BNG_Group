@@ -69,6 +69,7 @@ public class ChunkBaker : MonoBehaviour
                     data.monologueDataPath = GetResourcePath(mono.monologueData);
                 }
             }
+
             else if (marker.entityType == EntityType.NPC)
             {
                 var npc = marker.GetComponent<NPC>();
@@ -84,7 +85,13 @@ public class ChunkBaker : MonoBehaviour
                         }
                     }
                 }
+                var facing = marker.GetComponent<NPCAnimation>();
+                if (facing != null)
+                {
+                    data.npcFacing = facing.initialFacing;
+                }
             }
+
             else if (marker.entityType == EntityType.Container)
             {
                 var chest = marker.GetComponent<Chest>();

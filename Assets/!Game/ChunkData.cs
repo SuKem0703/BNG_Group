@@ -27,6 +27,7 @@ public class EntitySaveData
 
     // --- Dữ liệu cho NPC ---
     public string[] npcDialoguePaths;
+    public FacingDirection npcFacing;
 
     // --- Dữ liệu cho Reward Chest ---
     public bool isOpened;

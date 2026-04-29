@@ -215,6 +215,11 @@ public class ChunkManager : MonoBehaviour
                         }
                     }
                 }
+                var facing = obj.GetComponent<NPCAnimation>();
+                if (facing != null)
+                {
+                    facing.initialFacing = data.npcFacing;
+                }
                 break;
 
             case EntityType.Container:

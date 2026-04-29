@@ -232,6 +232,16 @@ public class NPC : AutoIDBehaviour, IInteractable, ITargetableInfo
     {
         SyncQuestState();
 
+        GameObject player = GameObject.FindGameObjectWithTag("PlayerController");
+        if (player != null)
+        {
+            NPCAnimation nPCAnimation = GetComponent<NPCAnimation>();
+            if (nPCAnimation != null)
+            {
+                nPCAnimation.LookTowards(player.transform.position);
+            }
+        }
+
         if (CurrentQuestState == QuestState.NotStarted)
         {
             dialogueIndex = 0;
@@ -563,7 +573,7 @@ public class NPC : AutoIDBehaviour, IInteractable, ITargetableInfo
 
         UpdateActiveDialogue();
         SyncQuestState();
-        SaveController.Instance?.SaveGame();
+        SaveController.Instance?.TriggerAutoSave();
     }
 
     void HandleQuestCompletion(Quest quest)

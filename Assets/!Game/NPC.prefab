@@ -109,6 +109,7 @@ GameObject:
   - component: {fileID: 8833251898576531316}
   - component: {fileID: 8657469189403248438}
   - component: {fileID: 4689900677014188505}
+  - component: {fileID: -8440513524299156426}
   m_Layer: 8
   m_Name: NPC
   m_TagString: Untagged
@@ -125,7 +126,7 @@ Transform:
   m_GameObject: {fileID: 8757576948480836762}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -38, y: -23, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -225,7 +226,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f09b87ed534d1624cae7cd3564493884, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <UniqueID>k__BackingField: NPC_-38_-23
+  <UniqueID>k__BackingField: NPC_0_0
   dialogueDataList: []
   playerName: Elric
   playerPortrait: {fileID: 1942528367, guid: 346b5f769ed1fe948b5ff84bf1d4a1dd, type: 3}
@@ -348,9 +349,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpriteDynamicSorting
   inFrontLayer: Walk in front
   behindLayer: Walk behind
-  sortingBuffer: 0
   yOffset: -0.2
   sortingPrecision: 100
+  sortingBuffer: 0
 --- !u!114 &4689900677014188505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -365,3 +366,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChunkEntityMarker
   prefabID: 
   entityType: 2
+--- !u!114 &-8440513524299156426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8757576948480836762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd1d8c1129d0ce74b8f4ed521f47c6cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NPCAnimation
+  animator: {fileID: 4971033556569165825}
+  initialFacing: 0
+  enableBlink: 1
+  minBlinkInterval: 4
+  maxBlinkInterval: 10
