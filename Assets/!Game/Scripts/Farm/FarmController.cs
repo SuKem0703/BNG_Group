@@ -6,7 +6,6 @@ public class FarmController : MonoBehaviour
 {
     public static FarmController Instance;
 
-    // Thêm Dictionary để quản lý nhanh Plot trong Scene
     private Dictionary<string, FarmPlot> scenePlots = new Dictionary<string, FarmPlot>();
 
     private void Awake()
@@ -14,7 +13,6 @@ public class FarmController : MonoBehaviour
         if (Instance != null && Instance != this) Destroy(gameObject);
         Instance = this;
 
-        // Lưu trước toàn bộ ô đất có trong Map vào Dictionary
         FarmPlot[] allPlots = FindObjectsByType<FarmPlot>(FindObjectsSortMode.None);
         foreach (var plot in allPlots)
         {
@@ -22,7 +20,6 @@ public class FarmController : MonoBehaviour
         }
     }
 
-    // ĐƯỢC GỌI SAU KHI LOAD SCENE (Từ SaveController hoặc tự gọi)
     public void FetchFarmDataFromServer()
     {
         if (FarmService.Instance == null) return;
@@ -54,10 +51,8 @@ public class FarmController : MonoBehaviour
         crop.seedItemID = seedItemId;
         crop.plot = plot;
 
-        // Chuyển chuỗi thời gian ISO từ DB thành DateTime
         if (DateTime.TryParse(plantedAtString, out DateTime plantedAt))
         {
-            // Quan Trọng: Chuyển về Local Time hoặc để nguyên UTC tùy thuộc ServerTimeManager
             crop.InitializeGrowth(plantedAt.ToLocalTime());
         }
         else
@@ -80,7 +75,6 @@ public class FarmController : MonoBehaviour
         crop.seedItemID = seed.ID;
         crop.plot = plot;
 
-        // Bắt đầu tính giờ ngay lập tức trên máy Client
         crop.InitializeGrowth(ServerTimeManager.GetCurrentTime());
 
         plot.currentCrop = crop;
@@ -91,7 +85,6 @@ public class FarmController : MonoBehaviour
 
         if (QuestController.Instance != null) QuestController.Instance.MarkCropPlanted(seed.ID);
 
-        // GỌI API LƯU LÊN SERVER THAY VÌ LƯU VÀO JSON
         FarmService.Instance.RequestPlant(plot.UniqueID, seed.ID);
     }
 
@@ -106,7 +99,7 @@ public class FarmController : MonoBehaviour
         int collectedCount = 0;
         for (int i = 0; i < crop.harvestAmount; i++)
         {
-            bool added = InventoryController.Instance.AddItem(itemPrefab);
+            bool added = InventoryController.Instance.AddItem(itemPrefab.GetComponent<Item>());
             if (added)
             {
                 collectedCount++;
@@ -135,96 +128,6 @@ public class FarmController : MonoBehaviour
             plot.isPlanted = false;
         }
 
-        // GỌI API BÁO SERVER THU HOẠCH XONG
         FarmService.Instance.RequestHarvest(plot.UniqueID, crop.isRegrowable, offsetSeconds);
     }
-
-    /*
-
-    // ===== SAVE & LOAD =====
-    // --- SAVE ---
-    public FarmData GetFarmDataToSave()
-    {
-        FarmData data = new FarmData();
-        FarmPlot[] allPlots = FindObjectsByType<FarmPlot>(FindObjectsSortMode.None);
-
-        foreach (var plot in allPlots)
-        {
-            FarmPlotSaveData plotData = new FarmPlotSaveData();
-
-            plotData.plotID = plot.PlotID;
-
-            plotData.hasCrop = plot.isPlanted && plot.currentCrop != null;
-
-            if (plotData.hasCrop)
-            {
-                Crop crop = plot.currentCrop;
-                plotData.cropData = new CropSaveData
-                {
-                    seedItemID = crop.seedItemID,
-                    currentStage = crop.stage,
-                    currentTimer = crop.timer
-                };
-            }
-            data.plotDataList.Add(plotData);
-        }
-        return data;
-    }
-
-    // --- LOAD ---
-    public void LoadFarmData(FarmData data)
-    {
-        if (data == null || data.plotDataList == null) return;
-
-        Dictionary<string, FarmPlot> scenePlots = new Dictionary<string, FarmPlot>();
-        FarmPlot[] allPlots = FindObjectsByType<FarmPlot>(FindObjectsSortMode.None);
-
-        foreach (var plot in allPlots)
-        {
-            if (!scenePlots.ContainsKey(plot.PlotID))
-            {
-                scenePlots.Add(plot.PlotID, plot);
-            }
-
-            // Dọn dẹp cây cũ
-            if (plot.currentCrop != null)
-            {
-                Destroy(plot.currentCrop.gameObject);
-                plot.currentCrop = null;
-                plot.isPlanted = false;
-            }
-        }
-
-        // Khôi phục dữ liệu
-        foreach (var plotData in data.plotDataList)
-        {
-            // Tìm ô đất theo ID đã lưu
-            if (scenePlots.TryGetValue(plotData.plotID, out FarmPlot plot))
-            {
-                if (plotData.hasCrop && plotData.cropData != null)
-                {
-                    RespawnCrop(plot, plotData.cropData);
-                }
-            }
-        }
-    }
-    private void RespawnCrop(FarmPlot plot, CropSaveData data)
-    {
-        GameObject seedPrefab = InventoryController.Instance.itemDictionary.GetItemPrefab(data.seedItemID);
-        if (seedPrefab == null) return;
-
-        SeedItem seedScript = seedPrefab.GetComponent<SeedItem>();
-        GameObject cropObj = Instantiate(seedScript.cropPrefab, plot.transform);
-        cropObj.transform.localPosition = Vector3.zero;
-
-        Crop crop = cropObj.GetComponent<Crop>();
-        crop.seedItemID = data.seedItemID;
-        crop.plot = plot;
-        crop.RestoreState(data.currentStage, data.currentTimer);
-
-        plot.currentCrop = crop;
-        plot.isPlanted = true;
-    }
-
-    */
 }

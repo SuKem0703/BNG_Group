@@ -25,13 +25,12 @@ public class SaveController : MonoBehaviour
     public static void UnregisterChest(Chest chest) => _activeChests.Remove(chest);
 
     public static event System.Action OnDataLoaded;
+    public static event System.Action<string> OnUIDReady;
     public static bool IsDataLoaded { get; private set; } = false;
     public static bool IsSaving { get; private set; } = false;
 
     private GameObject mainLoadingCanvasInstance;
     private GameObject miniLoadingScreenInstance;
-
-    [SerializeField] private TextMeshProUGUI uidText;
 
     private InventoryController inventoryController;
     private HotbarController hotbarController;
@@ -67,9 +66,6 @@ public class SaveController : MonoBehaviour
 
         _activeChests.Clear();
         _sessionChestStates.Clear();
-
-        if (uidText == null)
-            uidText = GameObject.Find("UIDText")?.GetComponent<TextMeshProUGUI>();
     }
 
     private void OnDestroy()
@@ -86,10 +82,9 @@ public class SaveController : MonoBehaviour
 
     private void UpdateUIDText()
     {
-        if (uidText != null && IsDataLoaded)
+        if (IsDataLoaded)
         {
-            string format = GetText("UI_UID");
-            uidText.text = string.Format(format, GetPlayerUID());
+            OnUIDReady?.Invoke(GetPlayerUID());
         }
     }
 
@@ -586,7 +581,10 @@ public class SaveController : MonoBehaviour
         }
 
         if (inventoryController != null)
+        {
             inventoryController.slotCount = saveData.backPackSlotCount;
+            inventoryController.ReBuildItemCounts();
+        }
 
         // Lưu vào cache để rương đẻ sau có thể truy cập
         _cachedChestStates = saveData.chestSaveData ?? new List<ChestSaveData>();

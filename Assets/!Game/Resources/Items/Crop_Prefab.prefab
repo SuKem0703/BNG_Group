@@ -81,8 +81,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -1831009817
-  m_SortingLayer: 3
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -5840972274582744104, guid: e470f441ccbf38b43afaf8093a93d94a, type: 3}
@@ -127,10 +127,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f4c1c9905737434a9c7ed84e6fa103a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpriteDynamicSorting
-  inFrontLayer: Walk in front
-  behindLayer: Walk behind
-  yOffset: 0.25
   sortingPrecision: 100
+  sortingBuffer: 0
+  yOffset: 0.25
 --- !u!58 &-3588774175055066750
 CircleCollider2D:
   m_ObjectHideFlags: 0

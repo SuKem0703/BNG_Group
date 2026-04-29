@@ -30,8 +30,7 @@ public class PlayerItemCollector : MonoBehaviour
         {
             void OnDialogueEnd()
             {
-                // Sau khi nói xong mới add item
-                bool added = inventoryController.AddItem(collision.gameObject);
+                bool added = inventoryController.AddItem(item);
                 if (!added)
                 {
                     Debug.Log("Inventory đầy, không thể nhặt " + item.Name);
@@ -40,7 +39,9 @@ public class PlayerItemCollector : MonoBehaviour
                 }
 
                 item.ShowPopUp();
-                equipmentViewController.ShowEquipmentItems();
+
+                if (equipmentViewController != null)
+                    equipmentViewController.ShowEquipmentItems();
 
                 if (collectible != null)
                     collectible.OnPickedUp();
@@ -57,7 +58,7 @@ public class PlayerItemCollector : MonoBehaviour
         }
 
         // === KHÔNG CÓ MONOLOGUE ===
-        bool itemAdded = inventoryController.AddItem(collision.gameObject);
+        bool itemAdded = inventoryController.AddItem(item);
         if (!itemAdded)
         {
             Debug.Log("Inventory đầy, không thể nhặt " + item.Name);
@@ -65,7 +66,9 @@ public class PlayerItemCollector : MonoBehaviour
         }
 
         item.ShowPopUp();
-        equipmentViewController.ShowEquipmentItems();
+
+        if (equipmentViewController != null)
+            equipmentViewController.ShowEquipmentItems();
 
         if (collectible != null)
             collectible.OnPickedUp();
@@ -73,5 +76,4 @@ public class PlayerItemCollector : MonoBehaviour
         SaveController.Instance.TriggerAutoSave();
         Destroy(collision.gameObject);
     }
-
 }

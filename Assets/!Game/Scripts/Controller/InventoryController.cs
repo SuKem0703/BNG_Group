@@ -6,8 +6,16 @@ using UnityEngine;
 
 public class InventoryController : MonoBehaviour
 {
-    #region Singleton
     public static InventoryController Instance { get; private set; }
+
+    [Header("Config")]
+    public int slotCount = 20;
+    public ItemDictionary itemDictionary;
+
+    private List<InventorySaveData> _inventoryData = new List<InventorySaveData>();
+    private readonly Dictionary<int, int> _itemCountCache = new Dictionary<int, int>();
+
+    public event Action<List<InventorySaveData>, int> OnInventoryChanged;
 
     private void Awake()
     {
@@ -16,208 +24,69 @@ public class InventoryController : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
-
-        if (inventoryPanel == null)
-            inventoryPanel = GameObject.Find("InventoryPage");
-    }
-
-    private void OnDestroy()
-    {
-        if (Instance == this)
-            Instance = null;
-    }
-    #endregion
-
-    #region References & Config
-    public ItemDictionary itemDictionary;
-    public GameObject inventoryPanel;
-    public GameObject slotPrefab;
-    public int slotCount = 20;
-    #endregion
-
-    #region Cache & Events
-    private readonly Dictionary<int, int> itemCountCache = new();
-    public event Action OnInventoryChanged;
-    #endregion
-
-    #region Unity Lifecycle
-
-    private void Start()
-    {
-        ResolveInventoryPanel();
-        EnsureSlotCount(slotCount);
 
         if (itemDictionary == null)
             itemDictionary = FindFirstObjectByType<ItemDictionary>();
+    }
+
+    private void Start()
+    {
+        ReBuildItemCounts();
+    }
+
+    #region Public API
+
+    public Dictionary<int, int> GetItemCounts() => _itemCountCache;
+
+    public List<InventorySaveData> GetInventoryItemsData() => _inventoryData;
+
+    public void SetInventoryItems(List<InventorySaveData> newData)
+    {
+        _inventoryData = newData ?? new List<InventorySaveData>();
+
+        if (_inventoryData.Count > 0)
+        {
+            int maxSlot = _inventoryData.Max(x => x.slotIndex);
+            if (maxSlot >= slotCount) slotCount = maxSlot + 1;
+        }
 
         ReBuildItemCounts();
     }
 
-    #endregion
-
-    #region Initialization
-
-    private void ResolveInventoryPanel()
+    public bool AddItem(Item tempItem)
     {
-        if (inventoryPanel != null) return;
-
-        inventoryPanel = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-            .FirstOrDefault(x => x.name == "InventoryPage")?.gameObject;
-
-        if (inventoryPanel == null)
-            Debug.LogError("Inventory panel not found!");
-    }
-
-    private void EnsureSlotCount(int neededCount)
-    {
-        int currentCount = inventoryPanel.transform.childCount;
-        if (currentCount < neededCount)
-        {
-            for (int i = 0; i < (neededCount - currentCount); i++)
-            {
-                Instantiate(slotPrefab, inventoryPanel.transform);
-            }
-        }
-    }
-
-    #endregion
-
-    #region Inventory Public API
-
-    public Dictionary<int, int> GetItemCounts() => itemCountCache;
-
-    public bool AddItem(GameObject itemPrefab)
-    {
-        if (itemPrefab == null) return false;
-
-        Item tempItem = itemPrefab.GetComponent<Item>();
         if (tempItem == null) return false;
 
         int quantityLeft = tempItem.quantity;
 
-        // 1. STACK LOGIC (non-equipment)
         if (tempItem.IsStackable)
         {
             quantityLeft = TryStackItem(tempItem, quantityLeft);
             if (quantityLeft <= 0) return true;
         }
 
-        // 2. CREATE NEW ITEM
-        return TryCreateNewItem(itemPrefab, tempItem, quantityLeft);
+        return TryCreateNewItem(tempItem, quantityLeft);
     }
 
     public void RemoveItemsFromInventory(int itemID, int amountToRemove)
     {
-        foreach (Transform slotTransform in inventoryPanel.transform)
+        for (int i = _inventoryData.Count - 1; i >= 0; i--)
         {
             if (amountToRemove <= 0) break;
 
-            Slot slot = slotTransform.GetComponent<Slot>();
-            if (slot == null || slot.currentItem == null) continue;
+            var data = _inventoryData[i];
+            if (data.itemID != itemID) continue;
 
-            Item item = slot.currentItem.GetComponent<Item>();
-            if (item == null || item.ID != itemID) continue;
-
-            int removed = Mathf.Min(amountToRemove, item.quantity);
-            item.RemoveFromStack(removed);
+            int removed = Mathf.Min(amountToRemove, data.quantity);
+            data.quantity -= removed;
             amountToRemove -= removed;
 
-            if (item.quantity <= 0)
+            if (data.quantity <= 0)
             {
-                Destroy(slot.currentItem);
-                slot.currentItem = null;
+                InventoryService.Instance.RequestRemoveItem(data.dbID);
+                _inventoryData.RemoveAt(i);
             }
-        }
-
-        ReBuildItemCounts();
-    }
-
-    public List<InventorySaveData> GetInventoryItems()
-    {
-        List<InventorySaveData> data = new();
-
-        foreach (Transform slotTransform in inventoryPanel.transform)
-        {
-            Slot slot = slotTransform.GetComponent<Slot>();
-            if (slot?.currentItem == null) continue;
-
-            Item item = slot.currentItem.GetComponent<Item>();
-            if (item == null) continue;
-
-            bool equippedStatus = false;
-            if (item is EquipmentItem equip) equippedStatus = equip.isEquipped;
-
-            data.Add(new InventorySaveData
-            {
-                dbID = item.dbID,
-                itemID = item.ID,
-                slotIndex = slotTransform.GetSiblingIndex(),
-                quantity = item.quantity,
-                isEquipped = equippedStatus, // Gán an toàn
-                rarity = item.rarity,
-                qualityFactor = item.qualityFactor
-            });
-        }
-
-        return data;
-    }
-
-    public void SetInventoryItems(List<InventorySaveData> inventorySaveData)
-    {
-        int maxSlotIndexFromData = 0;
-        if (inventorySaveData != null && inventorySaveData.Count > 0)
-        {
-            maxSlotIndexFromData = inventorySaveData.Max(x => x.slotIndex);
-        }
-
-        int requiredSlots = Mathf.Max(slotCount, maxSlotIndexFromData + 1);
-        EnsureSlotCount(requiredSlots);
-
-        foreach (Transform slotTrans in inventoryPanel.transform)
-        {
-            Slot s = slotTrans.GetComponent<Slot>();
-            if (s != null && s.currentItem != null)
-            {
-                Destroy(s.currentItem);
-                s.currentItem = null;
-            }
-        }
-
-        if (inventorySaveData == null || inventorySaveData.Count == 0)
-        {
-            ReBuildItemCounts();
-            return;
-        }
-
-        foreach (InventorySaveData data in inventorySaveData)
-        {
-            if (data.slotIndex >= inventoryPanel.transform.childCount) continue;
-
-            Slot slot = inventoryPanel.transform.GetChild(data.slotIndex).GetComponent<Slot>();
-            GameObject prefab = itemDictionary.GetItemPrefab(data.itemID);
-
-            if (prefab == null) continue;
-
-            GameObject itemObj = Instantiate(prefab, slot.transform);
-            itemObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-
-            Item item = itemObj.GetComponent<Item>();
-            if (item == null) continue;
-
-            item.dbID = data.dbID;
-            item.quantity = Mathf.Max(1, data.quantity);
-            item.rarity = data.rarity;
-            item.qualityFactor = data.qualityFactor;
-
-            if (item is EquipmentItem equip)
-            {
-                equip.isEquipped = data.isEquipped;
-            }
-
-            item.UpdateQuantityDisplay();
-            slot.currentItem = itemObj;
         }
 
         ReBuildItemCounts();
@@ -229,26 +98,19 @@ public class InventoryController : MonoBehaviour
 
     private int TryStackItem(Item tempItem, int quantity)
     {
-        foreach (Transform slotTransform in inventoryPanel.transform)
+        foreach (var data in _inventoryData)
         {
-            Slot slot = slotTransform.GetComponent<Slot>();
-            if (slot?.currentItem == null) continue;
-
-            Item slotItem = slot.currentItem.GetComponent<Item>();
-            if (slotItem == null || slotItem.ID != tempItem.ID) continue;
+            if (data.itemID != tempItem.ID) continue;
 
             int maxStack = 999;
-            int canAdd = Mathf.Min(quantity, maxStack - slotItem.quantity);
+            int canAdd = Mathf.Min(quantity, maxStack - data.quantity);
 
             if (canAdd <= 0) continue;
 
-            slotItem.AddToStack(canAdd);
+            data.quantity += canAdd;
             quantity -= canAdd;
 
-            InventoryService.Instance.RequestUpdateQuantity(
-                slotItem.dbID,
-                slotItem.quantity
-            );
+            InventoryService.Instance.RequestUpdateQuantity(data.dbID, data.quantity);
 
             if (quantity <= 0)
             {
@@ -256,74 +118,52 @@ public class InventoryController : MonoBehaviour
                 return 0;
             }
         }
-
         return quantity;
     }
 
-    private bool TryCreateNewItem(GameObject prefab, Item tempItem, int quantity)
+    private bool TryCreateNewItem(Item tempItem, int quantity)
     {
-        foreach (Transform slotTransform in inventoryPanel.transform)
+        int emptySlotIndex = -1;
+        var occupiedSlots = _inventoryData.Select(x => x.slotIndex).ToHashSet();
+
+        for (int i = 0; i < slotCount; i++)
         {
-            Slot slot = slotTransform.GetComponent<Slot>();
-            if (slot == null || slot.currentItem != null) continue;
-
-            GameObject itemObj = Instantiate(prefab, slot.transform);
-            itemObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-
-            CleanupWorldComponents(itemObj);
-
-            Item newItem = itemObj.GetComponent<Item>();
-            newItem.dbID = 0;
-
-            // Gọi thuộc tính ItemType
-            newItem.quantity = tempItem.ItemType == ItemType.Equipment ? 1 : quantity;
-            newItem.rarity = tempItem.rarity;
-            newItem.qualityFactor = tempItem.qualityFactor;
-
-            newItem.UpdateQuantityDisplay();
-            slot.currentItem = itemObj;
-
-            ReBuildItemCounts();
-
-            int slotIndex = slotTransform.GetSiblingIndex();
-            InventoryService.Instance.RequestAddItem(
-                newItem.ID,
-                newItem.quantity,
-                slotIndex,
-                (int)newItem.rarity,
-                newItem.qualityFactor,
-                id => newItem.dbID = id
-            );
-
-            return true;
+            if (!occupiedSlots.Contains(i))
+            {
+                emptySlotIndex = i;
+                break;
+            }
         }
 
-        return false;
-    }
+        if (emptySlotIndex == -1) return false;
 
-    private void CleanupWorldComponents(GameObject item)
-    {
-        if (item.GetComponent<Collectible>()) Destroy(item.GetComponent<Collectible>());
-        if (item.GetComponent<Monologue>()) Destroy(item.GetComponent<Monologue>());
-    }
-
-    public void ReBuildItemCounts()
-    {
-        itemCountCache.Clear();
-
-        foreach (Transform slotTransform in inventoryPanel.transform)
+        var newItemData = new InventorySaveData
         {
-            Slot slot = slotTransform.GetComponent<Slot>();
-            if (slot?.currentItem == null) continue;
+            dbID = 0,
+            itemID = tempItem.ID,
+            quantity = tempItem.ItemType == ItemType.Equipment ? 1 : quantity,
+            slotIndex = emptySlotIndex,
+            isEquipped = false,
+            rarity = tempItem.rarity,
+            qualityFactor = tempItem.qualityFactor
+        };
 
-            Item item = slot.currentItem.GetComponent<Item>();
-            if (item == null) continue;
+        _inventoryData.Add(newItemData);
+        ReBuildItemCounts();
 
-            itemCountCache[item.ID] =
-                itemCountCache.GetValueOrDefault(item.ID, 0) + item.quantity;
-        }
+        InventoryService.Instance.RequestAddItem(
+            newItemData.itemID,
+            newItemData.quantity,
+            newItemData.slotIndex,
+            (int)newItemData.rarity,
+            newItemData.qualityFactor,
+            dbId =>
+            {
+                newItemData.dbID = dbId;
+            }
+        );
 
-        OnInventoryChanged?.Invoke();
+        return true;
     }
 
     public void RefreshInventory()
@@ -368,12 +208,22 @@ public class InventoryController : MonoBehaviour
         });
     }
 
+    public void ReBuildItemCounts()
+    {
+        _itemCountCache.Clear();
+
+        foreach (var data in _inventoryData)
+        {
+            _itemCountCache[data.itemID] = _itemCountCache.GetValueOrDefault(data.itemID, 0) + data.quantity;
+        }
+
+        OnInventoryChanged?.Invoke(_inventoryData, slotCount);
+    }
+
     #endregion
 
     #region Sync Queue (Debounce Logic)
-
     private Dictionary<int, Coroutine> _consumableSyncCoroutines = new Dictionary<int, Coroutine>();
-
     private Dictionary<int, int> _pendingQuantities = new Dictionary<int, int>();
 
     public void ScheduleConsumableSync(int itemDbId, int currentQuantity)
@@ -404,16 +254,11 @@ public class InventoryController : MonoBehaviour
         if (_pendingQuantities.ContainsKey(itemDbId))
         {
             int finalQty = _pendingQuantities[itemDbId];
-
-            Debug.Log($"[Sync] Đang cập nhật Consumable ID {itemDbId} lên Server. SL còn lại: {finalQty}");
-
             InventoryService.Instance.RequestUpdateQuantity(itemDbId, finalQty);
-
             _pendingQuantities.Remove(itemDbId);
         }
 
         _consumableSyncCoroutines.Remove(itemDbId);
     }
-
     #endregion
 }

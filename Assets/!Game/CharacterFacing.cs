@@ -20,12 +20,25 @@ public bool enableBlink = true;
     public float maxBlinkInterval = 10f;
 
     private float blinkTimer;
+    private bool hasBlinkParameter;
 
     private void Awake()
     {
         if (animator == null)
         {
             animator = GetComponent<Animator>();
+        }
+
+        if (animator != null)
+        {
+            foreach (var parameter in animator.parameters)
+            {
+                if (parameter.name == "blink" && parameter.type == AnimatorControllerParameterType.Trigger)
+                {
+                    hasBlinkParameter = true;
+                    break;
+                }
+            }
         }
     }
 
@@ -63,7 +76,7 @@ public bool enableBlink = true;
     // Xử lý đếm thời gian và gọi trigger chớp mắt
     private void Update()
     {
-        if (!enableBlink || animator == null) return;
+        if (!enableBlink || animator == null || !hasBlinkParameter) return;
 
         if (animator.GetFloat("LastInputY") > 0.1f) return;
 

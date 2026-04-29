@@ -49,7 +49,7 @@ public class RewardController : MonoBehaviour
                 equip.qualityFactor = ItemGenerationHelper.GetWeightedQualityFactor();
             }
 
-            if (!InventoryController.Instance.AddItem(itemInstance))
+            if (!InventoryController.Instance.AddItem(item))
             {
                 itemInstance.transform.position = transform.position + Vector3.down;
                 itemInstance.GetComponent<BounceEffect>()?.StartBounce();
@@ -65,7 +65,7 @@ public class RewardController : MonoBehaviour
 
     public void GiveCoinReward(int amount)
     {
-        EconomyService.Instance.EarnCurrency("Coin", amount, "Reward", (success) => 
+        EconomyService.Instance.EarnCurrency("Coin", amount, "Reward", (success) =>
         {
             if (success) Debug.Log($"Đã nhận thưởng {amount} Coin từ Server.");
         });
@@ -73,7 +73,7 @@ public class RewardController : MonoBehaviour
 
     public void GiveGemReward(int amount)
     {
-        EconomyService.Instance.EarnCurrency("Gem", amount, "Reward", (success) => 
+        EconomyService.Instance.EarnCurrency("Gem", amount, "Reward", (success) =>
         {
             if (success) Debug.Log($"Đã nhận thưởng {amount} Gem từ Server.");
         });

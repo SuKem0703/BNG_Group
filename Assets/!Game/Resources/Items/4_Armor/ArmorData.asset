@@ -1,0 +1,115 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be9f6c50889fade4c991c91e4c39d786, type: 3}
+  m_Name: ArmorData
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentDatabase
+  dataRows:
+  - itemId: 401
+    itemName: Ki?m g?
+    reqLevel: 1
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 3
+    value2: 2
+    value3: 0.01
+  - itemId: 402
+    itemName: Ki?m g?
+    reqLevel: 20
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 10
+    value2: 6
+    value3: 0.02
+  - itemId: 403
+    itemName: Ki?m g?
+    reqLevel: 40
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 22
+    value2: 14
+    value3: 0.04
+  - itemId: 404
+    itemName: Ki?m g?
+    reqLevel: 60
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 40
+    value2: 25
+    value3: 0.06
+  - itemId: 405
+    itemName: Ki?m g?
+    reqLevel: 85
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 65
+    value2: 42
+    value3: 0.08
+  - itemId: 406
+    itemName: Ki?m g?
+    reqLevel: 110
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 100
+    value2: 65
+    value3: 0.1
+  - itemId: 407
+    itemName: Ki?m g?
+    reqLevel: 135
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 150
+    value2: 95
+    value3: 0.12
+  - itemId: 408
+    itemName: Ki?m g?
+    reqLevel: 160
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 210
+    value2: 135
+    value3: 0.14
+  - itemId: 409
+    itemName: Ki?m g?
+    reqLevel: 185
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 300
+    value2: 185
+    value3: 0.17
+  - itemId: 410
+    itemName: Ki?m g?
+    reqLevel: 200
+    classRestriction: 1
+    equipSlot: 4
+    statGuide: "Ch\u1ECDn Class v\xE0 Slot \u0111\u1EC3 xem h\u01B0\u1EDBng d\u1EABn
+      nh\u1EADp..."
+    value1: 420
+    value2: 250
+    value3: 0.2

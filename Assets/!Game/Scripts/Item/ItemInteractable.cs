@@ -62,7 +62,7 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
     {
         if (isCollected) return;
 
-        bool itemAdded = inventoryController.AddItem(gameObject);
+        bool itemAdded = inventoryController.AddItem(item);
         if (!itemAdded)
         {
             Debug.Log("Inventory đầy, không thể nhặt " + item.Name);

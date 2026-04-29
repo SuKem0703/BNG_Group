@@ -11,7 +11,6 @@ public class QuestController : MonoBehaviour
 
     public List<string> handInQuestIDs = new();
 
-    // Event khi tiến độ quest được cập nhật
     public static event System.Action<string> OnQuestStatusUpdated;
     private void Awake()
     {
@@ -25,10 +24,9 @@ public class QuestController : MonoBehaviour
         }
         questUI = FindFirstObjectByType<QuestUI>();
 
-        // Đảm bảo InventoryController đã sẵn sàng trước khi đăng ký event
         if (InventoryController.Instance != null)
         {
-            InventoryController.Instance.OnInventoryChanged += CheckInventoryForQuest;
+            InventoryController.Instance.OnInventoryChanged += (data, slotCount) => CheckInventoryForQuest();
         }
         else
         {
@@ -65,7 +63,6 @@ public class QuestController : MonoBehaviour
 
     public bool IsQuestActive(string questID) => activeQuests.Exists(q => q.quest.questID == questID);
 
-    // Với quest thu thập, kiểm tra số lượng mục trong kho
     public void CheckInventoryForQuest()
     {
         if (InventoryController.Instance == null) return;
@@ -110,10 +107,9 @@ public class QuestController : MonoBehaviour
                 OnQuestStatusUpdated?.Invoke(quest.QuestID);
             }
         }
-        questUI.UpdateQuestUI();
+        if (questUI != null) questUI.UpdateQuestUI();
     }
 
-    // Đánh dấu vị trí đã đến cho các quest liên quan
     public void MarkLocationReached(string locationID)
     {
         bool anyQuestUpdated = false;
@@ -150,7 +146,6 @@ public class QuestController : MonoBehaviour
         }
     }
 
-    // Đánh dấu gieo hạt cho các quest liên quan
     public void MarkCropPlanted(int seedItemID)
     {
         bool anyQuestUpdated = false;
@@ -187,7 +182,6 @@ public class QuestController : MonoBehaviour
         }
     }
 
-    // Đánh dấu kẻ thù đã bị đánh bại cho các quest liên quan
     public void MarkEnemyDefeated(string enemyID)
     {
         bool anyQuestUpdated = false;
@@ -198,7 +192,6 @@ public class QuestController : MonoBehaviour
 
             foreach (QuestObject questObject in quest.questObjects)
             {
-                // Kiểm tra nếu nhiệm vụ là KillEnemy và ID trùng khớp
                 if (questObject.objectType == ObjectType.DefeatEnemy &&
                     questObject.objectID == enemyID)
                 {
@@ -342,7 +335,6 @@ public class QuestController : MonoBehaviour
         return null;
     }
 
-    // Kiểm tra xem item có cần thiết cho bất kỳ quest nào đang hoạt động không
     public bool IsItemNeededForActiveQuest(int itemID)
     {
         foreach (QuestProgress quest in activeQuests)

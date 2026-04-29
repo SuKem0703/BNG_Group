@@ -232,10 +232,12 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6120917431619549583}
+  - {fileID: 5889424537065524477}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3704750855595692870
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -278,9 +280,10 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -1710315361
-  m_SortingLayer: 6
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -7294240746080377788, guid: d0eaefc0f9134c44fb5c3f95a3678793, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -290,7 +293,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!70 &689079983812177836
 CapsuleCollider2D:
@@ -368,9 +370,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99367e819e3f2c1419968c5c83d010a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  questTargetID: 
+  <UniqueID>k__BackingField: 
+  questTargetID: Slime
   isQuestEnemy: 0
-  uniqueSaveID: 
   enemyRank: 0
   bossPhases: []
   enemyName: Slime
@@ -378,7 +380,7 @@ MonoBehaviour:
   damage: 5
   maxHealth: 100
   defense: 0
-  currentHealth: 0
+  currentHealth: 100
   experienceReward: 0
   goldReward: 0
   chaseSpeed: 3
@@ -388,6 +390,8 @@ MonoBehaviour:
   chaseResumeBuffer: -1.25
   attackCooldown: 0.25
   hurtDuration: 1
+  knockbackForce: 5
+  knockbackDuration: 0.2
 --- !u!95 &3051677935332708012
 Animator:
   serializedVersion: 7
@@ -431,10 +435,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 3107261148613328395}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54a7f9762e2401d4285b144a83964b3a, type: 3}
+  m_Script: {fileID: 11500000, guid: 1dc33dfc387f8464f8b0d05937173f1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offset: 0
+  sortingPrecision: 100
+  yOffset: 0
+  entityWeight: 3
+  onlySortWhenVisible: 1
 --- !u!114 &1554956197311286333
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -448,3 +455,85 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SnapToGrid
   gridSize: 1
+--- !u!1 &5537452638752057694
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5889424537065524477}
+  - component: {fileID: 4381957944860778006}
+  - component: {fileID: 5625707058454388376}
+  m_Layer: 0
+  m_Name: DetectionArea
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5889424537065524477
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5537452638752057694}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5985982328215177655}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!58 &4381957944860778006
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5537452638752057694}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 5
+--- !u!114 &5625707058454388376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5537452638752057694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e05f8ae793aec3c4986758918e88d455, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDetection
+  enemyChase: {fileID: 5748400431044971867}

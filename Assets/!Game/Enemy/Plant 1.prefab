@@ -119,6 +119,88 @@ MonoBehaviour:
   offset: {x: 0, y: 0, z: 0}
   hideWhenFull: 1
   lerpSpeed: 10
+--- !u!1 &1683958581465241076
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 156477786229267130}
+  - component: {fileID: 5487976859314180836}
+  - component: {fileID: 6870073416615484549}
+  m_Layer: 0
+  m_Name: DetectionArea
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &156477786229267130
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683958581465241076}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8371662157751634440}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!58 &5487976859314180836
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683958581465241076}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 7
+--- !u!114 &6870073416615484549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683958581465241076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e05f8ae793aec3c4986758918e88d455, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDetection
+  enemyChase: {fileID: 7733683245675652385}
 --- !u!1 &2460534325703430410
 GameObject:
   m_ObjectHideFlags: 0
@@ -157,10 +239,12 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8221317584782966314}
+  - {fileID: 156477786229267130}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3053878768402642888
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -203,9 +287,10 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -1710315361
-  m_SortingLayer: 6
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 2284068906407988662, guid: 059c308b7057fdd4d8c786d329b7598e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -215,7 +300,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!70 &5577423919157179311
 CapsuleCollider2D:
@@ -293,9 +377,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99367e819e3f2c1419968c5c83d010a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  questTargetID: 
+  <UniqueID>k__BackingField: 
+  questTargetID: Plant
   isQuestEnemy: 0
-  uniqueSaveID: 
   enemyRank: 0
   bossPhases: []
   enemyName: Plant
@@ -303,7 +387,7 @@ MonoBehaviour:
   damage: 10
   maxHealth: 150
   defense: 0
-  currentHealth: 0
+  currentHealth: 150
   experienceReward: 0
   goldReward: 0
   chaseSpeed: 3
@@ -313,6 +397,8 @@ MonoBehaviour:
   chaseResumeBuffer: -1.5
   attackCooldown: 1
   hurtDuration: 1
+  knockbackForce: 5
+  knockbackDuration: 0.2
 --- !u!95 &5964361228703599746
 Animator:
   serializedVersion: 7
@@ -356,10 +442,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2460534325703430410}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54a7f9762e2401d4285b144a83964b3a, type: 3}
+  m_Script: {fileID: 11500000, guid: 1dc33dfc387f8464f8b0d05937173f1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offset: 0
+  sortingPrecision: 100
+  yOffset: 0
+  entityWeight: 3
+  onlySortWhenVisible: 1
 --- !u!114 &254828966373257922
 MonoBehaviour:
   m_ObjectHideFlags: 0

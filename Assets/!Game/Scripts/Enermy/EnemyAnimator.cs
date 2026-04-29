@@ -47,6 +47,7 @@ public class EnemyAnimator : MonoBehaviour
 
     public void SetWalking(bool walking)
     {
+        if (animator == null) return;
         animator.SetBool("isWalking", walking);
     }
 

@@ -47,7 +47,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        // [CẬP NHẬT] Type checking Hạt giống
         if (draggedItem is SeedItem && LoadResourceManager.Instance.SelectionBoxPrefab != null)
         {
             currentSelectionBox = Instantiate(LoadResourceManager.Instance.SelectionBoxPrefab);
@@ -100,7 +99,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         if (dropSlot == originalSlot) { SnapBack(); return; }
 
-        // 1. Vứt đồ ra ngoài
         if (dropSlot == null)
         {
             if (!IsWithinInventory(eventData.position))
@@ -148,7 +146,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             }
         }
 
-        // --- LOGIC EQUIP (Trang bị) ---
         if (dropSlot.isEquipmentSlot)
         {
             if (draggedItem is not EquipmentItem equipItem ||
@@ -180,14 +177,12 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        // --- Swap UI ---
         if (dropSlot.currentItem != null)
         {
             dropSlot.currentItem.transform.SetParent(originalSlot.transform);
             originalSlot.currentItem = dropSlot.currentItem;
             dropSlot.currentItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
-            // Đồng bộ isEquipped cho item bị swap ra ngoài
             if (dropSlot.currentItem.GetComponent<Item>() is EquipmentItem targetEquip)
             {
                 targetEquip.isEquipped = originalSlot.isEquipmentSlot;
@@ -203,7 +198,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         dropSlot.currentItem = gameObject;
         GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
-        // --- GỌI API CẬP NHẬT DB ---
         if (dropSlot.isEquipmentSlot && draggedItem is EquipmentItem equipToWear)
         {
             UpdateAllEquipmentItems(equipToWear);
@@ -236,7 +230,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         TooltipManager.Instance.gameObject.SetActive(true);
     }
 
-    
     private IEnumerator SyncChestAfterMoveDelay()
     {
         yield return new WaitForSeconds(0.2f);
@@ -368,7 +361,10 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     private void UpdateAllEquipmentItems(EquipmentItem draggedItem)
     {
-        foreach (Transform slotTransform in inventoryController.inventoryPanel.transform)
+        InventoryUIAdapter inventoryUI = Object.FindFirstObjectByType<InventoryUIAdapter>();
+        if (inventoryUI == null || inventoryUI.InventoryPanel == null) return;
+
+        foreach (Transform slotTransform in inventoryUI.InventoryPanel)
         {
             Slot slot = slotTransform.GetComponent<Slot>();
             if (slot != null && slot.currentItem != null)

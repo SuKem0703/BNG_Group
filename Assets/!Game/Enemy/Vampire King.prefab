@@ -194,6 +194,88 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &2832812715187219823
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 285086171035484022}
+  - component: {fileID: 1469594164762067245}
+  - component: {fileID: 8021520142233547010}
+  m_Layer: 0
+  m_Name: DetectionArea
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &285086171035484022
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2832812715187219823}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7085651187345940742}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!58 &1469594164762067245
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2832812715187219823}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 15
+--- !u!114 &8021520142233547010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2832812715187219823}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e05f8ae793aec3c4986758918e88d455, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDetection
+  enemyChase: {fileID: 7350235499372859252}
 --- !u!1 &6475406139617800791
 GameObject:
   m_ObjectHideFlags: 0
@@ -232,10 +314,12 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6097801723926335279}
+  - {fileID: 285086171035484022}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2010415558918039725
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -278,9 +362,10 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -1710315361
-  m_SortingLayer: 6
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 3122195235970301021, guid: 63f6ebe5d7f6fd74d8dddf0781fae54c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -290,7 +375,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!70 &5797968247099871807
 CapsuleCollider2D:
@@ -368,9 +452,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 269677ee3eacc19489fb40c740df26a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  questTargetID: 
+  <UniqueID>k__BackingField: 
+  questTargetID: Vampire King
   isQuestEnemy: 0
-  uniqueSaveID: 
   enemyRank: 2
   bossPhases:
   - phaseDescription: "L\xE3nh Ch\xFAa Ng\u1EA1o M\u1EA1n"
@@ -380,18 +464,20 @@ MonoBehaviour:
   enemyName: Vampire King
   levelEnemy: 50
   damage: 30
-  maxHealth: 1300
+  maxHealth: 500
   defense: 40
-  currentHealth: 0
+  currentHealth: 500
   experienceReward: 300
   goldReward: 500
-  chaseSpeed: 5
+  chaseSpeed: 2
   detectionRadius: 15
   attackRange: 2
   attackTriggerBuffer: 1
   chaseResumeBuffer: -2
   attackCooldown: 0.5
   hurtDuration: 1
+  knockbackForce: 5
+  knockbackDuration: 0.2
   lifeStealRatio: 0.5
   regenInterval: 1
   phase1Speed: 2
@@ -442,10 +528,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 6475406139617800791}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54a7f9762e2401d4285b144a83964b3a, type: 3}
+  m_Script: {fileID: 11500000, guid: 1dc33dfc387f8464f8b0d05937173f1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offset: 0
+  sortingPrecision: 100
+  yOffset: 0
+  entityWeight: 3
+  onlySortWhenVisible: 1
 --- !u!114 &954720159451659637
 MonoBehaviour:
   m_ObjectHideFlags: 0

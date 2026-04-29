@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class StorageChest : AutoIDBehaviour, IInteractable
 {
-    private List<InventoryService.StorageItemDTO> cachedItems = new List<InventoryService.StorageItemDTO>();
+    private List<InventoryService.StorageItemDTO> cachedItems = null;
 
     public void InitChunkData(string customID)
     {
@@ -12,11 +12,12 @@ public class StorageChest : AutoIDBehaviour, IInteractable
 
     public void ClearCache()
     {
-        cachedItems.Clear();
+        if (cachedItems != null) cachedItems.Clear();
     }
 
     public void AddToCache(InventoryService.StorageItemDTO item)
     {
+        if (cachedItems == null) cachedItems = new List<InventoryService.StorageItemDTO>();
         cachedItems.Add(item);
     }
 

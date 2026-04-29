@@ -76,21 +76,16 @@ public class StorageChestController : MonoBehaviour
 
         ClearChestUI();
 
-        // Nếu có Cache thì hiển thị ngay
-        if (preloadedItems != null)
+        if (preloadedItems != null && preloadedItems.Count > 0)
         {
             PopulateChestUI(preloadedItems);
         }
-        else
-        {
-            // Fallback: Nếu không có cache, gọi API load lẻ
-            RefreshChestContent();
-        }
+
+        RefreshChestContent();
 
         CommonUIController.Instance.SetUIVisible(false, CommonUIController.Instance.hotBar);
         chestPanel.SetActive(true);
 
-        // Mượn Inventory Panel (Code UI cũ giữ nguyên)
         if (inventoryPanel != null && pageContainer != null)
         {
             if (inventoryPanel.transform.parent != pageContainer)
@@ -130,7 +125,6 @@ public class StorageChestController : MonoBehaviour
         InventoryController.Instance.ReBuildItemCounts();
     }
 
-    // Hàm này giữ lại để tương thích SaveController nhưng để trống vì dữ liệu đã lên mây
     public void SyncDataIfOpen(StorageChest chest) { }
 
     // ============================
@@ -142,10 +136,8 @@ public class StorageChestController : MonoBehaviour
         if (currentActiveChest == null) return;
         if (IsViewingChest) WithdrawItem(item);
         else DepositItem(item);
-        InventoryController.Instance.RefreshInventory();
     }
 
-    // --- RÚT ĐỒ (CHEST -> INVENTORY) ---
     private void WithdrawItem(Item item)
     {
         if (item == null) return;
@@ -166,7 +158,6 @@ public class StorageChestController : MonoBehaviour
                 if (item != null && item.gameObject != null) Destroy(item.gameObject);
                 if (InventoryController.Instance != null) InventoryController.Instance.RefreshInventory();
 
-                // Refresh lại rương để lấy data mới
                 RefreshChestContent();
             }
             else
@@ -296,7 +287,6 @@ public class StorageChestController : MonoBehaviour
                 if (s.currentItem != null) Destroy(s.currentItem);
                 s.currentItem = null;
             }
-            // Fallback nếu item ko được gán vào currentItem
             if (child.childCount > 0)
             {
                 foreach (Transform grandChild in child) Destroy(grandChild.gameObject);
@@ -309,13 +299,11 @@ public class StorageChestController : MonoBehaviour
         if (currentActiveChest == null) return;
         string requestingId = currentActiveChest.UniqueID;
 
-        // Gọi API load lẻ 1 rương (để lấy ID mới nhất sau khi transaction)
         InventoryService.Instance.RequestLoadSingleChest(requestingId, (items) =>
         {
             if (this == null || currentActiveChest == null) return;
             if (currentActiveChest.UniqueID != requestingId) return;
 
-            // items lúc này là List<StorageItemDTO>
             PopulateChestUI(items);
             currentActiveChest.SetCache(items);
         });

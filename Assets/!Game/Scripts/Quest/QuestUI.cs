@@ -20,7 +20,10 @@ public class QuestUI : MonoBehaviour
         }
         Instance = this;
 
-        questListContent = GameObject.Find("GameUI/Menu/Pages/QuestPage/QuestScroll/Viewport/Content").transform;
+        if (questListContent == null)
+        {
+            questListContent = GameObject.Find("GameUI/Static_UI/Menu/Pages/QuestPage/QuestScroll/Viewport/Content").transform;
+        }
     }
     void Start()
     {
