@@ -278,6 +278,6 @@ public class PlayerMovement : MonoBehaviour
 
     public void TriggerDeathUI()
     {
-        DeathManager.Instance.ShowGameOverUI();
+        GameOverUIAdapter.Instance.ShowGameOverUI();
     }
 }

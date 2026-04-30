@@ -129,9 +129,9 @@ public class StatusUI : MonoBehaviour
 
     void UpdateUI()
     {
-        if (playerStats == null)
+        if (playerStats == null || classController == null)
         {
-            Debug.LogError("PlayerStats không được gán vào StatusUI!");
+            Debug.LogError("PlayerStats hoặc ClassController không được gán!");
             return;
         }
 
@@ -150,103 +150,106 @@ public class StatusUI : MonoBehaviour
             }
         }
 
-        // ========== HP ==========
         string currentClass = classController.GetCurrentClassName();
         bool hasLyria = GameFlags.HasRecruitedLyria();
+        bool isKnight = currentClass == "Knight";
+        bool isMage = currentClass == "Mage";
 
-        // Fill logic — chỉ class hiện tại mới có fill
-        knightHealthBarFill.gameObject.SetActive(currentClass == "Knight");
-        mageHealthBarFill.gameObject.SetActive(currentClass == "Mage" && hasLyria);
-
-        if (currentClass == "Knight")
-            knightHealthBarFill.fillAmount = (float)playerStats.knightHealth / playerStats.finalKnightMaxHP;
-        else if (currentClass == "Mage" && hasLyria)
-            mageHealthBarFill.fillAmount = (float)playerStats.mageHealth / playerStats.finalMageMaxHP;
-
-        // Text logic — cho phép xem chỉ số cả hai khi ở menu, nhưng ẩn Mage nếu chưa có
-        if (showBothHPInMenu)
+        // ========== HP ==========
+        // Kiểm tra Knight HP
+        if (knightHealthBarFill != null)
         {
-            knightHealthText.gameObject.SetActive(true);
-            mageHealthText.gameObject.SetActive(hasLyria);
-        }
-        else
-        {
-            knightHealthText.gameObject.SetActive(currentClass == "Knight");
-            mageHealthText.gameObject.SetActive(currentClass == "Mage" && hasLyria);
+            knightHealthBarFill.gameObject.SetActive(isKnight);
+            if (isKnight)
+                knightHealthBarFill.fillAmount = (float)playerStats.knightHealth / playerStats.finalKnightMaxHP;
         }
 
-        knightHealthText.text = $"{playerStats.knightHealth} / {playerStats.finalKnightMaxHP}";
-        if (hasLyria)
-            mageHealthText.text = $"{playerStats.mageHealth} / {playerStats.finalMageMaxHP}";
+        if (knightHealthText != null)
+        {
+            knightHealthText.gameObject.SetActive(showBothHPInMenu || isKnight);
+            knightHealthText.text = $"{playerStats.knightHealth} / {playerStats.finalKnightMaxHP}";
+        }
+
+        // Kiểm tra Mage HP
+        if (mageHealthBarFill != null)
+        {
+            mageHealthBarFill.gameObject.SetActive(isMage && hasLyria);
+            if (isMage && hasLyria)
+                mageHealthBarFill.fillAmount = (float)playerStats.mageHealth / playerStats.finalMageMaxHP;
+        }
+
+        if (mageHealthText != null)
+        {
+            mageHealthText.gameObject.SetActive(hasLyria && (showBothHPInMenu || isMage));
+            if (hasLyria)
+                mageHealthText.text = $"{playerStats.mageHealth} / {playerStats.finalMageMaxHP}";
+        }
 
         // ========== MP ==========
-        knightManaBarFill.gameObject.SetActive(currentClass == "Knight");
-        mageManaBarFill.gameObject.SetActive(currentClass == "Mage" && hasLyria);
-
-        if (currentClass == "Knight")
-            knightManaBarFill.fillAmount = (float)playerStats.knightMP / playerStats.finalKnightMaxMP;
-        else if (currentClass == "Mage" && hasLyria)
-            mageManaBarFill.fillAmount = (float)playerStats.mageMP / playerStats.finalMageMaxMP;
-
-        if (showBothHPInMenu)
+        // Kiểm tra Knight MP
+        if (knightManaBarFill != null)
         {
-            knightManaText.gameObject.SetActive(true);
-            mageManaText.gameObject.SetActive(hasLyria);
-        }
-        else
-        {
-            knightManaText.gameObject.SetActive(currentClass == "Knight");
-            mageManaText.gameObject.SetActive(currentClass == "Mage" && hasLyria);
+            knightManaBarFill.gameObject.SetActive(isKnight);
+            if (isKnight)
+                knightManaBarFill.fillAmount = (float)playerStats.knightMP / playerStats.finalKnightMaxMP;
         }
 
-        knightManaText.text = $"{playerStats.knightMP} / {playerStats.finalKnightMaxMP}";
-        if (hasLyria)
-            mageManaText.text = $"{playerStats.mageMP} / {playerStats.finalMageMaxMP}";
+        if (knightManaText != null)
+        {
+            knightManaText.gameObject.SetActive(showBothHPInMenu || isKnight);
+            knightManaText.text = $"{playerStats.knightMP} / {playerStats.finalKnightMaxMP}";
+        }
+
+        // Kiểm tra Mage MP
+        if (mageManaBarFill != null)
+        {
+            mageManaBarFill.gameObject.SetActive(isMage && hasLyria);
+            if (isMage && hasLyria)
+                mageManaBarFill.fillAmount = (float)playerStats.mageMP / playerStats.finalKnightMaxMP; // Lưu ý: Chỗ này nên là finalMageMaxMP nếu PlayerStats có hỗ trợ
+        }
+
+        if (mageManaText != null)
+        {
+            mageManaText.gameObject.SetActive(hasLyria && (showBothHPInMenu || isMage));
+            if (hasLyria)
+                mageManaText.text = $"{playerStats.mageMP} / {playerStats.finalMageMaxMP}";
+        }
 
         // ========== Stamina ==========
         if (staminaBarFill != null)
         {
             float maxStamina = playerStats.finalStamina;
             float currentStamina = playerStats.currentStamina;
-            staminaBarFill.fillAmount = (float)currentStamina / maxStamina;
+            staminaBarFill.fillAmount = maxStamina > 0 ? (float)currentStamina / maxStamina : 0;
+
             if (staminaText != null)
                 staminaText.text = $"{currentStamina} / {maxStamina}";
         }
 
-        // Level
+        // ========== Level & EXP ==========
         if (levelText != null)
             levelText.text = playerStats.level.ToString();
 
-        // EXP
         if (expBarFill != null)
-            expBarFill.fillAmount = (float)playerStats.exp / playerStats.expToNextLevel;
-
-        // Stats
-        if (physicDMGText)
-            physicDMGText.text = playerStats.finalPhysicalAttack.ToString();
-        if (magicDMGText)
-            magicDMGText.text = playerStats.finalMagicAttack.ToString();
-        if (defenseText)
-            defenseText.text = playerStats.finalDefense.ToString();
-        if (critChanceText)
-            critChanceText.text = playerStats.finalCritRate.ToString("F2") + "%";
-        if (moveSpeedText)
-            moveSpeedText.text = playerStats.finalMoveSpeed.ToString("F2");
-
-        // Currency
-        if (coinText)
-            coinText.text = playerStats.coin.ToString();
-        if (gemText)
-            gemText.text = playerStats.gem.ToString();
-
-        // Portraits
-        if (elricPortrait != null && lyriaPortrait != null)
         {
-            bool isKnight = currentClass == "Knight";
-            bool isMage = currentClass == "Mage";
-
-            elricPortrait.gameObject.SetActive(isKnight);
-            lyriaPortrait.gameObject.SetActive(isMage && hasLyria);
+            float expNeeded = playerStats.expToNextLevel;
+            expBarFill.fillAmount = expNeeded > 0 ? (float)playerStats.exp / expNeeded : 0;
         }
+
+        // ========== Stats & Currency ==========
+        if (physicDMGText) physicDMGText.text = playerStats.finalPhysicalAttack.ToString();
+        if (magicDMGText) magicDMGText.text = playerStats.finalMagicAttack.ToString();
+        if (defenseText) defenseText.text = playerStats.finalDefense.ToString();
+        if (critChanceText) critChanceText.text = playerStats.finalCritRate.ToString("F2") + "%";
+        if (moveSpeedText) moveSpeedText.text = playerStats.finalMoveSpeed.ToString("F2");
+        if (coinText) coinText.text = playerStats.coin.ToString();
+        if (gemText) gemText.text = playerStats.gem.ToString();
+
+        // ========== Portraits ==========
+        if (elricPortrait != null)
+            elricPortrait.gameObject.SetActive(isKnight);
+
+        if (lyriaPortrait != null)
+            lyriaPortrait.gameObject.SetActive(isMage && hasLyria);
     }
 }

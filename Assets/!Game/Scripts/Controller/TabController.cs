@@ -16,9 +16,9 @@ public class TabController : MonoBehaviour
     [SerializeField] private string[] tabKeys;
 
     [Header("Tab Flag Checker")]
-    private const int TAB_INDEX_EQUIPMENT = 3;
-    private const int TAB_INDEX_POTENTIAL = 4;
-    private const int TAB_INDEX_SKILL = 5;
+    //private const int TAB_INDEX_EQUIPMENT = 3;
+    //private const int TAB_INDEX_POTENTIAL = 4;
+    //private const int TAB_INDEX_SKILL = 5;
 
     [Header("Âm thanh")]
     [SerializeField] private AudioClip tabClickSoundClip;
@@ -93,18 +93,18 @@ public class TabController : MonoBehaviour
         {
             bool shouldBeVisible = true;
 
-            switch (i)
-            {
-                case TAB_INDEX_EQUIPMENT:
-                    shouldBeVisible = GameFlags.IsOpenedEquipmentMenu();
-                    break;
-                case TAB_INDEX_POTENTIAL:
-                    shouldBeVisible = GameFlags.IsOpenedPotentialMenu();
-                    break;
-                case TAB_INDEX_SKILL:
-                    shouldBeVisible = GameFlags.IsOpenedSkillMenu();
-                    break;
-            }
+            //switch (i)
+            //{
+            //    case TAB_INDEX_EQUIPMENT:
+            //        shouldBeVisible = GameFlags.IsOpenedEquipmentMenu();
+            //        break;
+            //    case TAB_INDEX_POTENTIAL:
+            //        shouldBeVisible = GameFlags.IsOpenedPotentialMenu();
+            //        break;
+            //    case TAB_INDEX_SKILL:
+            //        shouldBeVisible = GameFlags.IsOpenedSkillMenu();
+            //        break;
+            //}
 
             if (tabImages[i] != null)
             {

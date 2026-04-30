@@ -1,56 +1,42 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
+using System;
 
 public class EffectController : MonoBehaviour
 {
-    public static EffectController Instance;
+    public static EffectController Instance { get; private set; }
 
-    [Header("UI Container")]
-    public Transform effectGrid;
+    private Dictionary<GameObject, List<EffectData>> activeEffects = new();
 
-    [Header("Effect Prefabs")]
-    public List<Effect> effectPrefabs;
-
-    private Dictionary<GameObject, List<Effect>> activeEffects = new();
+    public event Action<GameObject, EffectData> OnEffectAdded;
+    public event Action<GameObject, string> OnEffectRemoved;
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-            Destroy(gameObject);
-        else
-            Instance = this;
-
-        if (effectGrid == null)
-            effectGrid = GameObject.Find("GameUI/CommonUI/UI_EffectGrid")?.transform;
+        if (Instance != null && Instance != this) Destroy(gameObject);
+        else Instance = this;
     }
+
     public void AddEffect(GameObject target, string effectID, float duration, float value)
     {
-        if (effectGrid == null) return;
-
-        GameObject prefab = GetPrefab(effectID);
-        if (prefab == null)
-        {
-            Debug.LogWarning($"Không có prefab cho effectID: {effectID}");
-            return;
-        }
-
-        GameObject newEff = Instantiate(prefab, effectGrid);
-        Effect eff = newEff.GetComponent<Effect>();
-
-        if (eff != null)
-        {
-            eff.Initialize(target, duration, value);
-        }
-
         if (!activeEffects.ContainsKey(target))
-            activeEffects[target] = new List<Effect>();
-        activeEffects[target].Add(eff);
+            activeEffects[target] = new List<EffectData>();
+
+        EffectData newEffect = new EffectData(effectID, duration, value);
+        activeEffects[target].Add(newEffect);
+
+        OnEffectAdded?.Invoke(target, newEffect);
     }
 
-    private GameObject GetPrefab(string id)
+    public class EffectData
     {
-        Effect prefab = effectPrefabs.FirstOrDefault(p => p.effectID == id);
-        return (prefab != null) ? prefab.gameObject : null;
+        public string effectID;
+        public float duration;
+        public float value;
+
+        public EffectData(string id, float dur, float val)
+        {
+            effectID = id; duration = dur; value = val;
+        }
     }
 }

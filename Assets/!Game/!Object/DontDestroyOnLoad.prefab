@@ -33,6 +33,7 @@ Transform:
   - {fileID: 7633201732420070522}
   - {fileID: 1907746839762626920}
   - {fileID: 1632811135897932889}
+  - {fileID: 9081819826606842994}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8951650497253838345
@@ -632,3 +633,56 @@ MonoBehaviour:
   mainLoadingCanvasPrefab: {fileID: 1186966195149484881, guid: 1002f86d2da9ac14aae16d460d5b4147, type: 3}
   miniLoadingScreenPrefab: {fileID: 2169108689158331059, guid: 578e1cc104490854594a6542e380e0d9, type: 3}
   mapInfoUIPrefab: {fileID: 3982446727728801820, guid: 8e7945f9b5b1e3b4aa3d09539f565309, type: 3}
+--- !u!1 &8360316825586474837
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9081819826606842994}
+  - component: {fileID: 2135076066620625800}
+  m_Layer: 0
+  m_Name: GameSettingService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9081819826606842994
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8360316825586474837}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2571078056733691153}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2135076066620625800
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8360316825586474837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d90e0e18aa0749a4a9f9998a275c9ce1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  currentSettings:
+    sfxVolume: 1
+    bgmVolume: 1
+    graphicsLevel: 2
+    lightIntensity: 1
+    fxaaEnabled: 1
+    isFullScreen: 1
+    language: 
+    cameraZoom: 5

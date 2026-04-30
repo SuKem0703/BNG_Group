@@ -782,7 +782,7 @@ public class PlayerStats : MonoBehaviour
     {
         if (PauseController.IsGamePause) return;
 
-        DeathManager.Instance.HandlePlayerDeath();
+        DeathController.Instance.HandlePlayerDeath();
 
         //Debug.Log("💀 GAME OVER");
 
