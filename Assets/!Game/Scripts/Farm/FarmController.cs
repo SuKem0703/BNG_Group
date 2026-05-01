@@ -40,7 +40,7 @@ public class FarmController : MonoBehaviour
     {
         if (plot.currentCrop != null) Destroy(plot.currentCrop.gameObject);
 
-        GameObject seedPrefab = InventoryController.Instance.itemDictionary.GetItemPrefab(seedItemId);
+        GameObject seedPrefab = ItemDictionary.Instance.GetItemPrefab(seedItemId);
         if (seedPrefab == null) return;
 
         SeedItem seedScript = seedPrefab.GetComponent<SeedItem>();

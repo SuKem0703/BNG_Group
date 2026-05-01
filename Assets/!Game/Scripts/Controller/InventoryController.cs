@@ -10,7 +10,6 @@ public class InventoryController : MonoBehaviour
 
     [Header("Config")]
     public int slotCount = 20;
-    public ItemDictionary itemDictionary;
 
     private List<InventorySaveData> _inventoryData = new List<InventorySaveData>();
     private readonly Dictionary<int, int> _itemCountCache = new Dictionary<int, int>();
@@ -25,9 +24,6 @@ public class InventoryController : MonoBehaviour
             return;
         }
         Instance = this;
-
-        if (itemDictionary == null)
-            itemDictionary = FindFirstObjectByType<ItemDictionary>();
     }
 
     private void Start()

@@ -16,8 +16,8 @@ public class ChunkManager : MonoBehaviour
     public int unloadDistance = 2;
     public int objectsDestroyedPerFrame = 5;
 
-    [Header("References")]
-    public WorldObjectDictionary worldDictionary;
+    //[Header("References")]
+    //public WorldObjectDictionary worldDictionary;
 
     public string savePath = "Assets/!Game/Resources/ChunkData/";
 
@@ -36,10 +36,10 @@ public class ChunkManager : MonoBehaviour
         }
         Instance = this;
 
-        if (worldDictionary == null)
-        {
-            worldDictionary = FindFirstObjectByType<WorldObjectDictionary>();
-        }
+        //if (worldDictionary == null)
+        //{
+        //    worldDictionary = FindFirstObjectByType<WorldObjectDictionary>();
+        //}
 
         currentSceneName = SceneManager.GetActiveScene().name;
         allChunkData.Clear();
@@ -147,7 +147,7 @@ public class ChunkManager : MonoBehaviour
         {
             var entity = data.entities[i];
             if (string.IsNullOrEmpty(entity.entityID)) continue;
-            GameObject prefab = worldDictionary.GetPrefab(entity.entityID);
+            GameObject prefab = WorldObjectDictionary.Instance.GetPrefab(entity.entityID);
 
             if (prefab != null)
             {

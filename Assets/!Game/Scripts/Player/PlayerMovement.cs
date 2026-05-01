@@ -2,9 +2,9 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
+using Unity.Netcode;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] public float moveSpeed;
@@ -13,14 +13,14 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] public float dashSpeed = 12f;
     [SerializeField] public float dashDuration = 0.2f;
     [SerializeField] public float dashCooldown = 1f;
-    [SerializeField] public int dashStaminaCost = 3;
+    [SerializeField] public int dashStaminaCost = 2;
 
     [Header("Run (Sprint) Settings")]
     [SerializeField] public float runSpeedMultiplier = 1.5f;
     [SerializeField] public float runStaminaCostPerSec = 10f;
     [SerializeField] public float runHoldThreshold = 0.5f;
 
-    private Rigidbody2D rb;
+    public Rigidbody2D rb;
     public Vector2 moveInput;
     public Animator animator;
 
@@ -44,17 +44,20 @@ public class PlayerMovement : MonoBehaviour
     public bool IsDead => isDead;
 
     private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
-    private KnightComboNormalAttack comboAttack;
+    public KnightComboNormalAttack comboAttack;
 
     void Awake()
     {
-        comboAttack = GetComponentInChildren<KnightComboNormalAttack>();
-        rb = GetComponentInParent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+
+        if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (comboAttack == null) comboAttack = GetComponentInChildren<KnightComboNormalAttack>();
     }
 
     void Update()
     {
+        if (!IsOwner) return;
+
         if (isDead || !GameStateManager.CanProcessInput() || !SaveController.IsDataLoaded)
         {
             ResetMovementState();
@@ -88,7 +91,6 @@ public class PlayerMovement : MonoBehaviour
             isRunning = false;
             staminaDrainTimer = 0f;
 
-            // Hủy khóa Sprint nếu dừng di chuyển hoặc hết Stamina
             if (!isMoving || playerStats.currentStamina <= 0)
             {
                 isSprintLocked = false;
@@ -101,7 +103,6 @@ public class PlayerMovement : MonoBehaviour
             bool isCurrentlyAttacking = animator.GetBool("isAttacking");
             bool isWalkAttacking = animator.GetBool("isWalkAttacking");
             bool isRunAttacking = animator.GetBool("isRunAttacking");
-            // Allow movement during walk-attacking or run-attacking
             bool canMove = !isCurrentlyAttacking || isWalkAttacking || isRunAttacking;
 
             float currentSpeed = isRunning ? (moveSpeed * runSpeedMultiplier) : moveSpeed;
@@ -117,40 +118,10 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private Color HexToColor(string hex)
-    {
-        Color color;
-        if (ColorUtility.TryParseHtmlString(hex, out color))
-            return color;
-        return Color.white;
-    }
-
-    private void ResetMovementState()
-    {
-        rb.linearVelocity = Vector2.zero;
-        animator.SetBool("isWalking", false);
-        animator.SetBool("isRunning", false);
-        isSprintLocked = false;
-        isDashButtonHeld = false;
-        canRunAfterDash = false;
-        holdTimer = 0f;
-    }
-
-    private void HandleRunStamina()
-    {
-        if (playerStats == null) return;
-        staminaDrainTimer += Time.deltaTime;
-        float timePerPoint = 1f / runStaminaCostPerSec;
-
-        if (staminaDrainTimer >= timePerPoint)
-        {
-            playerStats.UseStamina(0.1f);
-            staminaDrainTimer = 0f;
-        }
-    }
-
     private void FixedUpdate()
     {
+        if (!IsOwner) return;
+
         if (isDead) { rb.linearVelocity = Vector2.zero; return; }
         bool isWalkAttacking = animator.GetBool("isWalkAttacking");
         bool isRunAttacking = animator.GetBool("isRunAttacking");
@@ -172,8 +143,28 @@ public class PlayerMovement : MonoBehaviour
         isDead = false;
     }
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        if (IsOwner)
+        {
+            var input = GetComponentInChildren<PlayerInput>(true);
+            if (input != null) input.enabled = true;
+        }
+        else
+        {
+            if (rb != null) rb.simulated = false;
+
+            var inputs = GetComponentsInChildren<PlayerInput>(true);
+            foreach (var input in inputs) input.enabled = false;
+        }
+    }
+
     public void Move(InputAction.CallbackContext context)
     {
+        if (!IsOwner) return;
+
         if (isDead) return;
         Vector2 rawInput = context.ReadValue<Vector2>();
         moveInput = PauseController.IsGamePause ? Vector2.zero : rawInput;
@@ -189,6 +180,8 @@ public class PlayerMovement : MonoBehaviour
 
     public void Dash(InputAction.CallbackContext context)
     {
+        if (!IsOwner) return;
+
         if (isDead || PauseController.IsGamePause) return;
 
         if (context.started)
@@ -201,11 +194,9 @@ public class PlayerMovement : MonoBehaviour
         {
             isDashButtonHeld = false;
             holdTimer = 0f;
-            // Thả tay ra thì reset quyền chạy (trừ khi đã lock sprint)
             if (!isSprintLocked) canRunAfterDash = false;
         }
 
-        // Logic kích hoạt Dash
         if (context.performed && !isDashing && !isDashOnCooldown && moveInput != Vector2.zero)
         {
             if (playerStats != null && playerStats.currentStamina >= dashStaminaCost)
@@ -220,8 +211,6 @@ public class PlayerMovement : MonoBehaviour
     {
         isDashing = true;
         isDashOnCooldown = true;
-
-        // Đang Dash thì không tính là Run
         isRunning = false;
 
         playerStats?.SetInvincible(true);
@@ -241,7 +230,6 @@ public class PlayerMovement : MonoBehaviour
         isDashing = false;
         playerStats?.SetInvincible(false);
 
-        // Nếu vẫn đang giữ nút Shift -> Mới cấp quyền cho phép chạy (canRunAfterDash = true)
         if (isDashButtonHeld)
         {
             canRunAfterDash = true;
@@ -253,6 +241,8 @@ public class PlayerMovement : MonoBehaviour
 
     public void LookTowards(Vector3 targetPosition)
     {
+        if (!IsOwner) return;
+
         if (isDead) return;
         Vector3 lookDirection = (targetPosition - transform.position).normalized;
         animator.SetFloat("LastInputX", lookDirection.x);
@@ -278,6 +268,31 @@ public class PlayerMovement : MonoBehaviour
 
     public void TriggerDeathUI()
     {
+        if (!IsOwner) return;
         GameOverUIAdapter.Instance.ShowGameOverUI();
+    }
+
+    private void HandleRunStamina()
+    {
+        if (playerStats == null) return;
+        staminaDrainTimer += Time.deltaTime;
+        float timePerPoint = 1f / runStaminaCostPerSec;
+
+        if (staminaDrainTimer >= timePerPoint)
+        {
+            playerStats.UseStamina(0.1f);
+            staminaDrainTimer = 0f;
+        }
+    }
+
+    private void ResetMovementState()
+    {
+        rb.linearVelocity = Vector2.zero;
+        animator.SetBool("isWalking", false);
+        animator.SetBool("isRunning", false);
+        isSprintLocked = false;
+        isDashButtonHeld = false;
+        canRunAfterDash = false;
+        holdTimer = 0f;
     }
 }

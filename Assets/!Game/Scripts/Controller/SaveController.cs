@@ -132,9 +132,7 @@ public class SaveController : MonoBehaviour
                     List<EquippedSaveData> mageEquips = new List<EquippedSaveData>();
                     List<EquippedSaveData> sharedEquips = new List<EquippedSaveData>();
 
-                    ItemDictionary itemDict = null;
-                    if (InventoryController.Instance != null)
-                        itemDict = InventoryController.Instance.itemDictionary;
+                    ItemDictionary itemDict = ItemDictionary.Instance;
 
                     foreach (var svItem in serverItems)
                     {
@@ -272,12 +270,25 @@ public class SaveController : MonoBehaviour
     {
         inventoryController = FindFirstObjectByType<InventoryController>(FindObjectsInactive.Include);
         hotbarController = FindFirstObjectByType<HotbarController>();
-        playerStats = GameObject.FindGameObjectWithTag("PlayerController").GetComponent<PlayerStats>();
         knightEquipmentPanel = FindFirstObjectByType<KnightEquipmentPanel>(FindObjectsInactive.Include);
         mageEquipmentPanel = FindFirstObjectByType<MageEquipmentPanel>(FindObjectsInactive.Include);
         sharedEquipmentPanel = FindFirstObjectByType<SharedEquipmentPanel>(FindObjectsInactive.Include);
         farmController = FindFirstObjectByType<FarmController>();
         storageChests = FindObjectsByType<StorageChest>(FindObjectsSortMode.None);
+
+        GameObject playerObj = null;
+        while (playerObj == null)
+        {
+            playerObj = GameObject.FindGameObjectWithTag("PlayerController");
+            yield return null;
+        }
+
+        playerStats = playerObj.GetComponent<PlayerStats>();
+
+        while (playerStats == null || playerStats.equipmentKnightSlots == null)
+        {
+            yield return null;
+        }
 
         yield break;
     }

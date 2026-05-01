@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class StatusUI : MonoBehaviour
 {
@@ -58,17 +57,10 @@ public class StatusUI : MonoBehaviour
 
     void Awake()
     {
-        playerStats = FindFirstObjectByType<PlayerStats>();
-        classController = FindFirstObjectByType<ClassController>();
-
-        if (playerStats == null || classController == null)
-        {
-            Debug.LogWarning("PlayerStats hoặc ClassController chưa được gán.");
-            return;
-        }
-
         AssignInspector();
+        TryFindPlayer();
     }
+
     void AssignInspector()
     {
         elricPortrait ??= transform.FindDeepChild("ElricPortrait")?.GetComponent<Image>();
@@ -104,36 +96,41 @@ public class StatusUI : MonoBehaviour
         coinText ??= transform.FindDeepChild("CoinText")?.GetComponent<TextMeshProUGUI>();
         gemText ??= transform.FindDeepChild("GemText")?.GetComponent<TextMeshProUGUI>();
     }
-    void Start()
-    {
-        if (playerStats == null || classController == null)
-        {
-            Debug.LogError("PlayerStats hoặc ClassController bị null!");
-            return;
-        }
 
-        UpdateUI();
+    private void TryFindPlayer()
+    {
+        if (playerStats == null) playerStats = FindFirstObjectByType<PlayerStats>();
+        if (classController == null) classController = FindFirstObjectByType<ClassController>();
     }
 
-    void Update()
+    void Start()
     {
-        if (playerStats == null) return;
-        if (!gameObject.activeInHierarchy) return;
+        TryFindPlayer();
         UpdateUI();
     }
 
     void OnEnable()
     {
+        TryFindPlayer();
+        UpdateUI();
+    }
+
+    void Update()
+    {
+        if (!gameObject.activeInHierarchy) return;
+
+        if (playerStats == null || classController == null)
+        {
+            TryFindPlayer();
+            return;
+        }
+
         UpdateUI();
     }
 
     void UpdateUI()
     {
-        if (playerStats == null || classController == null)
-        {
-            Debug.LogError("PlayerStats hoặc ClassController không được gán!");
-            return;
-        }
+        if (playerStats == null || classController == null) return;
 
         // Real Time
         if (timeText != null)
@@ -156,7 +153,6 @@ public class StatusUI : MonoBehaviour
         bool isMage = currentClass == "Mage";
 
         // ========== HP ==========
-        // Kiểm tra Knight HP
         if (knightHealthBarFill != null)
         {
             knightHealthBarFill.gameObject.SetActive(isKnight);
@@ -170,7 +166,6 @@ public class StatusUI : MonoBehaviour
             knightHealthText.text = $"{playerStats.knightHealth} / {playerStats.finalKnightMaxHP}";
         }
 
-        // Kiểm tra Mage HP
         if (mageHealthBarFill != null)
         {
             mageHealthBarFill.gameObject.SetActive(isMage && hasLyria);
@@ -186,7 +181,6 @@ public class StatusUI : MonoBehaviour
         }
 
         // ========== MP ==========
-        // Kiểm tra Knight MP
         if (knightManaBarFill != null)
         {
             knightManaBarFill.gameObject.SetActive(isKnight);
@@ -200,12 +194,12 @@ public class StatusUI : MonoBehaviour
             knightManaText.text = $"{playerStats.knightMP} / {playerStats.finalKnightMaxMP}";
         }
 
-        // Kiểm tra Mage MP
         if (mageManaBarFill != null)
         {
             mageManaBarFill.gameObject.SetActive(isMage && hasLyria);
             if (isMage && hasLyria)
-                mageManaBarFill.fillAmount = (float)playerStats.mageMP / playerStats.finalKnightMaxMP; // Lưu ý: Chỗ này nên là finalMageMaxMP nếu PlayerStats có hỗ trợ
+                // Đã sửa lỗi logic: Chuyển từ finalKnightMaxMP -> finalMageMaxMP
+                mageManaBarFill.fillAmount = (float)playerStats.mageMP / playerStats.finalMageMaxMP;
         }
 
         if (mageManaText != null)
@@ -227,8 +221,7 @@ public class StatusUI : MonoBehaviour
         }
 
         // ========== Level & EXP ==========
-        if (levelText != null)
-            levelText.text = playerStats.level.ToString();
+        if (levelText != null) levelText.text = playerStats.level.ToString();
 
         if (expBarFill != null)
         {
@@ -246,10 +239,7 @@ public class StatusUI : MonoBehaviour
         if (gemText) gemText.text = playerStats.gem.ToString();
 
         // ========== Portraits ==========
-        if (elricPortrait != null)
-            elricPortrait.gameObject.SetActive(isKnight);
-
-        if (lyriaPortrait != null)
-            lyriaPortrait.gameObject.SetActive(isMage && hasLyria);
+        if (elricPortrait != null) elricPortrait.gameObject.SetActive(isKnight);
+        if (lyriaPortrait != null) lyriaPortrait.gameObject.SetActive(isMage && hasLyria);
     }
 }

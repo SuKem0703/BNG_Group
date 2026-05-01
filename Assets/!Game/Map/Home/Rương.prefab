@@ -208,7 +208,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1926694469
-  m_SortingLayer: 8
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -358,16 +358,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52cd3bf356bf0cb4691286b121ca23a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForestDynamicSorting
-  inFrontLayer: Walk in front
-  behindLayer: Walk behind
+  sortingPrecision: 100
+  sortingBuffer: 0
   yOffset: -0.2
   fadedAlpha: 0.75
   normalAlpha: 1
   fadeSpeed: 5
   frontRenderer: {fileID: 7188251018861852714}
   behindRenderer: {fileID: 4739864190066365128}
-  sortingPrecision: 100
-  sortingBuffer: 0
 --- !u!114 &819990869883883403
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -585,7 +583,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1780988441
-  m_SortingLayer: 2
+  m_SortingLayer: -5
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}

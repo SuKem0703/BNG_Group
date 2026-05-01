@@ -31,7 +31,7 @@ public class InventoryUIAdapter : MonoBehaviour
     {
         if (inventoryPanel == null || slotPrefab == null) return;
 
-        ItemDictionary dictionary = InventoryController.Instance.itemDictionary;
+        ItemDictionary dictionary = ItemDictionary.Instance;
         if (dictionary == null) return;
 
         EnsureSlotCount(maxSlots);

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -186,13 +187,6 @@ public class PlayerStats : MonoBehaviour
     // Singleton Init
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        Instance = this;
-
         Application.runInBackground = true;
 
         if (playerCollider == null) playerCollider = GetComponent<CapsuleCollider2D>();
@@ -207,7 +201,11 @@ public class PlayerStats : MonoBehaviour
     // Init Logic
     void Start()
     {
-        //PauseController.SetPause(false);
+        NetworkObject netObj = GetComponent<NetworkObject>();
+        if (netObj != null && netObj.IsOwner)
+        {
+            Instance = this;
+        }
 
         IsOnBattle = false;
 
