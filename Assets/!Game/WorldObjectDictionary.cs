@@ -6,6 +6,8 @@ using UnityEditor;
 
 public class WorldObjectDictionary : MonoBehaviour
 {
+    public static WorldObjectDictionary Instance { get; private set; }
+
     [Header("Danh sách Prefab Decor/World Object")]
     public List<GameObject> worldPrefabs;
 
@@ -13,6 +15,13 @@ public class WorldObjectDictionary : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(transform.root.gameObject);
+            return;
+        }
+        Instance = this;
+
         prefabDict = new Dictionary<string, GameObject>();
         foreach (var prefab in worldPrefabs)
         {

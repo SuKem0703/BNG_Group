@@ -32,13 +32,11 @@ public class SoundEffectManager : MonoBehaviour
             bgmAudioSource = audioSources[3];
             soundEffectLibrary = GetComponent<SoundEffectLibrary>();
 
-            // DontDestroyOnLoad(gameObject);
-
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
         {
-            Destroy(gameObject);
+            Destroy(transform.root.gameObject);
         }
     }
 

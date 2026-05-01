@@ -26,12 +26,10 @@ public class LoadResourceManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(transform.root.gameObject);
             return;
         }
         Instance = this;
-
-        // DontDestroyOnLoad(gameObject);
 
         LoadResources();
         CheckLoadResources();

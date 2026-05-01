@@ -16,21 +16,21 @@ public class EffectUIAdapter : MonoBehaviour
     {
         localPlayer = GameObject.FindGameObjectWithTag("PlayerController");
 
-        if (EffectController.Instance != null)
+        if (EffectService.Instance != null)
         {
-            EffectController.Instance.OnEffectAdded += DrawEffectUI;
+            EffectService.Instance.OnEffectAdded += DrawEffectUI;
         }
     }
 
     private void OnDestroy()
     {
-        if (EffectController.Instance != null)
+        if (EffectService.Instance != null)
         {
-            EffectController.Instance.OnEffectAdded -= DrawEffectUI;
+            EffectService.Instance.OnEffectAdded -= DrawEffectUI;
         }
     }
 
-    private void DrawEffectUI(GameObject target, EffectController.EffectData effectData)
+    private void DrawEffectUI(GameObject target, EffectService.EffectData effectData)
     {
         if (effectGrid == null) return;
 

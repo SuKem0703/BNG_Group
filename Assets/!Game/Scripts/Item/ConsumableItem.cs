@@ -32,7 +32,7 @@ public class ConsumableItem : Item
 
     public override void UseItem()
     {
-        if (playerStats == null || EffectController.Instance == null)
+        if (playerStats == null || EffectService.Instance == null)
         {
             Debug.LogWarning("Không thể dùng item: Thiếu PlayerStats hoặc EffectController.");
             return;
@@ -71,7 +71,7 @@ public class ConsumableItem : Item
             playerStats.TriggerPotionCooldown();
         }
 
-        EffectController.Instance.AddEffect(
+        EffectService.Instance.AddEffect(
             playerStats.gameObject,
             effectID,
             effectDuration,

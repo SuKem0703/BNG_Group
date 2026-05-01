@@ -7,6 +7,8 @@ using UnityEditor;
 
 public class ItemDictionary : MonoBehaviour
 {
+    public static ItemDictionary Instance { get; private set; }
+
     [Header("Danh sách tự động cập nhật")]
     public List<Item> itemPrefabs;
 
@@ -14,12 +16,21 @@ public class ItemDictionary : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(transform.root.gameObject);
+            return;
+        }
+        Instance = this;
+
         itemDictionary = new Dictionary<int, GameObject>();
 
         foreach (Item item in itemPrefabs)
         {
             if (item != null)
             {
+                if (item.ID == 0) continue;
+
                 if (itemDictionary.ContainsKey(item.ID))
                 {
                     Debug.LogWarning($"[ItemDictionary] PHÁT HIỆN TRÙNG ID {item.ID} giữa '{item.Name}' và '{itemDictionary[item.ID].name}'");

@@ -259,9 +259,9 @@ public class SaveController : MonoBehaviour
         HideMainLoadingScreen();
         OnDataLoaded?.Invoke();
 
-        if (DeathController.IsRespawningFlag)
+        if (DeathService.IsRespawningFlag)
         {
-            DeathController.IsRespawningFlag = false;
+            DeathService.IsRespawningFlag = false;
             var ps = GameObject.FindGameObjectWithTag("PlayerController")?.GetComponent<PlayerStats>();
             if (ps != null)
                 StartCoroutine(ps.FinalizeRespawnProtection(0.5f));

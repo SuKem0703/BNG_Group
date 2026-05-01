@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class DeathController : MonoBehaviour
+public class DeathService : MonoBehaviour
 {
-    public static DeathController Instance { get; private set; }
+    public static DeathService Instance { get; private set; }
 
     [Header("Death Penalty Settings")]
     public float expPenaltyPercentage = 0.1f;

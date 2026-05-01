@@ -19,12 +19,10 @@ public class LocalizationManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(transform.root.gameObject);
             return;
         }
         Instance = this;
-
-        // DontDestroyOnLoad(gameObject);
 
         saveFilePath = Application.persistentDataPath + "/game_settings.json";
 

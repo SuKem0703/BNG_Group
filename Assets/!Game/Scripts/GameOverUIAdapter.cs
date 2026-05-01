@@ -24,12 +24,12 @@ public class GameOverUIAdapter : MonoBehaviour
 
     private void OnEnable()
     {
-        DeathController.OnPlayerDied += HideCommonUI;
+        DeathService.OnPlayerDied += HideCommonUI;
     }
 
     private void OnDisable()
     {
-        DeathController.OnPlayerDied -= HideCommonUI;
+        DeathService.OnPlayerDied -= HideCommonUI;
     }
 
     private void HideCommonUI()
@@ -67,7 +67,7 @@ public class GameOverUIAdapter : MonoBehaviour
             targetScene = SceneManager.GetActiveScene().name;
         }
 
-        DeathController.IsRespawningFlag = true;
+        DeathService.IsRespawningFlag = true;
         SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
     }
 }

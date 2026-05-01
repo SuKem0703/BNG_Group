@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System;
 
-public class EffectController : MonoBehaviour
+public class EffectService : MonoBehaviour
 {
-    public static EffectController Instance { get; private set; }
+    public static EffectService Instance { get; private set; }
 
     private Dictionary<GameObject, List<EffectData>> activeEffects = new();
 

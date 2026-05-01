@@ -128,8 +128,8 @@ public class ClassController : MonoBehaviour
         {
             SwitchClass(target);
             StartCoroutine(SwapDelay());
-            if (EffectController.Instance != null)
-                EffectController.Instance.AddEffect(gameObject, "SWAP_CD", swapCooldown, 0);
+            if (EffectService.Instance != null)
+                EffectService.Instance.AddEffect(gameObject, "SWAP_CD", swapCooldown, 0);
         }
         else
         {
