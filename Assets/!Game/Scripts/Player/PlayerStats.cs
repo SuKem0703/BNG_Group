@@ -167,11 +167,6 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public Slot[] equipmentKnightSlots;
-    public Slot[] equipmentMageSlots;
-
-    public Slot[] shareEquipmentSlots;
-
     public static event System.Action<PlayerStats> OnInitialized;
 
     public bool isInvincible = false;
@@ -184,55 +179,59 @@ public class PlayerStats : MonoBehaviour
 
     public CapsuleCollider2D playerCollider;
 
+    public static event System.Action<Slot[], string> OnEquipmentUIReady;
+
     // Singleton Init
     private void Awake()
     {
         Application.runInBackground = true;
 
         if (playerCollider == null) playerCollider = GetComponent<CapsuleCollider2D>();
+
+        DontDestroyOnLoad(this.gameObject);
     }
 
     // Singleton cleanup
     private void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance == this) 
+        {
+            Instance = null;
+            if (InventoryController.Instance != null)
+                InventoryController.Instance.OnInventoryChanged -= OnInventoryUpdated;
+        }
     }
 
     // Init Logic
     void Start()
     {
         NetworkObject netObj = GetComponent<NetworkObject>();
+        IsOnBattle = false;
+
         if (netObj != null && netObj.IsOwner)
         {
             Instance = this;
+
+            OnInitialized?.Invoke(this);
+
+            if (InventoryController.Instance != null)
+            {
+                InventoryController.Instance.OnInventoryChanged += OnInventoryUpdated;
+                ApplyEquippedItems();
+            }
         }
-
-        IsOnBattle = false;
-
-        equipmentKnightSlots = FindSlotsByName("KnightSlotContainer");
-        equipmentMageSlots = FindSlotsByName("MageSlotContainer");
-
-        shareEquipmentSlots = FindSlotsByName("ShareSlotContainer");
-
-        if (equipmentKnightSlots == null || equipmentMageSlots == null || shareEquipmentSlots == null)
-        {
-            Debug.LogError("Không tìm thấy Equipment Slot!");
-        }
-        else
-        {
-            ApplyEquippedItems();
-        }
-
-        OnInitialized?.Invoke(this);
 
         healthRegenCooldown = healthRegenDelay;
         mpRegenCooldown = mpRegenDelay;
         staminaRegenCooldown = staminaRegenDelay;
     }
 
-    // Loop
     void Update()
     {
+        NetworkObject netObj = GetComponent<NetworkObject>();
+
+        if (netObj != null && !netObj.IsOwner) return;
+
         if (PauseController.IsGamePause)
         {
             healthRegenCooldown = healthRegenDelay;
@@ -240,12 +239,18 @@ public class PlayerStats : MonoBehaviour
             staminaRegenCooldown = staminaRegenDelay;
             return;
         }
+
         HandleRegen();
 
         if (potionCooldownTimer > 0)
         {
             potionCooldownTimer -= Time.unscaledDeltaTime;
         }
+    }
+
+    private void OnInventoryUpdated(List<InventorySaveData> inventoryData, int slotCount)
+    {
+        ApplyEquippedItems();
     }
 
     // Logic hồi phục theo thời gian
@@ -327,12 +332,20 @@ public class PlayerStats : MonoBehaviour
     // Tính chỉ số từ trang bị
     public void ApplyEquippedItems()
     {
-        var classController = GetComponent<ClassController>();
+        if (InventoryController.Instance == null || ItemDictionary.Instance == null) return;
 
-        int cachedKnightFinalMaxHP = finalKnightMaxHP;
-        int cachedKnightFinalMaxMP = finalKnightMaxMP;
-        int cachedMageFinalMaxHP = finalMageMaxHP;
-        int cachedMageFinalMaxMP = finalMageMaxMP;
+        var classController = GetComponent<ClassController>();
+        if (classController == null) return;
+
+        bool isKnightActive = true;
+
+        if (classController.mageObject != null && classController.knightObject != null)
+        {
+            if (classController.mageObject.activeSelf && !classController.knightObject.activeSelf)
+            {
+                isKnightActive = false;
+            }
+        }
 
         bonusSTR = bonusDEX = bonusCON = bonusINT = 0;
         bonusPhysicalAttack = 0;
@@ -349,100 +362,57 @@ public class PlayerStats : MonoBehaviour
         bonusStaminaRegen = 0;
         damageReduction = 0;
 
-        if (classController.knightObject.activeSelf)
-        {
-            foreach (Slot slot in equipmentKnightSlots)
-            {
-                if (!slot.isEquipmentSlot || slot.currentItem == null) continue;
-                
-                if (slot.currentItem.GetComponent<Item>() is EquipmentItem equip)
-                {
-                    bonusSTR += equip.bonusSTR;
-                    bonusDEX += equip.bonusDEX;
-                    bonusCON += equip.bonusCON;
-                    bonusINT += equip.bonusINT;
+        var equippedData = InventoryController.Instance.GetInventoryItemsData()
+            .Where(item => item.isEquipped)
+            .GroupBy(item => item.itemID)
+            .Select(group => group.First());
 
-                    bonusPhysicalAttack += equip.physDamageBonus;
-                    bonusMagicAttack += equip.magicDamageBonus;
-                    bonusDefense += equip.defenseBonus;
-                    bonusCritRate += equip.critRateBonus;
-                    bonusKnightMaxHP += equip.hpKnightBonus;
-                    bonusKnightMaxMP += equip.mpKnightBonus;
-                    bonusHPRegen += equip.hpRegenBonus;
-                    bonusMPRegen += equip.mpRegenBonus;
-                    bonusMoveSpeed += equip.moveSpeedBonus;
-                    bonusStaminaRegen += equip.staminaRegenBonus;
-                    damageReduction += equip.damageReduction;
-                }
+        foreach (var data in equippedData)
+        {
+            GameObject prefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
+            if (prefab == null) continue;
+
+            EquipmentItem equip = prefab.GetComponent<EquipmentItem>();
+            if (equip == null) continue;
+
+            float svQuality = data.qualityFactor;
+
+            if (equip.classRestriction == ClassRestriction.Knight || equip.classRestriction == ClassRestriction.None)
+            {
+                bonusKnightMaxHP += Mathf.RoundToInt(equip.hpKnightBonus * svQuality);
+                bonusKnightMaxMP += Mathf.RoundToInt(equip.mpKnightBonus * svQuality);
             }
 
-            bonusMageMaxHP = cachedMageFinalMaxHP - baseMaxHP;
-            bonusMageMaxMP = cachedMageFinalMaxMP - baseMaxMP;
-        }
-        else // Mage active
-        {
-            foreach (Slot slot in equipmentMageSlots)
+            if (equip.classRestriction == ClassRestriction.Mage || equip.classRestriction == ClassRestriction.None)
             {
-                if (!slot.isEquipmentSlot || slot.currentItem == null) continue;
-
-                if (slot.currentItem.GetComponent<Item>() is EquipmentItem equip)
-                {
-                    bonusSTR += equip.bonusSTR;
-                    bonusDEX += equip.bonusDEX;
-                    bonusCON += equip.bonusCON;
-                    bonusINT += equip.bonusINT;
-
-                    bonusPhysicalAttack += equip.physDamageBonus;
-                    bonusMagicAttack += equip.magicDamageBonus;
-                    bonusDefense += equip.defenseBonus;
-                    bonusCritRate += equip.critRateBonus;
-                    bonusMageMaxHP += equip.hpMageBonus;
-                    bonusMageMaxMP += equip.mpMageBonus;
-                    bonusHPRegen += equip.hpRegenBonus;
-                    bonusMPRegen += equip.mpRegenBonus;
-                    bonusMoveSpeed += equip.moveSpeedBonus;
-                    bonusStaminaRegen += equip.staminaRegenBonus;
-                    damageReduction += equip.damageReduction;
-                }
+                bonusMageMaxHP += Mathf.RoundToInt(equip.hpMageBonus * svQuality);
+                bonusMageMaxMP += Mathf.RoundToInt(equip.mpMageBonus * svQuality);
             }
 
-            bonusKnightMaxHP = cachedKnightFinalMaxHP - baseMaxHP;
-            bonusKnightMaxMP = cachedKnightFinalMaxMP - baseMaxMP;
+            bool isMatchingActiveStatus = (equip.classRestriction == ClassRestriction.None) ||
+                                          (isKnightActive && equip.classRestriction == ClassRestriction.Knight) ||
+                                          (!isKnightActive && equip.classRestriction == ClassRestriction.Mage);
+
+            if (isMatchingActiveStatus)
+            {
+                bonusSTR += Mathf.RoundToInt(equip.bonusSTR * svQuality);
+                bonusDEX += Mathf.RoundToInt(equip.bonusDEX * svQuality);
+                bonusCON += Mathf.RoundToInt(equip.bonusCON * svQuality);
+                bonusINT += Mathf.RoundToInt(equip.bonusINT * svQuality);
+
+                bonusPhysicalAttack += Mathf.RoundToInt(equip.physDamageBonus * svQuality);
+                bonusMagicAttack += Mathf.RoundToInt(equip.magicDamageBonus * svQuality);
+                bonusDefense += Mathf.RoundToInt(equip.defenseBonus * svQuality);
+                bonusHPRegen += Mathf.RoundToInt(equip.hpRegenBonus * svQuality);
+                bonusMPRegen += Mathf.RoundToInt(equip.mpRegenBonus * svQuality);
+                bonusStaminaRegen += Mathf.RoundToInt(equip.staminaRegenBonus * svQuality);
+
+                bonusCritRate += equip.critRateBonus * svQuality;
+                bonusMoveSpeed += equip.moveSpeedBonus * svQuality;
+
+                damageReduction += equip.damageReduction * svQuality;
+            }
         }
-
-        knightHealth = Mathf.Min(knightHealth, finalKnightMaxHP);
-        knightMP = Mathf.Min(knightMP, finalKnightMaxMP);
-        mageHealth = Mathf.Min(mageHealth, finalMageMaxHP);
-        mageMP = Mathf.Min(mageMP, finalMageMaxMP);
-    }
-
-    // Tính chỉ số cho cả 2 class (dùng khi load game)
-    public void ApplyAllClassEquippedItems()
-    {
-        var classController = GetComponent<ClassController>();
-        bool wasKnightActive = classController.knightObject.activeSelf;
-
-        classController.knightObject.SetActive(true);
-        classController.mageObject.SetActive(false);
-        ApplyEquippedItems();
-
-        int savedKnightHP = finalKnightMaxHP;
-        int savedKnightMP = finalKnightMaxMP;
-
-        classController.knightObject.SetActive(false);
-        classController.mageObject.SetActive(true);
-        ApplyEquippedItems();
-
-        int savedMageHP = finalMageMaxHP;
-        int savedMageMP = finalMageMaxMP;
-
-        classController.knightObject.SetActive(wasKnightActive);
-        classController.mageObject.SetActive(!wasKnightActive);
-
-        bonusKnightMaxHP = savedKnightHP - baseMaxHP;
-        bonusKnightMaxMP = savedKnightMP - baseMaxMP;
-        bonusMageMaxHP = savedMageHP - baseMaxHP;
-        bonusMageMaxMP = savedMageMP - baseMaxMP;
 
         knightHealth = Mathf.Min(knightHealth, finalKnightMaxHP);
         knightMP = Mathf.Min(knightMP, finalKnightMaxMP);

@@ -4,6 +4,7 @@ using UnityEngine.Networking;
 using System.Collections;
 using TMPro;
 using UnityEngine.SceneManagement;
+using Unity.Netcode;
 
 public class LoginManager : MonoBehaviour
 {
@@ -183,7 +184,6 @@ public class LoginManager : MonoBehaviour
             yield break;
         }
 
-        // [NETWORK] URL Get Save
         string url = NetworkConfig.GetUrl("api/GameData/get-save");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
@@ -196,14 +196,20 @@ public class LoginManager : MonoBehaviour
             string saveJson = request.downloadHandler.text;
             SaveData saveData = JsonUtility.FromJson<SaveData>(saveJson);
 
-            if (!string.IsNullOrEmpty(saveData.currentSceneName))
+            string targetScene = !string.IsNullOrEmpty(saveData.currentSceneName) ? saveData.currentSceneName : "MAP_CH1_01";
+
+            SaveController.pendingSceneName = targetScene;
+            SaveController.nextSpawnPosition = saveData.playerPosition;
+
+            if (NetworkManager.Singleton != null)
             {
-                SaveController.pendingSceneName = saveData.currentSceneName;
-                SceneManager.LoadScene(saveData.currentSceneName);
+                NetworkManager.Singleton.StartHost();
+
+                NetworkManager.Singleton.SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
             }
             else
             {
-                Debug.LogWarning("Dữ liệu lưu trống.");
+                SceneManager.LoadScene(targetScene);
             }
         }
         else

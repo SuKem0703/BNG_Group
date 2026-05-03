@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using Unity.Cinemachine;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -229,7 +230,7 @@ public class SaveController : MonoBehaviour
 
                     if (playerStats != null)
                     {
-                        playerStats.ApplyAllClassEquippedItems();
+                        playerStats.ApplyEquippedItems();
                     }
                 }
                 inventoryLoaded = true;
@@ -285,7 +286,7 @@ public class SaveController : MonoBehaviour
 
         playerStats = playerObj.GetComponent<PlayerStats>();
 
-        while (playerStats == null || playerStats.equipmentKnightSlots == null)
+        while (playerStats == null)
         {
             yield return null;
         }
@@ -556,15 +557,40 @@ public class SaveController : MonoBehaviour
 
         if (!sceneExists) targetScene = "MAP_CH1_01";
 
+        nextSpawnPosition = targetPos;
+
         if (SceneManager.GetActiveScene().name != targetScene)
         {
-            SceneManager.LoadScene(targetScene);
             pendingSceneName = targetScene;
-            nextSpawnPosition = targetPos;
+
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            {
+                if (NetworkManager.Singleton.IsServer)
+                {
+                    NetworkManager.Singleton.SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
+                }
+            }
+            else
+            {
+                SceneManager.LoadScene(targetScene);
+            }
+
             return true;
         }
 
-        GameObject player = GameObject.FindGameObjectWithTag("PlayerController");
+        GameObject player = null;
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient)
+        {
+            if (NetworkManager.Singleton.LocalClient.PlayerObject != null)
+            {
+                player = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
+            }
+        }
+        else
+        {
+            player = GameObject.FindGameObjectWithTag("PlayerController");
+        }
+
         if (player != null)
         {
             player.transform.position = targetPos;
@@ -597,7 +623,6 @@ public class SaveController : MonoBehaviour
             inventoryController.ReBuildItemCounts();
         }
 
-        // Lưu vào cache để rương đẻ sau có thể truy cập
         _cachedChestStates = saveData.chestSaveData ?? new List<ChestSaveData>();
         LoadChestStates(_cachedChestStates);
 

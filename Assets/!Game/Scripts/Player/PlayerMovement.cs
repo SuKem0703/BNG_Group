@@ -33,7 +33,6 @@ public class PlayerMovement : NetworkBehaviour
     private bool isDashButtonHeld = false;
     private bool isSprintLocked = false;
     private float holdTimer = 0f;
-
     private bool canRunAfterDash = false;
 
     // Stamina Timer
@@ -46,71 +45,91 @@ public class PlayerMovement : NetworkBehaviour
     private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
     public KnightComboNormalAttack comboAttack;
 
+    public NetworkVariable<Vector2> netMoveInput = new NetworkVariable<Vector2>(Vector2.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<Vector2> netLastInput = new NetworkVariable<Vector2>(new Vector2(0, -1), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<bool> netIsRunning = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     void Awake()
     {
         if (rb == null) rb = GetComponent<Rigidbody2D>();
-
         if (animator == null) animator = GetComponentInChildren<Animator>();
         if (comboAttack == null) comboAttack = GetComponentInChildren<KnightComboNormalAttack>();
     }
 
     void Update()
     {
-        if (!IsOwner) return;
-
-        if (isDead || !GameStateManager.CanProcessInput() || !SaveController.IsDataLoaded)
+        if (IsOwner)
         {
-            ResetMovementState();
-            return;
-        }
-
-        bool isMoving = moveInput.magnitude > 0.1f;
-
-        if (isDashButtonHeld && canRunAfterDash)
-        {
-            holdTimer += Time.deltaTime;
-            if (holdTimer >= runHoldThreshold)
+            if (isDead || !GameStateManager.CanProcessInput() || !SaveController.IsDataLoaded)
             {
-                isSprintLocked = true;
+                ResetMovementState();
+            }
+            else
+            {
+                bool isMovingOwner = moveInput.magnitude > 0.1f;
+
+                if (isDashButtonHeld && canRunAfterDash)
+                {
+                    holdTimer += Time.deltaTime;
+                    if (holdTimer >= runHoldThreshold) isSprintLocked = true;
+                }
+                else if (!isDashButtonHeld && !isSprintLocked)
+                {
+                    holdTimer = 0f;
+                }
+
+                bool intentionToRun = (isDashButtonHeld && canRunAfterDash) || isSprintLocked;
+
+                if (intentionToRun && isMovingOwner && !isDashing && playerStats.currentStamina > 0)
+                {
+                    isRunning = true;
+                    HandleRunStamina();
+                }
+                else
+                {
+                    isRunning = false;
+                    staminaDrainTimer = 0f;
+
+                    if (!isMovingOwner || playerStats.currentStamina <= 0)
+                    {
+                        isSprintLocked = false;
+                        if (playerStats.currentStamina <= 0) canRunAfterDash = false;
+                    }
+                }
+
+                if (!isDashing)
+                {
+                    bool isCurrentlyAttacking = animator.GetBool("isAttacking");
+                    bool isWalkAttacking = animator.GetBool("isWalkAttacking");
+                    bool isRunAttacking = animator.GetBool("isRunAttacking");
+                    bool canMove = !isCurrentlyAttacking || isWalkAttacking || isRunAttacking;
+
+                    float currentSpeed = isRunning ? (moveSpeed * runSpeedMultiplier) : moveSpeed;
+                    rb.linearVelocity = canMove ? moveInput * currentSpeed : Vector2.zero;
+                }
+
+                netMoveInput.Value = moveInput;
+                netIsRunning.Value = isRunning;
             }
         }
-        else if (!isDashButtonHeld && !isSprintLocked)
+
+        Vector2 currentMove = IsOwner ? moveInput : netMoveInput.Value;
+        bool currentRun = IsOwner ? isRunning : netIsRunning.Value;
+        Vector2 currentLast = netLastInput.Value;
+
+        bool isMoving = currentMove.magnitude > 0.1f;
+
+        animator.SetBool("isWalking", isMoving && !currentRun);
+        animator.SetBool("isRunning", isMoving && currentRun);
+
+        if (isMoving)
         {
-            holdTimer = 0f;
+            animator.SetFloat("InputX", currentMove.x);
+            animator.SetFloat("InputY", currentMove.y);
         }
 
-        bool intentionToRun = (isDashButtonHeld && canRunAfterDash) || isSprintLocked;
-
-        if (intentionToRun && isMoving && !isDashing && playerStats.currentStamina > 0)
-        {
-            isRunning = true;
-            HandleRunStamina();
-        }
-        else
-        {
-            isRunning = false;
-            staminaDrainTimer = 0f;
-
-            if (!isMoving || playerStats.currentStamina <= 0)
-            {
-                isSprintLocked = false;
-                if (playerStats.currentStamina <= 0) canRunAfterDash = false;
-            }
-        }
-
-        if (!isDashing)
-        {
-            bool isCurrentlyAttacking = animator.GetBool("isAttacking");
-            bool isWalkAttacking = animator.GetBool("isWalkAttacking");
-            bool isRunAttacking = animator.GetBool("isRunAttacking");
-            bool canMove = !isCurrentlyAttacking || isWalkAttacking || isRunAttacking;
-
-            float currentSpeed = isRunning ? (moveSpeed * runSpeedMultiplier) : moveSpeed;
-            rb.linearVelocity = canMove ? moveInput * currentSpeed : Vector2.zero;
-        }
-
-        animator.SetBool("isWalking", isMoving && !isRunning);
-        animator.SetBool("isRunning", isMoving && isRunning);
+        animator.SetFloat("LastInputX", currentLast.x);
+        animator.SetFloat("LastInputY", currentLast.y);
 
         if (playerStats != null)
         {
@@ -163,26 +182,20 @@ public class PlayerMovement : NetworkBehaviour
 
     public void Move(InputAction.CallbackContext context)
     {
-        if (!IsOwner) return;
+        if (!IsOwner || isDead) return;
 
-        if (isDead) return;
         Vector2 rawInput = context.ReadValue<Vector2>();
         moveInput = PauseController.IsGamePause ? Vector2.zero : rawInput;
 
         if (moveInput.magnitude > 0.01f)
         {
-            animator.SetFloat("InputX", moveInput.x);
-            animator.SetFloat("InputY", moveInput.y);
-            animator.SetFloat("LastInputX", moveInput.x);
-            animator.SetFloat("LastInputY", moveInput.y);
+            netLastInput.Value = moveInput;
         }
     }
 
     public void Dash(InputAction.CallbackContext context)
     {
-        if (!IsOwner) return;
-
-        if (isDead || PauseController.IsGamePause) return;
+        if (!IsOwner || isDead || PauseController.IsGamePause) return;
 
         if (context.started)
         {
@@ -241,15 +254,14 @@ public class PlayerMovement : NetworkBehaviour
 
     public void LookTowards(Vector3 targetPosition)
     {
-        if (!IsOwner) return;
+        if (!IsOwner || isDead) return;
 
-        if (isDead) return;
         Vector3 lookDirection = (targetPosition - transform.position).normalized;
-        animator.SetFloat("LastInputX", lookDirection.x);
-        animator.SetFloat("LastInputY", lookDirection.y);
-        animator.SetFloat("InputX", 0);
-        animator.SetFloat("InputY", 0);
+
+        netLastInput.Value = new Vector2(lookDirection.x, lookDirection.y);
+
         moveInput = Vector2.zero;
+        netMoveInput.Value = Vector2.zero;
         rb.linearVelocity = Vector2.zero;
     }
 
@@ -294,5 +306,11 @@ public class PlayerMovement : NetworkBehaviour
         isDashButtonHeld = false;
         canRunAfterDash = false;
         holdTimer = 0f;
+
+        if (IsOwner)
+        {
+            netMoveInput.Value = Vector2.zero;
+            netIsRunning.Value = false;
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 using UnityEngine.SceneManagement;
 
 public enum EnemyRank
@@ -17,11 +18,12 @@ public class BossPhaseInfo
     public int maxHealth = 1000;
 }
 
-public class Enemy : AutoIDBehaviour
+public class Enemy : NetworkBehaviour
 {
     [Header("Quest Settings")]
     public string questTargetID;
     public bool isQuestEnemy = false;
+    public string UniqueID;
 
     [Header("Enemy Info")]
     public EnemyRank enemyRank = EnemyRank.Normal;
@@ -35,9 +37,12 @@ public class Enemy : AutoIDBehaviour
     public float damage = 10f;
     public int maxHealth = 100;
     public int defense = 0;
-    public int currentHealth;
     public float experienceReward;
     public float goldReward;
+
+    public NetworkVariable<int> netHealth = new NetworkVariable<int>(100);
+    public NetworkVariable<bool> netIsWalking = new NetworkVariable<bool>(false);
+    public NetworkVariable<Vector2> netDirection = new NetworkVariable<Vector2>(Vector2.zero);
 
     [Header("Movement")]
     public float chaseSpeed = 3f;
@@ -52,13 +57,12 @@ public class Enemy : AutoIDBehaviour
 
     [Header("Hurt & Knockback Settings")]
     public float hurtDuration = 0.5f;
-
     public float knockbackForce = 5f;
     public float knockbackDuration = 0.2f;
-    protected bool isKnockedBack = false;
 
-    protected PlayerStats playerStats;
+    protected bool isKnockedBack = false;
     protected Transform player;
+    private List<Transform> playersInRange = new List<Transform>();
     protected Rigidbody2D rb;
     protected EnemyAnimator enemyAnimator;
 
@@ -69,30 +73,26 @@ public class Enemy : AutoIDBehaviour
     protected bool hasDealtDamageThisAttack = false;
     protected bool isTransitioning = false;
     protected Coroutine hurtCoroutine;
-
     protected bool hasProcessedDeath = false;
 
     protected virtual void Awake()
     {
-        if (string.IsNullOrEmpty(questTargetID)) questTargetID = enemyName;
-    }
-
-    protected virtual void Start()
-    {
-        playerStats = FindFirstObjectByType<PlayerStats>();
-        player = GameObject.FindGameObjectWithTag("PlayerController")?.transform;
         rb = GetComponent<Rigidbody2D>();
         enemyAnimator = GetComponent<EnemyAnimator>();
 
-        GameObject detectionArea = new GameObject("DetectionArea");
-        detectionArea.transform.SetParent(transform);
-        detectionArea.transform.localPosition = Vector3.zero;
-        CircleCollider2D detectionCollider = detectionArea.AddComponent<CircleCollider2D>();
-        detectionCollider.isTrigger = true;
-        detectionCollider.radius = detectionRadius;
-        detectionArea.AddComponent<EnemyDetection>().enemyChase = this;
+        if (string.IsNullOrEmpty(questTargetID)) questTargetID = enemyName;
+    }
 
-        InitializePhase(0);
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        if (enemyAnimator != null) enemyAnimator.enabled = true;
+
+        if (IsServer)
+        {
+            InitializePhase(0);
+        }
 
         if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
         {
@@ -113,139 +113,154 @@ public class Enemy : AutoIDBehaviour
         {
             maxHealth = bossPhases[phaseIndex].maxHealth;
         }
-        currentHealth = maxHealth;
+        netHealth.Value = maxHealth;
 
-        if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
+        if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null && IsClient)
         {
             BossHUD.Instance.UpdatePhaseInfo(this);
         }
     }
 
     public string GetCurrentPhaseName() => enemyName;
+
     public string GetCurrentPhaseDescription()
     {
         if (bossPhases != null && bossPhases.Count > currentPhaseIndex) return bossPhases[currentPhaseIndex].phaseDescription;
         return "";
     }
+
     public int GetRemainingPhases()
     {
         if (bossPhases == null) return 0;
         return (bossPhases.Count - 1) - currentPhaseIndex;
     }
-    public bool IsDefeated() => isDead;
+
+    public void OnPlayerDetected(Transform detectedPlayer)
+    {
+        if (!IsServer) return;
+        if (!playersInRange.Contains(detectedPlayer)) playersInRange.Add(detectedPlayer);
+    }
+
+    public void OnPlayerLost(Transform lostPlayer)
+    {
+        if (!IsServer) return;
+        if (playersInRange.Contains(lostPlayer)) playersInRange.Remove(lostPlayer);
+
+        if (playersInRange.Count == 0)
+        {
+            player = null;
+            StopMovement();
+        }
+    }
+
+    private void UpdateTarget()
+    {
+        playersInRange.RemoveAll(p => p == null);
+
+        float minDistance = Mathf.Infinity;
+        Transform closest = null;
+
+        foreach (var p in playersInRange)
+        {
+            float dist = Vector2.Distance(transform.position, p.position);
+            if (dist < minDistance)
+            {
+                minDistance = dist;
+                closest = p;
+            }
+        }
+
+        player = closest;
+    }
 
     protected virtual void Update()
     {
-        if (!isDead && !isTransitioning && currentHealth <= 0)
+        if (!IsServer) return;
+
+        UpdateTarget();
+
+        if (isDead || isTransitioning || netHealth.Value <= 0 || player == null)
         {
-            isAttacking = false;
-            isStunned = false;
-            isKnockedBack = false;
-
-            if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
-            {
-                if (!isTransitioning) StartCoroutine(SwitchPhaseRoutine());
-            }
-            else
-            {
-                isDead = true;
-                Die();
-            }
-            return;
-        }
-
-        if (player == null) return;
-
-        if (isAttacking && Time.time - lastAttackTime > 3.0f) EndAttack();
-
-        if (PauseController.IsGamePause || isStunned || isDead || isAttacking || isTransitioning || isKnockedBack)
-        {
-            if (!isKnockedBack) StopMovement();
-
-            if (!isAttacking && !isTransitioning && enemyAnimator != null) enemyAnimator.SetWalking(false);
+            StopMovement();
             return;
         }
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-        float actualTriggerDistance = attackRange - attackTriggerBuffer;
 
         if (distanceToPlayer <= detectionRadius)
         {
             PlayerStats.IsOnBattle = true;
-
-            if (distanceToPlayer <= actualTriggerDistance)
-            {
-                StopMovement();
-                if (distanceToPlayer > 0.1f && enemyAnimator != null)
-                {
-                    Vector2 directionToPlayer = player.position - transform.position;
-                    enemyAnimator.SetFacingDirection(directionToPlayer);
-                }
-                if (enemyAnimator != null) enemyAnimator.SetWalking(false);
-
-                if (Time.time >= lastAttackTime + attackCooldown) PerformAttack();
-            }
-            else if (distanceToPlayer > actualTriggerDistance + chaseResumeBuffer)
-            {
-                ChasePlayer();
-            }
-            else
-            {
-                StopMovement();
-                if (enemyAnimator != null) enemyAnimator.SetWalking(false);
-                if (distanceToPlayer > 0.1f && enemyAnimator != null)
-                {
-                    Vector2 directionToPlayer = player.position - transform.position;
-                    enemyAnimator.SetFacingDirection(directionToPlayer);
-                }
-            }
         }
-        else { StopMovement(); if (enemyAnimator != null) enemyAnimator.SetWalking(false); }
+
+        if (distanceToPlayer <= attackRange - attackTriggerBuffer)
+        {
+            StopMovement();
+            netDirection.Value = (player.position - transform.position).normalized;
+            if (Time.time >= lastAttackTime + attackCooldown) PerformAttack();
+        }
+        else
+        {
+            ChasePlayer();
+        }
     }
 
     protected void ChasePlayer()
     {
         Vector2 direction = (player.position - transform.position).normalized;
         rb.linearVelocity = direction * chaseSpeed;
-        if (enemyAnimator != null) enemyAnimator.SetWalking(true);
+        netDirection.Value = direction;
+        netIsWalking.Value = true;
     }
 
-    protected void StopMovement() { rb.linearVelocity = Vector2.zero; }
+    protected void StopMovement()
+    {
+        rb.linearVelocity = Vector2.zero;
+        netIsWalking.Value = false;
+    }
 
     protected virtual void PerformAttack()
     {
         isAttacking = true;
         hasDealtDamageThisAttack = false;
         StopMovement();
+
+        PerformAttackClientRpc(netDirection.Value);
+    }
+
+    [ClientRpc]
+    private void PerformAttackClientRpc(Vector2 attackDirection)
+    {
+        if (isDead) return;
+
         if (enemyAnimator != null)
         {
             enemyAnimator.SetWalking(false);
+            enemyAnimator.SetFacingDirection(attackDirection);
             enemyAnimator.TriggerAttack();
         }
     }
 
     public virtual void DealDamage()
     {
-        if (isDead || isStunned || hasDealtDamageThisAttack || PauseController.IsGamePause) return;
+        if (!IsServer || isDead || isStunned || hasDealtDamageThisAttack || PauseController.IsGamePause) return;
         if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
         {
             var health = player.GetComponentInParent<PlayerStats>();
-            if (health != null)
+            if (health != null && !health.isInvincible && !health.IsProcessingDeath)
             {
-                if (!health.isInvincible && !health.IsProcessingDeath)
-                {
-                    health.TakeDamage((int)damage);
-                    hasDealtDamageThisAttack = true;
-                }
+                health.TakeDamage((int)damage);
+                hasDealtDamageThisAttack = true;
             }
         }
     }
 
     public void EndAttack()
     {
+        if (!IsServer) return;
         isAttacking = false;
         lastAttackTime = Time.time;
-        if (currentHealth <= 0 && !isDead)
+
+        if (netHealth.Value <= 0 && !isDead)
         {
             isDead = true;
             Die();
@@ -254,27 +269,16 @@ public class Enemy : AutoIDBehaviour
 
     public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, Transform attacker = null, bool isCritical = false, bool forceKnockback = false)
     {
-        if (isDead || isTransitioning) return;
+        if (!IsServer || isDead || isTransitioning) return;
 
         float reductionMultiplier = 100f / (defense + 100f);
-        int finalDamage = Mathf.CeilToInt(rawDamage * reductionMultiplier);
-        finalDamage = Mathf.Max(finalDamage, 1);
+        int finalDamage = Mathf.Max(Mathf.CeilToInt(rawDamage * reductionMultiplier), 1);
 
-        currentHealth -= finalDamage;
+        netHealth.Value -= finalDamage;
 
-        if (LoadResourceManager.Instance != null)
-        {
-            GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
-            if (popupPrefab != null)
-            {
-                Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
-                GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
-                DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
-                if (popupScript != null) popupScript.Setup(finalDamage, damageSourceType, isCritical);
-            }
-        }
+        TakeDamageVisualsClientRpc(finalDamage, damageSourceType, isCritical);
 
-        if (currentHealth <= 0 && !isDead)
+        if (netHealth.Value <= 0 && !isDead)
         {
             isAttacking = false;
             isStunned = false;
@@ -293,27 +297,25 @@ public class Enemy : AutoIDBehaviour
             return;
         }
 
-        if (currentHealth > 0)
+        if (netHealth.Value > 0)
         {
             if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
 
             isStunned = false;
-            bool shouldStun = false;
+            bool shouldStun = isCritical || forceKnockback;
 
-            bool isLevelHighEnough = playerStats != null && playerStats.level > levelEnemy + 5;
-            if (isLevelHighEnough && isCritical) shouldStun = true;
-
-            bool triggerKnockback = shouldStun || forceKnockback;
-
-            if (attacker != null && !isDead && enemyRank != EnemyRank.Boss && triggerKnockback)
+            if (!shouldStun && attacker != null)
             {
-                ApplyKnockback(attacker);
-                shouldStun = true;
+                var pStats = attacker.GetComponentInParent<PlayerStats>();
+                if (pStats != null && pStats.level > levelEnemy + 5 && isCritical)
+                {
+                    shouldStun = true;
+                }
             }
 
-            if (isCritical && CinemachineShaker.Instance != null)
+            if (attacker != null && enemyRank != EnemyRank.Boss && shouldStun)
             {
-                CinemachineShaker.Instance.TriggerShake(2f, 2f, 0.2f);
+                ApplyKnockback(attacker);
             }
 
             if (shouldStun)
@@ -321,6 +323,23 @@ public class Enemy : AutoIDBehaviour
                 if (isAttacking) isAttacking = false;
                 hurtCoroutine = StartCoroutine(HurtRoutine());
             }
+        }
+    }
+
+    [ClientRpc]
+    private void TakeDamageVisualsClientRpc(int finalDamage, DamageSourceType damageSourceType, bool isCritical)
+    {
+        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.DamagePopupPrefab != null)
+        {
+            Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
+            GameObject popupGO = Instantiate(LoadResourceManager.Instance.DamagePopupPrefab, spawnPosition, Quaternion.identity);
+            DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
+            if (popupScript != null) popupScript.Setup(finalDamage, damageSourceType, isCritical);
+        }
+
+        if (isCritical && CinemachineShaker.Instance != null)
+        {
+            CinemachineShaker.Instance.TriggerShake(2f, 2f, 0.2f);
         }
     }
 
@@ -334,13 +353,9 @@ public class Enemy : AutoIDBehaviour
     {
         isKnockedBack = true;
         isAttacking = false;
-
         Vector2 direction = (transform.position - attackerTransform.position).normalized;
-
         rb.linearVelocity = direction * knockbackForce;
-
         yield return new WaitForSeconds(knockbackDuration);
-
         rb.linearVelocity = Vector2.zero;
         isKnockedBack = false;
     }
@@ -351,7 +366,7 @@ public class Enemy : AutoIDBehaviour
         isStunned = true;
         StopMovement();
 
-        if (enemyAnimator != null) enemyAnimator.TriggerDie();
+        SwitchPhaseVisualsClientRpc();
 
         yield return new WaitForSeconds(2.0f);
 
@@ -359,10 +374,16 @@ public class Enemy : AutoIDBehaviour
         InitializePhase(nextPhase);
         OnPhaseChange(nextPhase);
 
-        if (BossHUD.Instance != null) BossHUD.Instance.UpdatePhaseInfo(this);
-
         isTransitioning = false;
         isStunned = false;
+    }
+
+    [ClientRpc]
+    private void SwitchPhaseVisualsClientRpc()
+    {
+        if (isDead) return;
+
+        if (enemyAnimator != null) enemyAnimator.TriggerDie();
     }
 
     protected virtual void OnPhaseChange(int nextPhaseIndex)
@@ -379,14 +400,21 @@ public class Enemy : AutoIDBehaviour
     {
         isStunned = true;
         isAttacking = false;
-
-        if (enemyAnimator != null) enemyAnimator.TriggerHurt();
-
         if (!isKnockedBack) StopMovement();
+
+        TriggerHurtClientRpc();
 
         yield return new WaitForSeconds(hurtDuration);
         isStunned = false;
         hurtCoroutine = null;
+    }
+
+    [ClientRpc]
+    private void TriggerHurtClientRpc()
+    {
+        if (isDead) return;
+
+        if (enemyAnimator != null) enemyAnimator.TriggerHurt();
     }
 
     protected virtual void Die()
@@ -398,42 +426,22 @@ public class Enemy : AutoIDBehaviour
         isAttacking = false;
         isKnockedBack = false;
 
-        if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
-        StopMovement();
-        rb.bodyType = RigidbodyType2D.Kinematic;
-
-        if (enemyAnimator != null)
-        {
-            enemyAnimator.SetWalking(false);
-            Animator anim = GetComponent<Animator>();
-            if (anim != null) anim.Play("Dead");
-            else enemyAnimator.TriggerDie();
-        }
-
         PlayerStats.IsOnBattle = false;
 
-        if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
-        {
-            BossHUD.Instance.HideBossHealth();
-        }
+        if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
+        StopMovement();
 
         int expGain = Mathf.FloorToInt(experienceReward * Random.Range(0.9f, 1.1f));
         int goldGain = Mathf.FloorToInt(goldReward * Random.Range(0.9f, 1.1f));
 
         if (PlayerStats.Instance != null && expGain > 0)
-        {
             PlayerStats.Instance.AddEXP(expGain);
-        }
 
         if (EconomyService.Instance != null && goldGain > 0)
         {
-            EconomyService.Instance.EarnCurrency("Coin", goldGain, $"Kill: {enemyName}", (success) =>
-            {
-                if (success)
-                {
-                    if (PlayerStats.Instance != null)
-                        PlayerStats.Instance.SyncCoinFromServer(PlayerStats.Instance.coin + goldGain);
-                }
+            EconomyService.Instance.EarnCurrency("Coin", goldGain, $"Kill: {enemyName}", (success) => {
+                if (success && PlayerStats.Instance != null)
+                    PlayerStats.Instance.SyncCoinFromServer(PlayerStats.Instance.coin + goldGain);
             });
         }
 
@@ -445,13 +453,71 @@ public class Enemy : AutoIDBehaviour
             SaveController.Instance.MarkCollected(SceneManager.GetActiveScene().name, UniqueID);
             SaveController.Instance.TriggerAutoSave();
         }
+
+        DieVisualsClientRpc();
     }
 
-    protected virtual void Dead() { StopAllCoroutines(); Destroy(gameObject); }
-    public void OnPlayerDetected(Transform detectedPlayer) { player = detectedPlayer; }
-    public void OnPlayerLost() { player = null; StopMovement(); if (enemyAnimator != null) enemyAnimator.SetWalking(false); }
+    [ClientRpc]
+    private void DieVisualsClientRpc()
+    {
+        isDead = true;
 
-    private void OnDestroy() { if (isQuestEnemy) SaveController.OnDataLoaded -= HandleDataLoaded; }
-    private void HandleDataLoaded() { SaveController.OnDataLoaded -= HandleDataLoaded; CheckPersistence(); }
-    private void CheckPersistence() { if (SaveController.Instance != null && !string.IsNullOrEmpty(UniqueID)) { if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, UniqueID)) Destroy(gameObject); } }
+        if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
+            BossHUD.Instance.HideBossHealth();
+
+        Animator anim = GetComponent<Animator>();
+        if (anim != null)
+        {
+            anim.ResetTrigger("Attack");
+            anim.ResetTrigger("Hurt");
+            anim.SetBool("IsAttacking", false);
+
+            anim.SetTrigger("isDie");
+        }
+
+        if (enemyAnimator != null)
+        {
+            enemyAnimator.SetWalking(false);
+            enemyAnimator.TriggerDie();
+        }
+    }
+
+    protected virtual void Dead()
+    {
+        StopAllCoroutines();
+
+        if (IsServer && NetworkObject != null && NetworkObject.IsSpawned)
+        {
+            NetworkObject.Despawn(false);
+        }
+
+        gameObject.SetActive(false);
+    }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        if (isQuestEnemy) SaveController.OnDataLoaded -= HandleDataLoaded;
+    }
+
+    private void HandleDataLoaded()
+    {
+        SaveController.OnDataLoaded -= HandleDataLoaded;
+        CheckPersistence();
+    }
+
+    private void CheckPersistence()
+    {
+        if (SaveController.Instance != null && !string.IsNullOrEmpty(UniqueID))
+        {
+            if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, UniqueID))
+            {
+                if (NetworkObject != null && NetworkObject.IsSpawned && IsServer)
+                {
+                    NetworkObject.Despawn(false);
+                }
+                gameObject.SetActive(false);
+            }
+        }
+    }
 }

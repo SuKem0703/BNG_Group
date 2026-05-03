@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
+using Unity.Netcode;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class ChunkManager : MonoBehaviour
@@ -16,9 +17,6 @@ public class ChunkManager : MonoBehaviour
     public int unloadDistance = 2;
     public int objectsDestroyedPerFrame = 5;
 
-    //[Header("References")]
-    //public WorldObjectDictionary worldDictionary;
-
     public string savePath = "Assets/!Game/Resources/ChunkData/";
 
     private string currentSceneName;
@@ -26,6 +24,8 @@ public class ChunkManager : MonoBehaviour
     private Vector2Int currentPlayerChunk;
     private Dictionary<Vector2Int, ChunkData> allChunkData = new Dictionary<Vector2Int, ChunkData>();
     private Dictionary<Vector2Int, GameObject> activeChunks = new Dictionary<Vector2Int, GameObject>();
+
+    private Coroutine chunkTickCoroutine;
 
     private void Awake()
     {
@@ -36,40 +36,69 @@ public class ChunkManager : MonoBehaviour
         }
         Instance = this;
 
-        //if (worldDictionary == null)
-        //{
-        //    worldDictionary = FindFirstObjectByType<WorldObjectDictionary>();
-        //}
-
         currentSceneName = SceneManager.GetActiveScene().name;
         allChunkData.Clear();
         activeChunks.Clear();
     }
 
+    private void OnEnable()
+    {
+        PlayerStats.OnInitialized += OnLocalPlayerSpawned;
+    }
+
+    private void OnDisable()
+    {
+        PlayerStats.OnInitialized -= OnLocalPlayerSpawned;
+    }
+
     private void Start()
     {
-        if (player == null)
+        if (PlayerStats.Instance != null)
         {
-            GameObject pObj = GameObject.FindGameObjectWithTag("PlayerController");
-            if (pObj != null) player = pObj.transform;
+            InitPlayerTracking(PlayerStats.Instance.transform);
+            return;
         }
 
-        if (player != null)
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
         {
-            currentPlayerChunk = WorldToGrid(player.position);
-            UpdateChunks();
+            GameObject pObj = GameObject.FindGameObjectWithTag("PlayerController");
+            if (pObj != null)
+            {
+                InitPlayerTracking(pObj.transform);
+                return;
+            }
         }
     }
 
-    private void Update()
+    private void OnLocalPlayerSpawned(PlayerStats stats)
     {
-        if (player == null) return;
+        InitPlayerTracking(stats.transform);
+    }
 
-        Vector2Int newChunkCoord = WorldToGrid(player.position);
-        if (newChunkCoord != currentPlayerChunk)
+    private void InitPlayerTracking(Transform localPlayer)
+    {
+        player = localPlayer;
+        currentPlayerChunk = WorldToGrid(player.position);
+        UpdateChunks();
+
+        if (chunkTickCoroutine != null) StopCoroutine(chunkTickCoroutine);
+        chunkTickCoroutine = StartCoroutine(ChunkUpdateTick());
+    }
+
+    private IEnumerator ChunkUpdateTick()
+    {
+        WaitForSeconds waitTime = new WaitForSeconds(0.2f);
+
+        while (player != null)
         {
-            currentPlayerChunk = newChunkCoord;
-            UpdateChunks();
+            Vector2Int newChunkCoord = WorldToGrid(player.position);
+            if (newChunkCoord != currentPlayerChunk)
+            {
+                currentPlayerChunk = newChunkCoord;
+                UpdateChunks();
+            }
+
+            yield return waitTime;
         }
     }
 

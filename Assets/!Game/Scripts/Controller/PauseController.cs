@@ -1,13 +1,26 @@
 ﻿using UnityEngine;
+using Unity.Netcode;
 
-/// <summary>
-/// Quản lý trạng thái pause của game.
-/// </summary>
 public class PauseController : MonoBehaviour
 {
     public static bool IsManualPause { get; private set; } = false;
     public static bool IsFocusPause { get; private set; } = false;
-    public static bool IsGamePause => IsManualPause || IsFocusPause;
+
+    public static bool IsGamePause
+    {
+        get
+        {
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            {
+                if (NetworkManager.Singleton.ConnectedClients.Count > 1)
+                {
+                    return false;
+                }
+            }
+
+            return IsManualPause || IsFocusPause;
+        }
+    }
 
     public static void SetPause(bool pause) => IsManualPause = pause;
 

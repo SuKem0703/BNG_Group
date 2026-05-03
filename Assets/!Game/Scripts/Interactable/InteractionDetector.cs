@@ -143,6 +143,12 @@ public class InteractionDetector : MonoBehaviour
             return;
         }
 
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+            if (mainCamera == null) return;
+        }
+
         if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
         {
             Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);

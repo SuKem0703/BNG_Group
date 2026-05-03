@@ -1,42 +1,42 @@
 ﻿using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
-[RequireComponent(typeof(Rigidbody2D))]
 public class EnemyAnimator : MonoBehaviour
 {
     private Animator animator;
-    private Rigidbody2D rb;
+    private Enemy enemyCore;
+
     void Awake()
     {
         animator = GetComponent<Animator>();
-        rb = GetComponent<Rigidbody2D>();
+        enemyCore = GetComponent<Enemy>();
     }
 
     void Update()
     {
-        if (PauseController.IsGamePause)
+        if (PauseController.IsGamePause || enemyCore == null)
         {
             animator.SetBool("isWalking", false);
             return;
         }
 
-        Vector2 velocity = rb.linearVelocity;
-        bool isMoving = velocity.magnitude > 0.05f;
+        bool isMoving = enemyCore.netIsWalking.Value;
+        Vector2 dir = enemyCore.netDirection.Value;
+
         animator.SetBool("isWalking", isMoving);
 
-        if (isMoving)
+        if (dir != Vector2.zero)
         {
-            animator.SetFloat("InputX", velocity.x);
-            animator.SetFloat("InputY", velocity.y);
-            animator.SetFloat("LastInputX", velocity.normalized.x);
-            animator.SetFloat("LastInputY", velocity.normalized.y);
+            animator.SetFloat("InputX", dir.x);
+            animator.SetFloat("InputY", dir.y);
+            animator.SetFloat("LastInputX", dir.x);
+            animator.SetFloat("LastInputY", dir.y);
         }
     }
 
     public void SetFacingDirection(Vector2 direction)
     {
         if (direction == Vector2.zero) return;
-
         Vector2 dir = direction.normalized;
 
         animator.SetFloat("InputX", dir.x);

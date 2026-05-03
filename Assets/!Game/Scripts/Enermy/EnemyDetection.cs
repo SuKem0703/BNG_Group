@@ -3,26 +3,20 @@
 public class EnemyDetection : MonoBehaviour
 {
     public Enemy enemyChase;
-    private Transform player;
-    private void Start()
-    {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
-    }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("PlayerController"))
         {
-            PlayerStats.IsOnBattle = true;
-            enemyChase.OnPlayerDetected(player);
+            enemyChase.OnPlayerDetected(other.transform);
         }
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("PlayerController"))
         {
-            PlayerStats.IsOnBattle = false;
-            enemyChase.OnPlayerLost();
+            enemyChase.OnPlayerLost(other.transform);
         }
     }
 }

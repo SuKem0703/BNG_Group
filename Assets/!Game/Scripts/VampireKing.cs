@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using Unity.Netcode;
 
 public class VampireKing : Enemy
 {
@@ -14,7 +15,6 @@ public class VampireKing : Enemy
     [Header("Phase 1: Summoning")]
     public GameObject minionPrefab;
 
-    // Khoảng cách triệu hồi đệ
     public float summonDistance = 2.0f;
 
     public float summonInterval = 10f;
@@ -28,34 +28,54 @@ public class VampireKing : Enemy
 
     private bool _hasExplodedOnDeath = false;
     private bool _isTrueForm = false;
+    private int _lastPhaseIndex = 0;
 
     private List<GameObject> _activeMinions = new List<GameObject>();
 
     private CapsuleCollider2D _bodyCollider;
 
-    protected override void Start()
+    public override void OnNetworkSpawn()
     {
-        base.Start();
+        base.OnNetworkSpawn();
 
         _bodyCollider = GetComponent<CapsuleCollider2D>();
 
-        if (currentPhaseIndex == 0)
+        if (IsServer)
         {
-            _isTrueForm = false;
-            chaseSpeed = phase1Speed;
-        }
-        else
-        {
-            _isTrueForm = true;
-            chaseSpeed = phase2Speed;
-        }
+            if (currentPhaseIndex == 0)
+            {
+                _isTrueForm = false;
+                chaseSpeed = phase1Speed;
+            }
+            else
+            {
+                _isTrueForm = true;
+                chaseSpeed = phase2Speed;
+            }
 
-        UpdateAnimatorPhase();
+            UpdateAnimatorPhaseClientRpc(_isTrueForm);
+        }
     }
 
     protected override void Update()
     {
         base.Update();
+
+        if (!IsServer) return;
+
+        if (currentPhaseIndex != _lastPhaseIndex)
+        {
+            _lastPhaseIndex = currentPhaseIndex;
+            if (currentPhaseIndex == 1)
+            {
+                _isTrueForm = true;
+                chaseSpeed = phase2Speed;
+                Debug.Log("VAMPIRE KING: PHASE 2!");
+
+                ClearMinions();
+                UpdateAnimatorPhaseClientRpc(_isTrueForm);
+            }
+        }
 
         if (_isTrueForm)
         {
@@ -64,33 +84,20 @@ public class VampireKing : Enemy
         }
     }
 
-    protected override void OnPhaseChange(int nextPhaseIndex)
-    {
-        base.OnPhaseChange(nextPhaseIndex);
-
-        if (nextPhaseIndex == 1)
-        {
-            _isTrueForm = true;
-            chaseSpeed = phase2Speed;
-            Debug.Log("VAMPIRE KING: PHASE 2!");
-
-            ClearMinions();
-
-            UpdateAnimatorPhase();
-        }
-    }
-
-    private void UpdateAnimatorPhase()
+    [ClientRpc]
+    private void UpdateAnimatorPhaseClientRpc(bool isTrueForm)
     {
         Animator anim = GetComponent<Animator>();
         if (anim != null)
         {
-            anim.SetBool("isTrueForm", _isTrueForm);
+            anim.SetBool("isTrueForm", isTrueForm);
         }
     }
 
     public void DealVampireDamage(int frameIndex)
     {
+        if (!IsServer) return;
+
         if (Time.time - _lastDamageTime < DAMAGE_EVENT_COOLDOWN) return;
         _lastDamageTime = Time.time;
 
@@ -133,8 +140,8 @@ public class VampireKing : Enemy
                 int healAmount = Mathf.RoundToInt(_frame1DamageDealt * lifeStealRatio);
                 if (healAmount > 0)
                 {
-                    currentHealth = Mathf.Min(currentHealth + healAmount, maxHealth);
-                    ShowHealPopup(healAmount);
+                    netHealth.Value = Mathf.Min(netHealth.Value + healAmount, maxHealth);
+                    ShowHealPopupClientRpc(healAmount);
                 }
                 break;
 
@@ -145,7 +152,6 @@ public class VampireKing : Enemy
         }
     }
 
-    // Triệu hồi theo hình tam giác đều dựa trên hướng nhìn
     private void SummonMinions()
     {
         if (minionPrefab == null) return;
@@ -163,14 +169,17 @@ public class VampireKing : Enemy
         foreach (float angle in angles)
         {
             Vector2 spawnDirection = Quaternion.Euler(0, 0, angle) * facingDir;
-
             Vector3 spawnPos = transform.position + (Vector3)spawnDirection * summonDistance;
 
             GameObject minion = Instantiate(minionPrefab, spawnPos, Quaternion.identity);
-            _activeMinions.Add(minion);
 
-            // (Optional) Spawn Effect
-            // Instantiate(spawnEffectPrefab, spawnPos, Quaternion.identity);
+            var netObj = minion.GetComponent<NetworkObject>();
+            if (netObj != null)
+            {
+                netObj.Spawn(true);
+            }
+
+            _activeMinions.Add(minion);
         }
 
         Debug.Log("Summoned 2 minions in triangle formation!");
@@ -191,12 +200,18 @@ public class VampireKing : Enemy
                     if (minionScript != null)
                     {
                         minionScript.TakeDamage(99999, DamageSourceType.Environment);
-
-                        Destroy(minion, 2.0f);
                     }
                     else
                     {
-                        Destroy(minion);
+                        var netObj = minion.GetComponent<NetworkObject>();
+                        if (netObj != null && netObj.IsSpawned)
+                        {
+                            netObj.Despawn(true);
+                        }
+                        else
+                        {
+                            Destroy(minion);
+                        }
                     }
                 }
             }
@@ -221,21 +236,22 @@ public class VampireKing : Enemy
     {
         if (isDead || isAttacking || isStunned) return;
         if (rb.linearVelocity.magnitude < 0.1f) return;
-        if (currentHealth >= maxHealth * 0.7f) return;
+
+        if (netHealth.Value >= maxHealth * 0.7f) return;
 
         _regenTimer += Time.deltaTime;
         if (_regenTimer >= regenInterval)
         {
             _regenTimer = 0f;
             int healAmount = Mathf.FloorToInt(maxHealth * 0.01f);
-            currentHealth = Mathf.Min(currentHealth + healAmount, maxHealth);
-            ShowHealPopup(healAmount);
+            netHealth.Value = Mathf.Min(netHealth.Value + healAmount, maxHealth);
+            ShowHealPopupClientRpc(healAmount);
         }
     }
 
     public void DealDamageWhenDead()
     {
-        if (_hasExplodedOnDeath || !isDead) return;
+        if (!IsServer || _hasExplodedOnDeath || !isDead) return;
 
         _hasExplodedOnDeath = true;
 
@@ -250,23 +266,25 @@ public class VampireKing : Enemy
         }
     }
 
-    private void ShowHealPopup(int amount)
+    [ClientRpc]
+    private void ShowHealPopupClientRpc(int amount)
     {
         if (amount <= 0) return;
-        GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
-        if (popupPrefab != null)
+        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.DamagePopupPrefab != null)
         {
             Vector3 spawnPosition = transform.position + new Vector3(0, 1.5f, 0);
-            GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
+            GameObject popupGO = Instantiate(LoadResourceManager.Instance.DamagePopupPrefab, spawnPosition, Quaternion.identity);
             DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
             if (popupScript != null) popupScript.Setup(amount, DamageSourceType.Heal);
         }
     }
 
-    protected override void Dead()
+    protected override void Die()
     {
-        if (!isDead) return;
-        _activeMinions.Clear();
-        base.Dead();
+        if (IsServer)
+        {
+            _activeMinions.Clear();
+        }
+        base.Die();
     }
 }

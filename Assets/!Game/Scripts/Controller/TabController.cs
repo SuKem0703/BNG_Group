@@ -15,6 +15,9 @@ public class TabController : MonoBehaviour
     [Header("Tab Localization Keys")]
     [SerializeField] private string[] tabKeys;
 
+    [Header("Page Title Display")]
+    [SerializeField] private TextMeshProUGUI pageTitleText;
+
     [Header("Tab Flag Checker")]
     //private const int TAB_INDEX_EQUIPMENT = 3;
     //private const int TAB_INDEX_POTENTIAL = 4;
@@ -82,6 +85,11 @@ public class TabController : MonoBehaviour
             {
                 tabText.text = LocalizationManager.Instance.GetText(tabKeys[i]);
             }
+        }
+
+        if (pageTitleText != null && currentTabIndex < tabKeys.Length)
+        {
+            pageTitleText.text = LocalizationManager.Instance.GetText(tabKeys[currentTabIndex]);
         }
     }
 
@@ -156,6 +164,13 @@ public class TabController : MonoBehaviour
 
         if (validTab < tabCount && tabImages[validTab] != null)
             tabImages[validTab].color = Color.white;
+
+        if (pageTitleText != null && validTab < tabKeys.Length)
+        {
+            string titleKey = tabKeys[validTab];
+            pageTitleText.text = LocalizationManager.Instance != null ?
+                                 LocalizationManager.Instance.GetText(titleKey) : titleKey;
+        }
     }
 
     public void PointerDown()

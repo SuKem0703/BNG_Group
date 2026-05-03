@@ -4,17 +4,14 @@ using UnityEngine.UI;
 public class EnemyHealthBar : MonoBehaviour
 {
     [Header("UI References")]
-    [Tooltip("Kéo ảnh 'Fill' (ảnh màu đỏ tươi hiển thị máu) vào đây.")]
     public Image healthFillImage;
 
     [Header("Settings")]
-    [Tooltip("Khoảng cách thanh máu nằm trên đầu quái")]
     public Vector3 offset = new Vector3(0, 1.5f, 0);
 
     [Tooltip("Có ẩn thanh máu khi đầy không?")]
     public bool hideWhenFull = false;
 
-    [Tooltip("Tốc độ cập nhật thanh máu (càng cao càng nhanh)")]
     public float lerpSpeed = 10f;
 
     private Enemy enemyChase;
@@ -66,7 +63,7 @@ public class EnemyHealthBar : MonoBehaviour
 
     private void UpdateHealthUI(bool instant)
     {
-        float targetFillAmount = (float)enemyChase.currentHealth / enemyChase.maxHealth;
+        float targetFillAmount = (float)enemyChase.netHealth.Value / enemyChase.maxHealth;
 
         targetFillAmount = Mathf.Clamp01(targetFillAmount);
 
@@ -81,7 +78,7 @@ public class EnemyHealthBar : MonoBehaviour
 
         if (canvas != null)
         {
-            bool shouldShow = enemyChase.currentHealth > 0;
+            bool shouldShow = enemyChase.netHealth.Value > 0;
             if (hideWhenFull && targetFillAmount >= 0.99f) shouldShow = false;
             canvas.enabled = shouldShow;
         }

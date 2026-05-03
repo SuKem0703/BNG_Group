@@ -344,7 +344,7 @@ GameObject:
   - component: {fileID: 5406327389448248723}
   m_Layer: 3
   m_Name: Knight
-  m_TagString: Player
+  m_TagString: GameController
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -437,6 +437,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20cfeb9767ce73e4ab271c07707f6f11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   combo: 1
   comboNumber: 0
   comboTiming: 0
@@ -605,6 +606,10 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 55f7c94f-a898-411c-a2cb-1a876ec1b4bc
     m_ActionName: 'Player/Swap[/Keyboard/tab]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 9eb5fabb-e453-411f-ae10-0be677f153c6
+    m_ActionName: 'UI/MenuUI[/Keyboard/e]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -787,9 +792,6 @@ MonoBehaviour:
   healthRegenInterval: 2
   mpRegenInterval: 1
   staminaRegenInterval: 1
-  equipmentKnightSlots: []
-  equipmentMageSlots: []
-  shareEquipmentSlots: []
   isInvincible: 0
   potionCooldownDuration: 2
   potionCooldownTimer: 0
@@ -899,9 +901,24 @@ MonoBehaviour:
   rb: {fileID: 6571584841508672072}
   moveInput: {x: 0, y: 0}
   animator: {fileID: 5691647660223253319}
-  isDashing: 0
+  isDashing: 1
   isRunning: 0
   comboAttack: {fileID: 4097809021824385584}
+  netMoveInput:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: {x: 0, y: 0}
+  netLastInput:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: {x: 0, y: -1}
+  netIsRunning:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
 --- !u!114 &3909449334393896824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1075,7 +1092,7 @@ GameObject:
   - component: {fileID: 2756847178287482438}
   m_Layer: 3
   m_Name: Mage
-  m_TagString: Player
+  m_TagString: PlayerController
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1323,6 +1340,10 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 55f7c94f-a898-411c-a2cb-1a876ec1b4bc
     m_ActionName: 'Player/Swap[/Keyboard/tab]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 9eb5fabb-e453-411f-ae10-0be677f153c6
+    m_ActionName: 'UI/MenuUI[/Keyboard/e]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player

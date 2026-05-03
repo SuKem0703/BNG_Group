@@ -15,7 +15,6 @@ public class ShopController : MonoBehaviour
 
     private GameObject ConfirmUIPrefab => LoadResourceManager.Instance.ConfirmUIPrefab;
 
-    private ItemDictionary itemDictionary;
     private TextMeshProUGUI coinText;
     private TextMeshProUGUI gemText;
 
@@ -23,7 +22,6 @@ public class ShopController : MonoBehaviour
     {
         coinText = FindTextByName(transform, "CoinText");
         gemText = FindTextByName(transform, "GemText");
-        itemDictionary = FindFirstObjectByType<ItemDictionary>();
         shopItemPreview = GetComponentsInChildren<ShopItemPreview>(true).FirstOrDefault(x => x.name == "ItemPreview");
     }
 
@@ -49,7 +47,7 @@ public class ShopController : MonoBehaviour
             if (i < shopItems.Count)
             {
                 var data = shopItems[i];
-                GameObject itemPrefab = itemDictionary.GetItemPrefab(data.itemID);
+                GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
                 if (itemPrefab != null)
                 {
                     GameObject item = Instantiate(itemPrefab, slot.transform);
@@ -127,7 +125,7 @@ public class ShopController : MonoBehaviour
         var confirmUI = confirmUIObj.GetComponent<ConfirmUIController>();
 
         string itemName = "vật phẩm này";
-        GameObject pf = itemDictionary.GetItemPrefab(itemID);
+        GameObject pf = ItemDictionary.Instance.GetItemPrefab(itemID);
         if (pf != null) itemName = $"<color=white>{pf.GetComponent<Item>().Name}</color>";
         string curStr = currency == CurrencyType.Coin ? "coin" : "gem";
 

@@ -7,7 +7,6 @@ public class BossHUD : MonoBehaviour
     public static BossHUD Instance { get; private set; }
 
     [Header("UI Components")]
-    [Tooltip("Kéo Panel chứa toàn bộ UI Boss vào đây")]
     public GameObject bossPanel;
     public Image healthFillImage;
     public TextMeshProUGUI bossNameText;
@@ -15,7 +14,6 @@ public class BossHUD : MonoBehaviour
     public TextMeshProUGUI phaseDescriptionText;
 
     [Header("Phase Stack Indicator")]
-    [Tooltip("Object chứa icon hiển thị số mạng còn lại")]
     public GameObject healthStackIndicator;
     public TextMeshProUGUI healthStackText;
 
@@ -29,7 +27,6 @@ public class BossHUD : MonoBehaviour
         if (Instance != null && Instance != this) Destroy(gameObject);
         else Instance = this;
 
-        // Ẩn UI khi bắt đầu game
         if (bossPanel != null) bossPanel.SetActive(false);
     }
 
@@ -37,14 +34,8 @@ public class BossHUD : MonoBehaviour
     {
         if (_currentBoss == null) return;
 
-        // Cập nhật thanh máu mượt mà
-        float targetFill = Mathf.Clamp01((float)_currentBoss.currentHealth / _currentBoss.maxHealth);
+        float targetFill = Mathf.Clamp01((float)_currentBoss.netHealth.Value / _currentBoss.maxHealth);
         healthFillImage.fillAmount = Mathf.Lerp(healthFillImage.fillAmount, targetFill, Time.deltaTime * lerpSpeed);
-
-        // if (_currentBoss.currentHealth <= 0 && _currentBoss.IsDefeated())
-        // {
-        //    HideBossHealth();
-        // }
     }
 
     public void ShowBossHealth(Enemy boss)
@@ -55,16 +46,11 @@ public class BossHUD : MonoBehaviour
         UpdatePhaseInfo(boss);
     }
 
-    // Cập nhật thông tin khi chuyển Phase hoặc mới vào trận
     public void UpdatePhaseInfo(Enemy boss)
     {
-        // Cập nhật Tên
         if (bossNameText != null) bossNameText.text = boss.GetCurrentPhaseName();
-
-        // Cập nhật Mô tả
         if (phaseDescriptionText != null) phaseDescriptionText.text = boss.GetCurrentPhaseDescription();
 
-        // Cập nhật số thanh máu còn lại (Health Stacks)
         if (healthStackText != null && healthStackIndicator != null)
         {
             int remainingPhases = boss.GetRemainingPhases();
@@ -79,7 +65,6 @@ public class BossHUD : MonoBehaviour
             }
         }
 
-        // Hồi đầy thanh máu trên UI ngay lập tức để chuẩn bị cho Phase mới
         if (healthFillImage != null) healthFillImage.fillAmount = 1f;
     }
 

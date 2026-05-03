@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class MenuController : MonoBehaviour
 {
@@ -11,6 +12,9 @@ public class MenuController : MonoBehaviour
 
     [Header("References")]
     private EquipmentScrollViewController equipmentScrollView;
+
+    [Header("Input Actions (Cross-Platform)")]
+    [SerializeField] private InputActionReference toggleMenuAction;
 
     [Header("Audio")]
     [SerializeField] private AudioClip openMenuSound;
@@ -43,11 +47,17 @@ public class MenuController : MonoBehaviour
     private void OnEnable()
     {
         SaveController.OnDataLoaded += EnableMenuOpening;
+
+        if (toggleMenuAction != null)
+            toggleMenuAction.action.performed += OnShortcutPressed;
     }
 
     private void OnDisable()
     {
         SaveController.OnDataLoaded -= EnableMenuOpening;
+
+        if (toggleMenuAction != null)
+            toggleMenuAction.action.performed -= OnShortcutPressed;
     }
 
     private void EnableMenuOpening()
@@ -66,25 +76,30 @@ public class MenuController : MonoBehaviour
             equipmentScrollView = FindFirstObjectByType<EquipmentScrollViewController>();
     }
 
-    void Update()
+    private void OnShortcutPressed(InputAction.CallbackContext context)
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        if (!menuCanvas.activeSelf)
         {
-            if (!menuCanvas.activeSelf)
-            {
-                if (GameStateManager.CanProcessInput() && GameStateManager.CanOpenMenu)
-                {
-                    ToggleMenu(true);
-                }
-            }
-            else
-            {
-                if (!GameStateManager.IsLoading)
-                {
-                    ToggleMenu(false);
-                }
-            }
+            if (GameStateManager.CanProcessInput() && GameStateManager.CanOpenMenu)
+                ToggleMenu(true);
         }
+        else
+        {
+            if (!GameStateManager.IsLoading)
+                ToggleMenu(false);
+        }
+    }
+
+    public void Button_CloseMenu()
+    {
+        if (!GameStateManager.IsLoading)
+            ToggleMenu(false);
+    }
+
+    public void Button_OpenMenu()
+    {
+        if (GameStateManager.CanProcessInput() && GameStateManager.CanOpenMenu)
+            ToggleMenu(true);
     }
 
     private void ToggleMenu(bool open)
@@ -95,10 +110,8 @@ public class MenuController : MonoBehaviour
         {
             SoundEffectManager.PlayVoice(openMenuSound);
 
-            // Gọi Manager để quản lý trạng thái chung
             MenuStateManager.Instance.OpenMenu(null, true);
 
-            // Bật UI riêng của Menu
             menuCanvas.SetActive(true);
             if (canvasGroup != null) canvasGroup.alpha = 1f;
 
@@ -113,7 +126,6 @@ public class MenuController : MonoBehaviour
         {
             SoundEffectManager.PlayVoice(closeMenuSound);
 
-            // Tắt UI
             menuCanvas.SetActive(false);
             if (canvasGroup != null) canvasGroup.alpha = 0f;
 
