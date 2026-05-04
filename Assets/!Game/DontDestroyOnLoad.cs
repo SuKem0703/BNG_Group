@@ -33,7 +33,29 @@ public class DontDestroyOnLoad : MonoBehaviour
 
         if (Unity.Netcode.NetworkManager.Singleton != null && !Unity.Netcode.NetworkManager.Singleton.IsListening)
         {
-            Debug.Log("<color=green>[Dev Mode]</color> Tự động StartHost()!");
+            Debug.Log("<color=green>[Dev Mode]</color> Chuẩn bị tự động StartHost()...");
+
+            ushort dynamicPort = 7777;
+            try
+            {
+                using (var socket = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.InterNetwork, System.Net.Sockets.SocketType.Dgram, System.Net.Sockets.ProtocolType.Udp))
+                {
+                    socket.Bind(new System.Net.IPEndPoint(System.Net.IPAddress.Any, 0));
+                    dynamicPort = (ushort)((System.Net.IPEndPoint)socket.LocalEndPoint).Port;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[Dev Mode] Không thể xin Port động. Lỗi: {e.Message}");
+            }
+
+            var transport = Unity.Netcode.NetworkManager.Singleton.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>();
+            if (transport != null)
+            {
+                transport.SetConnectionData("127.0.0.1", dynamicPort, "0.0.0.0");
+                Debug.Log($"<color=green>[Dev Mode]</color> Đã gán Port tự động: {dynamicPort} để tránh trùng lặp!");
+            }
+
             Unity.Netcode.NetworkManager.Singleton.StartHost();
         }
     }

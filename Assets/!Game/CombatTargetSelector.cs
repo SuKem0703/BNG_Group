@@ -1,11 +1,11 @@
-using UnityEngine;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using UnityEngine;
+using Unity.Netcode;
 
-public class CombatTargetSelector : MonoBehaviour
+public class CombatTargetSelector : NetworkBehaviour
 {
-    public static CombatTargetSelector Instance { get; private set; }
-
     [Header("Settings")]
     public LayerMask enemyLayer;
     public float targetYOffset = 1.2f;
@@ -19,13 +19,10 @@ public class CombatTargetSelector : MonoBehaviour
 
     private List<Enemy> enemiesInRange = new List<Enemy>();
 
-    private void Awake()
-    {
-        Instance = this;
-    }
-
     private void Update()
     {
+        if (!IsOwner) return;
+
         HandleTargetingLogic();
         UpdateIndicatorPosition();
     }
@@ -82,6 +79,8 @@ public class CombatTargetSelector : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (!IsOwner) return;
+
         if (collision.TryGetComponent(out Enemy enemy))
         {
             if (!enemiesInRange.Contains(enemy)) enemiesInRange.Add(enemy);
@@ -90,6 +89,8 @@ public class CombatTargetSelector : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collision)
     {
+        if (!IsOwner) return;
+
         if (collision.TryGetComponent(out Enemy enemy))
         {
             enemiesInRange.Remove(enemy);

@@ -3,6 +3,7 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using System.IO;
 using System.Collections;
+using Unity.Netcode;
 
 public class GameSettingService : MonoBehaviour
 {
@@ -53,6 +54,12 @@ public class GameSettingService : MonoBehaviour
             PlayerPrefs.DeleteKey("AuthToken");
             PlayerPrefs.Save();
         }
+
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
         MenuStateManager.Instance.ResetState();
         SceneManager.LoadScene("MainMenu");
     }
@@ -69,6 +76,11 @@ public class GameSettingService : MonoBehaviour
             yield return StartCoroutine(SaveController.Instance.SaveRoutine(SaveReason.Manual));
         }
 
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -76,6 +88,13 @@ public class GameSettingService : MonoBehaviour
 #endif
     }
 
+    private void OnApplicationQuit()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+    }
 
     public void SetAudioVolume(string type, float value)
     {

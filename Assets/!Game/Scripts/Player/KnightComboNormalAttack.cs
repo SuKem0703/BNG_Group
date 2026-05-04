@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using Unity.Netcode;
 
 public class KnightComboNormalAttack : NetworkBehaviour
 {
-    private Animator ani;
+    [SerializeField] private Animator animator;
 
     [Header("Combo Settings")]
     public int combo = 1;
@@ -32,12 +33,11 @@ public class KnightComboNormalAttack : NetworkBehaviour
     private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
     private PlayerMovement playerMovement => GetComponentInParent<PlayerMovement>();
 
-    public bool isAttacking => ani.GetBool("isAttacking");
-    public bool isWalking => ani.GetBool("isWalking");
-    public bool isRunning => ani.GetBool("isRunning");
-    public bool isWalkAttacking => ani.GetBool("isWalkAttacking");
-    public bool isRunAttacking => ani.GetBool("isRunAttacking");
-
+    public bool isAttacking => animator.GetBool("isAttacking");
+    public bool isWalking => animator.GetBool("isWalking");
+    public bool isRunning => animator.GetBool("isRunning");
+    public bool isWalkAttacking => animator.GetBool("isWalkAttacking");
+    public bool isRunAttacking => animator.GetBool("isRunAttacking");
     public Transform attackPoint;
     public float attackRange = 0.6f;
     public LayerMask enemyLayer;
@@ -47,9 +47,10 @@ public class KnightComboNormalAttack : NetworkBehaviour
     private List<Collider2D> enemiesHitThisAttack;
     private Vector2 attackDirection;
 
+    [SerializeField] private CombatTargetSelector targetSelector;
+
     private void Start()
     {
-        ani = GetComponent<Animator>();
         enemiesHitThisAttack = new List<Collider2D>();
         comboTempo = comboTiming;
         combo = 1;
@@ -65,9 +66,9 @@ public class KnightComboNormalAttack : NetworkBehaviour
 
         if (PauseController.IsGamePause)
         {
-            ani.SetBool("isAttacking", false);
-            ani.SetBool("isWalkAttacking", false);
-            ani.SetBool("isRunAttacking", false);
+            animator.SetBool("isAttacking", false);
+            animator.SetBool("isWalkAttacking", false);
+            animator.SetBool("isRunAttacking", false);
             return;
         }
 
@@ -81,7 +82,7 @@ public class KnightComboNormalAttack : NetworkBehaviour
 
         if (isAttacking && !isWalkAttacking && !isRunAttacking)
         {
-            ani.SetBool("isWalking", false);
+            animator.SetBool("isWalking", false);
         }
 
         if (attackPressed)
@@ -125,28 +126,28 @@ public class KnightComboNormalAttack : NetworkBehaviour
         if (comboTempo < 0) return;
 
         playerStats.UseStamina(staminaCost);
-        ani.SetBool("isAttacking", true);
+        animator.SetBool("isAttacking", true);
 
         bool isMoving = playerMovement != null && playerMovement.moveInput.magnitude > 0.1f;
         bool isRunningLocal = playerMovement != null && playerMovement.isRunning;
 
         if (isRunningLocal)
         {
-            ani.SetBool("isRunAttacking", true);
-            ani.SetBool("isWalkAttacking", false);
+            animator.SetBool("isRunAttacking", true);
+            animator.SetBool("isWalkAttacking", false);
         }
         else
         {
-            ani.SetBool("isRunAttacking", false);
-            ani.SetBool("isWalkAttacking", isMoving);
+            animator.SetBool("isRunAttacking", false);
+            animator.SetBool("isWalkAttacking", isMoving);
         }
 
-        if (!isMoving) ani.SetBool("isWalking", false);
+        if (!isMoving) animator.SetBool("isWalking", false);
 
-        ani.SetFloat("LookX", attackDirection.x);
-        ani.SetFloat("LookY", attackDirection.y);
-        ani.SetFloat("LastInputX", attackDirection.x);
-        ani.SetFloat("LastInputY", attackDirection.y);
+        animator.SetFloat("LookX", attackDirection.x);
+        animator.SetFloat("LookY", attackDirection.y);
+        animator.SetFloat("LastInputX", attackDirection.x);
+        animator.SetFloat("LastInputY", attackDirection.y);
 
         if (playerMovement != null)
         {
@@ -156,7 +157,7 @@ public class KnightComboNormalAttack : NetworkBehaviour
         enemiesHitThisAttack.Clear();
         currentComboCache = combo;
 
-        ani.SetTrigger("Attack");
+        animator.SetTrigger("Attack");
 
         if (!isRunningLocal)
         {
@@ -188,18 +189,18 @@ public class KnightComboNormalAttack : NetworkBehaviour
     {
         if (IsOwner) return;
 
-        ani.SetBool("isAttacking", true);
-        ani.SetBool("isRunAttacking", runAttack);
-        ani.SetBool("isWalkAttacking", walkAttack);
+        animator.SetBool("isAttacking", true);
+        animator.SetBool("isRunAttacking", runAttack);
+        animator.SetBool("isWalkAttacking", walkAttack);
 
-        if (!runAttack && !walkAttack) ani.SetBool("isWalking", false);
+        if (!runAttack && !walkAttack) animator.SetBool("isWalking", false);
 
-        ani.SetFloat("LookX", dir.x);
-        ani.SetFloat("LookY", dir.y);
-        ani.SetFloat("LastInputX", dir.x);
-        ani.SetFloat("LastInputY", dir.y);
+        animator.SetFloat("LookX", dir.x);
+        animator.SetFloat("LookY", dir.y);
+        animator.SetFloat("LastInputX", dir.x);
+        animator.SetFloat("LastInputY", dir.y);
 
-        ani.SetTrigger("Attack");
+        animator.SetTrigger("Attack");
     }
 
     public void StartAttack()
@@ -209,10 +210,10 @@ public class KnightComboNormalAttack : NetworkBehaviour
 
     public void EndAttack()
     {
-        ani.SetBool("isAttacking", false);
-        ani.SetBool("isWalkAttacking", false);
-        ani.SetBool("isRunAttacking", false);
-        ani.ResetTrigger("Attack");
+        animator.SetBool("isAttacking", false);
+        animator.SetBool("isWalkAttacking", false);
+        animator.SetBool("isRunAttacking", false);
+        animator.ResetTrigger("Attack");
         attackPressed = false;
     }
 
@@ -323,9 +324,9 @@ public class KnightComboNormalAttack : NetworkBehaviour
             ? playerMovement.moveInput.normalized
             : attackDirection;
 
-        if (CombatTargetSelector.Instance != null)
+        if (targetSelector != null)
         {
-            attackDirection = CombatTargetSelector.Instance.GetAimDirection(basePosition, fallbackDir);
+            attackDirection = targetSelector.GetAimDirection(basePosition, fallbackDir);
         }
         else
         {

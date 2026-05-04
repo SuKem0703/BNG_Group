@@ -240,6 +240,11 @@ public class LoginManager : MonoBehaviour
         PlayerPrefs.DeleteKey("AccountId");
         PlayerPrefs.Save();
 
+        if (NetworkManager.Singleton != null && (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient))
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
         CheckLoginStatus();
         UpdateLoginUI();
         HideLoginPanel();

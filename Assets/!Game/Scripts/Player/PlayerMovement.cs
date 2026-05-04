@@ -167,15 +167,35 @@ public class PlayerMovement : NetworkBehaviour
 
         if (IsServer)
         {
-            if (OwnerClientId != NetworkManager.ServerClientId)
+            if (IsOwner)
             {
-                if (NetworkManager.Singleton.ConnectedClients.TryGetValue(NetworkManager.ServerClientId, out NetworkClient hostClient))
+                // Nếu đây là Host: Lấy vị trí từ SaveController đã được cache ở RelayManager
+                if (SaveController.nextSpawnPosition.HasValue)
                 {
-                    if (hostClient.PlayerObject != null)
-                    {
-                        transform.position = hostClient.PlayerObject.transform.position;
-                    }
+                    transform.position = SaveController.nextSpawnPosition.Value;
+                    if (rb != null) rb.linearVelocity = Vector2.zero;
                 }
+            }
+            else
+            {
+                // Nếu Server đang xử lý object của Client: Đặt nó cạnh Host
+                var hostObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(NetworkManager.ServerClientId);
+                if (hostObj != null)
+                {
+                    transform.position = hostObj.transform.position;
+                    if (rb != null) rb.linearVelocity = Vector2.zero;
+                }
+            }
+        }
+
+        if (IsOwner && !IsServer)
+        {
+            // Client tự động cập nhật vị trí của chính nó để khớp với Host ở local
+            var hostObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(NetworkManager.ServerClientId);
+            if (hostObj != null)
+            {
+                transform.position = hostObj.transform.position;
+                if (rb != null) rb.linearVelocity = Vector2.zero;
             }
         }
 

@@ -1,11 +1,12 @@
-﻿using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.EventSystems;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System;
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
-public class InteractionDetector : MonoBehaviour
+public class InteractionDetector : NetworkBehaviour
 {
     public static InteractionDetector Instance { get; private set; }
 
@@ -28,20 +29,19 @@ public class InteractionDetector : MonoBehaviour
     public float floatAmplitude = 0.02f;
     public float floatSpeed = 5f;
 
-    private void Awake()
+    public override void OnNetworkSpawn()
     {
-        if (Instance != null && Instance != this)
+        if (IsOwner)
         {
-            Destroy(gameObject);
-            return;
+            Instance = this;
         }
-
-        Instance = this;
     }
+
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
     }
+
     void Start()
     {
         mainCamera = Camera.main;
@@ -49,12 +49,16 @@ public class InteractionDetector : MonoBehaviour
 
     void Update()
     {
+        if (!IsOwner) return;
+
         HandleIndicatorPosition();
         HandleTargetingLogic();
     }
 
     public void OnInteract(InputAction.CallbackContext context)
     {
+        if (!IsOwner) return;
+
         if (!context.performed) return;
         if (PlayerStats.IsOnBattle) return;
 
@@ -84,6 +88,8 @@ public class InteractionDetector : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (!IsOwner) return;
+
         if (PlayerStats.IsOnBattle) return;
 
         if (collision.TryGetComponent(out IInteractable interactable))
@@ -102,6 +108,8 @@ public class InteractionDetector : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collision)
     {
+        if (!IsOwner) return;
+
         if (collision.TryGetComponent(out IInteractable interactable))
         {
             if (interactablesInRange.Contains(interactable))

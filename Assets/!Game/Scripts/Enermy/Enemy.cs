@@ -151,6 +151,13 @@ public class Enemy : NetworkBehaviour
 
     protected virtual void Update()
     {
+        if (PauseController.IsGamePause)
+        {
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+
+            return;
+        }
+
         if (aiLogic != null) aiLogic.OnUpdate();
     }
 
