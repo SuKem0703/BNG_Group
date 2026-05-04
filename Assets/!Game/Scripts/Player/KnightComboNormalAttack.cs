@@ -22,6 +22,12 @@ public class KnightComboNormalAttack : NetworkBehaviour
     public int normalAttackStaminaCost = 0;
     public float runAttackMultiplier = 1.2f;
     public bool causesKnockback = true;
+    public float attackAngle = 180f;
+
+    [Header("Hit Feedback")]
+    public float hitShakeIntensity = 1.5f;
+    public float hitShakeFrequency = 2f;
+    public float hitShakeDuration = 0.15f;
 
     private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
     private PlayerMovement playerMovement => GetComponentInParent<PlayerMovement>();
@@ -220,13 +226,25 @@ public class KnightComboNormalAttack : NetworkBehaviour
         if (isRunAttacking) stanceMultiplier = runAttackMultiplier;
         else if (!isWalkAttacking) stanceMultiplier = 1.5f;
 
+        bool hasHitAnyEnemy = false;
+        Vector3 basePosition = transform.parent != null ? transform.parent.position : transform.position;
+
         foreach (Collider2D enemyCollider in hitEnemies)
         {
             if (enemiesHitThisAttack.Contains(enemyCollider)) continue;
 
-            Enemy enemyChase = enemyCollider.GetComponent<Enemy>();
-            if (enemyChase != null)
+            Vector2 dirToEnemy = (enemyCollider.transform.position - basePosition).normalized;
+            if (Vector2.Angle(attackDirection, dirToEnemy) > attackAngle / 2f)
             {
+                continue;
+            }
+
+            Enemy enemyChase = enemyCollider.GetComponent<Enemy>();
+
+            if (enemyChase != null && !enemyChase.IsDead && enemyChase.netHealth.Value > 0)
+            {
+                hasHitAnyEnemy = true;
+
                 float comboScale = checkCombo(currentComboCache);
                 if (isRunAttacking) comboScale = 1.0f;
 
@@ -257,6 +275,11 @@ public class KnightComboNormalAttack : NetworkBehaviour
 
                 enemiesHitThisAttack.Add(enemyCollider);
             }
+        }
+
+        if (hasHitAnyEnemy && CinemachineShaker.Instance != null)
+        {
+            CinemachineShaker.Instance.TriggerShake(hitShakeIntensity, hitShakeFrequency, hitShakeDuration);
         }
     }
 
@@ -292,29 +315,47 @@ public class KnightComboNormalAttack : NetworkBehaviour
 
     private void UpdateAttackPointDirection()
     {
-        if (Camera.main == null) return;
+        if (Camera.main == null || isAttacking) return;
 
-        if (playerMovement != null && playerMovement.isRunning && playerMovement.moveInput.magnitude > 0.01f)
+        Vector3 basePosition = transform.parent != null ? transform.parent.position : transform.position;
+
+        Vector2 fallbackDir = playerMovement != null && playerMovement.moveInput.magnitude > 0.01f
+            ? playerMovement.moveInput.normalized
+            : attackDirection;
+
+        if (CombatTargetSelector.Instance != null)
         {
-            attackDirection = playerMovement.moveInput.normalized;
+            attackDirection = CombatTargetSelector.Instance.GetAimDirection(basePosition, fallbackDir);
         }
         else
         {
-            Vector3 mousePos = Mouse.current.position.ReadValue();
-            Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(mousePos);
-            worldMousePos.z = 0;
-            attackDirection = (worldMousePos - transform.position).normalized;
+            attackDirection = fallbackDir;
         }
 
-        attackPoint.position = transform.position + (Vector3)attackDirection * attackRange;
+        attackPoint.position = basePosition + (Vector3)attackDirection * attackRange;
     }
 
     private void OnDrawGizmosSelected()
     {
         if (attackPoint == null) return;
+
+        Vector3 basePosition = transform.parent != null ? transform.parent.position : transform.position;
+
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(transform.position, attackPoint.position);
+        Gizmos.DrawLine(basePosition, attackPoint.position);
+
+        if (attackDirection != Vector2.zero)
+        {
+            Gizmos.color = Color.cyan;
+            Vector3 rightLimit = Quaternion.Euler(0, 0, attackAngle / 2f) * attackDirection;
+            Vector3 leftLimit = Quaternion.Euler(0, 0, -attackAngle / 2f) * attackDirection;
+
+            float reach = Vector3.Distance(basePosition, attackPoint.position) + attackRange;
+            Gizmos.DrawLine(basePosition, basePosition + rightLimit * reach);
+            Gizmos.DrawLine(basePosition, basePosition + leftLimit * reach);
+        }
     }
 }

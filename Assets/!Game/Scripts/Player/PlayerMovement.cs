@@ -24,26 +24,24 @@ public class PlayerMovement : NetworkBehaviour
     public Vector2 moveInput;
     public Animator animator;
 
-    // States
     public bool isDashing = false;
     public bool isRunning = false;
     private bool isDashOnCooldown = false;
 
-    // Logic Input & Lock
     private bool isDashButtonHeld = false;
     private bool isSprintLocked = false;
     private float holdTimer = 0f;
     private bool canRunAfterDash = false;
 
-    // Stamina Timer
     private float staminaDrainTimer = 0f;
 
-    // Death State
     private bool isDead = false;
     public bool IsDead => isDead;
 
     private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
     public KnightComboNormalAttack comboAttack;
+
+    public GhostTrail ghostTrail;
 
     public NetworkVariable<Vector2> netMoveInput = new NetworkVariable<Vector2>(Vector2.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<Vector2> netLastInput = new NetworkVariable<Vector2>(new Vector2(0, -1), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
@@ -54,6 +52,7 @@ public class PlayerMovement : NetworkBehaviour
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
         if (comboAttack == null) comboAttack = GetComponentInChildren<KnightComboNormalAttack>();
+        if (ghostTrail == null) ghostTrail = GetComponentInChildren<GhostTrail>();
     }
 
     void Update()
@@ -166,15 +165,29 @@ public class PlayerMovement : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        if (IsServer)
+        {
+            if (OwnerClientId != NetworkManager.ServerClientId)
+            {
+                if (NetworkManager.Singleton.ConnectedClients.TryGetValue(NetworkManager.ServerClientId, out NetworkClient hostClient))
+                {
+                    if (hostClient.PlayerObject != null)
+                    {
+                        transform.position = hostClient.PlayerObject.transform.position;
+                    }
+                }
+            }
+        }
+
         if (IsOwner)
         {
             var input = GetComponentInChildren<PlayerInput>(true);
             if (input != null) input.enabled = true;
+
+            if (rb != null) rb.bodyType = RigidbodyType2D.Dynamic;
         }
         else
         {
-            if (rb != null) rb.simulated = false;
-
             var inputs = GetComponentsInChildren<PlayerInput>(true);
             foreach (var input in inputs) input.enabled = false;
         }
@@ -228,7 +241,8 @@ public class PlayerMovement : NetworkBehaviour
 
         playerStats?.SetInvincible(true);
         SoundEffectManager.Play("Dash", true);
-        GetComponent<GhostTrail>()?.CreateTrail();
+
+        ghostTrail?.CreateTrail();
 
         float elapsed = 0f;
         Vector2 dashDirection = moveInput.normalized;

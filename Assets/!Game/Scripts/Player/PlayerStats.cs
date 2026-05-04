@@ -188,7 +188,13 @@ public class PlayerStats : MonoBehaviour
 
         if (playerCollider == null) playerCollider = GetComponent<CapsuleCollider2D>();
 
-        DontDestroyOnLoad(this.gameObject);
+        // DontDestroyOnLoad(this.gameObject);
+
+        NetworkObject netObj = GetComponent<NetworkObject>();
+        if (netObj != null)
+        {
+            netObj.DestroyWithScene = true;
+        }
     }
 
     // Singleton cleanup
@@ -197,6 +203,7 @@ public class PlayerStats : MonoBehaviour
         if (Instance == this) 
         {
             Instance = null;
+            IsOnBattle = false;
             if (InventoryController.Instance != null)
                 InventoryController.Instance.OnInventoryChanged -= OnInventoryUpdated;
         }

@@ -221,6 +221,8 @@ GameObject:
   - component: {fileID: 254828966373257922}
   - component: {fileID: -1530275564277633628}
   - component: {fileID: -6346619479149294300}
+  - component: {fileID: 9066375698849236856}
+  - component: {fileID: 661957699596037292}
   m_Layer: 6
   m_Name: Plant 1
   m_TagString: Enemy
@@ -406,8 +408,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  questTargetID: 
+  isQuestEnemy: 0
+  UniqueID: 
   enemyRank: 0
   bossPhases: []
+  currentPhaseIndex: 0
   enemyName: Plant
   levelEnemy: 5
   damage: 10
@@ -436,9 +442,22 @@ MonoBehaviour:
   attackTriggerBuffer: 0.5
   chaseResumeBuffer: -1.5
   attackCooldown: 1
+  lastAttackTime: -999
+  hasDealtDamageThisAttack: 0
   hurtDuration: 1
   knockbackForce: 5
   knockbackDuration: 0.2
+  flashMaterial: {fileID: 2100000, guid: 88fb700eb7040dd43a1166e95ea2e00e, type: 2}
+  isAttacking: 0
+  isStunned: 0
+  isDead: 0
+  isKnockedBack: 0
+  isTransitioning: 0
+  rb: {fileID: 0}
+  enemyAnimator: {fileID: 0}
+  spriteRenderer: {fileID: 0}
+  healthLogic: {fileID: 0}
+  aiLogic: {fileID: 0}
 --- !u!95 &5964361228703599746
 Animator:
   serializedVersion: 7
@@ -565,6 +584,30 @@ MonoBehaviour:
   UseRigidBodyForMotion: 0
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
+--- !u!114 &9066375698849236856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2460534325703430410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6cce37138d4ea04593c497d513ecf0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+--- !u!114 &661957699596037292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2460534325703430410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef9d30581b24c934ab0abfd672cb0d57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombatAI
 --- !u!1 &6281575448635985022
 GameObject:
   m_ObjectHideFlags: 0

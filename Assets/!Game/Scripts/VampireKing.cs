@@ -14,9 +14,7 @@ public class VampireKing : Enemy
 
     [Header("Phase 1: Summoning")]
     public GameObject minionPrefab;
-
     public float summonDistance = 2.0f;
-
     public float summonInterval = 10f;
 
     private bool _hitFrame1Success = false;
@@ -31,14 +29,17 @@ public class VampireKing : Enemy
     private int _lastPhaseIndex = 0;
 
     private List<GameObject> _activeMinions = new List<GameObject>();
-
     private CapsuleCollider2D _bodyCollider;
+
+    private EnemyCombatAI _combatAI;
+    private Transform TargetPlayer => _combatAI != null ? _combatAI.player : null;
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
         _bodyCollider = GetComponent<CapsuleCollider2D>();
+        _combatAI = GetComponent<EnemyCombatAI>();
 
         if (IsServer)
         {
@@ -109,9 +110,10 @@ public class VampireKing : Enemy
             _frame1DamageDealt = 0;
         }
 
-        if (player == null || Vector2.Distance(transform.position, player.position) > attackRange) return;
+        Transform currentPlayer = TargetPlayer;
+        if (currentPlayer == null || Vector2.Distance(transform.position, currentPlayer.position) > attackRange) return;
 
-        var pStats = player.GetComponentInParent<PlayerStats>();
+        var pStats = currentPlayer.GetComponentInParent<PlayerStats>();
         if (pStats == null) return;
 
         switch (frameIndex)
@@ -159,9 +161,10 @@ public class VampireKing : Enemy
         _activeMinions.RemoveAll(item => item == null);
 
         Vector2 facingDir = Vector2.down;
-        if (player != null)
+        Transform currentPlayer = TargetPlayer;
+        if (currentPlayer != null)
         {
-            facingDir = (player.position - transform.position).normalized;
+            facingDir = (currentPlayer.position - transform.position).normalized;
         }
 
         float[] angles = { -30f, 30f };
@@ -222,8 +225,8 @@ public class VampireKing : Enemy
 
     private void HandleGhostMovement()
     {
-        if (_bodyCollider == null || player == null || isDead) return;
-        float distance = Vector2.Distance(transform.position, player.position);
+        if (_bodyCollider == null || TargetPlayer == null || isDead) return;
+        float distance = Vector2.Distance(transform.position, TargetPlayer.position);
 
         bool isChasing = distance <= detectionRadius && distance > attackRange;
 
@@ -255,9 +258,10 @@ public class VampireKing : Enemy
 
         _hasExplodedOnDeath = true;
 
-        if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
+        Transform currentPlayer = TargetPlayer;
+        if (currentPlayer != null && Vector2.Distance(transform.position, currentPlayer.position) <= attackRange)
         {
-            var pStats = player.GetComponentInParent<PlayerStats>();
+            var pStats = currentPlayer.GetComponentInParent<PlayerStats>();
             if (pStats != null)
             {
                 int deathDamage = Mathf.RoundToInt(maxHealth * 0.1f);
@@ -279,7 +283,7 @@ public class VampireKing : Enemy
         }
     }
 
-    protected override void Die()
+    public override void Die()
     {
         if (IsServer)
         {

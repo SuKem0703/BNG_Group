@@ -119,7 +119,14 @@ public class SceneMapMove : MonoBehaviour
             {
                 if (isSuccess)
                 {
-                    SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+                    if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+                    {
+                        Unity.Netcode.NetworkManager.Singleton.SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+                    }
+                    else
+                    {
+                        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+                    }
                 }
                 else
                 {
@@ -133,7 +140,15 @@ public class SceneMapMove : MonoBehaviour
         }
 
         Debug.Log("Switching Scene (No SaveController)");
-        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+
+        if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+        {
+            Unity.Netcode.NetworkManager.Singleton.SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+        }
+        else
+        {
+            SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+        }
     }
 
     private IEnumerator InternalMoveRoutine(Transform playerTransform)

@@ -203,7 +203,18 @@ public class LoginManager : MonoBehaviour
 
             if (NetworkManager.Singleton != null)
             {
-                NetworkManager.Singleton.StartHost();
+                var portConfig = NetworkManager.Singleton.GetComponent<NetworkPortConfig>();
+                if (portConfig != null)
+                {
+                    portConfig.StartHostWithDynamicPort();
+                }
+                else
+                {
+                    Debug.LogWarning("[LoginManager] Không tìm thấy NetworkPortConfig, đang dùng Port mặc định!");
+                    NetworkManager.Singleton.StartHost();
+                }
+
+                yield return null;
 
                 NetworkManager.Singleton.SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
             }

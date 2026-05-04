@@ -277,21 +277,27 @@ public class SaveController : MonoBehaviour
         farmController = FindFirstObjectByType<FarmController>();
         storageChests = FindObjectsByType<StorageChest>(FindObjectsSortMode.None);
 
-        GameObject playerObj = null;
-        while (playerObj == null)
+        while (NetworkManager.Singleton == null || (!NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsConnectedClient))
         {
-            playerObj = GameObject.FindGameObjectWithTag("PlayerController");
             yield return null;
         }
-
-        playerStats = playerObj.GetComponent<PlayerStats>();
 
         while (playerStats == null)
         {
-            yield return null;
-        }
+            if (NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
+            {
+                playerStats = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerStats>();
+            }
+            else if (PlayerStats.Instance != null)
+            {
+                playerStats = PlayerStats.Instance;
+            }
 
-        yield break;
+            if (playerStats == null)
+            {
+                yield return null;
+            }
+        }
     }
 
     public void TriggerAutoSave()

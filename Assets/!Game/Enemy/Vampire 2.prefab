@@ -177,6 +177,8 @@ GameObject:
   - component: {fileID: 7962938468419878831}
   - component: {fileID: -337197812985636326}
   - component: {fileID: 8907596837124201645}
+  - component: {fileID: 2293966935915126617}
+  - component: {fileID: 5248962281093252249}
   m_Layer: 6
   m_Name: Vampire 2
   m_TagString: Enemy
@@ -335,8 +337,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   ShowTopMostFoldoutHeaderGroup: 1
+  questTargetID: 
+  isQuestEnemy: 0
+  UniqueID: 
   enemyRank: 1
   bossPhases: []
+  currentPhaseIndex: 0
   enemyName: Vampire Noble
   levelEnemy: 45
   damage: 15
@@ -365,9 +371,22 @@ MonoBehaviour:
   attackTriggerBuffer: 1
   chaseResumeBuffer: -2
   attackCooldown: 0.5
+  lastAttackTime: -999
+  hasDealtDamageThisAttack: 0
   hurtDuration: 1
   knockbackForce: 5
   knockbackDuration: 0.2
+  flashMaterial: {fileID: 2100000, guid: 88fb700eb7040dd43a1166e95ea2e00e, type: 2}
+  isAttacking: 0
+  isStunned: 0
+  isDead: 0
+  isKnockedBack: 0
+  isTransitioning: 0
+  rb: {fileID: 6245962013495930809}
+  enemyAnimator: {fileID: 3676544517621431292}
+  spriteRenderer: {fileID: 7076096300455342942}
+  healthLogic: {fileID: 2293966935915126617}
+  aiLogic: {fileID: 5248962281093252249}
 --- !u!50 &6245962013495930809
 Rigidbody2D:
   serializedVersion: 5
@@ -521,6 +540,30 @@ MonoBehaviour:
   UseRigidBodyForMotion: 0
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
+--- !u!114 &2293966935915126617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8541255292816746399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6cce37138d4ea04593c497d513ecf0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+--- !u!114 &5248962281093252249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8541255292816746399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef9d30581b24c934ab0abfd672cb0d57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombatAI
 --- !u!1 &8719676142416341019
 GameObject:
   m_ObjectHideFlags: 0

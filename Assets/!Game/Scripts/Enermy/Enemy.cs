@@ -18,6 +18,8 @@ public class BossPhaseInfo
     public int maxHealth = 1000;
 }
 
+[RequireComponent(typeof(EnemyHealth))]
+[RequireComponent(typeof(EnemyCombatAI))]
 public class Enemy : NetworkBehaviour
 {
     [Header("Quest Settings")]
@@ -30,8 +32,9 @@ public class Enemy : NetworkBehaviour
 
     [Header("Boss Phases System")]
     public List<BossPhaseInfo> bossPhases = new List<BossPhaseInfo>();
-    protected int currentPhaseIndex = 0;
+    public int currentPhaseIndex = 0;
 
+    [Header("Enemy Stats")]
     public string enemyName = "Enemy";
     public int levelEnemy = 1;
     public float damage = 10f;
@@ -53,34 +56,45 @@ public class Enemy : NetworkBehaviour
 
     [Header("Attack Settings")]
     public float attackCooldown = 0.5f;
-    protected float lastAttackTime = -999f;
+
+    public float lastAttackTime = -999f;
+    public bool hasDealtDamageThisAttack = false;
 
     [Header("Hurt & Knockback Settings")]
     public float hurtDuration = 0.5f;
     public float knockbackForce = 5f;
     public float knockbackDuration = 0.2f;
 
-    protected bool isKnockedBack = false;
-    protected Transform player;
-    private List<Transform> playersInRange = new List<Transform>();
-    protected Rigidbody2D rb;
-    protected EnemyAnimator enemyAnimator;
+    [Header("Hit Flash Settings")]
+    public Material flashMaterial;
+    private Material originalMaterial;
 
-    protected bool isAttacking = false;
-    protected bool isStunned = false;
-    protected bool isDead = false;
+    public bool isAttacking = false;
+    public bool isStunned = false;
+    public bool isDead = false;
     public bool IsDead => isDead;
-    protected bool hasDealtDamageThisAttack = false;
-    protected bool isTransitioning = false;
-    protected Coroutine hurtCoroutine;
+    public bool isKnockedBack = false;
+    public bool isTransitioning = false;
     protected bool hasProcessedDeath = false;
+
+    public Rigidbody2D rb;
+    public EnemyAnimator enemyAnimator;
+    public SpriteRenderer spriteRenderer;
+
+    [SerializeField] private EnemyHealth healthLogic;
+    [SerializeField] private EnemyCombatAI aiLogic;
 
     protected virtual void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
-        enemyAnimator = GetComponent<EnemyAnimator>();
-
         if (string.IsNullOrEmpty(questTargetID)) questTargetID = enemyName;
+
+        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (spriteRenderer != null) originalMaterial = spriteRenderer.material;
+
+        if (healthLogic != null) healthLogic.Init(this);
+
+        if (aiLogic != null) aiLogic.Init(this);
     }
 
     public override void OnNetworkSpawn()
@@ -135,100 +149,37 @@ public class Enemy : NetworkBehaviour
         return (bossPhases.Count - 1) - currentPhaseIndex;
     }
 
-    public void OnPlayerDetected(Transform detectedPlayer)
-    {
-        if (!IsServer) return;
-        if (!playersInRange.Contains(detectedPlayer)) playersInRange.Add(detectedPlayer);
-    }
-
-    public void OnPlayerLost(Transform lostPlayer)
-    {
-        if (!IsServer) return;
-        if (playersInRange.Contains(lostPlayer)) playersInRange.Remove(lostPlayer);
-
-        if (playersInRange.Count == 0)
-        {
-            player = null;
-            StopMovement();
-        }
-    }
-
-    private void UpdateTarget()
-    {
-        playersInRange.RemoveAll(p => p == null);
-
-        float minDistance = Mathf.Infinity;
-        Transform closest = null;
-
-        foreach (var p in playersInRange)
-        {
-            float dist = Vector2.Distance(transform.position, p.position);
-            if (dist < minDistance)
-            {
-                minDistance = dist;
-                closest = p;
-            }
-        }
-
-        player = closest;
-    }
-
     protected virtual void Update()
     {
-        if (!IsServer) return;
+        if (aiLogic != null) aiLogic.OnUpdate();
+    }
 
-        UpdateTarget();
+    public void OnPlayerDetected(Transform detectedPlayer) => aiLogic?.OnPlayerDetected(detectedPlayer);
+    public void OnPlayerLost(Transform lostPlayer) => aiLogic?.OnPlayerLost(lostPlayer);
 
-        if (isDead || isTransitioning || netHealth.Value <= 0 || player == null)
+    public virtual void DealDamage() => aiLogic?.ProcessDealDamage();
+    public void EndAttack() => aiLogic?.ProcessEndAttack();
+
+    public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, Transform attacker = null, bool isCritical = false, bool forceKnockback = false)
+    {
+        healthLogic?.ProcessDamage(rawDamage, damageSourceType, attacker, isCritical, forceKnockback);
+    }
+
+    public void HandleHealthDepleted()
+    {
+        if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
         {
-            StopMovement();
-            return;
-        }
-
-        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-
-        if (distanceToPlayer <= detectionRadius)
-        {
-            PlayerStats.IsOnBattle = true;
-        }
-
-        if (distanceToPlayer <= attackRange - attackTriggerBuffer)
-        {
-            StopMovement();
-            netDirection.Value = (player.position - transform.position).normalized;
-            if (Time.time >= lastAttackTime + attackCooldown) PerformAttack();
+            StartCoroutine(SwitchPhaseRoutine());
         }
         else
         {
-            ChasePlayer();
+            isDead = true;
+            Die();
         }
     }
 
-    protected void ChasePlayer()
-    {
-        Vector2 direction = (player.position - transform.position).normalized;
-        rb.linearVelocity = direction * chaseSpeed;
-        netDirection.Value = direction;
-        netIsWalking.Value = true;
-    }
-
-    protected void StopMovement()
-    {
-        rb.linearVelocity = Vector2.zero;
-        netIsWalking.Value = false;
-    }
-
-    protected virtual void PerformAttack()
-    {
-        isAttacking = true;
-        hasDealtDamageThisAttack = false;
-        StopMovement();
-
-        PerformAttackClientRpc(netDirection.Value);
-    }
-
     [ClientRpc]
-    private void PerformAttackClientRpc(Vector2 attackDirection)
+    public void PerformAttackClientRpc(Vector2 attackDirection)
     {
         if (isDead) return;
 
@@ -240,94 +191,8 @@ public class Enemy : NetworkBehaviour
         }
     }
 
-    public virtual void DealDamage()
-    {
-        if (!IsServer || isDead || isStunned || hasDealtDamageThisAttack || PauseController.IsGamePause) return;
-        if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
-        {
-            var health = player.GetComponentInParent<PlayerStats>();
-            if (health != null && !health.isInvincible && !health.IsProcessingDeath)
-            {
-                health.TakeDamage((int)damage);
-                hasDealtDamageThisAttack = true;
-            }
-        }
-    }
-
-    public void EndAttack()
-    {
-        if (!IsServer) return;
-        isAttacking = false;
-        lastAttackTime = Time.time;
-
-        if (netHealth.Value <= 0 && !isDead)
-        {
-            isDead = true;
-            Die();
-        }
-    }
-
-    public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, Transform attacker = null, bool isCritical = false, bool forceKnockback = false)
-    {
-        if (!IsServer || isDead || isTransitioning) return;
-
-        float reductionMultiplier = 100f / (defense + 100f);
-        int finalDamage = Mathf.Max(Mathf.CeilToInt(rawDamage * reductionMultiplier), 1);
-
-        netHealth.Value -= finalDamage;
-
-        TakeDamageVisualsClientRpc(finalDamage, damageSourceType, isCritical);
-
-        if (netHealth.Value <= 0 && !isDead)
-        {
-            isAttacking = false;
-            isStunned = false;
-            isKnockedBack = false;
-            if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
-
-            if (bossPhases != null && currentPhaseIndex < bossPhases.Count - 1)
-            {
-                StartCoroutine(SwitchPhaseRoutine());
-            }
-            else
-            {
-                isDead = true;
-                Die();
-            }
-            return;
-        }
-
-        if (netHealth.Value > 0)
-        {
-            if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
-
-            isStunned = false;
-            bool shouldStun = isCritical || forceKnockback;
-
-            if (!shouldStun && attacker != null)
-            {
-                var pStats = attacker.GetComponentInParent<PlayerStats>();
-                if (pStats != null && pStats.level > levelEnemy + 5 && isCritical)
-                {
-                    shouldStun = true;
-                }
-            }
-
-            if (attacker != null && enemyRank != EnemyRank.Boss && shouldStun)
-            {
-                ApplyKnockback(attacker);
-            }
-
-            if (shouldStun)
-            {
-                if (isAttacking) isAttacking = false;
-                hurtCoroutine = StartCoroutine(HurtRoutine());
-            }
-        }
-    }
-
     [ClientRpc]
-    private void TakeDamageVisualsClientRpc(int finalDamage, DamageSourceType damageSourceType, bool isCritical)
+    public void TakeDamageVisualsClientRpc(int finalDamage, DamageSourceType damageSourceType, bool isCritical)
     {
         if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.DamagePopupPrefab != null)
         {
@@ -341,30 +206,38 @@ public class Enemy : NetworkBehaviour
         {
             CinemachineShaker.Instance.TriggerShake(2f, 2f, 0.2f);
         }
+
+        if (!isDead && gameObject.activeInHierarchy)
+        {
+            StartCoroutine(FlashSpriteRoutine());
+        }
     }
 
-    public void ApplyKnockback(Transform attackerTransform)
+    private IEnumerator FlashSpriteRoutine()
     {
-        if (isDead || isTransitioning) return;
-        StartCoroutine(KnockbackRoutine(attackerTransform));
-    }
-
-    protected IEnumerator KnockbackRoutine(Transform attackerTransform)
-    {
-        isKnockedBack = true;
-        isAttacking = false;
-        Vector2 direction = (transform.position - attackerTransform.position).normalized;
-        rb.linearVelocity = direction * knockbackForce;
-        yield return new WaitForSeconds(knockbackDuration);
-        rb.linearVelocity = Vector2.zero;
-        isKnockedBack = false;
+        if (spriteRenderer != null)
+        {
+            if (flashMaterial != null)
+            {
+                spriteRenderer.material = flashMaterial;
+                yield return new WaitForSeconds(0.08f);
+                spriteRenderer.material = originalMaterial;
+            }
+            else
+            {
+                Color originalColor = spriteRenderer.color;
+                spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.2f);
+                yield return new WaitForSeconds(0.08f);
+                spriteRenderer.color = originalColor;
+            }
+        }
     }
 
     protected IEnumerator SwitchPhaseRoutine()
     {
         isTransitioning = true;
         isStunned = true;
-        StopMovement();
+        aiLogic?.StopMovement();
 
         SwitchPhaseVisualsClientRpc();
 
@@ -382,7 +255,6 @@ public class Enemy : NetworkBehaviour
     private void SwitchPhaseVisualsClientRpc()
     {
         if (isDead) return;
-
         if (enemyAnimator != null) enemyAnimator.TriggerDie();
     }
 
@@ -396,28 +268,14 @@ public class Enemy : NetworkBehaviour
         }
     }
 
-    protected IEnumerator HurtRoutine()
-    {
-        isStunned = true;
-        isAttacking = false;
-        if (!isKnockedBack) StopMovement();
-
-        TriggerHurtClientRpc();
-
-        yield return new WaitForSeconds(hurtDuration);
-        isStunned = false;
-        hurtCoroutine = null;
-    }
-
     [ClientRpc]
-    private void TriggerHurtClientRpc()
+    public void TriggerHurtClientRpc()
     {
         if (isDead) return;
-
         if (enemyAnimator != null) enemyAnimator.TriggerHurt();
     }
 
-    protected virtual void Die()
+    public virtual void Die()
     {
         if (hasProcessedDeath) return;
         hasProcessedDeath = true;
@@ -428,8 +286,8 @@ public class Enemy : NetworkBehaviour
 
         PlayerStats.IsOnBattle = false;
 
-        if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
-        StopMovement();
+        healthLogic?.StopHurt();
+        aiLogic?.StopMovement();
 
         int expGain = Mathf.FloorToInt(experienceReward * Random.Range(0.9f, 1.1f));
         int goldGain = Mathf.FloorToInt(goldReward * Random.Range(0.9f, 1.1f));
