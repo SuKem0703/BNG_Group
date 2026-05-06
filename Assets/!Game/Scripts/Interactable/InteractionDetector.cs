@@ -10,7 +10,6 @@ public class InteractionDetector : NetworkBehaviour
 {
     public static InteractionDetector Instance { get; private set; }
 
-    // Quét Farm Plot gần đó để ưu tiên tương tác
     private HashSet<FarmPlot> nearbyPlots = new HashSet<FarmPlot>();
 
     public static event Action<IInteractable> OnTargetChanged;
@@ -28,6 +27,8 @@ public class InteractionDetector : NetworkBehaviour
     [Header("Cài đặt hiệu ứng đung đưa")]
     public float floatAmplitude = 0.02f;
     public float floatSpeed = 5f;
+
+    private bool IsInBattle => PlayerStats.Instance != null && PlayerStats.Instance.netIsOnBattle.Value;
 
     public override void OnNetworkSpawn()
     {
@@ -60,7 +61,8 @@ public class InteractionDetector : NetworkBehaviour
         if (!IsOwner) return;
 
         if (!context.performed) return;
-        if (PlayerStats.IsOnBattle) return;
+
+        if (IsInBattle) return;
 
         if (currentTarget == null) return;
 
@@ -89,8 +91,6 @@ public class InteractionDetector : NetworkBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (!IsOwner) return;
-
-        if (PlayerStats.IsOnBattle) return;
 
         if (collision.TryGetComponent(out IInteractable interactable))
         {
@@ -143,8 +143,11 @@ public class InteractionDetector : NetworkBehaviour
 
     private void HandleTargetingLogic()
     {
-        if (PauseController.IsGamePause || PlayerStats.IsOnBattle)
+        if (PauseController.IsGamePause || IsInBattle)
+        {
+            ClearTarget();
             return;
+        }
 
         if (currentTarget is NPC npc && GameStateManager.IsDialogueActive)
         {

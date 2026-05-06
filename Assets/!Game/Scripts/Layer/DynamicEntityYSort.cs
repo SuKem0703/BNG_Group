@@ -6,11 +6,14 @@ public class DynamicEntityYSort : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private int sortingPrecision = 100;
     [SerializeField] private float yOffset = 0f;
-
     [SerializeField] private int entityWeight = 3;
 
     [Header("Optimization")]
     [SerializeField] private bool onlySortWhenVisible = true;
+
+    [Header("UI Canvas Sync (Đồng bộ thanh máu)")]
+    [SerializeField] private Canvas attachedCanvas;
+    [SerializeField] private int canvasSortingOffset = 1;
 
     private SpriteRenderer spriteRenderer;
     private float lastY = float.NaN;
@@ -33,7 +36,16 @@ public class DynamicEntityYSort : MonoBehaviour
         if (!float.IsNaN(lastY) && Mathf.Abs(currentY - lastY) < 0.01f) return;
 
         lastY = currentY;
-        spriteRenderer.sortingOrder = Mathf.RoundToInt(currentY * -sortingPrecision) + entityWeight;
+
+        int newOrder = Mathf.RoundToInt(currentY * -sortingPrecision) + entityWeight;
+
+        spriteRenderer.sortingOrder = newOrder;
+
+        if (attachedCanvas != null)
+        {
+            attachedCanvas.sortingLayerID = spriteRenderer.sortingLayerID;
+            attachedCanvas.sortingOrder = newOrder + canvasSortingOffset;
+        }
     }
 
     private void OnDrawGizmosSelected()

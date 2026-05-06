@@ -6,6 +6,9 @@ public class EnemyCombatAI : MonoBehaviour
     private Enemy enemy;
     public Transform player { get; private set; }
     private List<Transform> playersInRange = new List<Transform>();
+    private bool isInBattleState = false;
+
+    private PlayerStats currentAggroTarget;
 
     public void Init(Enemy mainScript)
     {
@@ -26,6 +29,7 @@ public class EnemyCombatAI : MonoBehaviour
         if (playersInRange.Count == 0)
         {
             player = null;
+            SetBattleState(false);
             StopMovement();
         }
     }
@@ -50,14 +54,45 @@ public class EnemyCombatAI : MonoBehaviour
         player = closest;
     }
 
+    private void SetBattleState(bool state, PlayerStats targetStats = null)
+    {
+        if (state)
+        {
+            if (targetStats == null) return;
+
+            if (currentAggroTarget != null && currentAggroTarget != targetStats)
+            {
+                currentAggroTarget.ChangeAggro(-1);
+            }
+
+            if (currentAggroTarget != targetStats)
+            {
+                currentAggroTarget = targetStats;
+                currentAggroTarget.ChangeAggro(1);
+            }
+        }
+        else
+        {
+            if (currentAggroTarget != null)
+            {
+                currentAggroTarget.ChangeAggro(-1);
+                currentAggroTarget = null;
+            }
+        }
+        isInBattleState = state;
+    }
+
     public void OnUpdate()
     {
         if (!enemy.IsServer) return;
 
         UpdateTarget();
 
-        if (enemy.isDead || enemy.isTransitioning || enemy.netHealth.Value <= 0 || player == null)
+        PlayerStats targetStats = player != null ? player.GetComponentInParent<PlayerStats>() : null;
+
+        if (enemy.isDead || enemy.isTransitioning || enemy.netHealth.Value <= 0 || player == null || targetStats == null)
         {
+            SetBattleState(false);
             StopMovement();
             return;
         }
@@ -68,7 +103,11 @@ public class EnemyCombatAI : MonoBehaviour
 
         if (distanceToPlayer <= enemy.detectionRadius)
         {
-            PlayerStats.IsOnBattle = true;
+            SetBattleState(true, targetStats); // [Cập nhật]
+        }
+        else
+        {
+            SetBattleState(false);
         }
 
         if (distanceToPlayer <= enemy.attackRange - enemy.attackTriggerBuffer)
@@ -83,6 +122,11 @@ public class EnemyCombatAI : MonoBehaviour
         {
             ChasePlayer();
         }
+    }
+
+    private void OnDisable()
+    {
+        SetBattleState(false);
     }
 
     private void ChasePlayer()

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Unity.Netcode;
 
 public class PauseController : MonoBehaviour
 {
@@ -10,12 +9,9 @@ public class PauseController : MonoBehaviour
     {
         get
         {
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            if (CoopManager.IsCoop)
             {
-                if (NetworkManager.Singleton.ConnectedClients.Count > 1)
-                {
-                    return false;
-                }
+                return false;
             }
 
             return IsManualPause || IsFocusPause;

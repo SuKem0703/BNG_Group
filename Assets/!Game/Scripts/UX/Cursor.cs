@@ -2,10 +2,22 @@
 
 public class CustomCursor : MonoBehaviour
 {
+    public static CustomCursor Instance { get; private set; }
+
     public Texture2D cursorNormal;
     public Texture2D cursorClick;
     public Texture2D cursorBattle;
     public Vector2 hotSpot = Vector2.zero;
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(transform.root.gameObject);
+            return;
+        }
+        Instance = this;
+    }
 
     void Start()
     {
@@ -14,7 +26,13 @@ public class CustomCursor : MonoBehaviour
 
     void Update()
     {
-        if (PlayerStats.IsOnBattle)
+        bool isOnBattle = false;
+        if (PlayerStats.Instance != null)
+        {
+            isOnBattle = PlayerStats.Instance.netIsOnBattle.Value;
+        }
+
+        if (isOnBattle)
         {
             if (Input.GetMouseButtonDown(0))
             {
@@ -24,7 +42,6 @@ public class CustomCursor : MonoBehaviour
             {
                 Cursor.SetCursor(cursorNormal, hotSpot, CursorMode.Auto);
             }
-            return;
         }
         else
         {

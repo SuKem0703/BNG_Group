@@ -6,7 +6,7 @@ public class FadeTrigger : MonoBehaviour
 {
     [SerializeField] private DynamicSorting target;
 
-    [SerializeField] private string targetLayerName = "Player";
+    [SerializeField] private string targetLayerName = "PlayerController";
     private int _targetLayerId;
 
     void Awake()
@@ -40,7 +40,7 @@ public class FadeTrigger : MonoBehaviour
     // Hàm kiểm tra điều kiện kép
     private bool IsCorrectLayerAndTag(Collider2D col)
     {
-        if (!col.CompareTag("Player")) return false;
+        if (!col.CompareTag("PlayerController")) return false;
 
         if (col.gameObject.layer != _targetLayerId) return false;
 

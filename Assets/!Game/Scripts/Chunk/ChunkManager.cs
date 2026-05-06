@@ -11,7 +11,7 @@ public class ChunkManager : MonoBehaviour
 
     [Header("Settings")]
     public Transform player;
-    public float chunkSize = 20f;
+    public float chunkSize = 16f;
 
     public int loadDistance = 1;
     public int unloadDistance = 2;
@@ -21,7 +21,6 @@ public class ChunkManager : MonoBehaviour
 
     private string currentSceneName;
 
-    private Vector2Int currentPlayerChunk;
     private Dictionary<Vector2Int, ChunkData> allChunkData = new Dictionary<Vector2Int, ChunkData>();
     private Dictionary<Vector2Int, GameObject> activeChunks = new Dictionary<Vector2Int, GameObject>();
 
@@ -78,7 +77,6 @@ public class ChunkManager : MonoBehaviour
     private void InitPlayerTracking(Transform localPlayer)
     {
         player = localPlayer;
-        currentPlayerChunk = WorldToGrid(player.position);
         UpdateChunks();
 
         if (chunkTickCoroutine != null) StopCoroutine(chunkTickCoroutine);
@@ -87,17 +85,11 @@ public class ChunkManager : MonoBehaviour
 
     private IEnumerator ChunkUpdateTick()
     {
-        WaitForSeconds waitTime = new WaitForSeconds(0.2f);
+        WaitForSeconds waitTime = new WaitForSeconds(0.5f);
 
-        while (player != null)
+        while (true)
         {
-            Vector2Int newChunkCoord = WorldToGrid(player.position);
-            if (newChunkCoord != currentPlayerChunk)
-            {
-                currentPlayerChunk = newChunkCoord;
-                UpdateChunks();
-            }
-
+            UpdateChunks();
             yield return waitTime;
         }
     }
@@ -111,26 +103,59 @@ public class ChunkManager : MonoBehaviour
 
     private void UpdateChunks()
     {
-        for (int x = -loadDistance; x <= loadDistance; x++)
-        {
-            for (int y = -loadDistance; y <= loadDistance; y++)
-            {
-                Vector2Int coord = new Vector2Int(currentPlayerChunk.x + x, currentPlayerChunk.y + y);
+        HashSet<Vector2Int> requiredChunks = new HashSet<Vector2Int>();
+        HashSet<Vector2Int> keepAliveChunks = new HashSet<Vector2Int>();
 
-                if (!activeChunks.ContainsKey(coord))
+        List<Transform> playersToTrack = new List<Transform>();
+
+        if (player != null) playersToTrack.Add(player);
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.PlayerObject != null && client.PlayerObject.transform != player)
                 {
-                    LoadChunk(coord);
+                    playersToTrack.Add(client.PlayerObject.transform);
                 }
+            }
+        }
+
+        if (playersToTrack.Count == 0) return;
+
+        foreach (var p in playersToTrack)
+        {
+            Vector2Int center = WorldToGrid(p.position);
+
+            for (int x = -loadDistance; x <= loadDistance; x++)
+            {
+                for (int y = -loadDistance; y <= loadDistance; y++)
+                {
+                    requiredChunks.Add(new Vector2Int(center.x + x, center.y + y));
+                }
+            }
+
+            for (int x = -unloadDistance; x <= unloadDistance; x++)
+            {
+                for (int y = -unloadDistance; y <= unloadDistance; y++)
+                {
+                    keepAliveChunks.Add(new Vector2Int(center.x + x, center.y + y));
+                }
+            }
+        }
+
+        foreach (var coord in requiredChunks)
+        {
+            if (!activeChunks.ContainsKey(coord))
+            {
+                LoadChunk(coord);
             }
         }
 
         List<Vector2Int> chunksToRemove = new List<Vector2Int>();
         foreach (var coord in activeChunks.Keys)
         {
-            int distX = Mathf.Abs(coord.x - currentPlayerChunk.x);
-            int distY = Mathf.Abs(coord.y - currentPlayerChunk.y);
-
-            if (distX > unloadDistance || distY > unloadDistance)
+            if (!keepAliveChunks.Contains(coord))
             {
                 chunksToRemove.Add(coord);
             }
@@ -182,7 +207,6 @@ public class ChunkManager : MonoBehaviour
             {
                 GameObject spawnedObj = Instantiate(prefab, entity.position, Quaternion.identity, chunkGO.transform);
 
-                // Sử dụng công thức dùng chung để đồng nhất định dạng ID
                 string deterministicID = GlobalHelper.GenerateUniqueID(spawnedObj);
 
                 var marker = spawnedObj.GetComponent<ChunkEntityMarker>();
@@ -264,11 +288,6 @@ public class ChunkManager : MonoBehaviour
                     if (!string.IsNullOrEmpty(data.rewardItemPath))
                     {
                         chest.itemPrefab = Resources.Load<GameObject>(data.rewardItemPath);
-
-                        if (chest.itemPrefab == null)
-                        {
-                            Debug.LogWarning($"[Rương] Không tìm thấy Item Prefab tại: {data.rewardItemPath}. Hãy chắc chắn vật phẩm nằm trong thư mục Resources.");
-                        }
                     }
                 }
                 EnsureCollider(obj, data);
@@ -279,6 +298,14 @@ public class ChunkManager : MonoBehaviour
                 if (storageChest != null)
                 {
                     storageChest.InitChunkData(uniqueID);
+                }
+                break;
+
+            case EntityType.Enemy:
+                var spawnArea = obj.GetComponent<EnemySpawnArea>();
+                if (spawnArea == null)
+                {
+                    Debug.LogWarning($"[Chunk] Cảnh báo: {obj.name} là Enemy/Spawner nhưng thiếu EnemySpawnArea!");
                 }
                 break;
         }

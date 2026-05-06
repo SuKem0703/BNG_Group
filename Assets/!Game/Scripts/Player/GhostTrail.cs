@@ -11,11 +11,14 @@ public class GhostTrail : MonoBehaviour
     public int ghostCount = 5;
 
     private Queue<SpriteRenderer> ghostPool = new Queue<SpriteRenderer>();
-
     private GameObject poolContainer;
 
-    private void Awake()
+    private bool isInitialized = false;
+
+    private void InitializePool()
     {
+        if (isInitialized) return;
+
         poolContainer = new GameObject(gameObject.name + "_GhostPool");
         poolContainer.transform.SetParent(null);
 
@@ -32,10 +35,14 @@ public class GhostTrail : MonoBehaviour
             ghost.SetActive(false);
             ghostPool.Enqueue(sr);
         }
+
+        isInitialized = true;
     }
 
     public void CreateTrail()
     {
+        InitializePool();
+
         StartCoroutine(SpawnGhosts());
     }
 

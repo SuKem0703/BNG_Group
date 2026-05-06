@@ -159,7 +159,18 @@ public class PlayerStats : NetworkBehaviour
         gem = svGem;
     }
 
-    public static bool IsOnBattle = false;
+    public NetworkVariable<bool> netIsOnBattle = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private int serverAggroCount = 0;
+
+    public void ChangeAggro(int amount)
+    {
+        if (!IsServer) return;
+
+        serverAggroCount += amount;
+        if (serverAggroCount < 0) serverAggroCount = 0;
+
+        netIsOnBattle.Value = serverAggroCount > 0;
+    }
 
     public bool CanAttack
     {
@@ -204,7 +215,7 @@ public class PlayerStats : NetworkBehaviour
         if (Instance == this)
         {
             Instance = null;
-            IsOnBattle = false;
+
             if (InventoryController.Instance != null)
                 InventoryController.Instance.OnInventoryChanged -= OnInventoryUpdated;
         }
@@ -213,7 +224,6 @@ public class PlayerStats : NetworkBehaviour
     void Start()
     {
         NetworkObject netObj = GetComponent<NetworkObject>();
-        IsOnBattle = false;
 
         if (netObj != null && netObj.IsOwner)
         {

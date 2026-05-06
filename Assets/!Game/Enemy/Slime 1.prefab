@@ -401,19 +401,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  questTargetID: 
+  data: {fileID: 11400000, guid: ea4be7ff45a5a7c4f8425425eff76331, type: 2}
   isQuestEnemy: 0
   UniqueID: 
-  enemyRank: 0
-  bossPhases: []
   currentPhaseIndex: 0
-  enemyName: Slime
-  levelEnemy: 1
-  damage: 5
-  maxHealth: 100
-  defense: 0
-  experienceReward: 0
-  goldReward: 0
   netHealth:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
@@ -429,12 +420,8 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: {x: 0, y: 0}
-  chaseSpeed: 3
-  detectionRadius: 5
-  attackRange: 1.25
   attackTriggerBuffer: 0.25
   chaseResumeBuffer: -1.25
-  attackCooldown: 0.25
   lastAttackTime: -999
   hasDealtDamageThisAttack: 0
   hurtDuration: 1
@@ -501,6 +488,8 @@ MonoBehaviour:
   yOffset: 0
   entityWeight: 3
   onlySortWhenVisible: 1
+  attachedCanvas: {fileID: 3102611397146476005}
+  canvasSortingOffset: 1
 --- !u!114 &1554956197311286333
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -33,13 +33,11 @@ public class SaveController : MonoBehaviour
     private GameObject mainLoadingCanvasInstance;
     private GameObject miniLoadingScreenInstance;
 
-    private InventoryController inventoryController;
-    private HotbarController hotbarController;
-    private PlayerStats playerStats;
-    private KnightEquipmentPanel knightEquipmentPanel;
-    private MageEquipmentPanel mageEquipmentPanel;
-    private SharedEquipmentPanel sharedEquipmentPanel;
-    private FarmController farmController;
+    private SaveAdapter uiAdapter;
+    public void RegisterUIAdapter(SaveAdapter adapter) => uiAdapter = adapter;
+
+    private LocalPlayerSaveAdapter localPlayerAdapter;
+
     private StorageChest[] storageChests;
 
     public static Vector3? nextSpawnPosition = null;
@@ -56,12 +54,6 @@ public class SaveController : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
         Instance = this;
         IsDataLoaded = false;
 
@@ -81,6 +73,16 @@ public class SaveController : MonoBehaviour
         LocalizationManager.OnLanguageChanged += UpdateUIDText;
     }
 
+    public void RegisterLocalPlayer(LocalPlayerSaveAdapter adapter)
+    {
+        localPlayerAdapter = adapter;
+    }
+
+    public void UnregisterLocalPlayer()
+    {
+        localPlayerAdapter = null;
+    }
+
     private void UpdateUIDText()
     {
         if (IsDataLoaded)
@@ -91,7 +93,10 @@ public class SaveController : MonoBehaviour
 
     IEnumerator LoadAndFinalize()
     {
-        yield return InitializeComponents();
+        while (NetworkManager.Singleton == null || (!NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsConnectedClient))
+        {
+            yield return null;
+        }
 
         bool sceneLoadTriggered = false;
         yield return StartCoroutine(LoadRoutine((wasTriggered) =>
@@ -99,8 +104,25 @@ public class SaveController : MonoBehaviour
             sceneLoadTriggered = wasTriggered;
         }));
 
-        if (sceneLoadTriggered) yield break;
+        if (sceneLoadTriggered)
+        {
+            HideMainLoadingScreen();
+            yield break;
+        }
 
+        while (localPlayerAdapter == null || uiAdapter == null)
+        {
+            if (localPlayerAdapter == null)
+            {
+                if (NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
+                {
+                    localPlayerAdapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LocalPlayerSaveAdapter>();
+                }
+            }
+            yield return null;
+        }
+
+        storageChests = FindObjectsByType<StorageChest>(FindObjectsSortMode.None);
         pendingSceneName = null;
         nextSpawnPosition = null;
 
@@ -218,19 +240,19 @@ public class SaveController : MonoBehaviour
                         }
                     }
 
-                    if (InventoryController.Instance != null)
-                        InventoryController.Instance.SetInventoryItems(inventoryItems);
+                    if (uiAdapter.inventoryController != null)
+                        uiAdapter.inventoryController.SetInventoryItems(inventoryItems);
 
-                    if (HotbarController.Instance != null)
-                        HotbarController.Instance.SetHotbarItems(hotbarItems);
+                    if (uiAdapter.hotbarController != null)
+                        uiAdapter.hotbarController.SetHotbarItems(hotbarItems);
 
-                    if (knightEquipmentPanel != null) knightEquipmentPanel.SetEquipmentItems(knightEquips);
-                    if (mageEquipmentPanel != null) mageEquipmentPanel.SetEquipmentItems(mageEquips);
-                    if (sharedEquipmentPanel != null) sharedEquipmentPanel.SetEquipmentItems(sharedEquips);
+                    if (uiAdapter.knightEquipmentPanel != null) uiAdapter.knightEquipmentPanel.SetEquipmentItems(knightEquips);
+                    if (uiAdapter.mageEquipmentPanel != null) uiAdapter.mageEquipmentPanel.SetEquipmentItems(mageEquips);
+                    if (uiAdapter.sharedEquipmentPanel != null) uiAdapter.sharedEquipmentPanel.SetEquipmentItems(sharedEquips);
 
-                    if (playerStats != null)
+                    if (localPlayerAdapter != null && localPlayerAdapter.playerStats != null)
                     {
-                        playerStats.ApplyEquippedItems();
+                        localPlayerAdapter.playerStats.ApplyEquippedItems();
                     }
                 }
                 inventoryLoaded = true;
@@ -240,13 +262,13 @@ public class SaveController : MonoBehaviour
 
         while (!inventoryLoaded) yield return null;
 
-        if (playerStats != null && tempSaveData != null)
+        if (localPlayerAdapter != null && tempSaveData != null)
         {
-            playerStats.knightHealth = tempSaveData.currentKnightHP;
-            playerStats.mageHealth = tempSaveData.currentmageHP;
-            playerStats.knightMP = tempSaveData.currentKnightMP;
-            playerStats.mageMP = tempSaveData.currentMageMP;
-            playerStats.currentStamina = tempSaveData.currentStamina;
+            localPlayerAdapter.playerStats.knightHealth = tempSaveData.currentKnightHP;
+            localPlayerAdapter.playerStats.mageHealth = tempSaveData.currentmageHP;
+            localPlayerAdapter.playerStats.knightMP = tempSaveData.currentKnightMP;
+            localPlayerAdapter.playerStats.mageMP = tempSaveData.currentMageMP;
+            localPlayerAdapter.playerStats.currentStamina = tempSaveData.currentStamina;
 
             tempSaveData = null;
         }
@@ -261,42 +283,8 @@ public class SaveController : MonoBehaviour
         if (DeathService.IsRespawningFlag)
         {
             DeathService.IsRespawningFlag = false;
-            var ps = GameObject.FindGameObjectWithTag("PlayerController")?.GetComponent<PlayerStats>();
-            if (ps != null)
-                StartCoroutine(ps.FinalizeRespawnProtection(0.5f));
-        }
-    }
-
-    IEnumerator InitializeComponents()
-    {
-        inventoryController = FindFirstObjectByType<InventoryController>(FindObjectsInactive.Include);
-        hotbarController = FindFirstObjectByType<HotbarController>();
-        knightEquipmentPanel = FindFirstObjectByType<KnightEquipmentPanel>(FindObjectsInactive.Include);
-        mageEquipmentPanel = FindFirstObjectByType<MageEquipmentPanel>(FindObjectsInactive.Include);
-        sharedEquipmentPanel = FindFirstObjectByType<SharedEquipmentPanel>(FindObjectsInactive.Include);
-        farmController = FindFirstObjectByType<FarmController>();
-        storageChests = FindObjectsByType<StorageChest>(FindObjectsSortMode.None);
-
-        while (NetworkManager.Singleton == null || (!NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsConnectedClient))
-        {
-            yield return null;
-        }
-
-        while (playerStats == null)
-        {
-            if (NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
-            {
-                playerStats = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerStats>();
-            }
-            else if (PlayerStats.Instance != null)
-            {
-                playerStats = PlayerStats.Instance;
-            }
-
-            if (playerStats == null)
-            {
-                yield return null;
-            }
+            if (localPlayerAdapter != null)
+                StartCoroutine(localPlayerAdapter.playerStats.FinalizeRespawnProtection(0.5f));
         }
     }
 
@@ -336,11 +324,11 @@ public class SaveController : MonoBehaviour
         IsSaving = true;
         if (!isSilent) ShowMiniLoadingScreen();
 
-        if (inventoryController == null || playerStats == null)
+        if (uiAdapter == null || uiAdapter.inventoryController == null || localPlayerAdapter == null)
         {
             if (!isSilent) HideMiniLoadingScreen();
             IsSaving = false;
-            Debug.LogError("SaveController: Thiếu component quan trọng, hủy lưu.");
+            Debug.LogError("SaveController: Thiếu component quan trọng (Adapter/Inventory), hủy lưu.");
             onSaveFinished?.Invoke(false);
             yield break;
         }
@@ -357,30 +345,30 @@ public class SaveController : MonoBehaviour
             existingFarmData = serverSave.farmData ?? new FarmData();
         }
 
-        Vector3 savePos = GameObject.FindGameObjectWithTag("PlayerController").transform.position;
+        Vector3 savePos = localPlayerAdapter.GetPosition();
         string saveScene = SceneManager.GetActiveScene().name;
         if (reason == SaveReason.SceneTransition && nextSpawnPosition != null) savePos = nextSpawnPosition.Value;
         if (reason == SaveReason.SceneTransition && !string.IsNullOrEmpty(pendingSceneName)) saveScene = pendingSceneName;
 
         SaveData saveData = new SaveData
         {
-            playerPosition = nextSpawnPosition ?? GameObject.FindGameObjectWithTag("PlayerController").transform.position,
+            playerPosition = nextSpawnPosition ?? localPlayerAdapter.GetPosition(),
             currentSceneName = pendingSceneName ?? SceneManager.GetActiveScene().name,
-            checkpointPosition = currentCheckpointPos ?? GameObject.FindGameObjectWithTag("PlayerController").transform.position,
+            checkpointPosition = currentCheckpointPos ?? localPlayerAdapter.GetPosition(),
             checkpointSceneName = currentCheckpointScene ?? SceneManager.GetActiveScene().name,
 
-            mapBoundary = FindFirstObjectByType<CinemachineConfiner2D>().BoundingShape2D.gameObject.name,
-            backPackSlotCount = inventoryController.slotCount,
+            mapBoundary = FindFirstObjectByType<CinemachineConfiner2D>()?.BoundingShape2D?.gameObject.name ?? "",
+            backPackSlotCount = uiAdapter.inventoryController.slotCount,
 
             chestSaveData = MergeChestsState(existingChestStates),
             questProgressData = QuestController.Instance.activeQuests,
             handInQuestIDs = QuestController.Instance.handInQuestIDs,
 
-            currentKnightHP = (reason == SaveReason.Death) ? playerStats.finalKnightMaxHP : playerStats.knightHealth,
-            currentmageHP = (reason == SaveReason.Death) ? playerStats.finalMageMaxHP : playerStats.mageHealth,
-            currentKnightMP = (reason == SaveReason.Death) ? playerStats.finalKnightMaxMP : playerStats.knightMP,
-            currentMageMP = (reason == SaveReason.Death) ? playerStats.finalMageMaxMP : playerStats.mageMP,
-            currentStamina = (reason == SaveReason.Death) ? playerStats.finalStamina : playerStats.currentStamina,
+            currentKnightHP = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalKnightMaxHP : localPlayerAdapter.playerStats.knightHealth,
+            currentmageHP = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalMageMaxHP : localPlayerAdapter.playerStats.mageHealth,
+            currentKnightMP = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalKnightMaxMP : localPlayerAdapter.playerStats.knightMP,
+            currentMageMP = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalMageMaxMP : localPlayerAdapter.playerStats.mageMP,
+            currentStamina = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalStamina : localPlayerAdapter.playerStats.currentStamina,
 
             collectedByScene = collectedByScene
         };
@@ -544,8 +532,8 @@ public class SaveController : MonoBehaviour
     {
         tempSaveData = saveData;
 
-        string targetScene = saveData.currentSceneName;
-        Vector3 targetPos = saveData.playerPosition;
+        string targetScene = saveData?.currentSceneName ?? "";
+        Vector3 targetPos = saveData?.playerPosition ?? Vector3.zero;
 
         if (!string.IsNullOrEmpty(pendingSceneName))
         {
@@ -584,28 +572,15 @@ public class SaveController : MonoBehaviour
             return true;
         }
 
-        GameObject player = null;
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient)
+        if (localPlayerAdapter != null)
         {
-            if (NetworkManager.Singleton.LocalClient.PlayerObject != null)
-            {
-                player = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
-            }
-        }
-        else
-        {
-            player = GameObject.FindGameObjectWithTag("PlayerController");
-        }
-
-        if (player != null)
-        {
-            player.transform.position = targetPos;
-            Physics2D.SyncTransforms();
+            localPlayerAdapter.SetPosition(targetPos);
             nextSpawnPosition = null;
             pendingSceneName = null;
         }
 
-        var boundary = GameObject.Find(saveData?.mapBoundary)?.GetComponent<BoxCollider2D>();
+        var boundaryObj = GameObject.Find(saveData?.mapBoundary);
+        var boundary = boundaryObj != null ? boundaryObj.GetComponent<BoxCollider2D>() : null;
 
         if (boundary != null)
         {
@@ -617,33 +592,33 @@ public class SaveController : MonoBehaviour
             }
         }
 
-        if (!string.IsNullOrEmpty(saveData.checkpointSceneName))
+        if (!string.IsNullOrEmpty(saveData?.checkpointSceneName))
         {
             currentCheckpointScene = saveData.checkpointSceneName;
             currentCheckpointPos = saveData.checkpointPosition;
         }
 
-        if (inventoryController != null)
+        if (uiAdapter != null && uiAdapter.inventoryController != null && saveData != null)
         {
-            inventoryController.slotCount = saveData.backPackSlotCount;
-            inventoryController.ReBuildItemCounts();
+            uiAdapter.inventoryController.slotCount = saveData.backPackSlotCount;
+            uiAdapter.inventoryController.ReBuildItemCounts();
         }
 
-        _cachedChestStates = saveData.chestSaveData ?? new List<ChestSaveData>();
+        _cachedChestStates = saveData?.chestSaveData ?? new List<ChestSaveData>();
         LoadChestStates(_cachedChestStates);
 
-        if (QuestController.Instance != null)
+        if (QuestController.Instance != null && saveData != null)
         {
             QuestController.Instance.LoadQuestProgress(saveData.questProgressData);
             QuestController.Instance.handInQuestIDs = saveData.handInQuestIDs;
         }
 
-        collectedByScene = saveData.collectedByScene ?? new List<SceneCollected>();
+        collectedByScene = saveData?.collectedByScene ?? new List<SceneCollected>();
 
         var vcam = FindFirstObjectByType<CinemachineCamera>();
-        if (vcam != null && player != null)
+        if (vcam != null && localPlayerAdapter != null)
         {
-            vcam.ForceCameraPosition(player.transform.position, Quaternion.identity);
+            vcam.ForceCameraPosition(localPlayerAdapter.GetPosition(), Quaternion.identity);
         }
         try { Unity.Cinemachine.CinemachineCore.ResetCameraState(); }
         catch { }
@@ -672,7 +647,6 @@ public class SaveController : MonoBehaviour
         }
     }
 
-    // Hàm truy xuất trạng thái nhanh cho rương sinh ra từ Chunk
     public bool IsChestOpened(string chestID)
     {
         var state = _cachedChestStates.FirstOrDefault(c => c.chestID == chestID);
@@ -739,6 +713,7 @@ public class SaveController : MonoBehaviour
         }
         else
         {
+            Debug.LogError($"[SaveController] Lỗi tải dữ liệu từ Server: {request.error}");
             PlayerPrefs.DeleteAll();
             PlayerPrefs.Save();
             SceneManager.LoadScene("MainMenu");

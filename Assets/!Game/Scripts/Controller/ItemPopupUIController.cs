@@ -44,39 +44,6 @@ public class ItemPickupUIController : MonoBehaviour
         {
             itemImage.sprite = itemIcon;
         }
-
-        Image borderFrame = newPopup.transform.Find("ItemCard")?.GetComponent<Image>();
-        if (borderFrame != null)
-        {
-            string rarityName = rarity.ToString();
-            string path = $"Horizontal Card/{rarityName}";
-            Sprite raritySprite = Resources.Load<Sprite>(path);
-
-            if (raritySprite != null)
-            {
-                borderFrame.sprite = raritySprite;
-            }
-            else
-            {
-                Debug.LogWarning($"Không tìm thấy sprite cho rarity '{rarityName}' tại đường dẫn: {path}");
-            }
-        }
-
-        Image iconCard = newPopup.transform.Find("ItemIconCard")?.GetComponent<Image>();
-        if (iconCard != null)
-        {
-            string rarityName = rarity.ToString();
-            string cardPath = $"Square Card/{rarityName}";
-            Sprite iconSprite = Resources.Load<Sprite>(cardPath);
-            if (iconSprite != null)
-            {
-                iconCard.sprite = iconSprite;
-            }
-            else
-            {
-                Debug.LogWarning($"Không tìm thấy sprite cho item icon tại đường dẫn: {iconCard}");
-            }
-        }
         #endregion
 
         ItemPopupLifetime lifetimeScript = newPopup.GetComponent<ItemPopupLifetime>();
@@ -104,7 +71,6 @@ public class ItemPickupUIController : MonoBehaviour
                     Destroy(oldestPopup);
             }
         }
-
     }
 
     public void ClearAllPopups()

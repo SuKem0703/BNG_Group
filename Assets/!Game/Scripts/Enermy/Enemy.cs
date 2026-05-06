@@ -22,41 +22,45 @@ public class BossPhaseInfo
 [RequireComponent(typeof(EnemyCombatAI))]
 public class Enemy : NetworkBehaviour
 {
-    [Header("Quest Settings")]
-    public string questTargetID;
+    [Header("Data Core (Kéo file SO vào đây)")]
+    public EnemyData data;
+
+    [Header("Quest & Instance Settings")]
     public bool isQuestEnemy = false;
     public string UniqueID;
 
-    [Header("Enemy Info")]
-    public EnemyRank enemyRank = EnemyRank.Normal;
+    // ==========================================
+    // CHỈ SỐ GỐC
+    // ==========================================
+    public string enemyName => data != null ? data.enemyName : "Enemy";
+    public string questTargetID => data != null ? (string.IsNullOrEmpty(data.questTargetID) ? data.enemyName : data.questTargetID) : "";
+    public EnemyRank enemyRank => data != null ? data.enemyRank : EnemyRank.Normal;
+    public int levelEnemy => data != null ? data.levelEnemy : 1;
+    public float experienceReward => data != null ? data.experienceReward : 0;
+    public float goldReward => data != null ? data.goldReward : 0;
 
-    [Header("Boss Phases System")]
-    public List<BossPhaseInfo> bossPhases = new List<BossPhaseInfo>();
+    public IReadOnlyList<BossPhaseInfo> bossPhases => data != null ? data.bossPhases : null;
+
+    // ==========================================
+    // CHỈ SỐ RUNTIME
+    // ==========================================
+    public float damage { get; set; }
+    public int maxHealth { get; set; }
+    public int defense { get; set; }
+    public float chaseSpeed { get; set; }
+    public float attackRange { get; set; }
+    public float detectionRadius { get; set; }
+    public float attackCooldown { get; set; }
+
+    [Header("Runtime State (Trạng thái thực tế)")]
     public int currentPhaseIndex = 0;
-
-    [Header("Enemy Stats")]
-    public string enemyName = "Enemy";
-    public int levelEnemy = 1;
-    public float damage = 10f;
-    public int maxHealth = 100;
-    public int defense = 0;
-    public float experienceReward;
-    public float goldReward;
-
     public NetworkVariable<int> netHealth = new NetworkVariable<int>(100);
     public NetworkVariable<bool> netIsWalking = new NetworkVariable<bool>(false);
     public NetworkVariable<Vector2> netDirection = new NetworkVariable<Vector2>(Vector2.zero);
 
-    [Header("Movement")]
-    public float chaseSpeed = 3f;
-    public float detectionRadius = 15f;
-    public float attackRange = 2f;
+    [Header("Movement & Combat Buffers")]
     public float attackTriggerBuffer = 1f;
     public float chaseResumeBuffer = -2f;
-
-    [Header("Attack Settings")]
-    public float attackCooldown = 0.5f;
-
     public float lastAttackTime = -999f;
     public bool hasDealtDamageThisAttack = false;
 
@@ -86,7 +90,16 @@ public class Enemy : NetworkBehaviour
 
     protected virtual void Awake()
     {
-        if (string.IsNullOrEmpty(questTargetID)) questTargetID = enemyName;
+        if (data != null)
+        {
+            damage = data.damage;
+            maxHealth = data.maxHealth;
+            defense = data.defense;
+            chaseSpeed = data.chaseSpeed;
+            attackRange = data.attackRange;
+            detectionRadius = data.detectionRadius;
+            attackCooldown = data.attackCooldown;
+        }
 
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
 
@@ -123,10 +136,16 @@ public class Enemy : NetworkBehaviour
     protected void InitializePhase(int phaseIndex)
     {
         currentPhaseIndex = phaseIndex;
+
         if (bossPhases != null && bossPhases.Count > phaseIndex)
         {
             maxHealth = bossPhases[phaseIndex].maxHealth;
         }
+        else if (data != null)
+        {
+            maxHealth = data.maxHealth;
+        }
+
         netHealth.Value = maxHealth;
 
         if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null && IsClient)
@@ -290,8 +309,6 @@ public class Enemy : NetworkBehaviour
         isStunned = false;
         isAttacking = false;
         isKnockedBack = false;
-
-        PlayerStats.IsOnBattle = false;
 
         healthLogic?.StopHurt();
         aiLogic?.StopMovement();

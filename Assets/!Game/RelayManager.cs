@@ -25,11 +25,14 @@ public class RelayManager : MonoBehaviour
         Instance = this;
     }
 
-    private async void Start()
+    private async Task EnsureUnityServicesInitialized()
     {
         try
         {
-            await UnityServices.InitializeAsync();
+            if (UnityServices.State != ServicesInitializationState.Initialized)
+            {
+                await UnityServices.InitializeAsync();
+            }
 
             if (!AuthenticationService.Instance.IsSignedIn)
             {
@@ -50,6 +53,14 @@ public class RelayManager : MonoBehaviour
     {
         try
         {
+            await EnsureUnityServicesInitialized();
+
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                Debug.LogError("[Relay] Không thể kết nối với dịch vụ xác thực của Unity.");
+                return null;
+            }
+
             CachePlayerPosition();
 
             if (NetworkManager.Singleton.IsListening)
@@ -99,6 +110,14 @@ public class RelayManager : MonoBehaviour
     {
         try
         {
+            await EnsureUnityServicesInitialized();
+
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                Debug.LogError("[Relay] Không thể kết nối với dịch vụ xác thực của Unity.");
+                return false;
+            }
+
             if (NetworkManager.Singleton.IsListening)
             {
                 NetworkManager.Singleton.Shutdown();

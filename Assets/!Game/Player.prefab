@@ -933,6 +933,8 @@ MonoBehaviour:
   yOffset: 0
   entityWeight: 3
   onlySortWhenVisible: 1
+  attachedCanvas: {fileID: 1024426765374942261}
+  canvasSortingOffset: 1
 --- !u!114 &8363902136144710776
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -969,6 +971,7 @@ GameObject:
   - component: {fileID: 3909449334393896824}
   - component: {fileID: 4586953363769722179}
   - component: {fileID: 2714117746525753295}
+  - component: {fileID: 4105975544014696189}
   m_Layer: 3
   m_Name: Player
   m_TagString: PlayerController
@@ -1034,7 +1037,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 934382041
+  GlobalObjectIdHash: 672220998
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1127,6 +1130,11 @@ MonoBehaviour:
   healthRegenInterval: 2
   mpRegenInterval: 1
   staminaRegenInterval: 1
+  netIsOnBattle:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
   isInvincible: 0
   potionCooldownDuration: 2
   potionCooldownTimer: 0
@@ -1311,6 +1319,20 @@ MonoBehaviour:
   uiCanvasObject: {fileID: 2561537775027890501}
   nameText: {fileID: 755231064257729680}
   healthFillImage: {fileID: 3174400872205574094}
+--- !u!114 &4105975544014696189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7053962648512897917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbdc272cee4fa0428bb442c15b80ba6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerStats: {fileID: 3869098756464639400}
 --- !u!1 &8304542053625197770
 GameObject:
   m_ObjectHideFlags: 0
@@ -1668,3 +1690,5 @@ MonoBehaviour:
   yOffset: 0
   entityWeight: 3
   onlySortWhenVisible: 1
+  attachedCanvas: {fileID: 0}
+  canvasSortingOffset: 1

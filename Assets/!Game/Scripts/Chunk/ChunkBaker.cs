@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 public class ChunkBaker : MonoBehaviour
 {
     [Header("Cấu hình lưới")]
-    public float chunkSize = 20f;
+    public float chunkSize = 16f;
     [Header("Đầu ra")]
     public string savePath = "Assets/!Game/Resources/ChunkData/";
 
