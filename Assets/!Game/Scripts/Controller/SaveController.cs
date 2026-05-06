@@ -98,18 +98,6 @@ public class SaveController : MonoBehaviour
             yield return null;
         }
 
-        bool sceneLoadTriggered = false;
-        yield return StartCoroutine(LoadRoutine((wasTriggered) =>
-        {
-            sceneLoadTriggered = wasTriggered;
-        }));
-
-        if (sceneLoadTriggered)
-        {
-            HideMainLoadingScreen();
-            yield break;
-        }
-
         while (localPlayerAdapter == null || uiAdapter == null)
         {
             if (localPlayerAdapter == null)
@@ -120,6 +108,18 @@ public class SaveController : MonoBehaviour
                 }
             }
             yield return null;
+        }
+
+        bool sceneLoadTriggered = false;
+        yield return StartCoroutine(LoadRoutine((wasTriggered) =>
+        {
+            sceneLoadTriggered = wasTriggered;
+        }));
+
+        if (sceneLoadTriggered)
+        {
+            HideMainLoadingScreen();
+            yield break;
         }
 
         storageChests = FindObjectsByType<StorageChest>(FindObjectsSortMode.None);
@@ -284,7 +284,13 @@ public class SaveController : MonoBehaviour
         {
             DeathService.IsRespawningFlag = false;
             if (localPlayerAdapter != null)
+            {
+                localPlayerAdapter.playerStats.SetDeathStateServerRpc(false);
+                var pMovement = localPlayerAdapter.playerStats.GetComponentInChildren<PlayerMovement>();
+                if (pMovement != null) pMovement.ResetDeathState();
+
                 StartCoroutine(localPlayerAdapter.playerStats.FinalizeRespawnProtection(0.5f));
+            }
         }
     }
 

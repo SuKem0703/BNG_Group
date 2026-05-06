@@ -22,15 +22,8 @@ public class GameOverUIAdapter : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void OnEnable()
-    {
-        DeathService.OnPlayerDied += HideCommonUI;
-    }
-
-    private void OnDisable()
-    {
-        DeathService.OnPlayerDied -= HideCommonUI;
-    }
+    private void OnEnable() => DeathService.OnPlayerDied += HideCommonUI;
+    private void OnDisable() => DeathService.OnPlayerDied -= HideCommonUI;
 
     private void HideCommonUI()
     {
@@ -61,13 +54,15 @@ public class GameOverUIAdapter : MonoBehaviour
         PauseController.SetPause(false);
         DOTween.KillAll();
 
-        string targetScene = SaveController.pendingSceneName;
-        if (string.IsNullOrEmpty(targetScene))
+        canvasGroup.DOFade(0f, 0.5f).OnComplete(() =>
         {
-            targetScene = SceneManager.GetActiveScene().name;
-        }
+            gameObject.SetActive(false);
+            isRespawning = false;
+        });
 
-        DeathService.IsRespawningFlag = true;
-        SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
+        if (DeathService.Instance != null)
+        {
+            DeathService.Instance.ExecuteRespawn();
+        }
     }
 }

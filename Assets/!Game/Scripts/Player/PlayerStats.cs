@@ -104,6 +104,11 @@ public class PlayerStats : NetworkBehaviour
     public NetworkVariable<int> netMaxKnightHP = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<int> netMaxMageHP = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
+    public NetworkVariable<bool> netIsOnBattle = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private int serverAggroCount = 0;
+
+    public NetworkVariable<bool> netIsDead = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     [Header("Derived Final Stats")]
     public int finalSTR => STR + bonusSTR + effectSTR;
     public int finalDEX => DEX + bonusDEX + effectDEX;
@@ -158,9 +163,6 @@ public class PlayerStats : NetworkBehaviour
         coin = svCoin;
         gem = svGem;
     }
-
-    public NetworkVariable<bool> netIsOnBattle = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private int serverAggroCount = 0;
 
     public void ChangeAggro(int amount)
     {
@@ -263,6 +265,17 @@ public class PlayerStats : NetworkBehaviour
         if (potionCooldownTimer > 0)
         {
             potionCooldownTimer -= Time.unscaledDeltaTime;
+        }
+    }
+
+    [ServerRpc]
+    public void SetDeathStateServerRpc(bool isDead)
+    {
+        netIsDead.Value = isDead;
+
+        if (isDead)
+        {
+            ChangeAggro(-serverAggroCount);
         }
     }
 

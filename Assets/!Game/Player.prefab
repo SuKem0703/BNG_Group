@@ -573,6 +573,7 @@ GameObject:
   - component: {fileID: 6622320634595183982}
   - component: {fileID: 5406327389448248723}
   - component: {fileID: 8363902136144710776}
+  - component: {fileID: 4866363441426797200}
   m_Layer: 3
   m_Name: Knight
   m_TagString: Player
@@ -953,6 +954,20 @@ MonoBehaviour:
     m_Bits: 64
   targetYOffset: 1.2
   indicatorPrefab: {fileID: 984118000735452077, guid: cac8db452cec35643829dad2fb5ee4e6, type: 3}
+--- !u!114 &4866363441426797200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7031346279699142252}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e3d96a5f1e627c47b36a54f6240335b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  animator: {fileID: 5691647660223253319}
+  playerStats: {fileID: 3869098756464639400}
 --- !u!1 &7053962648512897917
 GameObject:
   m_ObjectHideFlags: 0
@@ -1037,7 +1052,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 672220998
+  GlobalObjectIdHash: 934382041
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1124,17 +1139,22 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 100
+  netIsOnBattle:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  netIsDead:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
   healthRegenDelay: 5
   mpRegenDelay: 5
   staminaRegenDelay: 1.5
   healthRegenInterval: 2
   mpRegenInterval: 1
   staminaRegenInterval: 1
-  netIsOnBattle:
-    UpdateTraits:
-      MinSecondsBetweenUpdates: 0
-      MaxSecondsBetweenUpdates: 0
-    m_InternalValue: 0
   isInvincible: 0
   potionCooldownDuration: 2
   potionCooldownTimer: 0

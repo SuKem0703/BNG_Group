@@ -308,8 +308,6 @@ public class PlayerMovement : NetworkBehaviour
         animator.SetBool("isAttacking", false);
         animator.SetBool("isWalkAttacking", false);
         animator.ResetTrigger("Attack");
-
-        try { animator.Play("Die", -1, 0f); } catch { animator.SetTrigger("Die"); }
     }
 
     public void TriggerDeathUI()
@@ -346,5 +344,13 @@ public class PlayerMovement : NetworkBehaviour
             netMoveInput.Value = Vector2.zero;
             netIsRunning.Value = false;
         }
+    }
+
+    public void ResetDeathState()
+    {
+        isDead = false;
+
+        animator.ResetTrigger("Die");
+        animator.Play("Idle");
     }
 }
