@@ -17,7 +17,10 @@ public class GameSettingService : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(transform.root.gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+            return;
+        }
         Instance = this;
 
         saveFilePath = Application.persistentDataPath + "/game_settings.json";

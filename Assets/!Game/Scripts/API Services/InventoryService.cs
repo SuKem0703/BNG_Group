@@ -65,6 +65,8 @@ public class InventoryService : MonoBehaviour
         public int slotIndex;
         public int rarity;
         public float qualityFactor;
+        public uint validationSeed;
+        public bool isStackable;
     }
 
     [System.Serializable]
@@ -140,9 +142,11 @@ public class InventoryService : MonoBehaviour
         int slotIndex,
         int rarity,
         float quality,
+        uint validationSeed,
+        bool isStackable,
         System.Action<int> onSuccess)
     {
-        StartCoroutine(AddItemRoutine(itemId, quantity, slotIndex, rarity, quality, onSuccess));
+        StartCoroutine(AddItemRoutine(itemId, quantity, slotIndex, rarity, quality, validationSeed, isStackable, onSuccess));
     }
 
     public void RequestRemoveItem(int itemDbId, System.Action<bool> onComplete = null)
@@ -270,6 +274,8 @@ public class InventoryService : MonoBehaviour
         int slotIndex,
         int rarity,
         float quality,
+        uint validationSeed,
+        bool isStackable,
         System.Action<int> onSuccess)
     {
         string url = NetworkConfig.GetUrl("api/Inventory/add");
@@ -281,7 +287,9 @@ public class InventoryService : MonoBehaviour
             quantity = quantity,
             slotIndex = slotIndex,
             rarity = rarity,
-            qualityFactor = quality
+            qualityFactor = quality,
+            validationSeed = validationSeed,
+            isStackable = isStackable
         };
 
         UnityWebRequest request = CreatePostRequest(url, token, JsonUtility.ToJson(body));

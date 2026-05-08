@@ -968,6 +968,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   animator: {fileID: 5691647660223253319}
   playerStats: {fileID: 3869098756464639400}
+  playerMovement: {fileID: 5419666127035113273}
 --- !u!1 &7053962648512897917
 GameObject:
   m_ObjectHideFlags: 0
@@ -1052,7 +1053,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 934382041
+  GlobalObjectIdHash: 672220998
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1159,6 +1160,7 @@ MonoBehaviour:
   potionCooldownDuration: 2
   potionCooldownTimer: 0
   playerCollider: {fileID: 7485599206526260792}
+  classController: {fileID: 2281157301833218261}
 --- !u!114 &2281157301833218261
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1238,10 +1240,11 @@ MonoBehaviour:
   runHoldThreshold: 0.5
   rb: {fileID: 6571584841508672072}
   moveInput: {x: 0, y: 0}
-  animator: {fileID: 5691647660223253319}
   isDashing: 1
   isRunning: 0
-  comboAttack: {fileID: 4097809021824385584}
+  isAttacking: 0
+  canMoveWhileAttacking: 0
+  playerStats: {fileID: 3869098756464639400}
   ghostTrail: {fileID: 5924939614079651424}
   netMoveInput:
     UpdateTraits:

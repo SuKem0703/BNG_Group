@@ -15,13 +15,9 @@ public class MageEquipmentPanel : MonoBehaviour
 
     public static bool HasWeaponEquipped { get; private set; }
 
-    private ItemDictionary itemDictionary;
-
     private void Awake()
     {
-        itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
-
-        if (itemDictionary == null)
+        if (ItemDictionary.Instance == null)
             Debug.LogError("[MageEquipmentPanel] Không tìm thấy ItemDictionary!");
 
         if (Staff == null) Staff = GameObject.Find("Staff");
@@ -34,14 +30,14 @@ public class MageEquipmentPanel : MonoBehaviour
 
     public void RefreshEquipmentDisplay()
     {
-        if (itemDictionary == null) return;
+        if (ItemDictionary.Instance == null) return;
 
         ClearSlot(Staff);
         ClearSlot(Catalyst);
         ClearSlot(Hat);
         ClearSlot(Robe);
 
-        foreach (Item itemPrefab in itemDictionary.itemPrefabs)
+        foreach (Item itemPrefab in ItemDictionary.Instance.itemPrefabs)
         {
             if (itemPrefab is not EquipmentItem equipPrefab) continue;
             if (equipPrefab.classRestriction != ClassRestriction.Mage) continue;
@@ -129,7 +125,7 @@ public class MageEquipmentPanel : MonoBehaviour
 
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
-        if (savedData == null || itemDictionary == null)
+        if (savedData == null || ItemDictionary.Instance == null)
         {
             ClearSlot(Staff);
             ClearSlot(Catalyst);
@@ -149,7 +145,7 @@ public class MageEquipmentPanel : MonoBehaviour
             GameObject targetSlot = GetSlotByIndex(data.slotIndex);
             if (targetSlot != null)
             {
-                GameObject itemPrefab = itemDictionary.GetItemPrefab(data.itemID);
+                GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
                 if (itemPrefab != null)
                 {
                     GameObject itemGO = Instantiate(itemPrefab, targetSlot.transform);

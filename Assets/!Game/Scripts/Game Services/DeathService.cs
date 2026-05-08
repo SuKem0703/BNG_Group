@@ -37,7 +37,7 @@ public class DeathService : MonoBehaviour
 
         UpdateCheckpointInfo();
 
-        PlayerMovement playerMovement = PlayerStats.Instance.GetComponentInChildren<PlayerMovement>();
+        PlayerMovement playerMovement = PlayerStats.Instance.GetComponent<PlayerMovement>();
         if (playerMovement != null)
         {
             playerMovement.TriggerDeath();

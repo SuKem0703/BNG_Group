@@ -132,8 +132,14 @@ public class Chest : AutoIDBehaviour, IInteractable, ITargetableInfo
             Item item = droppedItem.GetComponent<Item>();
             if (item != null)
             {
-                item.rarity = (rarityMode == RarityMode.Fixed) ? fixedRarity : ItemGenerationHelper.GetRandomRarity();
-                item.qualityFactor = (qualityMode == QualityFactorMode.Max) ? 1f : ItemGenerationHelper.GetWeightedQualityFactor();
+                uint chestHash = string.IsNullOrEmpty(UniqueID) ? (uint)gameObject.GetInstanceID() : (uint)UniqueID.GetHashCode();
+                uint itemStatSeed = SaveController.MasterSeed + chestHash;
+                SeededRandom itemRng = new SeededRandom(itemStatSeed);
+
+                item.rarity = (rarityMode == RarityMode.Fixed) ? fixedRarity : ItemGenerationHelper.GetRandomRarity(itemRng);
+                item.qualityFactor = (qualityMode == QualityFactorMode.Max) ? 1f : ItemGenerationHelper.GetWeightedQualityFactor(itemRng);
+
+                item.dropSeed = itemStatSeed;
             }
 
             BounceEffect bounce = droppedItem.GetComponent<BounceEffect>();

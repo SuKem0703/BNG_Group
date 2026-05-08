@@ -10,7 +10,7 @@ public class EnemySpawnArea : MonoBehaviour
     [SerializeField] private int maxEnemies = 3;
     [SerializeField] private float respawnDelay = 10f;
 
-    [SerializeField] private List<GameObject> activeEnemies = new List<GameObject>();
+    [SerializeField] private List<GameObject> pooledEnemies = new List<GameObject>();
     private BoxCollider2D spawnBounds;
 
     void Awake()
@@ -29,7 +29,7 @@ public class EnemySpawnArea : MonoBehaviour
     {
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
 
-        foreach (var enemy in activeEnemies)
+        foreach (var enemy in pooledEnemies)
         {
             if (enemy != null)
             {
@@ -38,9 +38,13 @@ public class EnemySpawnArea : MonoBehaviour
                 {
                     netObj.Despawn(true);
                 }
+                else
+                {
+                    Destroy(enemy);
+                }
             }
         }
-        activeEnemies.Clear();
+        pooledEnemies.Clear();
     }
 
     private IEnumerator InitialSpawnRoutine()
@@ -61,21 +65,42 @@ public class EnemySpawnArea : MonoBehaviour
         Vector2 spawnPos = GetRandomPointInBounds();
         GameObject selectedPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
 
-        GameObject enemyObj = Instantiate(selectedPrefab, spawnPos, Quaternion.identity);
+        GameObject enemyObj = null;
 
-        var netObj = enemyObj.GetComponent<NetworkObject>();
-        if (netObj != null)
+        foreach (var obj in pooledEnemies)
         {
-            netObj.Spawn(true);
+            if (obj != null && !obj.activeInHierarchy && obj.name.StartsWith(selectedPrefab.name))
+            {
+                enemyObj = obj;
+                break;
+            }
         }
 
-        activeEnemies.Add(enemyObj);
+        if (enemyObj == null)
+        {
+            enemyObj = Instantiate(selectedPrefab, spawnPos, Quaternion.identity);
+            enemyObj.name = selectedPrefab.name + "_" + pooledEnemies.Count;
+            pooledEnemies.Add(enemyObj);
+        }
+        else
+        {
+            enemyObj.transform.position = spawnPos;
+            enemyObj.SetActive(true);
+        }
 
         var enemyScript = enemyObj.GetComponent<Enemy>();
         if (enemyScript != null)
         {
-            StartCoroutine(TrackEnemyDeath(enemyObj));
+            enemyScript.ResetEnemyState();
         }
+
+        var netObj = enemyObj.GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.IsSpawned)
+        {
+            netObj.Spawn(true);
+        }
+
+        StartCoroutine(TrackEnemyDeath(enemyObj));
     }
 
     private Vector2 GetRandomPointInBounds()
@@ -95,8 +120,6 @@ public class EnemySpawnArea : MonoBehaviour
         }
 
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) yield break;
-
-        activeEnemies.Remove(enemyObj);
 
         yield return new WaitForSeconds(respawnDelay);
 

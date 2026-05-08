@@ -26,6 +26,9 @@ public abstract class Item : MonoBehaviour
     public float qualityFactor = 1f;
     public ItemRarity rarity = ItemRarity.Common;
 
+    [Header("Bảo mật")]
+    public uint dropSeed = 0;
+
     [SerializeField] protected TMP_Text quantityTextOnUI;
     [SerializeField] protected TMP_Text quantityTextOnWorld;
 

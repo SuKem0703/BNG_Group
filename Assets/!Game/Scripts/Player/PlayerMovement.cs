@@ -22,7 +22,6 @@ public class PlayerMovement : NetworkBehaviour
 
     public Rigidbody2D rb;
     public Vector2 moveInput;
-    public Animator animator;
 
     public bool isDashing = false;
     public bool isRunning = false;
@@ -38,9 +37,10 @@ public class PlayerMovement : NetworkBehaviour
     private bool isDead = false;
     public bool IsDead => isDead;
 
-    private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
-    public KnightComboNormalAttack comboAttack;
+    public bool isAttacking = false;
+    public bool canMoveWhileAttacking = false;
 
+    [SerializeField] private PlayerStats playerStats;
     public GhostTrail ghostTrail;
 
     public NetworkVariable<Vector2> netMoveInput = new NetworkVariable<Vector2>(Vector2.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
@@ -50,8 +50,6 @@ public class PlayerMovement : NetworkBehaviour
     void Awake()
     {
         if (rb == null) rb = GetComponent<Rigidbody2D>();
-        if (animator == null) animator = GetComponentInChildren<Animator>();
-        if (comboAttack == null) comboAttack = GetComponentInChildren<KnightComboNormalAttack>();
         if (ghostTrail == null) ghostTrail = GetComponentInChildren<GhostTrail>();
     }
 
@@ -98,11 +96,7 @@ public class PlayerMovement : NetworkBehaviour
 
                 if (!isDashing)
                 {
-                    bool isCurrentlyAttacking = animator.GetBool("isAttacking");
-                    bool isWalkAttacking = animator.GetBool("isWalkAttacking");
-                    bool isRunAttacking = animator.GetBool("isRunAttacking");
-                    bool canMove = !isCurrentlyAttacking || isWalkAttacking || isRunAttacking;
-
+                    bool canMove = !isAttacking || canMoveWhileAttacking;
                     float currentSpeed = isRunning ? (moveSpeed * runSpeedMultiplier) : moveSpeed;
                     rb.linearVelocity = canMove ? moveInput * currentSpeed : Vector2.zero;
                 }
@@ -112,28 +106,7 @@ public class PlayerMovement : NetworkBehaviour
             }
         }
 
-        Vector2 currentMove = IsOwner ? moveInput : netMoveInput.Value;
-        bool currentRun = IsOwner ? isRunning : netIsRunning.Value;
-        Vector2 currentLast = netLastInput.Value;
-
-        bool isMoving = currentMove.magnitude > 0.1f;
-
-        animator.SetBool("isWalking", isMoving && !currentRun);
-        animator.SetBool("isRunning", isMoving && currentRun);
-
-        if (isMoving)
-        {
-            animator.SetFloat("InputX", currentMove.x);
-            animator.SetFloat("InputY", currentMove.y);
-        }
-
-        animator.SetFloat("LastInputX", currentLast.x);
-        animator.SetFloat("LastInputY", currentLast.y);
-
-        if (playerStats != null)
-        {
-            moveSpeed = playerStats.finalMoveSpeed;
-        }
+        if (playerStats != null) moveSpeed = playerStats.finalMoveSpeed;
     }
 
     private void FixedUpdate()
@@ -141,10 +114,9 @@ public class PlayerMovement : NetworkBehaviour
         if (!IsOwner) return;
 
         if (isDead) { rb.linearVelocity = Vector2.zero; return; }
-        bool isWalkAttacking = animator.GetBool("isWalkAttacking");
-        bool isRunAttacking = animator.GetBool("isRunAttacking");
-        bool attackAllowsMovement = isWalkAttacking || isRunAttacking;
-        if (PauseController.IsGamePause || isDashing || (!attackAllowsMovement && comboAttack != null && comboAttack.isAttacking) || !SaveController.IsDataLoaded) return;
+
+        bool attackAllowsMovement = canMoveWhileAttacking;
+        if (PauseController.IsGamePause || isDashing || (!attackAllowsMovement && isAttacking) || !SaveController.IsDataLoaded) return;
 
         float currentSpeed = isRunning ? (moveSpeed * runSpeedMultiplier) : moveSpeed;
         rb.linearVelocity = moveInput * currentSpeed;
@@ -159,12 +131,13 @@ public class PlayerMovement : NetworkBehaviour
         isSprintLocked = false;
         canRunAfterDash = false;
         isDead = false;
+        isAttacking = false;
+        canMoveWhileAttacking = false;
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
         if (IsServer)
         {
             if (IsOwner)
@@ -215,10 +188,10 @@ public class PlayerMovement : NetworkBehaviour
 
     public void Move(InputAction.CallbackContext context)
     {
-        if (!IsOwner || isDead) return;
+        if (!IsOwner) return;
 
         Vector2 rawInput = context.ReadValue<Vector2>();
-        moveInput = PauseController.IsGamePause ? Vector2.zero : rawInput;
+        moveInput = (PauseController.IsGamePause || isDead) ? Vector2.zero : rawInput;
 
         if (moveInput.magnitude > 0.01f)
         {
@@ -228,7 +201,7 @@ public class PlayerMovement : NetworkBehaviour
 
     public void Dash(InputAction.CallbackContext context)
     {
-        if (!IsOwner || isDead || PauseController.IsGamePause) return;
+        if (!IsOwner) return;
 
         if (context.started)
         {
@@ -242,6 +215,8 @@ public class PlayerMovement : NetworkBehaviour
             holdTimer = 0f;
             if (!isSprintLocked) canRunAfterDash = false;
         }
+
+        if (isDead || PauseController.IsGamePause) return;
 
         if (context.performed && !isDashing && !isDashOnCooldown && moveInput != Vector2.zero)
         {
@@ -277,10 +252,7 @@ public class PlayerMovement : NetworkBehaviour
         isDashing = false;
         playerStats?.SetInvincible(false);
 
-        if (isDashButtonHeld)
-        {
-            canRunAfterDash = true;
-        }
+        if (isDashButtonHeld) canRunAfterDash = true;
 
         yield return new WaitForSeconds(dashCooldown);
         isDashOnCooldown = false;
@@ -291,9 +263,7 @@ public class PlayerMovement : NetworkBehaviour
         if (!IsOwner || isDead) return;
 
         Vector3 lookDirection = (targetPosition - transform.position).normalized;
-
         netLastInput.Value = new Vector2(lookDirection.x, lookDirection.y);
-
         moveInput = Vector2.zero;
         netMoveInput.Value = Vector2.zero;
         rb.linearVelocity = Vector2.zero;
@@ -304,10 +274,6 @@ public class PlayerMovement : NetworkBehaviour
         if (isDead) return;
         isDead = true;
         ResetMovementState();
-
-        animator.SetBool("isAttacking", false);
-        animator.SetBool("isWalkAttacking", false);
-        animator.ResetTrigger("Attack");
     }
 
     public void TriggerDeathUI()
@@ -332,12 +298,13 @@ public class PlayerMovement : NetworkBehaviour
     private void ResetMovementState()
     {
         rb.linearVelocity = Vector2.zero;
-        animator.SetBool("isWalking", false);
-        animator.SetBool("isRunning", false);
         isSprintLocked = false;
         isDashButtonHeld = false;
         canRunAfterDash = false;
         holdTimer = 0f;
+        isAttacking = false;
+        canMoveWhileAttacking = false;
+        moveInput = Vector2.zero;
 
         if (IsOwner)
         {
@@ -346,11 +313,5 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
-    public void ResetDeathState()
-    {
-        isDead = false;
-
-        animator.ResetTrigger("Die");
-        animator.Play("Idle");
-    }
+    public void ResetDeathState() => isDead = false;
 }

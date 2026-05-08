@@ -14,13 +14,9 @@ public class KnightEquipmentPanel : MonoBehaviour
     [Header("Item Display Settings")]
     public GridLayoutGroup scrollViewGrid;
 
-    private ItemDictionary itemDictionary;
-
     private void Awake()
     {
-        itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
-
-        if (itemDictionary == null)
+        if (ItemDictionary.Instance == null)
             Debug.LogError("[KnightEquipmentPanel] Không tìm thấy ItemDictionary!");
 
         if (Swords == null) Swords = GameObject.Find("Swords");
@@ -33,14 +29,14 @@ public class KnightEquipmentPanel : MonoBehaviour
 
     public void RefreshEquipmentDisplay()
     {
-        if (itemDictionary == null) return;
+        if (ItemDictionary.Instance == null) return;
 
         ClearSlot(Swords);
         ClearSlot(Shield);
         ClearSlot(Helmet);
         ClearSlot(Armor);
 
-        foreach (Item itemPrefab in itemDictionary.itemPrefabs)
+        foreach (Item itemPrefab in ItemDictionary.Instance.itemPrefabs)
         {
             if (itemPrefab is not EquipmentItem equipPrefab) continue;
             if (equipPrefab.classRestriction != ClassRestriction.Knight) continue;
@@ -127,12 +123,6 @@ public class KnightEquipmentPanel : MonoBehaviour
 
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
-        if (itemDictionary == null)
-        {
-            itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
-            if (itemDictionary == null) return;
-        }
-
         ClearSlot(Swords);
         ClearSlot(Shield);
         ClearSlot(Helmet);
@@ -151,7 +141,7 @@ public class KnightEquipmentPanel : MonoBehaviour
             GameObject targetSlot = GetSlotByIndex(data.slotIndex);
             if (targetSlot != null)
             {
-                GameObject itemPrefab = itemDictionary.GetItemPrefab(data.itemID);
+                GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
                 if (itemPrefab != null)
                 {
                     GameObject itemGO = Instantiate(itemPrefab, targetSlot.transform);

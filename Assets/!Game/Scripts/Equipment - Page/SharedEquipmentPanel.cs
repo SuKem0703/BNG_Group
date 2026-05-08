@@ -15,13 +15,9 @@ public class SharedEquipmentPanel : MonoBehaviour
     [Header("Item Display Settings")]
     public GridLayoutGroup scrollViewGrid;
 
-    private ItemDictionary itemDictionary;
-
     private void Awake()
     {
-        itemDictionary = Object.FindFirstObjectByType<ItemDictionary>();
-
-        if (itemDictionary == null)
+        if (ItemDictionary.Instance == null)
             Debug.LogError("[SharedEquipmentPanel] Không tìm thấy ItemDictionary!");
 
         if (Legs == null) Legs = GameObject.Find("Legs");
@@ -36,12 +32,12 @@ public class SharedEquipmentPanel : MonoBehaviour
 
     public void RefreshEquipmentDisplay(ClassRestriction classRestriction)
     {
-        if (itemDictionary == null) return;
+        if (ItemDictionary.Instance == null) return;
 
         foreach (var slot in GetAllSlots())
             ClearSlot(slot);
 
-        foreach (Item itemPrefab in itemDictionary.itemPrefabs)
+        foreach (Item itemPrefab in ItemDictionary.Instance.itemPrefabs)
         {
             if (itemPrefab is not EquipmentItem equipPrefab) continue;
             if (equipPrefab.isEquipped) continue;
@@ -144,7 +140,7 @@ public class SharedEquipmentPanel : MonoBehaviour
             GameObject targetSlot = GetSlotByIndex(data.slotIndex);
             if (targetSlot == null) continue;
 
-            GameObject itemPrefab = itemDictionary.GetItemPrefab(data.itemID);
+            GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
             if (itemPrefab == null) continue;
 
             GameObject itemGO = Instantiate(itemPrefab, targetSlot.transform);

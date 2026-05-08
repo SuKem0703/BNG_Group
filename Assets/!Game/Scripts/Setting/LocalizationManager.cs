@@ -19,7 +19,6 @@ public class LocalizationManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(transform.root.gameObject);
             return;
         }
         Instance = this;

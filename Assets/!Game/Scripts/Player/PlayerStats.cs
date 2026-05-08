@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
@@ -180,7 +181,6 @@ public class PlayerStats : NetworkBehaviour
         {
             if (MapController.Instance != null && MapController.Instance.IsSafeZone()) return false;
 
-            ClassController classController = GetComponent<ClassController>();
             if (classController.knightObject.activeSelf) return KnightEquipmentPanel.HasWeaponEquipped;
             else return MageEquipmentPanel.HasWeaponEquipped;
         }
@@ -196,6 +196,8 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField] private float potionCooldownTimer;
 
     public CapsuleCollider2D playerCollider;
+
+    [SerializeField] private ClassController classController;
 
     public static event System.Action<Slot[], string> OnEquipmentUIReady;
 
@@ -286,7 +288,6 @@ public class PlayerStats : NetworkBehaviour
 
     void HandleRegen()
     {
-        ClassController classController = GetComponent<ClassController>();
         bool isKnight = classController.knightObject.activeSelf;
 
         if (isKnight)
@@ -355,9 +356,6 @@ public class PlayerStats : NetworkBehaviour
     public void ApplyEquippedItems()
     {
         if (InventoryController.Instance == null || ItemDictionary.Instance == null) return;
-
-        var classController = GetComponent<ClassController>();
-        if (classController == null) return;
 
         bool isKnightActive = classController.knightObject.activeSelf;
 
@@ -513,19 +511,16 @@ public class PlayerStats : NetworkBehaviour
         float reductionFactor = (1f - mitigation) * (1f - dmgRed);
         int finalDamage = Mathf.Max(Mathf.CeilToInt(rawDamage * reductionFactor), 1);
 
-        ClassController classController = GetComponent<ClassController>();
         bool isKnight = classController.knightObject.activeSelf;
 
         int currentHP = isKnight ? knightHealth : mageHealth;
         currentHP -= finalDamage;
 
-        GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
-        if (popupPrefab != null)
+        if (DamagePopupPool.Instance != null)
         {
             Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
-            GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
-            DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
-            if (popupScript != null) popupScript.Setup(finalDamage, DamageSourceType.Enemy);
+            DamagePopup popup = DamagePopupPool.Instance.GetPopup(spawnPosition);
+            popup.Setup(finalDamage, DamageSourceType.Enemy);
         }
 
         if (isKnight) knightHealth = currentHP;
@@ -545,9 +540,6 @@ public class PlayerStats : NetworkBehaviour
     private void HandleDeath(string who)
     {
         Debug.Log($"{who} has fallen!");
-
-        ClassController classController = GetComponent<ClassController>();
-        if (classController == null) return;
 
         isProcessingDeath = true;
 
@@ -666,8 +658,6 @@ public class PlayerStats : NetworkBehaviour
 
     public void HealActiveCharacter(int amount)
     {
-        ClassController classController = GetComponent<ClassController>();
-        if (classController == null) return;
         if (classController.knightObject.activeSelf)
         {
             if (knightHealth >= finalKnightMaxHP) Heal(amount, false); else Heal(amount, true);
@@ -680,8 +670,6 @@ public class PlayerStats : NetworkBehaviour
 
     public void RecoverMPActiveCharacter(int amount)
     {
-        ClassController classController = GetComponent<ClassController>();
-        if (classController == null) return;
         if (classController.knightObject.activeSelf)
         {
             if (knightMP >= finalKnightMaxMP) RecoverMP(amount, false); else RecoverMP(amount, true);
@@ -701,16 +689,15 @@ public class PlayerStats : NetworkBehaviour
 
     private void ShowRecoveryPopup(int amount, DamageSourceType type)
     {
-        GameObject popupPrefab = LoadResourceManager.Instance.DamagePopupPrefab;
-        if (popupPrefab == null || amount <= 0) return;
+        if (amount <= 0 || DamagePopupPool.Instance == null) return;
 
         var classController = GetComponent<ClassController>();
         Transform activeCharacterTransform = classController.knightObject.activeSelf
             ? classController.knightObject.transform : classController.mageObject.transform;
 
         Vector3 spawnPosition = activeCharacterTransform.position + new Vector3(0, 1.5f, 0);
-        GameObject popupGO = Instantiate(popupPrefab, spawnPosition, Quaternion.identity);
-        DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
-        if (popupScript != null) popupScript.Setup(amount, type);
+
+        DamagePopup popup = DamagePopupPool.Instance.GetPopup(spawnPosition);
+        popup.Setup(amount, type);
     }
 }

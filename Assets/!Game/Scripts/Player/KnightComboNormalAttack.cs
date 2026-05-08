@@ -38,6 +38,7 @@ public class KnightComboNormalAttack : NetworkBehaviour
     public bool isRunning => animator.GetBool("isRunning");
     public bool isWalkAttacking => animator.GetBool("isWalkAttacking");
     public bool isRunAttacking => animator.GetBool("isRunAttacking");
+
     public Transform attackPoint;
     public float attackRange = 0.6f;
     public LayerMask enemyLayer;
@@ -69,6 +70,8 @@ public class KnightComboNormalAttack : NetworkBehaviour
             animator.SetBool("isAttacking", false);
             animator.SetBool("isWalkAttacking", false);
             animator.SetBool("isRunAttacking", false);
+
+            if (playerMovement != null) playerMovement.isAttacking = false;
             return;
         }
 
@@ -130,6 +133,12 @@ public class KnightComboNormalAttack : NetworkBehaviour
 
         bool isMoving = playerMovement != null && playerMovement.moveInput.magnitude > 0.1f;
         bool isRunningLocal = playerMovement != null && playerMovement.isRunning;
+
+        if (playerMovement != null)
+        {
+            playerMovement.isAttacking = true;
+            playerMovement.canMoveWhileAttacking = isRunningLocal || isMoving;
+        }
 
         if (isRunningLocal)
         {
@@ -215,6 +224,12 @@ public class KnightComboNormalAttack : NetworkBehaviour
         animator.SetBool("isRunAttacking", false);
         animator.ResetTrigger("Attack");
         attackPressed = false;
+
+        if (playerMovement != null)
+        {
+            playerMovement.isAttacking = false;
+            playerMovement.canMoveWhileAttacking = false;
+        }
     }
 
     public void DealDamageEvent()

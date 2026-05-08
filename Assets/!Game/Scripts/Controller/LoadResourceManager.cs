@@ -9,7 +9,6 @@ public class LoadResourceManager : MonoBehaviour
     [SerializeField] private GameObject confirmUIPrefab;
     [SerializeField] private GameObject notifyUIPrefab;
     [SerializeField] private GameObject selectionBoxPrefab;
-    [SerializeField] private GameObject damagePopupPrefab;
     [SerializeField] private GameObject targetIndicatorPrefab;
     [SerializeField] private GameObject mainLoadingCanvasPrefab;
     [SerializeField] private GameObject miniLoadingScreenPrefab;
@@ -17,7 +16,6 @@ public class LoadResourceManager : MonoBehaviour
     public GameObject ConfirmUIPrefab => confirmUIPrefab;
     public GameObject NotifyUIPrefab => notifyUIPrefab;
     public GameObject SelectionBoxPrefab => selectionBoxPrefab;
-    public GameObject DamagePopupPrefab => damagePopupPrefab;
     public GameObject TargetIndicatorPrefab => targetIndicatorPrefab;
     public GameObject MainLoadingCanvasPrefab => mainLoadingCanvasPrefab;
     public GameObject MiniLoadingScreenPrefab => miniLoadingScreenPrefab;
@@ -26,7 +24,6 @@ public class LoadResourceManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(transform.root.gameObject);
             return;
         }
         Instance = this;
@@ -39,7 +36,6 @@ public class LoadResourceManager : MonoBehaviour
         if (confirmUIPrefab == null) confirmUIPrefab = Resources.Load<GameObject>("UI/ConfirmUICanvas");
         if (notifyUIPrefab == null) notifyUIPrefab = Resources.Load<GameObject>("UI/NotifyUICanvas");
         if (selectionBoxPrefab == null) selectionBoxPrefab = Resources.Load<GameObject>("UI/SelectionBox");
-        if (damagePopupPrefab == null) damagePopupPrefab = Resources.Load<GameObject>("DamagePopup");
         if (targetIndicatorPrefab == null) targetIndicatorPrefab = Resources.Load<GameObject>("UI/TargetIndicator_Prefab");
         if (miniLoadingScreenPrefab == null) miniLoadingScreenPrefab = Resources.Load<GameObject>("UI/MiniLoadingScreen");
         if (mainLoadingCanvasPrefab == null) mainLoadingCanvasPrefab = Resources.Load<GameObject>("UI/LoadingCanvas");
@@ -59,10 +55,6 @@ public class LoadResourceManager : MonoBehaviour
         if (selectionBoxPrefab == null)
         {
             Debug.LogWarning("SelectionBoxPrefab chưa được gán.");
-        }
-        if (damagePopupPrefab == null)
-        {
-            Debug.LogWarning("DamagePopupPrefab chưa được gán.");
         }
         if (targetIndicatorPrefab == null)
         {

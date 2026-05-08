@@ -18,6 +18,8 @@ public class SaveController : MonoBehaviour
 {
     public static SaveController Instance { get; private set; }
 
+    public static uint MasterSeed { get; private set; }
+
     private static HashSet<Chest> _activeChests = new HashSet<Chest>();
     private Dictionary<string, bool> _sessionChestStates = new Dictionary<string, bool>();
     private List<ChestSaveData> _cachedChestStates = new List<ChestSaveData>();
@@ -36,7 +38,7 @@ public class SaveController : MonoBehaviour
     private SaveAdapter uiAdapter;
     public void RegisterUIAdapter(SaveAdapter adapter) => uiAdapter = adapter;
 
-    private LocalPlayerSaveAdapter localPlayerAdapter;
+    private LocalPlayerAdapter localPlayerAdapter;
 
     private StorageChest[] storageChests;
 
@@ -73,7 +75,7 @@ public class SaveController : MonoBehaviour
         LocalizationManager.OnLanguageChanged += UpdateUIDText;
     }
 
-    public void RegisterLocalPlayer(LocalPlayerSaveAdapter adapter)
+    public void RegisterLocalPlayer(LocalPlayerAdapter adapter)
     {
         localPlayerAdapter = adapter;
     }
@@ -104,7 +106,7 @@ public class SaveController : MonoBehaviour
             {
                 if (NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
                 {
-                    localPlayerAdapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LocalPlayerSaveAdapter>();
+                    localPlayerAdapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LocalPlayerAdapter>();
                 }
             }
             yield return null;
@@ -659,16 +661,9 @@ public class SaveController : MonoBehaviour
         return state != null && state.isOpened;
     }
 
-    [System.Serializable]
-    public class SaveDataRequest
-    {
-        public string dataSave;
-        public string reason;
-    }
-
     IEnumerator SaveToServer(SaveData saveData, SaveReason reason, System.Action<bool> onComplete)
     {
-        string json = JsonUtility.ToJson(new SaveDataRequest { dataSave = JsonUtility.ToJson(saveData), reason = reason.ToString() });
+        string json = JsonUtility.ToJson(new SaveGameRequestDto { dataSave = JsonUtility.ToJson(saveData), reason = reason.ToString() });
 
         string url = NetworkConfig.GetUrl("api/GameData/save-data");
         string token = PlayerPrefs.GetString("AuthToken", "");
@@ -687,7 +682,13 @@ public class SaveController : MonoBehaviour
 
         bool isSuccess = false;
 
-        if (request.result == UnityWebRequest.Result.Success) isSuccess = true;
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            isSuccess = true;
+
+            SaveGameResponseDto responseDto = JsonUtility.FromJson<SaveGameResponseDto>(request.downloadHandler.text);
+            MasterSeed = responseDto.masterSeed;
+        }
         else
         {
             isSuccess = false;
@@ -714,7 +715,11 @@ public class SaveController : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             string json = request.downloadHandler.text;
-            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            GetSaveDataResponseDto responseDto = JsonUtility.FromJson<GetSaveDataResponseDto>(json);
+            MasterSeed = responseDto.masterSeed;
+
+            SaveData data = JsonUtility.FromJson<SaveData>(responseDto.dataSave);
             onLoaded?.Invoke(data);
         }
         else
@@ -727,12 +732,6 @@ public class SaveController : MonoBehaviour
     }
 
     public string GetPlayerUID() => PlayerPrefs.GetString("AccountId", "");
-
-    private string GetText(string key)
-    {
-        if (LocalizationManager.Instance != null) return LocalizationManager.Instance.GetText(key);
-        return key;
-    }
 
     public List<SceneCollected> collectedByScene = new List<SceneCollected>();
 
@@ -760,4 +759,26 @@ public class SaveController : MonoBehaviour
         public string sceneName;
         public List<string> collectedIDs = new List<string>();
     }
+}
+
+[System.Serializable]
+public class SaveGameRequestDto
+{
+    public string dataSave;
+    public string reason;
+}
+
+[System.Serializable]
+public class SaveGameResponseDto
+{
+    public string message;
+    public string context;
+    public uint masterSeed;
+}
+
+[System.Serializable]
+public class GetSaveDataResponseDto
+{
+    public string dataSave;
+    public uint masterSeed;
 }

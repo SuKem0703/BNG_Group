@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class LocalPlayerSaveAdapter : NetworkBehaviour
+public class LocalPlayerAdapter : NetworkBehaviour
 {
     public PlayerStats playerStats;
 
@@ -17,7 +17,7 @@ public class LocalPlayerSaveAdapter : NetworkBehaviour
             }
             else
             {
-                Debug.LogWarning("[LocalPlayerSaveAdapter] SaveController chưa khởi tạo, không thể đăng ký!");
+                Debug.LogWarning("[LocalPlayerAdapter] SaveController chưa khởi tạo, không thể đăng ký!");
             }
         }
     }

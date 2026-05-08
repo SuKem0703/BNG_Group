@@ -7,10 +7,13 @@ public class PlayerAnimatorHandler : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private PlayerStats playerStats;
 
+    [SerializeField] private PlayerMovement playerMovement;
+
     private void Awake()
     {
         if (animator == null) animator = GetComponent<Animator>();
         if (playerStats == null) playerStats = GetComponentInParent<PlayerStats>();
+        if (playerMovement == null) playerMovement = GetComponentInParent<PlayerMovement>();
     }
 
     private void Start()
@@ -23,6 +26,29 @@ public class PlayerAnimatorHandler : MonoBehaviour
         {
             ApplyDeathVisuals();
         }
+    }
+
+    private void Update()
+    {
+        if (playerMovement == null || playerStats == null || animator == null) return;
+
+        Vector2 currentMove = playerMovement.IsOwner ? playerMovement.moveInput : playerMovement.netMoveInput.Value;
+        bool currentRun = playerMovement.IsOwner ? playerMovement.isRunning : playerMovement.netIsRunning.Value;
+        Vector2 currentLast = playerMovement.netLastInput.Value;
+
+        bool isMoving = currentMove.magnitude > 0.1f;
+
+        animator.SetBool("isWalking", isMoving && !currentRun);
+        animator.SetBool("isRunning", isMoving && currentRun);
+
+        if (isMoving)
+        {
+            animator.SetFloat("InputX", currentMove.x);
+            animator.SetFloat("InputY", currentMove.y);
+        }
+
+        animator.SetFloat("LastInputX", currentLast.x);
+        animator.SetFloat("LastInputY", currentLast.y);
     }
 
     private void OnDestroy()
@@ -43,6 +69,7 @@ public class PlayerAnimatorHandler : MonoBehaviour
     {
         animator.SetTrigger("Die");
         animator.SetBool("isWalking", false);
+        animator.SetBool("isRunning", false);
     }
 
     private void ResetVisuals()

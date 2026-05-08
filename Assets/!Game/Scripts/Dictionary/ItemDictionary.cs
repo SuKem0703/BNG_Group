@@ -18,7 +18,6 @@ public class ItemDictionary : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(transform.root.gameObject);
             return;
         }
         Instance = this;

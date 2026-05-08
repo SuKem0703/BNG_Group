@@ -274,11 +274,11 @@ public class VampireKing : Enemy
     private void ShowHealPopupClientRpc(int amount)
     {
         if (amount <= 0) return;
-        if (LoadResourceManager.Instance != null && LoadResourceManager.Instance.DamagePopupPrefab != null)
+
+        if (DamagePopupPool.Instance != null)
         {
             Vector3 spawnPosition = transform.position + new Vector3(0, 1.5f, 0);
-            GameObject popupGO = Instantiate(LoadResourceManager.Instance.DamagePopupPrefab, spawnPosition, Quaternion.identity);
-            DamagePopup popupScript = popupGO.GetComponent<DamagePopup>();
+            DamagePopup popupScript = DamagePopupPool.Instance.GetPopup(spawnPosition);
             if (popupScript != null) popupScript.Setup(amount, DamageSourceType.Heal);
         }
     }

@@ -10,12 +10,18 @@ public class DamagePopup : MonoBehaviour
     public float moveSpeed = 2f;
     public float lifetime = 1f;
 
-    // [MỚI] Kích thước gốc để scale khi crit
     private Vector3 originalScale;
+    private bool isInitialized = false;
 
     private void Awake()
     {
-        // Lấy component TextMeshPro
+        Init();
+    }
+
+    private void Init()
+    {
+        if (isInitialized) return;
+
         textMesh = GetComponent<TextMeshPro>();
         if (textMesh == null)
         {
@@ -23,16 +29,16 @@ public class DamagePopup : MonoBehaviour
             return;
         }
 
-        originalScale = transform.localScale; // Lưu kích thước gốc
-        disappearTimer = lifetime;
-        textColor = textMesh.color;
+        originalScale = transform.localScale;
+        isInitialized = true;
     }
 
     public void Setup(int amount, DamageSourceType damageSourceType, bool isCritical = false)
     {
-        if (textMesh == null) return;
+        Init();
 
-        // 🟢 Xử lý hiển thị text
+        disappearTimer = lifetime;
+
         if (damageSourceType == DamageSourceType.Heal || damageSourceType == DamageSourceType.MPRestore)
             textMesh.SetText(amount.ToString());
         else
@@ -43,10 +49,8 @@ public class DamagePopup : MonoBehaviour
         if (isCritical)
         {
             ColorUtility.TryParseHtmlString("#FFD700", out newColor);
-
             transform.localScale = originalScale * 1.2f;
-
-            textMesh.SetText(textMesh.text);
+            textMesh.fontStyle = FontStyles.Bold;
         }
         else
         {
@@ -69,11 +73,12 @@ public class DamagePopup : MonoBehaviour
                     break;
                 case DamageSourceType.Environment:
                 default:
-                    newColor = textMesh.color;
+                    newColor = Color.white;
                     break;
             }
         }
 
+        newColor.a = 1f;
         textMesh.color = newColor;
         textColor = newColor;
     }
@@ -82,21 +87,25 @@ public class DamagePopup : MonoBehaviour
     {
         if (textMesh == null) return;
 
-        // 1. Di chuyển lên
         transform.position += new Vector3(0, moveSpeed * Time.deltaTime);
 
-        // 2. Mờ dần (Fade out)
         disappearTimer -= Time.deltaTime;
 
         if (disappearTimer < 0) disappearTimer = 0;
 
-        textColor.a = disappearTimer / lifetime; // Alpha giảm dần theo thời gian
+        textColor.a = disappearTimer / lifetime;
         textMesh.color = textColor;
 
-        // 3. Tự hủy khi hết giờ
         if (disappearTimer <= 0)
         {
-            Destroy(gameObject);
+            if (DamagePopupPool.Instance != null)
+            {
+                DamagePopupPool.Instance.ReturnPopup(this);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
     }
 }

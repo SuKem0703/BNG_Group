@@ -36,7 +36,7 @@ public class SoundEffectManager : MonoBehaviour
         }
         else
         {
-            Destroy(transform.root.gameObject);
+            Debug.LogError("Đã tồn tại một instance của SoundEffectManager! Hủy gameObject này.");
         }
     }
 

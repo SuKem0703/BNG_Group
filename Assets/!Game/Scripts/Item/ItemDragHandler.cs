@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -19,9 +20,36 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private SpriteRenderer selectionBoxRenderer;
 
     private Color invalidColor = new Color(1, 0, 0, 0.5f);
-    private PlayerStats playerStats => GameObject.FindGameObjectWithTag("PlayerController").GetComponent<PlayerStats>();
     private KnightEquipmentPanel knightEquipmentPanel => Object.FindFirstObjectByType<KnightEquipmentPanel>();
     private MageEquipmentPanel mageEquipmentPanel => Object.FindFirstObjectByType<MageEquipmentPanel>();
+
+    private PlayerStats playerStats
+    {
+        get
+        {
+            if (NetworkManager.Singleton != null &&
+                NetworkManager.Singleton.IsConnectedClient &&
+                NetworkManager.Singleton.LocalClient.PlayerObject != null)
+            {
+                LocalPlayerAdapter localAdapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LocalPlayerAdapter>();
+                if (localAdapter != null)
+                {
+                    return localAdapter.playerStats;
+                }
+            }
+
+            LocalPlayerAdapter[] allAdapters = Object.FindObjectsByType<LocalPlayerAdapter>(FindObjectsSortMode.None);
+            foreach (var adapter in allAdapters)
+            {
+                if (adapter.IsOwner || NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
+                {
+                    return adapter.playerStats;
+                }
+            }
+
+            return null;
+        }
+    }
 
     void Start()
     {

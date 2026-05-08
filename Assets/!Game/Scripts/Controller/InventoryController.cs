@@ -50,7 +50,7 @@ public class InventoryController : MonoBehaviour
         ReBuildItemCounts();
     }
 
-    public bool AddItem(Item tempItem)
+    public bool AddItem(Item tempItem, uint validationSeed = 0)
     {
         if (tempItem == null) return false;
 
@@ -62,7 +62,7 @@ public class InventoryController : MonoBehaviour
             if (quantityLeft <= 0) return true;
         }
 
-        return TryCreateNewItem(tempItem, quantityLeft);
+        return TryCreateNewItem(tempItem, quantityLeft, validationSeed);
     }
 
     public void RemoveItemsFromInventory(int itemID, int amountToRemove)
@@ -117,7 +117,7 @@ public class InventoryController : MonoBehaviour
         return quantity;
     }
 
-    private bool TryCreateNewItem(Item tempItem, int quantity)
+    private bool TryCreateNewItem(Item tempItem, int quantity, uint validationSeed)
     {
         int emptySlotIndex = -1;
         var occupiedSlots = _inventoryData.Select(x => x.slotIndex).ToHashSet();
@@ -153,6 +153,8 @@ public class InventoryController : MonoBehaviour
             newItemData.slotIndex,
             (int)newItemData.rarity,
             newItemData.qualityFactor,
+            validationSeed,
+            tempItem.IsStackable,
             dbId =>
             {
                 newItemData.dbID = dbId;
