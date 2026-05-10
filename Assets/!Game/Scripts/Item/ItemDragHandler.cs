@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,8 +21,9 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private SpriteRenderer selectionBoxRenderer;
 
     private Color invalidColor = new Color(1, 0, 0, 0.5f);
-    private KnightEquipmentPanel knightEquipmentPanel => Object.FindFirstObjectByType<KnightEquipmentPanel>();
-    private MageEquipmentPanel mageEquipmentPanel => Object.FindFirstObjectByType<MageEquipmentPanel>();
+
+    private static float nextEquipTime = 0f;
+    private const float EQUIP_COOLDOWN = 0.2f;
 
     private PlayerStats playerStats
     {
@@ -65,13 +67,32 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        Slot parentSlot = transform.parent.GetComponent<Slot>();
-        if (parentSlot != null && (parentSlot.isEquipmentSlot || parentSlot.isShopSlot)) return;
-
         Item draggedItem = GetComponent<Item>();
+
+        if (draggedItem != null && draggedItem.isDisplayOnly)
+        {
+            eventData.pointerDrag = null;
+            return;
+        }
+
+        Slot parentSlot = transform.parent.GetComponent<Slot>();
+
+        if (parentSlot != null && parentSlot.isShopSlot)
+        {
+            eventData.pointerDrag = null;
+            return;
+        }
+
+        if (parentSlot != null && parentSlot.isEquipmentSlot && draggedItem is EquipmentItem eq && eq.isEquipped)
+        {
+            eventData.pointerDrag = null;
+            return;
+        }
+
         if (draggedItem != null && draggedItem.dbID == 0)
         {
             Debug.LogWarning("Đang đồng bộ dữ liệu vật phẩm, vui lòng chờ...");
+            eventData.pointerDrag = null;
             return;
         }
 
@@ -107,9 +128,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        Slot parentSlot = transform.parent.GetComponent<Slot>();
-        if (parentSlot != null && (parentSlot.isEquipmentSlot || parentSlot.isShopSlot)) return;
-
         if (currentSelectionBox != null) { Destroy(currentSelectionBox); currentSelectionBox = null; }
 
         canvasGroup.blocksRaycasts = true;
@@ -127,6 +145,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         if (dropSlot == originalSlot) { SnapBack(); return; }
 
+        // --- XỬ LÝ VỨT ĐỒ / TRỒNG CÂY ---
         if (dropSlot == null)
         {
             if (!IsWithinInventory(eventData.position))
@@ -137,21 +156,29 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                     if (InteractionDetector.Instance != null && InteractionDetector.Instance.IsPlotInRange(plot))
                     {
                         FarmController.Instance.TryPlantSeed(plot, seedItem);
-                        if (InventoryService.Instance != null) InventoryService.Instance.RequestUpdateQuantity(draggedItem.dbID, draggedItem.quantity);
+                        var ramData = InventoryController.Instance.GetInventoryItemsData().Find(x => x.dbID == draggedItem.dbID);
+                        if (ramData != null) ramData.quantity = draggedItem.quantity;
+
+                        if (InventoryService.Instance != null)
+                            InventoryService.Instance.ScheduleQuantityUpdate(draggedItem.dbID, draggedItem.quantity);
 
                         if (draggedItem.quantity <= 0)
                         {
                             originalSlot.currentItem = null;
+                            InventoryController.Instance.GetInventoryItemsData().RemoveAll(x => x.dbID == draggedItem.dbID);
                             Destroy(gameObject);
                         }
                         else SnapBack();
 
+                        InventoryController.Instance.ReBuildItemCounts();
                         return;
                     }
                 }
 
                 bool isEquipped = draggedItem is EquipmentItem eq && eq.isEquipped;
-                if (isEquipped || draggedItem is QuestItem || QuestController.Instance.IsItemNeededForActiveQuest(draggedItem.ID))
+                bool isNeededForQuest = QuestController.Instance != null && QuestController.Instance.IsItemNeededForActiveQuest(draggedItem.ID);
+
+                if (isEquipped || draggedItem is QuestItem || isNeededForQuest)
                 {
                     GameNotify.Show("Không thể vứt bỏ vật phẩm này!");
                     SnapBack();
@@ -160,19 +187,13 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 RequestDropItemConfirmation(originalSlot, draggedItem, eventData.position);
             }
             else SnapBack();
-            TooltipManager.Instance.gameObject.SetActive(true);
             return;
         }
 
         if (dropSlot.isShopSlot) { SnapBack(); return; }
 
-        if (dropSlot.isHotBarSlot)
-        {
-            if (draggedItem is EquipmentItem || draggedItem is QuestItem)
-            {
-                SnapBack(); return;
-            }
-        }
+        // --- XỬ LÝ DI CHUYỂN / SWAP ---
+        if (dropSlot.isHotBarSlot && (draggedItem is EquipmentItem || draggedItem is QuestItem)) { SnapBack(); return; }
 
         if (dropSlot.isEquipmentSlot)
         {
@@ -185,77 +206,86 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             }
         }
 
-        bool isStackable = draggedItem.IsStackable;
         Item targetItem = dropSlot.currentItem != null ? dropSlot.currentItem.GetComponent<Item>() : null;
 
-        if (targetItem != null && draggedItem.ID == targetItem.ID && draggedItem is not EquipmentItem)
+        // Cộng dồn Stack
+        if (targetItem != null && draggedItem.ID == targetItem.ID && draggedItem.IsStackable)
         {
             targetItem.AddToStack(draggedItem.quantity);
             originalSlot.currentItem = null;
-            Destroy(gameObject);
 
-            InventoryService.Instance.RequestMoveItem(draggedItem.dbID, GetGlobalSlotIndex(dropSlot), isStackable, (success) =>
-            {
-                if (success && StorageChestController.Instance != null && StorageChestController.Instance.IsViewingChest)
-                {
-                    if (dropSlot.transform.IsChildOf(StorageChestController.Instance.storageChestPage.transform))
-                        StorageChestController.Instance.RefreshChestContent();
-                }
-            });
+            var invData = InventoryController.Instance.GetInventoryItemsData();
+            var targetRam = invData.Find(x => x.dbID == targetItem.dbID);
+            if (targetRam != null) targetRam.quantity = targetItem.quantity;
+            invData.RemoveAll(x => x.dbID == draggedItem.dbID);
+
+            Destroy(gameObject);
+            InventoryController.Instance.ReBuildItemCounts();
+
+            InventoryService.Instance.ScheduleQuantityUpdate(targetItem.dbID, targetItem.quantity);
+            InventoryService.Instance.ScheduleMoveItem(draggedItem.dbID, GetGlobalSlotIndex(dropSlot)); // Để Server xử lý xóa/gộp
             return;
         }
 
+        // Đổi chỗ (Swap)
         if (dropSlot.currentItem != null)
         {
+            Item swappedItem = dropSlot.currentItem.GetComponent<Item>();
+            if (swappedItem != null && swappedItem.dbID == 0)
+            {
+                GameNotify.Show("Vị trí này đang đồng bộ dữ liệu, vui lòng chờ!");
+                SnapBack();
+                return;
+            }
+
             dropSlot.currentItem.transform.SetParent(originalSlot.transform);
             originalSlot.currentItem = dropSlot.currentItem;
             dropSlot.currentItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
-            if (dropSlot.currentItem.GetComponent<Item>() is EquipmentItem targetEquip)
+            if (swappedItem != null)
             {
-                targetEquip.isEquipped = originalSlot.isEquipmentSlot;
-                if (targetEquip.sourceItem is EquipmentItem srcEq) srcEq.isEquipped = targetEquip.isEquipped;
+                var swapData = InventoryController.Instance.GetInventoryItemsData().Find(x => x.dbID == swappedItem.dbID);
+                if (swapData != null)
+                {
+                    swapData.slotIndex = GetGlobalSlotIndex(originalSlot);
+                    if (swappedItem is EquipmentItem swEq)
+                    {
+                        swEq.isEquipped = originalSlot.isEquipmentSlot;
+                        swapData.isEquipped = swEq.isEquipped;
+                    }
+                    InventoryService.Instance.ScheduleMoveItem(swappedItem.dbID, swapData.slotIndex);
+                }
             }
         }
-        else
-        {
-            originalSlot.currentItem = null;
-        }
+        else { originalSlot.currentItem = null; }
 
+        // Cập nhật Item đang kéo
         transform.SetParent(dropSlot.transform);
         dropSlot.currentItem = gameObject;
         GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
-        if (dropSlot.isEquipmentSlot && draggedItem is EquipmentItem equipToWear)
+        var draggedData = InventoryController.Instance.GetInventoryItemsData().Find(x => x.dbID == draggedItem.dbID);
+        if (draggedData != null)
         {
-            UpdateAllEquipmentItems(equipToWear);
-
-            equipToWear.isEquipped = true;
-            if (equipToWear.sourceItem is EquipmentItem srcEqWear) srcEqWear.isEquipped = true;
-
-            InventoryService.Instance.RequestEquip(equipToWear.dbID, true);
-            playerStats.ApplyEquippedItems();
-        }
-        else if (originalSlot.isEquipmentSlot && draggedItem is EquipmentItem equipToTakeOff)
-        {
-            equipToTakeOff.isEquipped = false;
-            if (equipToTakeOff.sourceItem is EquipmentItem srcEqTakeOff) srcEqTakeOff.isEquipped = false;
-
-            InventoryService.Instance.RequestEquip(equipToTakeOff.dbID, false);
-            playerStats.ApplyEquippedItems();
-        }
-        else
-        {
-            InventoryService.Instance.RequestMoveItem(draggedItem.dbID, GetGlobalSlotIndex(dropSlot), isStackable);
-
-            if (StorageChestController.Instance != null && StorageChestController.Instance.IsViewingChest)
+            draggedData.slotIndex = GetGlobalSlotIndex(dropSlot);
+            if (draggedItem is EquipmentItem eq)
             {
-                if (dropSlot.transform.IsChildOf(StorageChestController.Instance.storageChestPage.transform))
-                    StorageChestController.Instance.StartCoroutine(SyncChestAfterMoveDelay());
+                eq.isEquipped = dropSlot.isEquipmentSlot;
+                draggedData.isEquipped = eq.isEquipped;
             }
+            InventoryService.Instance.ScheduleMoveItem(draggedItem.dbID, draggedData.slotIndex);
         }
 
-        TooltipManager.Instance.gameObject.SetActive(true);
+        playerStats?.ApplyEquippedItems();
+        InventoryController.Instance.ReBuildItemCounts();
+
+        if (StorageChestController.Instance != null && StorageChestController.Instance.IsViewingChest)
+        {
+            if (StorageChestController.Instance.storageChestPage != null && dropSlot.transform.IsChildOf(StorageChestController.Instance.storageChestPage.transform))
+                StorageChestController.Instance.StartCoroutine(SyncChestAfterMoveDelay());
+        }
+
+        if (TooltipManager.Instance != null) TooltipManager.Instance.gameObject.SetActive(true);
     }
 
     private IEnumerator SyncChestAfterMoveDelay()
@@ -268,16 +298,13 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         Vector2 worldPos = Camera.main.ScreenToWorldPoint(eventData.position);
 
-        RaycastHit2D[] hits = Physics2D.RaycastAll(worldPos, Vector2.zero);
+        Collider2D[] colliders = Physics2D.OverlapPointAll(worldPos);
 
-        foreach (var hit in hits)
+        foreach (var col in colliders)
         {
-            if (hit.collider == null) continue;
+            if (col == null || col.CompareTag("PlayerController")) continue;
 
-            if (hit.collider.CompareTag("Player")) continue;
-
-            FarmPlot plot = hit.collider.GetComponent<FarmPlot>();
-
+            FarmPlot plot = col.GetComponent<FarmPlot>();
             if (plot != null)
             {
                 return plot;
@@ -286,6 +313,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         return null;
     }
+
     private void UpdateSelectionBoxPosition(PointerEventData eventData)
     {
         if (IsWithinInventory(eventData.position))
@@ -382,37 +410,16 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     private int GetGlobalSlotIndex(Slot slot)
     {
-        int index = slot.transform.GetSiblingIndex();
-        if (slot.isHotBarSlot) index += 1000;
-        return index;
-    }
+        if (slot.isHotBarSlot) return slot.transform.GetSiblingIndex() + 1000;
 
-    private void UpdateAllEquipmentItems(EquipmentItem draggedItem)
-    {
-        InventoryUIAdapter inventoryUI = Object.FindFirstObjectByType<InventoryUIAdapter>();
-        if (inventoryUI == null || inventoryUI.InventoryPanel == null) return;
-
-        foreach (Transform slotTransform in inventoryUI.InventoryPanel)
+        if (slot.isEquipmentSlot)
         {
-            Slot slot = slotTransform.GetComponent<Slot>();
-            if (slot != null && slot.currentItem != null)
-            {
-                if (slot.currentItem.GetComponent<Item>() is EquipmentItem eqItem
-                    && eqItem != draggedItem
-                    && eqItem.isEquipped
-                    && eqItem.classRestriction == draggedItem.classRestriction
-                    && eqItem.equipSlot == draggedItem.equipSlot)
-                {
-                    eqItem.isEquipped = false;
-                    if (eqItem.sourceItem is EquipmentItem srcEq) srcEq.isEquipped = false;
-
-                    InventoryService.Instance.RequestEquip(eqItem.dbID, false);
-                    Debug.Log($"Đã bỏ trang bị: {eqItem.Name}");
-                }
-            }
+            if (slot.classRestriction == ClassRestriction.Knight) return slot.transform.GetSiblingIndex() + 2000;
+            if (slot.classRestriction == ClassRestriction.Mage) return slot.transform.GetSiblingIndex() + 2100;
+            return slot.transform.GetSiblingIndex() + 2200;
         }
-        knightEquipmentPanel.UpdateWeaponStatus();
-        mageEquipmentPanel.UpdateWeaponStatus();
+
+        return slot.transform.GetSiblingIndex();
     }
 
     bool IsWithinInventory(Vector2 mousePosition)
@@ -448,7 +455,9 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             {
                 originalSlot.currentItem = null;
 
-                Transform playerTransform = GameObject.FindGameObjectWithTag("Player")?.transform;
+                InventoryController.Instance.GetInventoryItemsData().RemoveAll(x => x.dbID == itemDbIdToRemove);
+
+                Transform playerTransform = playerStats != null ? playerStats.transform : null;
                 if (playerTransform != null)
                 {
                     Vector2 playerPosition = (Vector2)playerTransform.position;
@@ -471,6 +480,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 }
 
                 Destroy(gameObject);
+
                 InventoryController.Instance.ReBuildItemCounts();
             }
             else
@@ -490,32 +500,136 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnPointerClick(PointerEventData eventData)
     {
-
         if (Time.time - lastClickTime < doubleClickThreshold)
         {
             if (!AntiSpam.CanPerformAction()) return;
 
-            if (StorageChestController.Instance != null &&
-                StorageChestController.Instance.chestPanel.activeSelf)
+            Item thisItem = GetComponent<Item>();
+            if (thisItem == null) return;
+
+            if (thisItem.dbID == 0)
             {
-                Item thisItem = GetComponent<Item>();
+                Debug.LogWarning("Vật phẩm đang được đồng bộ với Server, vui lòng đợi giây lát rồi thử lại.");
+                GameNotify.Show("Đang đồng bộ...");
+                return;
+            }
 
-                if (thisItem == null) return;
-
-                if (thisItem.dbID == 0)
-                {
-                    Debug.LogWarning("Vật phẩm đang được đồng bộ với Server, vui lòng đợi giây lát rồi thử lại.");
-                    GameNotify.Show("Đang đồng bộ...");
-                    return;
-                }
-
+            // Tương tác với Rương đồ
+            if (StorageChestController.Instance != null && StorageChestController.Instance.chestPanel.activeSelf)
+            {
                 StorageChestController.Instance.OnItemDoubleClicked(thisItem);
-
                 lastClickTime = 0;
                 return;
+            }
+
+            // Tương tác nhanh với Trang bị (Mặc / Tháo)
+            if (thisItem is EquipmentItem eqItem)
+            {
+                if (eqItem.isDisplayOnly)
+                {
+                    TryEquipViaDoubleClick(eqItem);
+                    lastClickTime = 0;
+                    return;
+                }
+                else if (eqItem.isEquipped)
+                {
+                    TryUnequipViaDoubleClick(eqItem);
+                    lastClickTime = 0;
+                    return;
+                }
             }
         }
 
         lastClickTime = Time.time;
+    }
+
+    private void TryEquipViaDoubleClick(EquipmentItem sourceEqItem)
+    {
+        if (Time.time < nextEquipTime) return;
+        nextEquipTime = Time.time + EQUIP_COOLDOWN;
+
+        if (playerStats != null && playerStats.level < sourceEqItem.requiredLevel)
+        {
+            GameNotify.Show("Chưa đủ cấp độ!"); return;
+        }
+
+        Slot targetSlot = Object.FindObjectsByType<Slot>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            .FirstOrDefault(s => s.isEquipmentSlot && s.acceptedEquipSlot == sourceEqItem.equipSlot &&
+            (s.classRestriction == ClassRestriction.None || s.classRestriction == sourceEqItem.classRestriction) && s.gameObject.scene.IsValid());
+
+        if (targetSlot == null) return;
+
+        var invData = InventoryController.Instance.GetInventoryItemsData();
+        var sourceRamData = invData.Find(x => x.dbID == sourceEqItem.dbID);
+        if (sourceRamData == null) return;
+
+        int targetGlobalIndex = GetGlobalSlotIndex(targetSlot);
+        int originalIdx = sourceRamData.slotIndex;
+
+        // Swap nếu có đồ cũ
+        if (targetSlot.currentItem != null)
+        {
+            Item equippedItem = targetSlot.currentItem.GetComponent<Item>();
+            var equippedRam = invData.Find(x => x.dbID == equippedItem.dbID);
+            if (equippedRam != null)
+            {
+                equippedRam.slotIndex = originalIdx;
+                equippedRam.isEquipped = false;
+                InventoryService.Instance.ScheduleMoveItem(equippedRam.dbID, originalIdx);
+            }
+            Destroy(targetSlot.currentItem);
+        }
+
+        sourceRamData.slotIndex = targetGlobalIndex;
+        sourceRamData.isEquipped = true;
+
+        // Tạo Visual trên ô trang bị
+        GameObject prefab = ItemDictionary.Instance.GetItemPrefab(sourceEqItem.ID);
+        if (prefab != null)
+        {
+            GameObject newObj = Instantiate(prefab, targetSlot.transform);
+            newObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            EquipmentItem newEq = newObj.GetComponent<EquipmentItem>();
+            newEq.dbID = sourceEqItem.dbID;
+            newEq.quantity = sourceEqItem.quantity;
+            newEq.rarity = sourceEqItem.rarity;
+            newEq.qualityFactor = sourceEqItem.qualityFactor;
+            newEq.isEquipped = true;
+            newEq.isDisplayOnly = false;
+            newEq.UpdateQuantityDisplay();
+            targetSlot.currentItem = newObj;
+        }
+
+        InventoryService.Instance.ScheduleMoveItem(sourceEqItem.dbID, targetGlobalIndex);
+        playerStats?.ApplyEquippedItems();
+        InventoryController.Instance.ReBuildItemCounts();
+    }
+
+    private void TryUnequipViaDoubleClick(EquipmentItem equippedItem)
+    {
+        if (Time.time < nextEquipTime) return;
+        nextEquipTime = Time.time + EQUIP_COOLDOWN;
+
+        var invData = InventoryController.Instance.GetInventoryItemsData();
+        var equippedRamData = invData.Find(x => x.dbID == equippedItem.dbID);
+        if (equippedRamData == null) return;
+
+        var occupied = invData.Where(x => x.slotIndex < 1000).Select(x => x.slotIndex).ToHashSet();
+        int emptySlot = -1;
+        for (int i = 0; i < InventoryController.Instance.slotCount; i++)
+            if (!occupied.Contains(i)) { emptySlot = i; break; }
+
+        if (emptySlot == -1) { GameNotify.Show("Túi đầy!"); return; }
+
+        Slot parentSlot = equippedItem.transform.parent?.GetComponent<Slot>();
+        if (parentSlot != null) parentSlot.currentItem = null;
+        Destroy(equippedItem.gameObject);
+
+        equippedRamData.slotIndex = emptySlot;
+        equippedRamData.isEquipped = false;
+
+        InventoryService.Instance.ScheduleMoveItem(equippedItem.dbID, emptySlot);
+        playerStats?.ApplyEquippedItems();
+        InventoryController.Instance.ReBuildItemCounts();
     }
 }

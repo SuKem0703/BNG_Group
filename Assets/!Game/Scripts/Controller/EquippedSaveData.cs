@@ -3,12 +3,12 @@ using UnityEngine;
 [System.Serializable]
 public class EquippedSaveData
 {
+    public int dbID;
     public int itemID;
     public int slotIndex;
-    public int quantity = 1;
-    public bool isEquipped = true;
+    public int quantity;
+    public bool isEquipped;
     public ItemRarity rarity;
     public float qualityFactor;
-
-    public int sourceItemID = -1;
+    public int sourceItemID;
 }

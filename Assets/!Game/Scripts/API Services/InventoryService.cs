@@ -74,6 +74,7 @@ public class InventoryService : MonoBehaviour
     {
         public bool success;
         public int dbId;
+        public string action;
     }
 
     [System.Serializable]
@@ -122,7 +123,7 @@ public class InventoryService : MonoBehaviour
         StartCoroutine(PostRequest("api/Inventory/move", body, onComplete));
     }
 
-    public void RequestUpdateQuantity(int dbId, int newQuantity)
+    public void RequestUpdateQuantityImmediate(int dbId, int newQuantity)
     {
         StartCoroutine(PostRequest(
             "api/Inventory/update-quantity",
@@ -144,7 +145,7 @@ public class InventoryService : MonoBehaviour
         float quality,
         uint validationSeed,
         bool isStackable,
-        System.Action<int> onSuccess)
+        System.Action<int, string> onSuccess)
     {
         StartCoroutine(AddItemRoutine(itemId, quantity, slotIndex, rarity, quality, validationSeed, isStackable, onSuccess));
     }
@@ -276,7 +277,7 @@ public class InventoryService : MonoBehaviour
         float quality,
         uint validationSeed,
         bool isStackable,
-        System.Action<int> onSuccess)
+        System.Action<int, string> onSuccess)
     {
         string url = NetworkConfig.GetUrl("api/Inventory/add");
         string token = PlayerPrefs.GetString("AuthToken", "");
@@ -298,7 +299,7 @@ public class InventoryService : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             var res = JsonUtility.FromJson<AddItemResponse>(request.downloadHandler.text);
-            if (res.success) onSuccess?.Invoke(res.dbId);
+            if (res.success) onSuccess?.Invoke(res.dbId, res.action);
         }
         else
         {
@@ -404,5 +405,117 @@ public class InventoryService : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Sync Queue (Quantity Debounce Logic)
+
+    private Dictionary<int, Coroutine> _quantitySyncCoroutines = new Dictionary<int, Coroutine>();
+    private Dictionary<int, int> _pendingQuantities = new Dictionary<int, int>();
+
+    public void ScheduleQuantityUpdate(int itemDbId, int newQuantity, float delay = 2.0f)
+    {
+        if (itemDbId == 0) return;
+
+        if (_pendingQuantities.ContainsKey(itemDbId))
+            _pendingQuantities[itemDbId] = newQuantity;
+        else
+            _pendingQuantities.Add(itemDbId, newQuantity);
+
+        if (_quantitySyncCoroutines.ContainsKey(itemDbId))
+        {
+            if (_quantitySyncCoroutines[itemDbId] != null)
+                StopCoroutine(_quantitySyncCoroutines[itemDbId]);
+
+            _quantitySyncCoroutines.Remove(itemDbId);
+        }
+
+        Coroutine newCoroutine = StartCoroutine(SyncQuantityDelayRoutine(itemDbId, delay));
+        _quantitySyncCoroutines.Add(itemDbId, newCoroutine);
+    }
+
+    private IEnumerator SyncQuantityDelayRoutine(int itemDbId, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (_pendingQuantities.ContainsKey(itemDbId))
+        {
+            int finalQty = _pendingQuantities[itemDbId];
+            _pendingQuantities.Remove(itemDbId);
+
+            RequestUpdateQuantityImmediate(itemDbId, finalQty);
+        }
+
+        _quantitySyncCoroutines.Remove(itemDbId);
+    }
+
+    public void CancelQuantityUpdate(int itemDbId)
+    {
+        if (_quantitySyncCoroutines.ContainsKey(itemDbId))
+        {
+            if (_quantitySyncCoroutines[itemDbId] != null)
+                StopCoroutine(_quantitySyncCoroutines[itemDbId]);
+
+            _quantitySyncCoroutines.Remove(itemDbId);
+        }
+        _pendingQuantities.Remove(itemDbId);
+    }
+
+    public void ForceSyncPendingQuantities()
+    {
+        if (_pendingQuantities.Count > 0)
+        {
+            foreach (var kvp in _pendingQuantities)
+            {
+                RequestUpdateQuantityImmediate(kvp.Key, kvp.Value);
+                Debug.Log($"[InventoryService] CHỐT SỔ KHẨN CẤP: Cập nhật item {kvp.Key} còn {kvp.Value} cái.");
+            }
+            _pendingQuantities.Clear();
+        }
+
+        foreach (var coroutine in _quantitySyncCoroutines.Values)
+        {
+            if (coroutine != null) StopCoroutine(coroutine);
+        }
+        _quantitySyncCoroutines.Clear();
+    }
+    #endregion
+
+    #region Move Item Debounce Logic
+    private Dictionary<int, int> _pendingMoves = new Dictionary<int, int>();
+    private Coroutine _moveSyncCoroutine;
+
+    public void ScheduleMoveItem(int itemDbId, int newSlotIndex)
+    {
+        if (itemDbId <= 0) return;
+
+        _pendingMoves[itemDbId] = newSlotIndex;
+
+        if (_moveSyncCoroutine != null) StopCoroutine(_moveSyncCoroutine);
+        _moveSyncCoroutine = StartCoroutine(SyncMovesRoutine(1.5f));
+    }
+
+    private IEnumerator SyncMovesRoutine(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        ForceSyncPendingMoves();
+    }
+
+    public void ForceSyncPendingMoves()
+    {
+        if (_pendingMoves.Count == 0) return;
+
+        if (_moveSyncCoroutine != null) StopCoroutine(_moveSyncCoroutine);
+
+        Debug.Log($"[InventoryService] Đang đồng bộ {_pendingMoves.Count} vị trí item lên Server...");
+
+        foreach (var move in _pendingMoves)
+        {
+            StartCoroutine(PostRequest("api/Inventory/move",
+                new MoveRequestDTO { itemDbId = move.Key, newSlotIndex = move.Value, isStackable = false },
+                null));
+        }
+
+        _pendingMoves.Clear();
+    }
     #endregion
 }

@@ -148,11 +148,7 @@ public class Chest : AutoIDBehaviour, IInteractable, ITargetableInfo
                 bounce.StartBounce();
             }
 
-            SaveController saveController = FindFirstObjectByType<SaveController>();
-            if (saveController != null)
-            {
-                saveController.SaveGame();
-            }
+            if (SaveController.Instance != null) SaveController.Instance.SaveGame();
         }
         else
         {

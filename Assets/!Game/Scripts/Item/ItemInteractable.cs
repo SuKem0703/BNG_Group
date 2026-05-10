@@ -3,16 +3,7 @@ using UnityEngine;
 
 public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
 {
-    private InventoryController inventoryController;
-    private EquipmentScrollViewController equipmentViewController;
-
     private bool isCollected = false;
-
-    void Start()
-    {
-        inventoryController = InventoryController.Instance;
-        equipmentViewController = Object.FindFirstObjectByType<EquipmentScrollViewController>();
-    }
 
     public bool CanInteract()
     {
@@ -29,7 +20,7 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
         Item item = GetComponent<Item>();
         if (item == null) return;
 
-        if (inventoryController == null)
+        if (InventoryController.Instance == null)
         {
             Debug.LogError("ItemInteractable: Không tìm thấy InventoryController!");
             return;
@@ -62,7 +53,7 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
     {
         if (isCollected) return;
 
-        bool itemAdded = inventoryController.AddItem(item, item.dropSeed);
+        bool itemAdded = InventoryController.Instance.AddItem(item, item.dropSeed);
         if (!itemAdded)
         {
             Debug.Log("Inventory đầy, không thể nhặt " + item.Name);
@@ -73,8 +64,6 @@ public class ItemInteractable : MonoBehaviour, IInteractable, ITargetableInfo
         isCollected = true;
 
         item.ShowPopUp();
-        if (equipmentViewController != null)
-            equipmentViewController.ShowEquipmentItems();
 
         if (questItem != null)
         {

@@ -129,7 +129,6 @@ public class PlayerStatsService : MonoBehaviour
         UnityWebRequest request = new UnityWebRequest(url, "POST");
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Authorization", $"Bearer {token}");
-        request.SetRequestHeader("Content-Length", "0");
 
         float startTime = Time.realtimeSinceStartup;
         yield return request.SendWebRequest();

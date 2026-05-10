@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class MageEquipmentPanel : MonoBehaviour
 {
@@ -9,139 +8,33 @@ public class MageEquipmentPanel : MonoBehaviour
     public GameObject Catalyst;
     public GameObject Hat;
     public GameObject Robe;
-
-    [Header("Item Display Settings")]
-    public GridLayoutGroup scrollViewGrid;
-
     public static bool HasWeaponEquipped { get; private set; }
 
     private void Awake()
     {
-        if (ItemDictionary.Instance == null)
-            Debug.LogError("[MageEquipmentPanel] Không tìm thấy ItemDictionary!");
-
         if (Staff == null) Staff = GameObject.Find("Staff");
         if (Catalyst == null) Catalyst = GameObject.Find("Catalyst");
         if (Hat == null) Hat = GameObject.Find("Hat");
         if (Robe == null) Robe = GameObject.Find("Robe");
-
-        if (scrollViewGrid == null) scrollViewGrid = GameObject.Find("EquipmentList")?.GetComponent<GridLayoutGroup>();
-    }
-
-    public void RefreshEquipmentDisplay()
-    {
-        if (ItemDictionary.Instance == null) return;
-
-        ClearSlot(Staff);
-        ClearSlot(Catalyst);
-        ClearSlot(Hat);
-        ClearSlot(Robe);
-
-        foreach (Item itemPrefab in ItemDictionary.Instance.itemPrefabs)
-        {
-            if (itemPrefab is not EquipmentItem equipPrefab) continue;
-            if (equipPrefab.classRestriction != ClassRestriction.Mage) continue;
-            if (equipPrefab.isEquipped) continue;
-
-            GameObject targetSlot = GetAvailableSlot(equipPrefab.equipSlot);
-            if (targetSlot == null) continue;
-
-            Item equippedItem = Instantiate(itemPrefab.gameObject, targetSlot.transform).GetComponent<Item>();
-            equippedItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-
-            equippedItem.quantity = 1;
-            equippedItem.UpdateQuantityDisplay();
-
-            if (equippedItem is EquipmentItem eItem)
-            {
-                eItem.isEquipped = true;
-                eItem.sourceItem = itemPrefab;
-            }
-
-            Slot slotComponent = targetSlot.GetComponent<Slot>();
-            if (slotComponent != null)
-            {
-                slotComponent.isEquipmentSlot = true;
-                slotComponent.currentItem = equippedItem.gameObject;
-            }
-        }
-
-        UpdateWeaponStatus();
-    }
-
-    private GameObject GetAvailableSlot(EquipSlot equipSlot)
-    {
-        switch (equipSlot)
-        {
-            case EquipSlot.Scepter: return Staff.transform.childCount == 0 ? Staff : null;
-            case EquipSlot.Amulet: return Catalyst.transform.childCount == 0 ? Catalyst : null;
-            case EquipSlot.Hat: return Hat.transform.childCount == 0 ? Hat : null;
-            case EquipSlot.Robe: return Robe.transform.childCount == 0 ? Robe : null;
-            default: return null;
-        }
-    }
-
-    private void ClearSlot(GameObject slotGO)
-    {
-        if (slotGO == null) return;
-        foreach (Transform child in slotGO.transform) Destroy(child.gameObject);
-    }
-
-    public List<EquippedSaveData> GetEquipmentItems()
-    {
-        List<EquippedSaveData> equipmentData = new List<EquippedSaveData>();
-
-        AddSlotData(Staff, 0, equipmentData);
-        AddSlotData(Catalyst, 1, equipmentData);
-        AddSlotData(Hat, 2, equipmentData);
-        AddSlotData(Robe, 3, equipmentData);
-
-        return equipmentData;
-    }
-
-    private void AddSlotData(GameObject slotGO, int slotIndex, List<EquippedSaveData> list)
-    {
-        if (slotGO == null) return;
-
-        if (slotGO.transform.childCount > 0)
-        {
-            Item item = slotGO.transform.GetChild(0).GetComponent<Item>();
-            if (item != null)
-            {
-                bool equippedStatus = item is EquipmentItem eq && eq.isEquipped;
-                list.Add(new EquippedSaveData
-                {
-                    itemID = item.ID,
-                    slotIndex = slotIndex,
-                    quantity = item.quantity,
-                    isEquipped = equippedStatus,
-                    rarity = item.rarity,
-                    qualityFactor = item.qualityFactor,
-                    sourceItemID = item.sourceItem != null ? item.sourceItem.ID : -1
-                });
-            }
-        }
     }
 
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
-        if (savedData == null || ItemDictionary.Instance == null)
-        {
-            ClearSlot(Staff);
-            ClearSlot(Catalyst);
-            ClearSlot(Hat);
-            ClearSlot(Robe);
-            UpdateWeaponStatus();
-            return;
-        }
-
         ClearSlot(Staff);
         ClearSlot(Catalyst);
         ClearSlot(Hat);
         ClearSlot(Robe);
 
+        if (savedData == null)
+        {
+            UpdateWeaponStatus();
+            return;
+        }
+
         foreach (EquippedSaveData data in savedData)
         {
+            if (data == null) continue;
+
             GameObject targetSlot = GetSlotByIndex(data.slotIndex);
             if (targetSlot != null)
             {
@@ -154,6 +47,7 @@ public class MageEquipmentPanel : MonoBehaviour
                     Item itemComponent = itemGO.GetComponent<Item>();
                     if (itemComponent != null)
                     {
+                        itemComponent.dbID = data.dbID;
                         itemComponent.quantity = data.quantity;
                         itemComponent.rarity = data.rarity;
                         itemComponent.qualityFactor = data.qualityFactor;
@@ -161,15 +55,9 @@ public class MageEquipmentPanel : MonoBehaviour
 
                         if (itemComponent is EquipmentItem equipComp)
                         {
-                            equipComp.isEquipped = data.isEquipped;
-
-                            Item sourceItemInInventory = FindItemInInventory(itemComponent.ID);
-                            if (sourceItemInInventory != null)
-                            {
-                                equipComp.sourceItem = sourceItemInInventory;
-                                if (sourceItemInInventory is EquipmentItem sourceEq)
-                                    sourceEq.isEquipped = true;
-                            }
+                            equipComp.isEquipped = true;
+                            equipComp.isDisplayOnly = false;
+                            equipComp.sourceItem = null;
                         }
                     }
 
@@ -185,31 +73,51 @@ public class MageEquipmentPanel : MonoBehaviour
         UpdateWeaponStatus();
     }
 
-    private Item FindItemInInventory(int itemID)
+    public List<EquippedSaveData> GetEquipmentItems()
     {
-        if (scrollViewGrid == null) return null;
+        List<EquippedSaveData> equipmentData = new List<EquippedSaveData>();
+        if (Staff != null) AddSlotData(Staff, Staff.transform.GetSiblingIndex(), equipmentData);
+        if (Catalyst != null) AddSlotData(Catalyst, Catalyst.transform.GetSiblingIndex(), equipmentData);
+        if (Hat != null) AddSlotData(Hat, Hat.transform.GetSiblingIndex(), equipmentData);
+        if (Robe != null) AddSlotData(Robe, Robe.transform.GetSiblingIndex(), equipmentData);
+        return equipmentData;
+    }
 
-        foreach (Transform child in scrollViewGrid.transform)
+    private void AddSlotData(GameObject slotGO, int slotIndex, List<EquippedSaveData> list)
+    {
+        if (slotGO == null || slotGO.transform.childCount == 0) return;
+
+        Item item = slotGO.transform.GetChild(0).GetComponent<Item>();
+        if (item != null)
         {
-            Item item = child.GetComponent<Item>();
-            if (item != null && item.ID == itemID && item is EquipmentItem eq && eq.isEquipped)
+            list.Add(new EquippedSaveData
             {
-                return item;
-            }
+                dbID = item.dbID,
+                itemID = item.ID,
+                slotIndex = slotIndex,
+                quantity = item.quantity,
+                isEquipped = true,
+                rarity = item.rarity,
+                qualityFactor = item.qualityFactor,
+                sourceItemID = -1
+            });
         }
-        return null;
+    }
+
+    private void ClearSlot(GameObject slotGO)
+    {
+        if (slotGO == null) return;
+        foreach (Transform child in slotGO.transform) Destroy(child.gameObject);
     }
 
     private GameObject GetSlotByIndex(int slotIndex)
     {
-        switch (slotIndex)
+        GameObject[] allSlots = { Staff, Catalyst, Hat, Robe };
+        foreach (var slot in allSlots)
         {
-            case 0: return Staff;
-            case 1: return Catalyst;
-            case 2: return Hat;
-            case 3: return Robe;
-            default: return null;
+            if (slot != null && slot.transform.GetSiblingIndex() == slotIndex) return slot;
         }
+        return null;
     }
 
     public void UpdateWeaponStatus()

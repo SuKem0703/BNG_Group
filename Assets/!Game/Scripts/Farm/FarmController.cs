@@ -12,11 +12,22 @@ public class FarmController : MonoBehaviour
     {
         if (Instance != null && Instance != this) Destroy(gameObject);
         Instance = this;
+    }
 
-        FarmPlot[] allPlots = FindObjectsByType<FarmPlot>(FindObjectsSortMode.None);
-        foreach (var plot in allPlots)
+    public void RegisterPlot(FarmPlot plot)
+    {
+        if (plot != null && !string.IsNullOrEmpty(plot.UniqueID))
         {
             scenePlots[plot.UniqueID] = plot;
+        }
+    }
+
+    public void UnregisterPlot(FarmPlot plot)
+    {
+        if (plot != null && !string.IsNullOrEmpty(plot.UniqueID))
+        {
+            if (scenePlots.ContainsKey(plot.UniqueID))
+                scenePlots.Remove(plot.UniqueID);
         }
     }
 
@@ -81,7 +92,27 @@ public class FarmController : MonoBehaviour
         plot.isPlanted = true;
 
         SoundEffectManager.Play("Seeding", true);
+
         seed.RemoveFromStack(1);
+
+        if (InventoryController.Instance != null)
+        {
+            var ramData = InventoryController.Instance.GetInventoryItemsData().Find(x => x.dbID == seed.dbID);
+            if (ramData != null) ramData.quantity = seed.quantity;
+
+            if (seed.quantity <= 0)
+            {
+                InventoryController.Instance.GetInventoryItemsData().RemoveAll(x => x.dbID == seed.dbID);
+                InventoryService.Instance.CancelQuantityUpdate(seed.dbID);
+                InventoryService.Instance.RequestRemoveItem(seed.dbID);
+                Destroy(seed.gameObject);
+            }
+            else
+            {
+                InventoryService.Instance.ScheduleQuantityUpdate(seed.dbID, seed.quantity);
+            }
+            InventoryController.Instance.ReBuildItemCounts();
+        }
 
         if (QuestController.Instance != null) QuestController.Instance.MarkCropPlanted(seed.ID);
 
@@ -95,30 +126,24 @@ public class FarmController : MonoBehaviour
         Crop crop = plot.currentCrop;
         GameObject itemPrefab = crop.harvestItemPrefab;
 
-        bool isFull = false;
-        int collectedCount = 0;
-        for (int i = 0; i < crop.harvestAmount; i++)
-        {
-            bool added = InventoryController.Instance.AddItem(itemPrefab.GetComponent<Item>());
-            if (added)
-            {
-                collectedCount++;
-                Vector3 randomOffset = new Vector3(UnityEngine.Random.Range(-0.2f, 0.2f), UnityEngine.Random.Range(0f, 0.3f), 0);
-                GameObject tempObj = Instantiate(itemPrefab, plot.transform.position + randomOffset, Quaternion.identity);
-                if (tempObj.TryGetComponent(out Item item)) item.ShowPopUp();
-                Destroy(tempObj);
-            }
-            else { isFull = true; break; }
-        }
-
-        if (collectedCount == 0) return;
-
         SoundEffectManager.Play("Harvesting", true);
 
-        float offsetSeconds = 0f;
+        for (int i = 0; i < crop.harvestAmount; i++)
+        {
+            Vector3 randomOffset = new Vector3(UnityEngine.Random.Range(-0.2f, 0.2f), UnityEngine.Random.Range(0f, 0.3f), 0);
+            GameObject vfxObj = Instantiate(itemPrefab, plot.transform.position + randomOffset, Quaternion.identity);
+            if (vfxObj.TryGetComponent(out Item item)) item.ShowPopUp();
+            Destroy(vfxObj);
+        }
+
+        Item harvestItemData = itemPrefab.GetComponent<Item>();
+        if (harvestItemData != null && InventoryController.Instance != null)
+        {
+            InventoryController.Instance.PredictAddHarvestItem(harvestItemData, crop.harvestAmount);
+        }
+
         if (crop.isRegrowable)
         {
-            offsetSeconds = crop.GetRegrowOffsetSeconds();
             crop.Regrow();
         }
         else
@@ -128,6 +153,6 @@ public class FarmController : MonoBehaviour
             plot.isPlanted = false;
         }
 
-        FarmService.Instance.RequestHarvest(plot.UniqueID, crop.isRegrowable, offsetSeconds);
+        FarmService.Instance.RequestHarvest(plot.UniqueID);
     }
 }

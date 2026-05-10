@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Unity.Netcode;
 
 public class ConsumableItem : Item
 {
@@ -6,95 +7,78 @@ public class ConsumableItem : Item
     public override bool IsStackable => true;
 
     [Header("Consumable Effect")]
-    [Tooltip("ID phải khớp với Effect.cs, ví dụ: 'HEAL_INSTANT'")]
     public string effectID;
-
-    [Tooltip("Giá trị của hiệu ứng, ví dụ: 50 (hồi 50 HP)")]
     public float effectValue;
-
-    [Tooltip("Thời gian hiệu ứng. Để 0 nếu là 'tức thì' (instant)")]
     public float effectDuration = 0f;
 
     [Header("Cooldown")]
-    [Tooltip("Đánh dấu true nếu item này kích hoạt và bị ảnh hưởng bởi cooldown Potion toàn cục")]
     public bool triggersGlobalPotionCooldown = false;
 
-    private PlayerStats playerStats;
-
-    protected override void Awake()
+    private PlayerStats GetLocalPlayerStats()
     {
-        base.Awake();
-
-        playerStats = FindFirstObjectByType<PlayerStats>();
-        if (playerStats == null)
-            Debug.LogError("ConsumableItem: Không tìm thấy PlayerStats trong Scene!");
+        if (NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.IsConnectedClient &&
+            NetworkManager.Singleton.LocalClient.PlayerObject != null)
+        {
+            var adapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LocalPlayerAdapter>();
+            if (adapter != null) return adapter.playerStats;
+        }
+        return null;
     }
 
     public override void UseItem()
     {
+        PlayerStats playerStats = GetLocalPlayerStats();
+
         if (playerStats == null || EffectService.Instance == null)
         {
-            Debug.LogWarning("Không thể dùng item: Thiếu PlayerStats hoặc EffectController.");
+            Debug.LogWarning("Không thể dùng item: Thiếu PlayerStats của chủ sở hữu.");
             return;
         }
 
-        if (triggersGlobalPotionCooldown)
-        {
-            if (playerStats.IsPotionOnCooldown()) return;
-        }
+        if (triggersGlobalPotionCooldown && playerStats.IsPotionOnCooldown()) return;
 
         bool canBeUsed = true;
         switch (effectID)
         {
             case "HEAL_INSTANT":
-                if (!playerStats.CanHeal())
-                {
-                    canBeUsed = false;
-                    Debug.Log("Không thể dùng Potion: HP đã đầy!");
-                }
+                if (!playerStats.CanHeal()) { canBeUsed = false; GameNotify.Show("HP đã đầy!"); }
                 break;
             case "MANA_INSTANT":
-                if (!playerStats.CanRecoverMP())
-                {
-                    canBeUsed = false;
-                    Debug.Log("Không thể dùng Potion: MP đã đầy!");
-                }
+                if (!playerStats.CanRecoverMP()) { canBeUsed = false; GameNotify.Show("MP đã đầy!"); }
                 break;
         }
 
         if (!canBeUsed) return;
 
-        float durationForIcon = effectDuration;
-        if (triggersGlobalPotionCooldown)
-        {
-            durationForIcon = playerStats.potionCooldownDuration;
-            playerStats.TriggerPotionCooldown();
-        }
+        if (triggersGlobalPotionCooldown) playerStats.TriggerPotionCooldown();
 
-        EffectService.Instance.AddEffect(
-            playerStats.gameObject,
-            effectID,
-            effectDuration,
-            effectValue
-        );
+        EffectService.Instance.AddEffect(playerStats.gameObject, effectID, effectDuration, effectValue);
 
         RemoveFromStack(1);
 
         if (InventoryController.Instance != null)
         {
-            InventoryController.Instance.ScheduleConsumableSync(this.dbID, this.quantity);
-            InventoryController.Instance.ReBuildItemCounts();
-        }
+            var ramData = InventoryController.Instance.GetInventoryItemsData().Find(x => x.dbID == this.dbID);
+            if (ramData != null) ramData.quantity = this.quantity;
 
-        if (quantity <= 0)
-        {
-            Slot parentSlot = GetComponentInParent<Slot>();
-            if (parentSlot != null)
+            if (this.quantity <= 0)
             {
-                parentSlot.currentItem = null;
+                InventoryController.Instance.GetInventoryItemsData().RemoveAll(x => x.dbID == this.dbID);
+                InventoryService.Instance.CancelQuantityUpdate(this.dbID);
+                InventoryService.Instance.RequestRemoveItem(this.dbID);
+
+                Slot parentSlot = GetComponentInParent<Slot>();
+                if (parentSlot != null) parentSlot.currentItem = null;
+
+                Destroy(gameObject);
+            }
+            else
+            {
+                InventoryService.Instance.ScheduleQuantityUpdate(this.dbID, this.quantity);
             }
 
-            Destroy(gameObject);
+            InventoryController.Instance.ReBuildItemCounts();
         }
     }
 }

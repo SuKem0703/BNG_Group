@@ -4,13 +4,12 @@ using UnityEngine.InputSystem;
 
 public class HotbarController : MonoBehaviour
 {
-    public static HotbarController Instance { get; private set; } // Singleton
+    public static HotbarController Instance { get; private set; }
 
     public GameObject hotbarPanel;
     public GameObject slotPrefab;
     public int slotCount = 9;
 
-    private ItemDictionary itemDictionary;
     private Key[] hotbarKeys;
 
     private void Awake()
@@ -22,8 +21,6 @@ public class HotbarController : MonoBehaviour
             return;
         }
         Instance = this;
-
-        itemDictionary = FindFirstObjectByType<ItemDictionary>();
 
         hotbarKeys = new Key[slotCount];
         for (int i = 0; i < slotCount; i++)
@@ -40,6 +37,27 @@ public class HotbarController : MonoBehaviour
                 slot.isHotBarSlot = true;
             }
         }
+    }
+
+    private void Start()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= RedrawHotbar;
+            InventoryController.Instance.OnInventoryChanged += RedrawHotbar;
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (InventoryController.Instance != null)
+            InventoryController.Instance.OnInventoryChanged += RedrawHotbar;
+    }
+
+    private void OnDisable()
+    {
+        if (InventoryController.Instance != null)
+            InventoryController.Instance.OnInventoryChanged -= RedrawHotbar;
     }
 
     void Update()
@@ -74,22 +92,10 @@ public class HotbarController : MonoBehaviour
                 }
 
                 consumable.UseItem();
-
-                if (consumable.quantity <= 0)
-                {
-                    InventoryService.Instance.RequestRemoveItem(consumable.dbID);
-                    Destroy(slot.currentItem);
-                    slot.currentItem = null;
-                }
-                else
-                {
-                    InventoryService.Instance.RequestUpdateQuantity(consumable.dbID, consumable.quantity);
-                }
             }
         }
     }
 
-    // Lấy dữ liệu để Save (Gửi lên Server Inventory Table)
     public List<InventorySaveData> GetHotbarItems()
     {
         List<InventorySaveData> hotData = new List<InventorySaveData>();
@@ -103,7 +109,6 @@ public class HotbarController : MonoBehaviour
                 {
                     dbID = item.dbID,
                     itemID = item.ID,
-                    // QUAN TRỌNG: Cộng 1000 để Server biết đây là Hotbar
                     slotIndex = slotTransform.GetSiblingIndex() + 1000,
                     quantity = item.quantity,
                     isEquipped = false,
@@ -115,21 +120,8 @@ public class HotbarController : MonoBehaviour
         return hotData;
     }
 
-    // Hiển thị dữ liệu từ Server
-    public void SetHotbarItems(List<InventorySaveData> inventorySaveData)
+    private void RedrawHotbar(List<InventorySaveData> inventoryData, int maxSlotCount)
     {
-        int currentCount = hotbarPanel.transform.childCount;
-        if (currentCount < slotCount)
-        {
-            for (int i = 0; i < (slotCount - currentCount); i++)
-            {
-                GameObject slotObj = Instantiate(slotPrefab, hotbarPanel.transform);
-                Slot slot = slotObj.GetComponent<Slot>();
-                slot.isHotBarSlot = true;
-            }
-        }
-
-        // Dọn dẹp Item cũ trong các Slot
         foreach (Transform slotTrans in hotbarPanel.transform)
         {
             Slot s = slotTrans.GetComponent<Slot>();
@@ -140,33 +132,36 @@ public class HotbarController : MonoBehaviour
             }
         }
 
-        if (inventorySaveData == null || inventorySaveData.Count == 0) return;
+        if (inventoryData == null) return;
 
-        // Điền Item mới vào
-        foreach (InventorySaveData data in inventorySaveData)
+        foreach (var data in inventoryData)
         {
-            // Kiểm tra index hợp lệ
-            if (data.slotIndex >= 0 && data.slotIndex < hotbarPanel.transform.childCount)
+            if (data.slotIndex >= 1000 && data.slotIndex < 2000)
             {
-                Slot slot = hotbarPanel.transform.GetChild(data.slotIndex).GetComponent<Slot>();
-                GameObject itemPrefab = itemDictionary.GetItemPrefab(data.itemID);
+                int localIndex = data.slotIndex - 1000;
 
-                if (itemPrefab != null)
+                if (localIndex >= 0 && localIndex < hotbarPanel.transform.childCount)
                 {
-                    GameObject itemObj = Instantiate(itemPrefab, slot.transform);
-                    itemObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                    Slot slot = hotbarPanel.transform.GetChild(localIndex).GetComponent<Slot>();
+                    GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
 
-                    Item itemComponent = itemObj.GetComponent<Item>();
-                    if (itemComponent != null)
+                    if (itemPrefab != null)
                     {
-                        itemComponent.dbID = data.dbID;
-                        itemComponent.quantity = data.quantity;
-                        itemComponent.rarity = data.rarity;
-                        itemComponent.qualityFactor = data.qualityFactor;
+                        GameObject itemObj = Instantiate(itemPrefab, slot.transform);
+                        itemObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
-                        itemComponent.UpdateQuantityDisplay();
+                        Item itemComponent = itemObj.GetComponent<Item>();
+                        if (itemComponent != null)
+                        {
+                            itemComponent.dbID = data.dbID;
+                            itemComponent.quantity = data.quantity;
+                            itemComponent.rarity = data.rarity;
+                            itemComponent.qualityFactor = data.qualityFactor;
+
+                            itemComponent.UpdateQuantityDisplay();
+                        }
+                        slot.currentItem = itemObj;
                     }
-                    slot.currentItem = itemObj;
                 }
             }
         }

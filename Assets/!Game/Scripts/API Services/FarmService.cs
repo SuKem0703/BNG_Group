@@ -10,7 +10,11 @@ public class FarmService : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) Destroy(gameObject);
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
     }
 
@@ -31,14 +35,11 @@ public class FarmService : MonoBehaviour
 
     [Serializable] public class PlantRequest { public string plotId; public int seedItemId; }
 
-    // DTO Hỗ trợ gửi hàng loạt
-    [Serializable] public class HarvestAction { public string plotId; public bool isRegrowable; public float offsetSeconds; }
-    [Serializable] public class BulkHarvestRequest { public List<HarvestAction> actions; }
+    [Serializable] public class BulkHarvestRequest { public List<string> plotIds; }
 
-    // --- BIẾN PHỤC VỤ HÀNG ĐỢI (DEBOUNCE) ---
-    private List<HarvestAction> pendingHarvests = new List<HarvestAction>();
+    private List<string> pendingHarvests = new List<string>();
     private Coroutine debounceCoroutine;
-    private float debounceWaitTime = 1.5f; // Chờ 1.5s sau thao tác cuối cùng mới gửi đi
+    private float debounceWaitTime = 1.5f;
 
     public void SyncFarm(Action<List<ServerFarmPlot>> onComplete)
     {
@@ -72,18 +73,28 @@ public class FarmService : MonoBehaviour
         StartCoroutine(PostRequest("api/Farm/plant", new PlantRequest { plotId = plotId, seedItemId = seedItemId }));
     }
 
-    // --- HÀM THU HOẠCH ĐÃ ĐƯỢC TỐI ƯU GOM LÔ ---
-    public void RequestHarvest(string plotId, bool isRegrowable, float offsetSeconds)
+    public void RequestHarvest(string plotId)
     {
-        pendingHarvests.Add(new HarvestAction
-        {
-            plotId = plotId,
-            isRegrowable = isRegrowable,
-            offsetSeconds = offsetSeconds
-        });
+        if (!pendingHarvests.Contains(plotId)) pendingHarvests.Add(plotId);
 
         if (debounceCoroutine != null) StopCoroutine(debounceCoroutine);
         debounceCoroutine = StartCoroutine(ProcessHarvestBatch());
+    }
+
+    public void ForceSendPendingHarvests()
+    {
+        if (pendingHarvests.Count > 0)
+        {
+            if (debounceCoroutine != null) StopCoroutine(debounceCoroutine);
+
+            List<string> batchToSend = new List<string>(pendingHarvests);
+            pendingHarvests.Clear();
+
+            BulkHarvestRequest body = new BulkHarvestRequest { plotIds = batchToSend };
+
+            Debug.Log($"[Farm] CHỐT SỔ KHẨN CẤP: Gửi Bulk Harvest gồm {batchToSend.Count} ô đất do chuyển Scene!");
+            StartCoroutine(PostRequest("api/Farm/harvest", body, true));
+        }
     }
 
     private IEnumerator ProcessHarvestBatch()
@@ -92,17 +103,16 @@ public class FarmService : MonoBehaviour
 
         if (pendingHarvests.Count == 0) yield break;
 
-        List<HarvestAction> batchToSend = new List<HarvestAction>(pendingHarvests);
+        List<string> batchToSend = new List<string>(pendingHarvests);
         pendingHarvests.Clear();
 
-        BulkHarvestRequest body = new BulkHarvestRequest { actions = batchToSend };
+        BulkHarvestRequest body = new BulkHarvestRequest { plotIds = batchToSend };
 
         Debug.Log($"[Farm] Bắt đầu gửi Bulk Harvest gồm {batchToSend.Count} ô đất...");
-
-        yield return StartCoroutine(PostRequest("api/Farm/harvest", body));
+        yield return StartCoroutine(PostRequest("api/Farm/harvest", body, true));
     }
 
-    private IEnumerator PostRequest(string endpoint, object body)
+    private IEnumerator PostRequest(string endpoint, object body, bool isHarvest = false)
     {
         string url = NetworkConfig.GetUrl(endpoint);
         string token = PlayerPrefs.GetString("AuthToken", "");
@@ -119,6 +129,11 @@ public class FarmService : MonoBehaviour
         if (request.result != UnityWebRequest.Result.Success)
         {
             Debug.LogError($"[FarmService] API {endpoint} Failed: {request.downloadHandler.text}");
+        }
+        else if (isHarvest)
+        {
+            if (InventoryController.Instance != null)
+                InventoryController.Instance.RefreshInventory();
         }
     }
 }

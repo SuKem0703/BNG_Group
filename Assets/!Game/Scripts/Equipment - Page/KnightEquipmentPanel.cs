@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class KnightEquipmentPanel : MonoBehaviour
 {
@@ -11,114 +10,12 @@ public class KnightEquipmentPanel : MonoBehaviour
     public GameObject Armor;
     public static bool HasWeaponEquipped { get; private set; }
 
-    [Header("Item Display Settings")]
-    public GridLayoutGroup scrollViewGrid;
-
     private void Awake()
     {
-        if (ItemDictionary.Instance == null)
-            Debug.LogError("[KnightEquipmentPanel] Không tìm thấy ItemDictionary!");
-
         if (Swords == null) Swords = GameObject.Find("Swords");
         if (Shield == null) Shield = GameObject.Find("Shield");
         if (Helmet == null) Helmet = GameObject.Find("Helmet");
         if (Armor == null) Armor = GameObject.Find("Armor");
-
-        if (scrollViewGrid == null) scrollViewGrid = GameObject.Find("EquipmentList")?.GetComponent<GridLayoutGroup>();
-    }
-
-    public void RefreshEquipmentDisplay()
-    {
-        if (ItemDictionary.Instance == null) return;
-
-        ClearSlot(Swords);
-        ClearSlot(Shield);
-        ClearSlot(Helmet);
-        ClearSlot(Armor);
-
-        foreach (Item itemPrefab in ItemDictionary.Instance.itemPrefabs)
-        {
-            if (itemPrefab is not EquipmentItem equipPrefab) continue;
-            if (equipPrefab.classRestriction != ClassRestriction.Knight) continue;
-            if (equipPrefab.isEquipped) continue;
-
-            GameObject targetSlot = GetAvailableSlot(equipPrefab.equipSlot);
-            if (targetSlot == null) continue;
-
-            Item equippedItem = Instantiate(itemPrefab.gameObject, targetSlot.transform).GetComponent<Item>();
-            equippedItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-
-            equippedItem.quantity = 1;
-            equippedItem.UpdateQuantityDisplay();
-
-            if (equippedItem is EquipmentItem eItem)
-            {
-                eItem.isEquipped = true;
-                eItem.sourceItem = itemPrefab;
-            }
-
-            Slot slotComponent = targetSlot.GetComponent<Slot>();
-            if (slotComponent != null)
-            {
-                slotComponent.isEquipmentSlot = true;
-                slotComponent.currentItem = equippedItem.gameObject;
-            }
-        }
-        UpdateWeaponStatus();
-    }
-
-    private GameObject GetAvailableSlot(EquipSlot equipSlot)
-    {
-        switch (equipSlot)
-        {
-            case EquipSlot.Swords: return Swords.transform.childCount == 0 ? Swords : null;
-            case EquipSlot.Shield: return Shield.transform.childCount == 0 ? Shield : null;
-            case EquipSlot.Helmet: return Helmet.transform.childCount == 0 ? Helmet : null;
-            case EquipSlot.Armor: return Armor.transform.childCount == 0 ? Armor : null;
-            default: return null;
-        }
-    }
-
-    private void ClearSlot(GameObject slotGO)
-    {
-        if (slotGO == null) return;
-        foreach (Transform child in slotGO.transform) Destroy(child.gameObject);
-    }
-
-    public List<EquippedSaveData> GetEquipmentItems()
-    {
-        List<EquippedSaveData> equipmentData = new List<EquippedSaveData>();
-
-        AddSlotData(Swords, 0, equipmentData);
-        AddSlotData(Shield, 1, equipmentData);
-        AddSlotData(Helmet, 2, equipmentData);
-        AddSlotData(Armor, 3, equipmentData);
-
-        return equipmentData;
-    }
-
-    private void AddSlotData(GameObject slotGO, int slotIndex, List<EquippedSaveData> list)
-    {
-        if (slotGO == null) return;
-
-        if (slotGO.transform.childCount > 0)
-        {
-            Item item = slotGO.transform.GetChild(0).GetComponent<Item>();
-            if (item != null)
-            {
-                bool equippedStatus = item is EquipmentItem eq && eq.isEquipped;
-                list.Add(new EquippedSaveData
-                {
-                    itemID = item.ID,
-                    slotIndex = slotIndex,
-                    quantity = item.quantity,
-                    isEquipped = equippedStatus,
-                    rarity = item.rarity,
-                    qualityFactor = item.qualityFactor,
-                    sourceItemID = item.sourceItem != null ? item.sourceItem.ID : -1
-                });
-            }
-        }
     }
 
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
@@ -150,6 +47,7 @@ public class KnightEquipmentPanel : MonoBehaviour
                     Item itemComponent = itemGO.GetComponent<Item>();
                     if (itemComponent != null)
                     {
+                        itemComponent.dbID = data.dbID;
                         itemComponent.quantity = data.quantity;
                         itemComponent.rarity = data.rarity;
                         itemComponent.qualityFactor = data.qualityFactor;
@@ -157,15 +55,9 @@ public class KnightEquipmentPanel : MonoBehaviour
 
                         if (itemComponent is EquipmentItem equipComp)
                         {
-                            equipComp.isEquipped = data.isEquipped;
-
-                            Item sourceItemInInventory = FindItemInInventory(itemComponent.ID);
-                            if (sourceItemInInventory != null)
-                            {
-                                equipComp.sourceItem = sourceItemInInventory;
-                                if (sourceItemInInventory is EquipmentItem sourceEq)
-                                    sourceEq.isEquipped = true;
-                            }
+                            equipComp.isEquipped = true;
+                            equipComp.isDisplayOnly = false;
+                            equipComp.sourceItem = null;
                         }
                     }
 
@@ -181,31 +73,51 @@ public class KnightEquipmentPanel : MonoBehaviour
         UpdateWeaponStatus();
     }
 
-    private Item FindItemInInventory(int itemID)
+    public List<EquippedSaveData> GetEquipmentItems()
     {
-        if (scrollViewGrid == null) return null;
+        List<EquippedSaveData> equipmentData = new List<EquippedSaveData>();
+        if (Swords != null) AddSlotData(Swords, Swords.transform.GetSiblingIndex(), equipmentData);
+        if (Shield != null) AddSlotData(Shield, Shield.transform.GetSiblingIndex(), equipmentData);
+        if (Helmet != null) AddSlotData(Helmet, Helmet.transform.GetSiblingIndex(), equipmentData);
+        if (Armor != null) AddSlotData(Armor, Armor.transform.GetSiblingIndex(), equipmentData);
+        return equipmentData;
+    }
 
-        foreach (Transform child in scrollViewGrid.transform)
+    private void AddSlotData(GameObject slotGO, int slotIndex, List<EquippedSaveData> list)
+    {
+        if (slotGO == null || slotGO.transform.childCount == 0) return;
+
+        Item item = slotGO.transform.GetChild(0).GetComponent<Item>();
+        if (item != null)
         {
-            Item item = child.GetComponent<Item>();
-            if (item != null && item.ID == itemID && item is EquipmentItem eq && eq.isEquipped)
+            list.Add(new EquippedSaveData
             {
-                return item;
-            }
+                dbID = item.dbID,
+                itemID = item.ID,
+                slotIndex = slotIndex,
+                quantity = item.quantity,
+                isEquipped = true,
+                rarity = item.rarity,
+                qualityFactor = item.qualityFactor,
+                sourceItemID = -1
+            });
         }
-        return null;
+    }
+
+    private void ClearSlot(GameObject slotGO)
+    {
+        if (slotGO == null) return;
+        foreach (Transform child in slotGO.transform) Destroy(child.gameObject);
     }
 
     private GameObject GetSlotByIndex(int slotIndex)
     {
-        switch (slotIndex)
+        GameObject[] allSlots = { Swords, Shield, Helmet, Armor };
+        foreach (var slot in allSlots)
         {
-            case 0: return Swords;
-            case 1: return Shield;
-            case 2: return Helmet;
-            case 3: return Armor;
-            default: return null;
+            if (slot != null && slot.transform.GetSiblingIndex() == slotIndex) return slot;
         }
+        return null;
     }
 
     public void UpdateWeaponStatus()

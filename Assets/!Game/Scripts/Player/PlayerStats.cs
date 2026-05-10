@@ -181,8 +181,14 @@ public class PlayerStats : NetworkBehaviour
         {
             if (MapController.Instance != null && MapController.Instance.IsSafeZone()) return false;
 
-            if (classController.knightObject.activeSelf) return KnightEquipmentPanel.HasWeaponEquipped;
-            else return MageEquipmentPanel.HasWeaponEquipped;
+            if (InventoryController.Instance == null) return false;
+
+            bool isKnightActive = classController.knightObject.activeSelf;
+
+            int weaponSlotIndex = isKnightActive ? 2003 : 2103;
+
+            return InventoryController.Instance.GetInventoryItemsData()
+                .Any(item => item.isEquipped && item.slotIndex == weaponSlotIndex);
         }
     }
 

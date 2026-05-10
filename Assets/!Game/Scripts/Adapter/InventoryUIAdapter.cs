@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class InventoryUIAdapter : MonoBehaviour
 {
+    public static InventoryUIAdapter Instance;
+
     [Header("References")]
     [SerializeField] private GameObject slotPrefab;
 
@@ -12,6 +14,9 @@ public class InventoryUIAdapter : MonoBehaviour
 
     private void Start()
     {
+        if (Instance != null && Instance != this) Destroy(gameObject);
+        Instance = this;
+
         if (InventoryController.Instance != null)
         {
             InventoryController.Instance.OnInventoryChanged += RedrawUI;
@@ -50,6 +55,8 @@ public class InventoryUIAdapter : MonoBehaviour
 
         foreach (var data in currentData)
         {
+            if (data.slotIndex >= 1000) continue;
+
             if (data.slotIndex >= inventoryPanel.childCount) continue;
 
             Slot slot = inventoryPanel.GetChild(data.slotIndex).GetComponent<Slot>();

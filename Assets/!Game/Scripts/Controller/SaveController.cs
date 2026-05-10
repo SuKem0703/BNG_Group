@@ -151,7 +151,6 @@ public class SaveController : MonoBehaviour
                 if (serverItems != null)
                 {
                     List<InventorySaveData> inventoryItems = new List<InventorySaveData>();
-                    List<InventorySaveData> hotbarItems = new List<InventorySaveData>();
 
                     List<EquippedSaveData> knightEquips = new List<EquippedSaveData>();
                     List<EquippedSaveData> mageEquips = new List<EquippedSaveData>();
@@ -167,86 +166,36 @@ public class SaveController : MonoBehaviour
                             itemID = svItem.itemId,
                             quantity = svItem.quantity,
                             slotIndex = svItem.slotIndex,
-                            isEquipped = svItem.isEquipped,
+                            isEquipped = svItem.slotIndex >= 2000,
                             rarity = (ItemRarity)svItem.rarity,
                             qualityFactor = svItem.qualityFactor
                         };
 
-                        if (svItem.slotIndex >= 1000)
-                        {
-                            itemData.slotIndex -= 1000;
-                            hotbarItems.Add(itemData);
-                        }
-                        else
-                        {
-                            inventoryItems.Add(itemData);
-                        }
+                        // Nạp TOÀN BỘ đồ vào RAM tổng, bất kể là đang mặc hay trong túi!
+                        inventoryItems.Add(itemData);
 
-                        if (svItem.isEquipped && itemDict != null)
+                        if (svItem.slotIndex >= 2200) // 2200+ Trang bị chung
                         {
-                            GameObject prefab = itemDict.GetItemPrefab(svItem.itemId);
-                            if (prefab != null)
-                            {
-                                if (prefab.GetComponent<Item>() is EquipmentItem equipComp)
-                                {
-                                    EquippedSaveData equipData = new EquippedSaveData
-                                    {
-                                        itemID = svItem.itemId,
-                                        quantity = svItem.quantity,
-                                        isEquipped = true,
-                                        rarity = (ItemRarity)svItem.rarity,
-                                        qualityFactor = svItem.qualityFactor,
-                                        sourceItemID = svItem.itemId
-                                    };
-
-                                    if (equipComp.classRestriction == ClassRestriction.Knight)
-                                    {
-                                        switch (equipComp.equipSlot)
-                                        {
-                                            case EquipSlot.Swords: equipData.slotIndex = 0; break;
-                                            case EquipSlot.Shield: equipData.slotIndex = 1; break;
-                                            case EquipSlot.Helmet: equipData.slotIndex = 2; break;
-                                            case EquipSlot.Armor: equipData.slotIndex = 3; break;
-                                            default: equipData.slotIndex = -1; break;
-                                        }
-                                        if (equipData.slotIndex != -1) knightEquips.Add(equipData);
-                                    }
-                                    else if (equipComp.classRestriction == ClassRestriction.Mage)
-                                    {
-                                        switch (equipComp.equipSlot)
-                                        {
-                                            case EquipSlot.Scepter: equipData.slotIndex = 0; break;
-                                            case EquipSlot.Amulet: equipData.slotIndex = 1; break;
-                                            case EquipSlot.Hat: equipData.slotIndex = 2; break;
-                                            case EquipSlot.Robe: equipData.slotIndex = 3; break;
-                                            default: equipData.slotIndex = -1; break;
-                                        }
-                                        if (equipData.slotIndex != -1) mageEquips.Add(equipData);
-                                    }
-                                    else
-                                    {
-                                        switch (equipComp.equipSlot)
-                                        {
-                                            case EquipSlot.Legs: equipData.slotIndex = 0; break;
-                                            case EquipSlot.Boots: equipData.slotIndex = 1; break;
-                                            case EquipSlot.Gloves: equipData.slotIndex = 2; break;
-                                            case EquipSlot.Belt: equipData.slotIndex = 3; break;
-                                            case EquipSlot.Ring: equipData.slotIndex = 4; break;
-                                            case EquipSlot.Necklace: equipData.slotIndex = 5; break;
-                                            default: equipData.slotIndex = -1; break;
-                                        }
-                                        if (equipData.slotIndex != -1) sharedEquips.Add(equipData);
-                                    }
-                                }
-                            }
+                            EquippedSaveData eqData = JsonUtility.FromJson<EquippedSaveData>(JsonUtility.ToJson(itemData));
+                            eqData.slotIndex = svItem.slotIndex - 2200;
+                            sharedEquips.Add(eqData);
+                        }
+                        else if (svItem.slotIndex >= 2100) // 2100+ Trang bị Mage
+                        {
+                            EquippedSaveData eqData = JsonUtility.FromJson<EquippedSaveData>(JsonUtility.ToJson(itemData));
+                            eqData.slotIndex = svItem.slotIndex - 2100;
+                            mageEquips.Add(eqData);
+                        }
+                        else if (svItem.slotIndex >= 2000) // 2000+ Trang bị Knight
+                        {
+                            EquippedSaveData eqData = JsonUtility.FromJson<EquippedSaveData>(JsonUtility.ToJson(itemData));
+                            eqData.slotIndex = svItem.slotIndex - 2000;
+                            knightEquips.Add(eqData);
                         }
                     }
 
                     if (uiAdapter.inventoryController != null)
                         uiAdapter.inventoryController.SetInventoryItems(inventoryItems);
-
-                    if (uiAdapter.hotbarController != null)
-                        uiAdapter.hotbarController.SetHotbarItems(hotbarItems);
 
                     if (uiAdapter.knightEquipmentPanel != null) uiAdapter.knightEquipmentPanel.SetEquipmentItems(knightEquips);
                     if (uiAdapter.mageEquipmentPanel != null) uiAdapter.mageEquipmentPanel.SetEquipmentItems(mageEquips);
@@ -330,6 +279,20 @@ public class SaveController : MonoBehaviour
     public IEnumerator SaveRoutine(SaveReason reason, System.Action<bool> onSaveFinished = null, bool isSilent = false)
     {
         IsSaving = true;
+
+        // Ép gửi toàn bộ API đang kẹt chờ trong hàng đợi
+        if (FarmService.Instance != null)
+            FarmService.Instance.ForceSendPendingHarvests();
+
+        if (InventoryService.Instance != null)
+            InventoryService.Instance.ForceSyncPendingQuantities();
+
+        if (InventoryService.Instance != null)
+            InventoryService.Instance.ForceSyncPendingMoves();
+
+        if (localPlayerAdapter != null && localPlayerAdapter.playerStats != null)
+            localPlayerAdapter.playerStats.ForceSyncExpImmediate();
+
         if (!isSilent) ShowMiniLoadingScreen();
 
         if (uiAdapter == null || uiAdapter.inventoryController == null || localPlayerAdapter == null)

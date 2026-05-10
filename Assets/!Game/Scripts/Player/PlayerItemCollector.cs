@@ -2,17 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Gán vào Player để nhặt item khi chạm vào
 public class PlayerItemCollector : MonoBehaviour
 {
-    private InventoryController inventoryController;
-    private EquipmentScrollViewController equipmentViewController;
-
-    void Start()
-    {
-        inventoryController = Object.FindFirstObjectByType<InventoryController>();
-        equipmentViewController = Object.FindFirstObjectByType<EquipmentScrollViewController>();
-    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -30,7 +21,7 @@ public class PlayerItemCollector : MonoBehaviour
         {
             void OnDialogueEnd()
             {
-                bool added = inventoryController.AddItem(item);
+                bool added = InventoryController.Instance.AddItem(item);
                 if (!added)
                 {
                     Debug.Log("Inventory đầy, không thể nhặt " + item.Name);
@@ -39,9 +30,6 @@ public class PlayerItemCollector : MonoBehaviour
                 }
 
                 item.ShowPopUp();
-
-                if (equipmentViewController != null)
-                    equipmentViewController.ShowEquipmentItems();
 
                 if (collectible != null)
                     collectible.OnPickedUp();
@@ -58,7 +46,7 @@ public class PlayerItemCollector : MonoBehaviour
         }
 
         // === KHÔNG CÓ MONOLOGUE ===
-        bool itemAdded = inventoryController.AddItem(item);
+        bool itemAdded = InventoryController.Instance.AddItem(item);
         if (!itemAdded)
         {
             Debug.Log("Inventory đầy, không thể nhặt " + item.Name);
@@ -66,9 +54,6 @@ public class PlayerItemCollector : MonoBehaviour
         }
 
         item.ShowPopUp();
-
-        if (equipmentViewController != null)
-            equipmentViewController.ShowEquipmentItems();
 
         if (collectible != null)
             collectible.OnPickedUp();

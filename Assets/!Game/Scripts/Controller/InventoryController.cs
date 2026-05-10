@@ -11,7 +11,7 @@ public class InventoryController : MonoBehaviour
     [Header("Config")]
     public int slotCount = 20;
 
-    private List<InventorySaveData> _inventoryData = new List<InventorySaveData>();
+    [SerializeField] private List<InventorySaveData> _inventoryData = new List<InventorySaveData>();
     private readonly Dictionary<int, int> _itemCountCache = new Dictionary<int, int>();
 
     public event Action<List<InventorySaveData>, int> OnInventoryChanged;
@@ -43,7 +43,7 @@ public class InventoryController : MonoBehaviour
 
         if (_inventoryData.Count > 0)
         {
-            int maxSlot = _inventoryData.Max(x => x.slotIndex);
+            int maxSlot = _inventoryData.Where(x => x.slotIndex < 1000).Select(x => x.slotIndex).DefaultIfEmpty(-1).Max();
             if (maxSlot >= slotCount) slotCount = maxSlot + 1;
         }
 
@@ -97,6 +97,7 @@ public class InventoryController : MonoBehaviour
         foreach (var data in _inventoryData)
         {
             if (data.itemID != tempItem.ID) continue;
+            if (data.dbID == 0) continue;
 
             int maxStack = 999;
             int canAdd = Mathf.Min(quantity, maxStack - data.quantity);
@@ -106,7 +107,7 @@ public class InventoryController : MonoBehaviour
             data.quantity += canAdd;
             quantity -= canAdd;
 
-            InventoryService.Instance.RequestUpdateQuantity(data.dbID, data.quantity);
+            InventoryService.Instance.ScheduleQuantityUpdate(data.dbID, data.quantity);
 
             if (quantity <= 0)
             {
@@ -155,13 +156,75 @@ public class InventoryController : MonoBehaviour
             newItemData.qualityFactor,
             validationSeed,
             tempItem.IsStackable,
-            dbId =>
+            (dbId, action) =>
             {
-                newItemData.dbID = dbId;
+                if (action == "stacked")
+                {
+                    _inventoryData.Remove(newItemData);
+
+                    var existingInRAM = _inventoryData.Find(x => x.dbID == dbId);
+                    if (existingInRAM != null)
+                    {
+                        existingInRAM.quantity += quantity;
+                    }
+                    else
+                    {
+                        RefreshInventory();
+                        return;
+                    }
+                }
+                else
+                {
+                    newItemData.dbID = dbId;
+                }
+
+                ReBuildItemCounts();
             }
         );
 
         return true;
+    }
+
+    public void PredictAddHarvestItem(Item itemPrefab, int quantity)
+    {
+        if (itemPrefab == null) return;
+
+        var existingData = _inventoryData.FirstOrDefault(x => x.itemID == itemPrefab.ID && x.slotIndex < 2000);
+
+        if (existingData != null)
+        {
+            existingData.quantity += quantity;
+        }
+        else
+        {
+            int emptySlotIndex = -1;
+            var occupiedSlots = _inventoryData.Select(x => x.slotIndex).ToHashSet();
+
+            for (int i = 0; i < slotCount; i++)
+            {
+                if (!occupiedSlots.Contains(i))
+                {
+                    emptySlotIndex = i;
+                    break;
+                }
+            }
+
+            if (emptySlotIndex != -1)
+            {
+                _inventoryData.Add(new InventorySaveData
+                {
+                    dbID = -1,
+                    itemID = itemPrefab.ID,
+                    quantity = quantity,
+                    slotIndex = emptySlotIndex,
+                    isEquipped = false,
+                    rarity = itemPrefab.rarity,
+                    qualityFactor = itemPrefab.qualityFactor
+                });
+            }
+        }
+
+        ReBuildItemCounts();
     }
 
     public void RefreshInventory()
@@ -181,26 +244,17 @@ public class InventoryController : MonoBehaviour
                     itemID = sItem.itemId,
                     quantity = sItem.quantity,
                     slotIndex = sItem.slotIndex,
-                    isEquipped = sItem.isEquipped,
+                    isEquipped = sItem.slotIndex >= 2000,
                     rarity = (ItemRarity)sItem.rarity,
                     qualityFactor = sItem.qualityFactor
                 };
 
-                if (sItem.slotIndex >= 1000)
-                {
-                    data.slotIndex -= 1000;
-                    hotBarData.Add(data);
-                }
-                else
-                {
-                    cleanData.Add(data);
-                }
+                if (sItem.slotIndex >= 2000) continue;
+
+                cleanData.Add(data);
             }
 
             SetInventoryItems(cleanData);
-
-            if (HotbarController.Instance != null)
-                HotbarController.Instance.SetHotbarItems(hotBarData);
 
             Debug.Log($"[Inventory] Đã làm mới: {cleanData.Count} item trong túi.");
         });
@@ -218,45 +272,5 @@ public class InventoryController : MonoBehaviour
         OnInventoryChanged?.Invoke(_inventoryData, slotCount);
     }
 
-    #endregion
-
-    #region Sync Queue (Debounce Logic)
-    private Dictionary<int, Coroutine> _consumableSyncCoroutines = new Dictionary<int, Coroutine>();
-    private Dictionary<int, int> _pendingQuantities = new Dictionary<int, int>();
-
-    public void ScheduleConsumableSync(int itemDbId, int currentQuantity)
-    {
-        if (itemDbId == 0) return;
-
-        if (_pendingQuantities.ContainsKey(itemDbId))
-            _pendingQuantities[itemDbId] = currentQuantity;
-        else
-            _pendingQuantities.Add(itemDbId, currentQuantity);
-
-        if (_consumableSyncCoroutines.ContainsKey(itemDbId))
-        {
-            if (_consumableSyncCoroutines[itemDbId] != null)
-                StopCoroutine(_consumableSyncCoroutines[itemDbId]);
-
-            _consumableSyncCoroutines.Remove(itemDbId);
-        }
-
-        Coroutine newCoroutine = StartCoroutine(SyncConsumableDelay(itemDbId, 3));
-        _consumableSyncCoroutines.Add(itemDbId, newCoroutine);
-    }
-
-    private IEnumerator SyncConsumableDelay(int itemDbId, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        if (_pendingQuantities.ContainsKey(itemDbId))
-        {
-            int finalQty = _pendingQuantities[itemDbId];
-            InventoryService.Instance.RequestUpdateQuantity(itemDbId, finalQty);
-            _pendingQuantities.Remove(itemDbId);
-        }
-
-        _consumableSyncCoroutines.Remove(itemDbId);
-    }
     #endregion
 }

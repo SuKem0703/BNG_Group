@@ -2,32 +2,32 @@
 
 public static class GameNotify
 {
+    private static NotifyUIController currentInstance;
+
     public static void Show(string message)
     {
-        if (LoadResourceManager.Instance == null)
+        if (currentInstance == null)
         {
-            Debug.LogWarning("[GameNotify] LoadResourceManager chưa được khởi tạo!");
-            return;
+            if (LoadResourceManager.Instance == null)
+            {
+                Debug.LogWarning("[GameNotify] LoadResourceManager chưa được khởi tạo!");
+                return;
+            }
+
+            GameObject prefab = LoadResourceManager.Instance.NotifyUIPrefab;
+            if (prefab == null) return;
+
+            GameObject notifyObj = Object.Instantiate(prefab);
+            currentInstance = notifyObj.GetComponent<NotifyUIController>();
+
+            if (currentInstance == null)
+            {
+                Debug.LogWarning($"[GameNotify] Prefab thiếu component NotifyUIController!");
+                Object.Destroy(notifyObj);
+                return;
+            }
         }
 
-        GameObject prefab = LoadResourceManager.Instance.NotifyUIPrefab;
-        if (prefab == null)
-        {
-            Debug.LogWarning("[GameNotify] NotifyUIPrefab bị null trong LoadResourceManager!");
-            return;
-        }
-
-        GameObject notifyObj = Object.Instantiate(prefab);
-        var notifyCtrl = notifyObj.GetComponent<NotifyUIController>();
-
-        if (notifyCtrl != null)
-        {
-            notifyCtrl.Show(message);
-        }
-        else
-        {
-            Debug.LogWarning($"[GameNotify] Prefab '{notifyObj.name}' thiếu component NotifyUIController!");
-            Object.Destroy(notifyObj);
-        }
+        currentInstance.Show(message);
     }
 }

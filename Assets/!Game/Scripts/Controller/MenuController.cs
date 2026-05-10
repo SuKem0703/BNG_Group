@@ -10,9 +10,6 @@ public class MenuController : MonoBehaviour
     public CanvasGroup canvasGroup;
     public GameObject itemPopupContainer;
 
-    [Header("References")]
-    private EquipmentScrollViewController equipmentScrollView;
-
     [Header("Input Actions (Cross-Platform)")]
     [SerializeField] private InputActionReference toggleMenuAction;
 
@@ -70,12 +67,6 @@ public class MenuController : MonoBehaviour
         }
     }
 
-    void Start()
-    {
-        if (equipmentScrollView == null)
-            equipmentScrollView = FindFirstObjectByType<EquipmentScrollViewController>();
-    }
-
     private void OnShortcutPressed(InputAction.CallbackContext context)
     {
         if (!menuCanvas.activeSelf)
@@ -114,8 +105,6 @@ public class MenuController : MonoBehaviour
 
             menuCanvas.SetActive(true);
             if (canvasGroup != null) canvasGroup.alpha = 1f;
-
-            equipmentScrollView?.ShowEquipmentItems();
 
             if (CommonUIController.Instance != null)
             {

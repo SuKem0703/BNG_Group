@@ -336,6 +336,7 @@ GameObject:
   - component: {fileID: 6114349204208936130}
   - component: {fileID: 3707744862691180340}
   - component: {fileID: 7126682973535686157}
+  - component: {fileID: 3611744853601441757}
   m_Layer: 5
   m_Name: Material Item Root
   m_TagString: Item
@@ -394,7 +395,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: -611056084, guid: e6c222ef383c4724d86de4dd15e19776, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -483,6 +484,7 @@ MonoBehaviour:
   quantity: 1
   qualityFactor: 1
   rarity: 1
+  dropSeed: 0
   quantityTextOnUI: {fileID: 2516998600735140098}
   quantityTextOnWorld: {fileID: 5911336944911711625}
 --- !u!225 &5753184598981514552
@@ -576,3 +578,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb09ad945ca5759489c4e43a9bb1c1bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+--- !u!114 &3611744853601441757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6837810065036512092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f4c1c9905737434a9c7ed84e6fa103a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteDynamicSorting
+  sortingPrecision: 100
+  sortingBuffer: 0
+  yOffset: 0.5

@@ -336,6 +336,7 @@ GameObject:
   - component: {fileID: 2079397965501926558}
   - component: {fileID: 7399679962354501384}
   - component: {fileID: 2413368583131915995}
+  - component: {fileID: -4337948179439527472}
   m_Layer: 5
   m_Name: Equipment Item Root
   m_TagString: Item
@@ -483,6 +484,7 @@ MonoBehaviour:
   quantity: 1
   qualityFactor: 1
   rarity: 1
+  dropSeed: 0
   quantityTextOnUI: {fileID: 4659574870176919880}
   quantityTextOnWorld: {fileID: 7274560857947891007}
   isEquipped: 0
@@ -597,3 +599,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb09ad945ca5759489c4e43a9bb1c1bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+--- !u!114 &-4337948179439527472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8340440980920504748}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f4c1c9905737434a9c7ed84e6fa103a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteDynamicSorting
+  sortingPrecision: 100
+  sortingBuffer: 0
+  yOffset: 0.5
