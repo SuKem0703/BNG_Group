@@ -22,6 +22,7 @@ public class SaveController : MonoBehaviour
 
     private static HashSet<Chest> _activeChests = new HashSet<Chest>();
     private Dictionary<string, bool> _sessionChestStates = new Dictionary<string, bool>();
+    private Dictionary<string, BestiaryEntry> _bestiaryCache = new Dictionary<string, BestiaryEntry>();
     private List<ChestSaveData> _cachedChestStates = new List<ChestSaveData>();
 
     public static void RegisterChest(Chest chest) => _activeChests.Add(chest);
@@ -171,7 +172,6 @@ public class SaveController : MonoBehaviour
                             qualityFactor = svItem.qualityFactor
                         };
 
-                        // Nạp TOÀN BỘ đồ vào RAM tổng, bất kể là đang mặc hay trong túi!
                         inventoryItems.Add(itemData);
 
                         if (svItem.slotIndex >= 2200) // 2200+ Trang bị chung
@@ -341,7 +341,12 @@ public class SaveController : MonoBehaviour
             currentMageMP = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalMageMaxMP : localPlayerAdapter.playerStats.mageMP,
             currentStamina = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalStamina : localPlayerAdapter.playerStats.currentStamina,
 
-            collectedByScene = collectedByScene
+            currentDay = TimeManager.Instance != null ? TimeManager.Instance.currentDay : 1,
+            currentTimeOfDay = TimeManager.Instance != null ? TimeManager.Instance.currentTimeOfDay : 6f,
+
+            collectedByScene = collectedByScene,
+
+            bestiaryData = _bestiaryCache.Values.ToList()
         };
 
         bool saveSuccess = false;
@@ -575,6 +580,12 @@ public class SaveController : MonoBehaviour
             uiAdapter.inventoryController.ReBuildItemCounts();
         }
 
+        if (TimeManager.Instance != null && saveData != null)
+        {
+            TimeManager.Instance.currentDay = saveData.currentDay > 0 ? saveData.currentDay : 1;
+            TimeManager.Instance.currentTimeOfDay = saveData.currentDay > 0 ? saveData.currentTimeOfDay : 6f;
+        }
+
         _cachedChestStates = saveData?.chestSaveData ?? new List<ChestSaveData>();
         LoadChestStates(_cachedChestStates);
 
@@ -585,6 +596,15 @@ public class SaveController : MonoBehaviour
         }
 
         collectedByScene = saveData?.collectedByScene ?? new List<SceneCollected>();
+
+        _bestiaryCache.Clear();
+        if (saveData != null && saveData.bestiaryData != null)
+        {
+            foreach (var entry in saveData.bestiaryData)
+            {
+                _bestiaryCache[entry.enemyID] = entry;
+            }
+        }
 
         var vcam = FindFirstObjectByType<CinemachineCamera>();
         if (vcam != null && localPlayerAdapter != null)
@@ -622,6 +642,37 @@ public class SaveController : MonoBehaviour
     {
         var state = _cachedChestStates.FirstOrDefault(c => c.chestID == chestID);
         return state != null && state.isOpened;
+    }
+
+    public Dictionary<string, BestiaryEntry> GetBestiaryCache() => _bestiaryCache;
+
+    public void RecordEnemyDefeat(string enemyID)
+    {
+        if (!_bestiaryCache.ContainsKey(enemyID))
+        {
+            _bestiaryCache[enemyID] = new BestiaryEntry { enemyID = enemyID, status = 2, killCount = 1 };
+        }
+        else
+        {
+            _bestiaryCache[enemyID].status = 2;
+            _bestiaryCache[enemyID].killCount++;
+        }
+
+        TriggerAutoSave();
+    }
+
+    public void UnlockBestiary(string enemyID, int newStatus)
+    {
+        if (!_bestiaryCache.ContainsKey(enemyID))
+        {
+            _bestiaryCache[enemyID] = new BestiaryEntry { enemyID = enemyID, status = newStatus, killCount = 0 };
+            TriggerAutoSave();
+        }
+        else if (_bestiaryCache[enemyID].status < newStatus)
+        {
+            _bestiaryCache[enemyID].status = newStatus;
+            TriggerAutoSave();
+        }
     }
 
     IEnumerator SaveToServer(SaveData saveData, SaveReason reason, System.Action<bool> onComplete)

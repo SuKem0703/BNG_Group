@@ -83,7 +83,7 @@ public class StorageChestController : MonoBehaviour
 
         RefreshChestContent();
 
-        CommonUIController.Instance.SetUIVisible(false, CommonUIController.Instance.hotBar);
+        CommonUIController.Instance.SetStaticUIVisible(false, CommonUIController.Instance.hotBar);
         chestPanel.SetActive(true);
 
         if (inventoryPanel != null && pageContainer != null)
@@ -121,7 +121,7 @@ public class StorageChestController : MonoBehaviour
         NecklaceEquipTooltip.Instance?.Hide();
 
         MenuStateManager.Instance.CloseCurrentMenu();
-        CommonUIController.Instance.SetUIVisible(true, CommonUIController.Instance.hotBar);
+        CommonUIController.Instance.SetStaticUIVisible(true, CommonUIController.Instance.hotBar);
         InventoryController.Instance.ReBuildItemCounts();
     }
 

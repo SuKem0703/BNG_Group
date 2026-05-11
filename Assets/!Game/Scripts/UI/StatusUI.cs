@@ -9,8 +9,9 @@ public class StatusUI : MonoBehaviour
     private ClassController classController;
 
     [Header("Portrait")]
-    [SerializeField] private Image elricPortrait;
-    [SerializeField] private Image lyriaPortrait;
+    [SerializeField] private Image portraitImage;
+    [SerializeField] private Sprite elricSprite;
+    [SerializeField] private Sprite lyriaSprite;
 
     [Header("Real Time")]
     [SerializeField] private TextMeshProUGUI timeText;
@@ -63,8 +64,7 @@ public class StatusUI : MonoBehaviour
 
     void AssignInspector()
     {
-        elricPortrait ??= transform.FindDeepChild("ElricPortrait")?.GetComponent<Image>();
-        lyriaPortrait ??= transform.FindDeepChild("LyriaPortrait")?.GetComponent<Image>();
+        portraitImage ??= transform.FindDeepChild("PortraitImage")?.GetComponent<Image>();
 
         timeText ??= transform.FindDeepChild("TimeText")?.GetComponent<TextMeshProUGUI>();
 
@@ -99,8 +99,8 @@ public class StatusUI : MonoBehaviour
 
     private void TryFindPlayer()
     {
-        if (playerStats == null) playerStats = FindFirstObjectByType<PlayerStats>();
-        if (classController == null) classController = FindFirstObjectByType<ClassController>();
+        if (playerStats == null) playerStats = PlayerStats.Instance;
+        if (classController == null) classController = ClassController.Instance;
     }
 
     void Start()
@@ -198,7 +198,6 @@ public class StatusUI : MonoBehaviour
         {
             mageManaBarFill.gameObject.SetActive(isMage && hasLyria);
             if (isMage && hasLyria)
-                // Đã sửa lỗi logic: Chuyển từ finalKnightMaxMP -> finalMageMaxMP
                 mageManaBarFill.fillAmount = (float)playerStats.mageMP / playerStats.finalMageMaxMP;
         }
 
@@ -239,7 +238,22 @@ public class StatusUI : MonoBehaviour
         if (gemText) gemText.text = playerStats.gem.ToString();
 
         // ========== Portraits ==========
-        if (elricPortrait != null) elricPortrait.gameObject.SetActive(isKnight);
-        if (lyriaPortrait != null) lyriaPortrait.gameObject.SetActive(isMage && hasLyria);
+        if (portraitImage != null)
+        {
+            if (isKnight)
+            {
+                portraitImage.gameObject.SetActive(true);
+                portraitImage.sprite = elricSprite;
+            }
+            else if (isMage && hasLyria)
+            {
+                portraitImage.gameObject.SetActive(true);
+                portraitImage.sprite = lyriaSprite;
+            }
+            else
+            {
+                portraitImage.gameObject.SetActive(false);
+            }
+        }
     }
 }

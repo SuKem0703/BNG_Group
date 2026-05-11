@@ -5,10 +5,12 @@ public class CommonUIController : MonoBehaviour
 {
     public static CommonUIController Instance { get; private set; }
 
-    [Header("UI Elements")]
+    [Header("Static UI")]
     public GameObject hotBar;
+
+    [Header("Dynamic UI")]
     public GameObject itemPopupContainer;
-    public GameObject commonBar;
+    public GameObject statusUI;
     public GameObject miniMenu;
     public GameObject effectGrid;
     public GameObject TargetInfoDisplayUI;
@@ -23,12 +25,22 @@ public class CommonUIController : MonoBehaviour
 
     public void SetUIVisible(bool visible, params GameObject[] exceptions)
     {
-        SetElementState(hotBar, visible, exceptions, "HotBar");
+        SetDynamicUIVisible(visible, exceptions);
+        SetStaticUIVisible(visible, exceptions);
+    }
+
+    public void SetDynamicUIVisible(bool visible, params GameObject[] exceptions)
+    {
         SetElementState(itemPopupContainer, visible, exceptions, "ItemPopupContainer");
-        SetElementState(commonBar, visible, exceptions, "CommonBar");
+        SetElementState(statusUI, visible, exceptions, "StatusUI");
         SetElementState(miniMenu, visible, exceptions, "MiniMenu");
         SetElementState(effectGrid, visible, exceptions, "EffectGrid");
         SetElementState(TargetInfoDisplayUI, visible, exceptions, "TargetInfoDisplayUI");
+    }
+
+    public void SetStaticUIVisible(bool visible, params GameObject[] exceptions)
+    {
+        SetElementState(hotBar, visible, exceptions, "HotBar");
     }
 
     private void SetElementState(GameObject element, bool targetState, GameObject[] exceptions, string debugName)
@@ -37,7 +49,7 @@ public class CommonUIController : MonoBehaviour
         {
             return;
         }
-        // Kiểm tra ngoại lệ
+
         if (exceptions != null && exceptions.Contains(element))
         {
             if (!element.activeSelf)

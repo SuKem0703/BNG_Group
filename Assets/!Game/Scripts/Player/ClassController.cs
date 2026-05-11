@@ -38,15 +38,6 @@ public class ClassController : NetworkBehaviour
         stats = GetComponent<PlayerStats>();
     }
 
-    //private void Start()
-    //{
-    //    knightObject.SetActive(true);
-    //    mageObject.SetActive(false);
-    //    currentClass = knightObject;
-
-    //    OnClassSwapped?.Invoke("Knight");
-    //}
-
     public override void OnDestroy()
     {
         base.OnDestroy();
@@ -198,6 +189,9 @@ public class ClassController : NetworkBehaviour
         var currentStats = GetComponent<PlayerStats>();
         if (currentStats != null) currentStats.ApplyEquippedItems();
 
-        OnClassSwapped?.Invoke(GetCurrentClassName());
+        if (IsOwner)
+        {
+            OnClassSwapped?.Invoke(GetCurrentClassName());
+        }
     }
 }

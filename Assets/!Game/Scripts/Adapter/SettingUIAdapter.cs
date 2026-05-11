@@ -66,7 +66,7 @@ public class SettingUIAdapter : MonoBehaviour
     private void UpdateGraphicsLabel(int level)
     {
         if (graphicsLabel != null)
-            graphicsLabel.text = level == 1 ? "Low" : (level == 2 ? "Medium" : "Ultra");
+            graphicsLabel.text = level == 1 ? "Thấp" : (level == 2 ? "Trung bình" : "Cao");
     }
 
     private void UpdateLanguageText(string lang)

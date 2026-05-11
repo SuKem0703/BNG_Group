@@ -1,6 +1,15 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+
+public enum TimePeriod
+{
+    Morning,    // 06:00 - 11:59
+    Afternoon,  // 12:00 - 16:59
+    Evening,    // 17:00 - 19:59
+    Night       // 20:00 - 05:59
+}
+
 public class TimeManager : MonoBehaviour
 {
     public static TimeManager Instance { get; private set; }
@@ -15,20 +24,33 @@ public class TimeManager : MonoBehaviour
     [SerializeField] private Gradient lightColorGradient;
     [SerializeField] private AnimationCurve lightIntensityCurve;
 
-    // Các sự kiện
     public Action<int, int> OnTimeChanged;
     public Action<int> OnDayChanged;
+    public Action<TimePeriod> OnPeriodChanged;
 
     private int lastHour = -1;
     private int lastMinute = -1;
+    private TimePeriod lastPeriod;
     private float timeMultiplier;
+
+    public static TimePeriod CurrentPeriod
+    {
+        get
+        {
+            if (Instance == null) return TimePeriod.Morning;
+            float t = Instance.currentTimeOfDay;
+            if (t >= 6f && t < 12f) return TimePeriod.Morning;
+            if (t >= 12f && t < 17f) return TimePeriod.Afternoon;
+            if (t >= 17f && t < 20f) return TimePeriod.Evening;
+            return TimePeriod.Night;
+        }
+    }
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            //DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -39,12 +61,14 @@ public class TimeManager : MonoBehaviour
     private void Start()
     {
         timeMultiplier = 24f / (dayDurationInRealMinutes * 60f);
-
+        lastPeriod = CurrentPeriod;
         TryFindGlobalLight();
     }
 
     private void Update()
     {
+        if (PauseController.IsGamePause) return;
+
         currentTimeOfDay += Time.deltaTime * timeMultiplier;
 
         if (currentTimeOfDay >= 24f)
@@ -55,7 +79,6 @@ public class TimeManager : MonoBehaviour
         }
 
         CalculateTime();
-
         UpdateLighting();
     }
 
@@ -70,6 +93,13 @@ public class TimeManager : MonoBehaviour
             lastMinute = currentMinute;
 
             OnTimeChanged?.Invoke(currentHour, currentMinute);
+        }
+
+        TimePeriod current = CurrentPeriod;
+        if (current != lastPeriod)
+        {
+            lastPeriod = current;
+            OnPeriodChanged?.Invoke(lastPeriod);
         }
     }
 
@@ -100,7 +130,6 @@ public class TimeManager : MonoBehaviour
         }
     }
 
-    // Gọi hàm này khi người chơi tương tác với giường ngủ
     public void SleepUntilMorning(float wakeUpHour = 6f)
     {
         if (currentTimeOfDay > wakeUpHour)

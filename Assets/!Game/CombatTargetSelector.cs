@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using UnityEngine;
 using Unity.Netcode;
+using UnityEngine;
 
 public class CombatTargetSelector : NetworkBehaviour
 {
@@ -19,6 +20,8 @@ public class CombatTargetSelector : NetworkBehaviour
 
     private List<Enemy> enemiesInRange = new List<Enemy>();
 
+    public static event Action<Enemy> OnEnemyTargetChanged;
+
     private void Update()
     {
         if (!IsOwner) return;
@@ -33,7 +36,10 @@ public class CombatTargetSelector : NetworkBehaviour
 
         if (enemiesInRange.Count == 0)
         {
-            ClearTarget();
+            if (currentTarget != null)
+            {
+                ClearTarget();
+            }
             return;
         }
 
@@ -56,16 +62,22 @@ public class CombatTargetSelector : NetworkBehaviour
         {
             indicatorInstance = Instantiate(indicatorPrefab);
         }
+
+        OnEnemyTargetChanged?.Invoke(currentTarget);
     }
 
     private void ClearTarget()
     {
+        if (currentTarget == null) return;
+
         currentTarget = null;
         if (indicatorInstance != null)
         {
             Destroy(indicatorInstance);
             indicatorInstance = null;
         }
+
+        OnEnemyTargetChanged?.Invoke(null);
     }
 
     private void UpdateIndicatorPosition()

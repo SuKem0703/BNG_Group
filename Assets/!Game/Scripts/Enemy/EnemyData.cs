@@ -1,6 +1,35 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+public enum TimeScalingType
+{
+    None,
+    Nocturnal,
+    Diurnal
+}
+
+public enum EnemyRace
+{
+    Slime,
+    Orc,
+    Goblin,
+    Golem,
+    PredatorPlant,
+    Beholder,
+    Imp,
+    Ghost,
+    Zombie,
+    Demon,
+    Lizardman,
+    GiantRat,
+    Vampire,
+    Mushroom,
+    Ent,
+    Lich,
+    Skeleton,
+    Gnoll
+}
+
 [CreateAssetMenu(fileName = "NewEnemyData", menuName = "ScriptableObjects/EnemyData")]
 public class EnemyData : ScriptableObject
 {
@@ -8,6 +37,12 @@ public class EnemyData : ScriptableObject
     public string enemyName = "Enemy";
     public string questTargetID;
     public EnemyRank enemyRank = EnemyRank.Normal;
+    public EnemyRace enemyRace = EnemyRace.Slime;
+
+    public Sprite enemyIcon;
+
+    [Header("Time Scaling")]
+    public TimeScalingType timeScalingType = TimeScalingType.Nocturnal;
 
     [Header("Base Stats")]
     public int levelEnemy = 1;

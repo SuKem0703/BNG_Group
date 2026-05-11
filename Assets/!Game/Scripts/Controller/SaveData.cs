@@ -12,8 +12,6 @@ public class SaveData
     public string checkpointSceneName;
 
     public int backPackSlotCount;
-    // public List<InventorySaveData> inventorySaveData;
-    // public List<InventorySaveData> hotbarSaveData;
     public List<ChestSaveData> chestSaveData;
     public List<QuestProgress> questProgressData;
     public List<string> handInQuestIDs;
@@ -24,20 +22,18 @@ public class SaveData
     public int currentMageMP;
     public float currentStamina;
 
-    /*
-     
-    public List<EquippedSaveData> knightEquipSaveData;
-    public List<EquippedSaveData> mageEquipSaveData;
-    public List<EquippedSaveData> shareEquipSaveData;
-
-    */
-
     public FarmData farmData;
+
+    public int currentDay;
+    public float currentTimeOfDay;
 
     public List<ChestStorageEntry> allChestsData = new List<ChestStorageEntry>();
 
     public List<SaveController.SceneCollected> collectedByScene = new();
+
+    public List<BestiaryEntry> bestiaryData = new List<BestiaryEntry>();
 }
+
 [System.Serializable]
 public class ChestSaveData
 {
@@ -57,4 +53,12 @@ public class ChestStorageEntry
 {
     public string chestID;
     public List<StorageChestSaveData> items;
+}
+
+[System.Serializable]
+public class BestiaryEntry
+{
+    public string enemyID;
+    public int status;
+    public int killCount;
 }

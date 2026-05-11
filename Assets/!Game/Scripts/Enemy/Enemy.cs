@@ -20,9 +20,9 @@ public class BossPhaseInfo
 
 [RequireComponent(typeof(EnemyHealth))]
 [RequireComponent(typeof(EnemyCombatAI))]
-public class Enemy : NetworkBehaviour
+public class Enemy : NetworkBehaviour, ITargetableInfo
 {
-    [Header("Data Core (Kéo file SO vào đây)")]
+    [Header("Data Core")]
     public EnemyData data;
 
     [Header("Quest & Instance Settings")]
@@ -32,18 +32,20 @@ public class Enemy : NetworkBehaviour
     public string enemyName => data != null ? data.enemyName : "Enemy";
     public string questTargetID => data != null ? (string.IsNullOrEmpty(data.questTargetID) ? data.enemyName : data.questTargetID) : "";
     public EnemyRank enemyRank => data != null ? data.enemyRank : EnemyRank.Normal;
+    public EnemyRace enemyRace => data != null ? data.enemyRace : EnemyRace.Slime;
     public int levelEnemy => data != null ? data.levelEnemy : 1;
-    public float experienceReward => data != null ? data.experienceReward : 0;
-    public float goldReward => data != null ? data.goldReward : 0;
 
     public IReadOnlyList<BossPhaseInfo> bossPhases => data != null ? data.bossPhases : null;
 
+    public float experienceReward { get; private set; }
+    public float goldReward { get; private set; }
     public float damage { get; set; }
     public int maxHealth { get; set; }
     public int defense { get; set; }
     public float chaseSpeed { get; set; }
-    public float attackRange { get; set; }
     public float detectionRadius { get; set; }
+
+    public float attackRange { get; set; }
     public float attackCooldown { get; set; }
 
     [Header("Runtime State (Trạng thái thực tế)")]
@@ -84,24 +86,12 @@ public class Enemy : NetworkBehaviour
 
     protected virtual void Awake()
     {
-        if (data != null)
-        {
-            damage = data.damage;
-            maxHealth = data.maxHealth;
-            defense = data.defense;
-            chaseSpeed = data.chaseSpeed;
-            attackRange = data.attackRange;
-            detectionRadius = data.detectionRadius;
-            attackCooldown = data.attackCooldown;
-        }
-
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
-
         if (spriteRenderer != null) originalMaterial = spriteRenderer.material;
-
         if (healthLogic != null) healthLogic.Init(this);
-
         if (aiLogic != null) aiLogic.Init(this);
+
+        ApplyTimeScalingStats();
     }
 
     public override void OnNetworkSpawn()
@@ -127,17 +117,79 @@ public class Enemy : NetworkBehaviour
         }
     }
 
+    private void GetTimeMultipliers(out float statMult, out float speedMult, out float rewardMult)
+    {
+        statMult = 1.0f;
+        speedMult = 1.0f;
+        rewardMult = 1.0f;
+
+        if (data == null || TimeManager.Instance == null || data.timeScalingType == TimeScalingType.None) return;
+
+        if (data.timeScalingType == TimeScalingType.Nocturnal)
+        {
+            switch (TimeManager.CurrentPeriod)
+            {
+                // Mạnh dần vào buổi tối
+                case TimePeriod.Evening:
+                    statMult = 1.2f; speedMult = 1.1f; rewardMult = 1.25f; break;
+                // Mạnh nhất vào ban đêm
+                case TimePeriod.Night:
+                    statMult = 1.5f; speedMult = 1.3f; rewardMult = 1.5f; break;
+            }
+        }
+        else if (data.timeScalingType == TimeScalingType.Diurnal)
+        {
+            switch (TimeManager.CurrentPeriod)
+            {
+                case TimePeriod.Morning:
+                case TimePeriod.Afternoon:
+                    // Mạnh nhất vào ban ngày
+                    statMult = 1.5f; speedMult = 1.3f; rewardMult = 1.5f; break;
+                case TimePeriod.Evening:
+                    statMult = 1.0f; speedMult = 1.0f; rewardMult = 1.0f; break;
+                case TimePeriod.Night:
+                    // Sinh vật ban ngày bị yếu đi khi đêm xuống
+                    statMult = 0.7f; speedMult = 0.8f; rewardMult = 0.8f; break;
+            }
+        }
+    }
+
+    private void ApplyTimeScalingStats()
+    {
+        if (data == null) return;
+
+        GetTimeMultipliers(out float statMult, out float speedMult, out float rewardMult);
+
+        damage = data.damage * statMult;
+        defense = Mathf.RoundToInt(data.defense * statMult);
+        chaseSpeed = data.chaseSpeed * speedMult;
+        detectionRadius = data.detectionRadius * speedMult;
+
+        experienceReward = data.experienceReward * rewardMult;
+        goldReward = data.goldReward * rewardMult;
+
+        attackRange = data.attackRange;
+        attackCooldown = data.attackCooldown;
+
+        if (bossPhases == null || bossPhases.Count == 0)
+        {
+            maxHealth = Mathf.RoundToInt(data.maxHealth * statMult);
+        }
+    }
+
     protected void InitializePhase(int phaseIndex)
     {
         currentPhaseIndex = phaseIndex;
 
+        GetTimeMultipliers(out float statMult, out _, out _);
+
         if (bossPhases != null && bossPhases.Count > phaseIndex)
         {
-            maxHealth = bossPhases[phaseIndex].maxHealth;
+            maxHealth = Mathf.RoundToInt(bossPhases[phaseIndex].maxHealth * statMult);
         }
         else if (data != null)
         {
-            maxHealth = data.maxHealth;
+            maxHealth = Mathf.RoundToInt(data.maxHealth * statMult);
         }
 
         netHealth.Value = maxHealth;
@@ -174,7 +226,16 @@ public class Enemy : NetworkBehaviour
         if (aiLogic != null) aiLogic.OnUpdate();
     }
 
-    public void OnPlayerDetected(Transform detectedPlayer) => aiLogic?.OnPlayerDetected(detectedPlayer);
+    public void OnPlayerDetected(Transform detectedPlayer)
+    {
+        aiLogic?.OnPlayerDetected(detectedPlayer);
+
+        if (data != null && SaveController.Instance != null)
+        {
+            SaveController.Instance.UnlockBestiary(data.enemyName, 1);
+        }
+    }
+
     public void OnPlayerLost(Transform lostPlayer) => aiLogic?.OnPlayerLost(lostPlayer);
 
     public virtual void DealDamage() => aiLogic?.ProcessDealDamage();
@@ -306,6 +367,11 @@ public class Enemy : NetworkBehaviour
         healthLogic?.StopHurt();
         aiLogic?.StopMovement();
 
+        if (data != null && SaveController.Instance != null)
+        {
+            SaveController.Instance.RecordEnemyDefeat(data.enemyName);
+        }
+
         uint subSeed = SaveController.MasterSeed + (uint)NetworkObjectId;
         SeededRandom rng = new SeededRandom(subSeed);
 
@@ -334,7 +400,7 @@ public class Enemy : NetworkBehaviour
 
         if (IsServer && data != null && data.lootTable != null)
         {
-            int droppedItemID = data.lootTable.GetRandomDrop(rng); // rng đang là biến ở ngoài
+            int droppedItemID = data.lootTable.GetRandomDrop(rng);
 
             if (droppedItemID > 0)
             {
@@ -352,12 +418,10 @@ public class Enemy : NetworkBehaviour
                     if (item != null)
                     {
                         uint itemStatSeed = (uint)rng.NextInt(0, int.MaxValue);
-
                         SeededRandom itemRng = new SeededRandom(itemStatSeed);
 
                         item.rarity = ItemGenerationHelper.GetRandomRarity(itemRng);
                         item.qualityFactor = ItemGenerationHelper.GetWeightedQualityFactor(itemRng);
-
                         item.dropSeed = itemStatSeed;
                     }
 
@@ -439,6 +503,8 @@ public class Enemy : NetworkBehaviour
 
     public virtual void ResetEnemyState()
     {
+        ApplyTimeScalingStats();
+
         isDead = false;
         hasProcessedDeath = false;
         isStunned = false;
@@ -461,6 +527,46 @@ public class Enemy : NetworkBehaviour
         if (IsServer)
         {
             InitializePhase(0);
+        }
+    }
+
+    public TargetInfoData GetInfo()
+    {
+        string raceDisplayName = GetRaceDisplayName(enemyRace);
+
+        string infoText = $"Lv. {levelEnemy} - {raceDisplayName}";
+
+        return new TargetInfoData(
+            enemyName,
+            data != null ? data.enemyIcon : null,
+            infoText,
+            TargetType.Enemy
+        );
+    }
+
+    private string GetRaceDisplayName(EnemyRace race)
+    {
+        switch (race)
+        {
+            case EnemyRace.Slime: return "Slime";
+            case EnemyRace.Orc: return "Orc";
+            case EnemyRace.Goblin: return "Goblin";
+            case EnemyRace.Golem: return "Golem";
+            case EnemyRace.PredatorPlant: return "Thực vật ăn thịt";
+            case EnemyRace.Beholder: return "Beholder";
+            case EnemyRace.Imp: return "Tiểu quỷ";
+            case EnemyRace.Ghost: return "Hồn ma";
+            case EnemyRace.Zombie: return "Thây ma";
+            case EnemyRace.Demon: return "Ác quỷ";
+            case EnemyRace.Lizardman: return "Người thằn lằn";
+            case EnemyRace.GiantRat: return "Chuột khổng lồ";
+            case EnemyRace.Vampire: return "Ma cà rồng";
+            case EnemyRace.Mushroom: return "Nấm đột biến";
+            case EnemyRace.Ent: return "Mộc tinh";
+            case EnemyRace.Lich: return "Lich";
+            case EnemyRace.Skeleton: return "Bộ xương";
+            case EnemyRace.Gnoll: return "Gnoll";
+            default: return "Quái vật";
         }
     }
 }
