@@ -1,5 +1,6 @@
 using TMPro;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -41,19 +42,19 @@ public class RelayUIAdapter : MonoBehaviour
     private async void OnCreateRoomClicked()
     {
         SetUIInteractable(false);
-        UpdateStatus("Đang khởi tạo máy chủ Relay...");
+        UpdateStatus("Đang chuyển đổi sang máy chủ Relay (Internet)...");
 
         string code = await RelayManager.Instance.CreateRelayHost();
 
         if (!string.IsNullOrEmpty(code))
         {
             joinCodeDisplayText.text = code;
-            UpdateStatus("Tạo phòng thành công!");
+            UpdateStatus("Tạo phòng Internet thành công! Đưa mã này cho bạn bè.");
+            GUIUtility.systemCopyBuffer = code;
         }
-
         else
         {
-            UpdateStatus("Lỗi: Không thể tạo phòng.");
+            UpdateStatus("Lỗi: Không thể tạo phòng Internet.");
             SetUIInteractable(true);
         }
     }
@@ -81,26 +82,24 @@ public class RelayUIAdapter : MonoBehaviour
         }
     }
 
-    private async void OnCreateLANClicked()
+    private void OnCreateLANClicked()
     {
-        SetUIInteractable(false);
-        UpdateStatus("Đang khởi tạo máy chủ nội bộ (LAN)...");
-
-        var result = await RelayManager.Instance.StartLANHost();
-
-        if (result.success)
+        if (NetworkManager.Singleton.IsServer)
         {
+            string localIP = RelayManager.GetLocalIPAddress();
+
+            UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+            ushort currentPort = transport.ConnectionData.Port;
+
             if (lanInfoDisplayText != null)
-                lanInfoDisplayText.text = $"IP: {result.ip}\nPort: {result.port}";
+                lanInfoDisplayText.text = $"IP: {localIP}\nPort: {currentPort}";
 
-            UpdateStatus("Tạo phòng LAN thành công! Đưa IP và Port này cho người khác.");
-            GUIUtility.systemCopyBuffer = $"{result.ip}:{result.port}";
+            UpdateStatus("Mạng LAN đã mở sẵn! Đã copy thông tin vào bộ nhớ tạm.");
+            GUIUtility.systemCopyBuffer = $"{localIP}:{currentPort}";
         }
-
         else
         {
-            UpdateStatus("Lỗi: Không thể mở phòng LAN.");
-            SetUIInteractable(true);
+            UpdateStatus("Lỗi: Máy chủ cục bộ chưa được khởi chạy.");
         }
     }
 
@@ -142,9 +141,6 @@ public class RelayUIAdapter : MonoBehaviour
 
     private void UpdateStatus(string message)
     {
-        if (statusText != null)
-        {
-            statusText.text = message;
-        }
+        if (statusText != null) statusText.text = message;
     }
 }

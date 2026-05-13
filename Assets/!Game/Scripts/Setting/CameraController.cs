@@ -14,19 +14,23 @@ public class CameraController : MonoBehaviour
     [Header("Dynamic Border Zoom")]
     [Tooltip("Bật tính năng tự zoom ra khi gần tường")]
     public bool enableBorderZoom = true;
-
     [Tooltip("Khoảng cách từ tường bắt đầu bị zoom ra")]
     public float borderThreshold = 3f;
-
     [Tooltip("Độ zoom bắt buộc khi chạm sát tường")]
     public float sizeAtBorder = 5f;
+
+    [Header("Minimap")]
+    public Camera minimapCamera;
+    public float minimapZOffset = -50f;
+    public float minimapSmoothness = 10f;
+    private bool instantSnapMinimap = true;
 
     [Header("References")]
     [SerializeField] private CinemachineCamera virtualCamera;
     [SerializeField] private Transform playerTransform;
 
-    private CinemachineConfiner2D confiner;
-    private PolygonCollider2D polyCollider;
+    public CinemachineConfiner2D confiner;
+    public Collider2D mapCollider;
 
     private float userDesiredSize;
     private float finalTargetSize;
@@ -47,15 +51,18 @@ public class CameraController : MonoBehaviour
             if (confiner != null)
             {
                 confiner.Damping = 0f;
-                if (confiner.BoundingShape2D is PolygonCollider2D poly)
-                {
-                    polyCollider = poly;
-                }
+                mapCollider = confiner.BoundingShape2D;
             }
         }
         else
         {
             userDesiredSize = defaultSize;
+        }
+
+        if (minimapCamera != null)
+        {
+            minimapCamera.clearFlags = CameraClearFlags.SolidColor;
+            minimapCamera.orthographic = true;
         }
     }
 
@@ -69,6 +76,12 @@ public class CameraController : MonoBehaviour
             if (playerTransform == null) return;
         }
 
+        ProcessMainCamera();
+        ProcessMinimapCamera();
+    }
+
+    private void ProcessMainCamera()
+    {
         float mapLimit = CalculateMaxOrthoSizeFromBound();
         float safeMaxSize = Mathf.Max(minSize, Mathf.Min(maxSize, mapLimit - 0.05f));
 
@@ -82,10 +95,9 @@ public class CameraController : MonoBehaviour
         }
 
         userDesiredSize = Mathf.Clamp(userDesiredSize, minSize, safeMaxSize);
-
         finalTargetSize = userDesiredSize;
 
-        if (enableBorderZoom && polyCollider != null && playerTransform != null)
+        if (enableBorderZoom && mapCollider != null && playerTransform != null)
         {
             float distToBorder = GetDistanceToClosestBorder(playerTransform.position, out debugClosestPoint);
 
@@ -94,9 +106,6 @@ public class CameraController : MonoBehaviour
                 float t = distToBorder / borderThreshold;
                 float borderOverrideSize = Mathf.Lerp(sizeAtBorder, userDesiredSize, t);
 
-                // Nếu bạn muốn CHO PHÉP người chơi zoom vào gần ngay cả khi ở sát tường,
-                // hãy đổi Mathf.Max thành Mathf.Min ở dòng dưới. 
-                // Nếu dùng Max, họ sẽ bị khóa cứng ở sizeAtBorder (không thể zoom gần hơn mức này).
                 finalTargetSize = Mathf.Max(userDesiredSize, borderOverrideSize);
                 finalTargetSize = Mathf.Min(finalTargetSize, safeMaxSize);
             }
@@ -116,14 +125,59 @@ public class CameraController : MonoBehaviour
             if (confiner != null)
             {
                 confiner.InvalidateBoundingShapeCache();
-                // Lưu ý: Nếu phiên bản Cinemachine của bạn báo lỗi dòng trên, 
-                // hãy đổi thành: confiner.InvalidateCache();
             }
+        }
+    }
+
+    private void ProcessMinimapCamera()
+    {
+        if (minimapCamera == null || playerTransform == null) return;
+
+        Vector3 targetPosition = new Vector3(playerTransform.position.x, playerTransform.position.y, minimapZOffset);
+
+        if (mapCollider != null)
+        {
+            Bounds bounds = mapCollider.bounds;
+            float camHeight = minimapCamera.orthographicSize;
+            float camWidth = camHeight * minimapCamera.aspect;
+
+            float minX = bounds.min.x + camWidth;
+            float maxX = bounds.max.x - camWidth;
+            float minY = bounds.min.y + camHeight;
+            float maxY = bounds.max.y - camHeight;
+
+            if (minX > maxX)
+            {
+                minX = bounds.center.x;
+                maxX = bounds.center.x;
+            }
+            if (minY > maxY)
+            {
+                minY = bounds.center.y;
+                maxY = bounds.center.y;
+            }
+
+            float clampedX = Mathf.Clamp(targetPosition.x, minX, maxX);
+            float clampedY = Mathf.Clamp(targetPosition.y, minY, maxY);
+
+            targetPosition = new Vector3(clampedX, clampedY, minimapZOffset);
+        }
+
+        if (instantSnapMinimap)
+        {
+            minimapCamera.transform.position = targetPosition;
+            instantSnapMinimap = false;
+        }
+        else
+        {
+            minimapCamera.transform.position = Vector3.Lerp(minimapCamera.transform.position, targetPosition, Time.deltaTime * minimapSmoothness);
         }
     }
 
     private void FindLocalPlayer()
     {
+        Transform oldTransform = playerTransform;
+
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient)
         {
             var localClient = NetworkManager.Singleton.LocalClient;
@@ -138,36 +192,63 @@ public class CameraController : MonoBehaviour
             if (p != null) playerTransform = p.transform;
         }
 
-        if (playerTransform != null && virtualCamera != null)
+        if (playerTransform != null)
         {
-            virtualCamera.Target.TrackingTarget = playerTransform;
+            if (virtualCamera != null) virtualCamera.Target.TrackingTarget = playerTransform;
+
+            if (oldTransform != playerTransform) instantSnapMinimap = true;
         }
     }
 
-    // Tính khoảng cách từ điểm đến cạnh gần nhất của Polygon
     private float GetDistanceToClosestBorder(Vector2 point, out Vector2 closestPointOnEdge)
     {
         float minDst = float.MaxValue;
         closestPointOnEdge = point;
 
-        if (polyCollider == null) return float.MaxValue;
+        if (mapCollider == null) return float.MaxValue;
 
-        for (int i = 0; i < polyCollider.pathCount; i++)
+        if (mapCollider is BoxCollider2D box)
         {
-            Vector2[] pathPoints = polyCollider.GetPath(i);
+            Vector2 localPoint = box.transform.InverseTransformPoint(point);
+            float halfWidth = box.size.x / 2f;
+            float halfHeight = box.size.y / 2f;
 
-            for (int j = 0; j < pathPoints.Length; j++)
+            float distRight = (box.offset.x + halfWidth) - localPoint.x;
+            float distLeft = localPoint.x - (box.offset.x - halfWidth);
+            float distTop = (box.offset.y + halfHeight) - localPoint.y;
+            float distBottom = localPoint.y - (box.offset.y - halfHeight);
+
+            minDst = Mathf.Min(distRight, distLeft, distTop, distBottom);
+
+            Vector2 closestLocal = localPoint;
+            if (minDst == distRight) closestLocal.x = box.offset.x + halfWidth;
+            else if (minDst == distLeft) closestLocal.x = box.offset.x - halfWidth;
+            else if (minDst == distTop) closestLocal.y = box.offset.y + halfHeight;
+            else if (minDst == distBottom) closestLocal.y = box.offset.y - halfHeight;
+
+            closestPointOnEdge = box.transform.TransformPoint(closestLocal);
+            return minDst;
+        }
+
+        else if (mapCollider is PolygonCollider2D poly)
+        {
+            for (int i = 0; i < poly.pathCount; i++)
             {
-                Vector2 p1 = polyCollider.transform.TransformPoint(pathPoints[j]);
-                Vector2 p2 = polyCollider.transform.TransformPoint(pathPoints[(j + 1) % pathPoints.Length]);
+                Vector2[] pathPoints = poly.GetPath(i);
 
-                Vector2 closest = GetClosestPointOnSegment(point, p1, p2);
-                float dst = Vector2.Distance(point, closest);
-
-                if (dst < minDst)
+                for (int j = 0; j < pathPoints.Length; j++)
                 {
-                    minDst = dst;
-                    closestPointOnEdge = closest;
+                    Vector2 p1 = poly.transform.TransformPoint(pathPoints[j]);
+                    Vector2 p2 = poly.transform.TransformPoint(pathPoints[(j + 1) % pathPoints.Length]);
+
+                    Vector2 closest = GetClosestPointOnSegment(point, p1, p2);
+                    float dst = Vector2.Distance(point, closest);
+
+                    if (dst < minDst)
+                    {
+                        minDst = dst;
+                        closestPointOnEdge = closest;
+                    }
                 }
             }
         }
@@ -175,7 +256,6 @@ public class CameraController : MonoBehaviour
         return minDst;
     }
 
-    // Tìm điểm gần nhất trên đoạn thẳng AB so với điểm P
     private Vector2 GetClosestPointOnSegment(Vector2 p, Vector2 a, Vector2 b)
     {
         Vector2 ap = p - a;
@@ -211,11 +291,23 @@ public class CameraController : MonoBehaviour
         currentVelocity = 0f;
         if (virtualCamera != null) virtualCamera.Lens.OrthographicSize = userDesiredSize;
     }
+
+    public void UpdateMapBounds(Collider2D newBounds)
+    {
+        mapCollider = newBounds;
+
+        if (confiner != null)
+        {
+            confiner.BoundingShape2D = newBounds;
+            confiner.InvalidateBoundingShapeCache();
+        }
+    }
+
     public float GetCurrentZoom() => userDesiredSize;
 
     void OnDrawGizmos()
     {
-        if (playerTransform != null && polyCollider != null)
+        if (playerTransform != null && mapCollider != null)
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(playerTransform.position, borderThreshold);

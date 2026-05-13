@@ -20,13 +20,40 @@ public class EnemySpawnArea : MonoBehaviour
 
     void Start()
     {
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && NetworkManager.Singleton.IsListening)
+        {
+            StartCoroutine(InitialSpawnRoutine());
+        }
 
-        StartCoroutine(InitialSpawnRoutine());
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnServerStarted += HandleServerStarted;
+            NetworkManager.Singleton.OnServerStopped += HandleServerStopped;
+        }
+    }
+
+    private void HandleServerStarted()
+    {
+        if (NetworkManager.Singleton.IsServer)
+        {
+            StartCoroutine(InitialSpawnRoutine());
+        }
+    }
+
+    private void HandleServerStopped(bool obj)
+    {
+        StopAllCoroutines();
+        pooledEnemies.Clear();
     }
 
     private void OnDestroy()
     {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnServerStarted -= HandleServerStarted;
+            NetworkManager.Singleton.OnServerStopped -= HandleServerStopped;
+        }
+
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
 
         foreach (var enemy in pooledEnemies)
@@ -34,14 +61,8 @@ public class EnemySpawnArea : MonoBehaviour
             if (enemy != null)
             {
                 var netObj = enemy.GetComponent<NetworkObject>();
-                if (netObj != null && netObj.IsSpawned)
-                {
-                    netObj.Despawn(true);
-                }
-                else
-                {
-                    Destroy(enemy);
-                }
+                if (netObj != null && netObj.IsSpawned) netObj.Despawn(true);
+                else Destroy(enemy);
             }
         }
         pooledEnemies.Clear();
@@ -67,9 +88,11 @@ public class EnemySpawnArea : MonoBehaviour
 
         GameObject enemyObj = null;
 
+        pooledEnemies.RemoveAll(item => item == null);
+
         foreach (var obj in pooledEnemies)
         {
-            if (obj != null && !obj.activeInHierarchy && obj.name.StartsWith(selectedPrefab.name))
+            if (!obj.activeInHierarchy && obj.name.StartsWith(selectedPrefab.name))
             {
                 enemyObj = obj;
                 break;
@@ -89,10 +112,7 @@ public class EnemySpawnArea : MonoBehaviour
         }
 
         var enemyScript = enemyObj.GetComponent<Enemy>();
-        if (enemyScript != null)
-        {
-            enemyScript.ResetEnemyState();
-        }
+        if (enemyScript != null) enemyScript.ResetEnemyState();
 
         var netObj = enemyObj.GetComponent<NetworkObject>();
         if (netObj != null && !netObj.IsSpawned)

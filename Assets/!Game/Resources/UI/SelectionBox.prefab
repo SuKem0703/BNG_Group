@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2821208231138737583}
   - component: {fileID: 8330903334878171855}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: SelectionBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -34,6 +34,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &8330903334878171855
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -77,8 +78,9 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1710315361
-  m_SortingLayer: 6
+  m_SortingLayer: 1
   m_SortingOrder: -100
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 4229148702422905740, guid: cfaee815c1fa1f64ea60c52ef5ce34ae, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -88,5 +90,4 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0

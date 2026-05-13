@@ -66,6 +66,12 @@ public class InteractionDetector : NetworkBehaviour
 
         if (currentTarget == null) return;
 
+        if (currentTarget is Item itemTarget && !itemTarget.IsOwnedByLocalPlayer())
+        {
+            GameNotify.Show("Vật phẩm này thuộc về người khác.");
+            return;
+        }
+
         if (playerMovement != null)
         {
             Vector3 targetCenter = GetTargetCenterPosition(currentTarget);
@@ -185,11 +191,9 @@ public class InteractionDetector : NetworkBehaviour
 
         interactablesInRange.RemoveAll(item => item == null || item.Equals(null));
 
-        // Loại bỏ object bị disable (SetActive false)
         interactablesInRange.RemoveAll(item =>
             (item as MonoBehaviour).gameObject.activeInHierarchy == false);
 
-        // Nếu target hiện tại vẫn hợp lệ thì giữ nguyên
         if (currentTarget != null && currentTarget.CanInteract() && interactablesInRange.Contains(currentTarget))
         {
             return;
@@ -205,6 +209,7 @@ public class InteractionDetector : NetworkBehaviour
         {
             IInteractable closest = interactablesInRange
                 .Where(i => i.CanInteract())
+                .Where(i => !(i is Item) || (i is Item item && item.IsOwnedByLocalPlayer()))
                 .OrderBy(i => Vector2.Distance(transform.position, GetTargetCenterPosition(i)))
                 .FirstOrDefault();
 
@@ -214,7 +219,7 @@ public class InteractionDetector : NetworkBehaviour
             }
             else
             {
-                ClearTarget(); // Không có gì sẵn sàng thì bỏ target
+                ClearTarget();
             }
         }
         else
@@ -260,7 +265,6 @@ public class InteractionDetector : NetworkBehaviour
         }
     }
 
-    // Dùng để ép set target từ bên ngoài (bỏ qua các kiểm tra)
     public void ForceSetTarget(IInteractable target, bool showVisual = true)
     {
         SetTarget(target, showVisual);
@@ -297,29 +301,24 @@ public class InteractionDetector : NetworkBehaviour
             float offsetY = col.offset.y;
             float halfSizeY = 0f;
 
-            // BoxCollider2D có thuộc tính size
             if (col is BoxCollider2D boxCol)
             {
                 halfSizeY = boxCol.size.y / 2f;
             }
-            // CapsuleCollider2D cũng có thuộc tính size
             else if (col is CapsuleCollider2D capCol)
             {
                 halfSizeY = capCol.size.y / 2f;
             }
-            // CircleCollider2D có thuộc tính radius
             else if (col is CircleCollider2D cirCol)
             {
                 halfSizeY = cirCol.radius;
             }
 
-            // Công thức: Tọa độ gốc + Offset Y + Một nửa chiều cao Collider
             float centerY = objectPos.y + offsetY + halfSizeY;
 
             return new Vector3(objectPos.x + col.offset.x, centerY, objectPos.z);
         }
 
-        // Nếu không có collider, fallback về vị trí transform
         return mb.transform.position;
     }
 
@@ -339,7 +338,6 @@ public class InteractionDetector : NetworkBehaviour
                 halfSizeY = boxCol.size.y / 2f;
             }
 
-            // Tâm Plot: Tọa độ gốc + Offset Y + Nửa chiều cao
             float centerY = objectPos.y + offsetY + halfSizeY;
 
             return new Vector3(objectPos.x + col.offset.x, centerY, objectPos.z);

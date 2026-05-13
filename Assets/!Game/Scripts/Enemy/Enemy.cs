@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
@@ -53,6 +54,9 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
     public NetworkVariable<int> netHealth = new NetworkVariable<int>(100);
     public NetworkVariable<bool> netIsWalking = new NetworkVariable<bool>(false);
     public NetworkVariable<Vector2> netDirection = new NetworkVariable<Vector2>(Vector2.zero);
+
+    [Header("Combat Tracking")]
+    private Dictionary<ulong, int> damageContributions = new Dictionary<ulong, int>();
 
     [Header("Movement & Combat Buffers")]
     public float attackTriggerBuffer = 1f;
@@ -129,10 +133,8 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         {
             switch (TimeManager.CurrentPeriod)
             {
-                // Mạnh dần vào buổi tối
                 case TimePeriod.Evening:
                     statMult = 1.2f; speedMult = 1.1f; rewardMult = 1.25f; break;
-                // Mạnh nhất vào ban đêm
                 case TimePeriod.Night:
                     statMult = 1.5f; speedMult = 1.3f; rewardMult = 1.5f; break;
             }
@@ -143,12 +145,10 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
             {
                 case TimePeriod.Morning:
                 case TimePeriod.Afternoon:
-                    // Mạnh nhất vào ban ngày
                     statMult = 1.5f; speedMult = 1.3f; rewardMult = 1.5f; break;
                 case TimePeriod.Evening:
                     statMult = 1.0f; speedMult = 1.0f; rewardMult = 1.0f; break;
                 case TimePeriod.Night:
-                    // Sinh vật ban ngày bị yếu đi khi đêm xuống
                     statMult = 0.7f; speedMult = 0.8f; rewardMult = 0.8f; break;
             }
         }
@@ -243,6 +243,30 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
 
     public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, Transform attacker = null, bool isCritical = false, bool forceKnockback = false)
     {
+        if (IsServer && attacker != null)
+        {
+            NetworkObject attackerNetObj = attacker.GetComponent<NetworkObject>();
+            if (attackerNetObj == null) attackerNetObj = attacker.GetComponentInParent<NetworkObject>();
+
+            if (attackerNetObj != null)
+            {
+                ulong clientId = attackerNetObj.OwnerClientId;
+
+                float def = defense;
+                float mitigation = def / (def + 100f);
+                int finalDamage = Mathf.Max(Mathf.CeilToInt(rawDamage * (1f - mitigation)), 1);
+
+                if (damageContributions.ContainsKey(clientId))
+                {
+                    damageContributions[clientId] += finalDamage;
+                }
+                else
+                {
+                    damageContributions.Add(clientId, finalDamage);
+                }
+            }
+        }
+
         healthLogic?.ProcessDamage(rawDamage, damageSourceType, attacker, isCritical, forceKnockback);
     }
 
@@ -375,18 +399,42 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         uint subSeed = SaveController.MasterSeed + (uint)NetworkObjectId;
         SeededRandom rng = new SeededRandom(subSeed);
 
-        int expGain = Mathf.FloorToInt(experienceReward * (0.9f + rng.NextFloat() * 0.2f));
-        int goldGain = Mathf.FloorToInt(goldReward * (0.9f + rng.NextFloat() * 0.2f));
+        int totalExpDrop = Mathf.FloorToInt(experienceReward * (0.9f + rng.NextFloat() * 0.2f));
+        int totalGoldDrop = Mathf.FloorToInt(goldReward * (0.9f + rng.NextFloat() * 0.2f));
+        ulong mvpClientId = 999;
 
-        if (PlayerStats.Instance != null && expGain > 0)
-            PlayerStats.Instance.AddEXP(expGain);
-
-        if (EconomyService.Instance != null && goldGain > 0)
+        if (IsServer)
         {
-            EconomyService.Instance.EarnCurrency("Coin", goldGain, $"Kill: {enemyName}", (success) => {
-                if (success && PlayerStats.Instance != null)
-                    PlayerStats.Instance.SyncCoinFromServer(PlayerStats.Instance.coin + goldGain);
-            });
+            if (damageContributions.Count > 0)
+            {
+                var mvpEntry = damageContributions.OrderByDescending(x => x.Value).First();
+                mvpClientId = mvpEntry.Key;
+                float totalDamageGained = damageContributions.Sum(x => x.Value);
+
+                foreach (var entry in damageContributions)
+                {
+                    ulong clientId = entry.Key;
+                    int dmgDone = entry.Value;
+
+                    float contributionRatio = (float)dmgDone / totalDamageGained;
+
+                    int playerExp = Mathf.FloorToInt(totalExpDrop * contributionRatio);
+                    int playerGold = Mathf.FloorToInt(totalGoldDrop * contributionRatio);
+
+                    if (playerExp > 0 || playerGold > 0)
+                    {
+                        ClientRpcParams clientRpcParams = new ClientRpcParams
+                        {
+                            Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { clientId } }
+                        };
+                        RewardKillerClientRpc(playerExp, playerGold, clientRpcParams);
+                    }
+                }
+            }
+            else
+            {
+                // Trường hợp quái chết do nguyên nhân khác (VD: môi trường, code), hoặc không có ai đánh mà vẫn chết
+            }
         }
 
         if (QuestController.Instance != null && !string.IsNullOrEmpty(questTargetID))
@@ -411,12 +459,11 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
                     Vector3 dropPos = transform.position + new Vector3(0, 0.5f, 0);
                     GameObject droppedItem = Instantiate(prefabToDrop, dropPos, Quaternion.identity);
 
-                    var netObj = droppedItem.GetComponent<NetworkObject>();
-                    if (netObj != null && !netObj.IsSpawned) netObj.Spawn();
-
                     Item item = droppedItem.GetComponent<Item>();
                     if (item != null)
                     {
+                        item.ownerClientId = mvpClientId;
+
                         uint itemStatSeed = (uint)rng.NextInt(0, int.MaxValue);
                         SeededRandom itemRng = new SeededRandom(itemStatSeed);
 
@@ -424,6 +471,9 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
                         item.qualityFactor = ItemGenerationHelper.GetWeightedQualityFactor(itemRng);
                         item.dropSeed = itemStatSeed;
                     }
+
+                    var netObj = droppedItem.GetComponent<NetworkObject>();
+                    if (netObj != null && !netObj.IsSpawned) netObj.Spawn();
 
                     BounceEffect bounce = droppedItem.GetComponent<BounceEffect>();
                     if (bounce != null)
@@ -435,6 +485,26 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         }
 
         DieVisualsClientRpc();
+    }
+
+    [ClientRpc]
+    private void RewardKillerClientRpc(int expGain, int goldGain, ClientRpcParams clientRpcParams = default)
+    {
+        if (PlayerStats.Instance != null && expGain > 0)
+            PlayerStats.Instance.AddEXP(expGain);
+
+        if (EconomyService.Instance != null && goldGain > 0)
+        {
+            EconomyService.Instance.EarnCurrency("Coin", goldGain, $"Kill: {enemyName}", (success) => {
+                if (success && PlayerStats.Instance != null)
+                    PlayerStats.Instance.SyncCoinFromServer(PlayerStats.Instance.coin + goldGain);
+            });
+        }
+
+        if (goldGain > 0 && GoldEffectPool.Instance != null)
+        {
+            GoldEffectPool.Instance.SpawnGold(transform.position, goldGain);
+        }
     }
 
     [ClientRpc]
@@ -511,6 +581,7 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         isAttacking = false;
         isKnockedBack = false;
         isTransitioning = false;
+        damageContributions.Clear();
 
         if (enemyAnimator != null)
         {

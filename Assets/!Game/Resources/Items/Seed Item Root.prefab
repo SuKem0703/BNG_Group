@@ -330,6 +330,7 @@ GameObject:
   - component: {fileID: 8080869778930647109}
   - component: {fileID: 6237764006184575147}
   - component: {fileID: 6738942790592966878}
+  - component: {fileID: -7715463359971928603}
   - component: {fileID: 8842432767394619790}
   - component: {fileID: 1473247375311944510}
   - component: {fileID: 2095264806310156459}
@@ -462,6 +463,31 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &-7715463359971928603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8892533445240797121}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 4216832538
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &8842432767394619790
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -474,6 +500,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52997838a71f858478f6748f3193f75c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SeedItem
+  ShowTopMostFoldoutHeaderGroup: 1
   isDisplayOnly: 0
   sourceItem: {fileID: 0}
   dbID: 0
@@ -485,6 +512,7 @@ MonoBehaviour:
   qualityFactor: 1
   rarity: 1
   dropSeed: 0
+  ownerClientId: 999
   quantityTextOnUI: {fileID: 3591190636132802604}
   quantityTextOnWorld: {fileID: 2803243512221879635}
   cropPrefab: {fileID: 0}

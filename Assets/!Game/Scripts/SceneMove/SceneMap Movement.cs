@@ -71,6 +71,15 @@ public class SceneMapMove : MonoBehaviour
         if (!other.CompareTag("PlayerController"))
             return;
 
+        if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+        {
+            var netObj = other.GetComponent<Unity.Netcode.NetworkObject>();
+            if (netObj != null && !netObj.IsOwner)
+            {
+                return;
+            }
+        }
+
         if (!SaveController.IsDataLoaded)
         {
             string data_loading = GetText("NOTIFY_DATA_LOADING");
@@ -178,11 +187,19 @@ public class SceneMapMove : MonoBehaviour
 
         if (newMapBoundary != null)
         {
-            var confiner = FindFirstObjectByType<CinemachineConfiner2D>();
-            if (confiner != null)
+            var camController = FindFirstObjectByType<CameraController>();
+            if (camController != null)
             {
-                confiner.BoundingShape2D = newMapBoundary;
-                confiner.InvalidateBoundingShapeCache();
+                camController.UpdateMapBounds(newMapBoundary);
+            }
+            else
+            {
+                var confiner = FindFirstObjectByType<CinemachineConfiner2D>();
+                if (confiner != null)
+                {
+                    confiner.BoundingShape2D = newMapBoundary;
+                    confiner.InvalidateBoundingShapeCache();
+                }
             }
         }
 

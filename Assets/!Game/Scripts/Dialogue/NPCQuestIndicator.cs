@@ -4,12 +4,19 @@ using System.Collections;
 [RequireComponent(typeof(NPC))]
 public class NPCQuestIndicator : MonoBehaviour
 {
+    [Header("Main Indicator (Màn hình chính)")]
     public GameObject indicatorChildObject;
-
-    [Header("Sprites cho các trạng thái")]
     public Sprite spriteNotStarted;
     public Sprite spriteInProgress;
     public Sprite spriteCompleted;
+
+    [Header("Minimap Indicator (Bản đồ nhỏ)")]
+    [Tooltip("Kéo Object Square (Layer MinimapUI) vào đây")]
+    public GameObject minimapIndicatorObject;
+    public Color colorNotStarted = Color.yellow;
+    public Color colorInProgress = Color.gray;
+    public Color colorCompleted = new Color(1f, 0.5f, 0f);
+    public Color colorNoQuest = Color.white;
 
     [Header("Cài đặt hiệu ứng đung đưa")]
     [Tooltip("Biên độ (khoảng cách) di chuyển lên xuống")]
@@ -18,6 +25,7 @@ public class NPCQuestIndicator : MonoBehaviour
     public float floatSpeed = 5f;
 
     private SpriteRenderer indicatorSpriteRenderer;
+    private SpriteRenderer minimapSpriteRenderer;
     private NPC npc;
 
     private Vector3 initialLocalPosition;
@@ -26,17 +34,21 @@ public class NPCQuestIndicator : MonoBehaviour
     void Awake()
     {
         npc = GetComponent<NPC>();
+
         if (indicatorChildObject != null)
         {
             indicatorSpriteRenderer = indicatorChildObject.GetComponent<SpriteRenderer>();
-
             initialLocalPosition = indicatorChildObject.transform.localPosition;
-
             indicatorChildObject.SetActive(false);
         }
         else
         {
             Debug.LogError("NPCQuestIndicator: Vui lòng gán 'indicatorChildObject'", this);
+        }
+
+        if (minimapIndicatorObject != null)
+        {
+            minimapSpriteRenderer = minimapIndicatorObject.GetComponent<SpriteRenderer>();
         }
     }
 
@@ -65,42 +77,58 @@ public class NPCQuestIndicator : MonoBehaviour
     {
         if (indicatorChildObject == null || indicatorSpriteRenderer == null) return;
 
-        if (GameStateManager.IsDialogueActive)
+        if (GameStateManager.IsDialogueActive ||
+            npc.CurrentActiveDialogue == null ||
+            npc.CurrentActiveDialogue.quest == null ||
+            QuestController.Instance.IsQuestHandedIn(npc.CurrentActiveDialogue.quest.questID))
         {
             indicatorChildObject.SetActive(false);
-            StopFloatingEffect();
-            return;
-        }
-        if (npc.CurrentActiveDialogue == null || npc.CurrentActiveDialogue.quest == null || QuestController.Instance.IsQuestHandedIn(npc.CurrentActiveDialogue.quest.questID))
-        {
-            indicatorChildObject.SetActive(false);
+
+            if (minimapIndicatorObject != null)
+            {
+                minimapIndicatorObject.SetActive(true);
+                if (minimapSpriteRenderer != null) minimapSpriteRenderer.color = colorNoQuest;
+            }
+
             StopFloatingEffect();
             return;
         }
 
         indicatorChildObject.SetActive(true);
+        if (minimapIndicatorObject != null) minimapIndicatorObject.SetActive(true);
         StartFloatingEffect();
 
         switch (state)
         {
             case NPC.QuestState.NotStarted:
                 indicatorSpriteRenderer.sprite = spriteNotStarted;
+                if (minimapSpriteRenderer != null) minimapSpriteRenderer.color = colorNotStarted;
                 break;
 
             case NPC.QuestState.InProgress:
                 indicatorSpriteRenderer.sprite = spriteInProgress;
+                if (minimapSpriteRenderer != null) minimapSpriteRenderer.color = colorInProgress;
                 break;
 
             case NPC.QuestState.Completed:
                 indicatorSpriteRenderer.sprite = spriteCompleted;
+                if (minimapSpriteRenderer != null) minimapSpriteRenderer.color = colorCompleted;
                 break;
 
             case NPC.QuestState.NoMoreQuests:
                 indicatorChildObject.SetActive(false);
+
+                if (minimapIndicatorObject != null)
+                {
+                    minimapIndicatorObject.SetActive(true);
+                    if (minimapSpriteRenderer != null) minimapSpriteRenderer.color = colorNoQuest;
+                }
+
                 StopFloatingEffect();
                 break;
         }
     }
+
     private void StartFloatingEffect()
     {
         if (floatCoroutine != null)
@@ -127,10 +155,9 @@ public class NPCQuestIndicator : MonoBehaviour
     {
         while (true)
         {
-            // Sử dụng Sine wave để tạo chuyển động mượt mà lên xuống
             float newY = initialLocalPosition.y + Mathf.Sin(Time.time * floatSpeed) * floatAmplitude;
             indicatorChildObject.transform.localPosition = new Vector3(initialLocalPosition.x, newY, initialLocalPosition.z);
-            yield return null; // Chờ 1 frame trước khi lặp lại
+            yield return null;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using TMPro;
 using UnityEngine;
+using Unity.Netcode;
 
 public enum ItemType { QuestItem, Equipment, Consumable, Seed, Material }
 public enum CurrencyType { Coin, Gem }
@@ -7,7 +8,7 @@ public enum EquipSlot { None, Swords, Shield, Helmet, Armor, Scepter, Amulet, Ha
 public enum ClassRestriction { None, Knight, Mage }
 public enum ItemRarity { Rusty, Common, Refined, Rare, Relic, Glacial, Legendary, Celestial, Mythic }
 
-public abstract class Item : MonoBehaviour
+public abstract class Item : NetworkBehaviour
 {
     [Header("Trạng thái cơ bản")]
     public bool isDisplayOnly = false;
@@ -26,8 +27,9 @@ public abstract class Item : MonoBehaviour
     public float qualityFactor = 1f;
     public ItemRarity rarity = ItemRarity.Common;
 
-    [Header("Bảo mật")]
+    [Header("Bảo mật & Phân quyền")]
     public uint dropSeed = 0;
+    public ulong ownerClientId = 999;
 
     [SerializeField] protected TMP_Text quantityTextOnUI;
     [SerializeField] protected TMP_Text quantityTextOnWorld;
@@ -61,7 +63,6 @@ public abstract class Item : MonoBehaviour
 
     protected float GetFinalMultiplier()
     {
-        // return ItemRarityMultiplier.GetMultiplier(rarity) * qualityFactor;
         return 1f * qualityFactor;
     }
 
@@ -88,6 +89,18 @@ public abstract class Item : MonoBehaviour
         cloneItem.quantity = newQuantity;
         cloneItem.UpdateQuantityDisplay();
         return clone;
+    }
+
+    public virtual bool IsOwnedByLocalPlayer()
+    {
+        if (ownerClientId == 999) return true;
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClientId == ownerClientId)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     // Bắt buộc lớp con tự định nghĩa logic sử dụng

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5418093554176427162}
   - component: {fileID: 1657229986532694739}
   - component: {fileID: 4499016968375814811}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Behind
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -117,7 +117,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -904201107
-  m_SortingLayer: 9
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -138,7 +138,7 @@ GameObject:
   - component: {fileID: 1938096886296623817}
   - component: {fileID: 5893446367819071049}
   - component: {fileID: 2197282512272226233}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Behind +1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -244,7 +244,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1926694469
-  m_SortingLayer: 8
+  m_SortingLayer: 3
   m_SortingOrder: 1
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -265,7 +265,7 @@ GameObject:
   - component: {fileID: 2338296522642209772}
   - component: {fileID: 7842570226302092235}
   - component: {fileID: 784093292936438745}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Ground + 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -371,7 +371,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 300066107
-  m_SortingLayer: 1
+  m_SortingLayer: -1
   m_SortingOrder: 3
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -392,7 +392,7 @@ GameObject:
   - component: {fileID: 3157742916049596212}
   - component: {fileID: 3066210073509461732}
   - component: {fileID: 4746748142383422601}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Shadow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -498,7 +498,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1780988441
-  m_SortingLayer: 2
+  m_SortingLayer: -5
   m_SortingOrder: 1
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -518,7 +518,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7081443656465315266}
   - component: {fileID: 5908432677332718338}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Grid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -572,7 +572,7 @@ GameObject:
   - component: {fileID: 1416864706888156431}
   - component: {fileID: 5545438706330495047}
   - component: {fileID: 596659163136925026}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Ground + 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -678,7 +678,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 300066107
-  m_SortingLayer: 1
+  m_SortingLayer: -1
   m_SortingOrder: 1
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -702,7 +702,7 @@ GameObject:
   - component: {fileID: 4400073095707257741}
   - component: {fileID: 1931908746479121796}
   - component: {fileID: 7206497273757918053}
-  m_Layer: 9
+  m_Layer: 7
   m_Name: Blocker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -808,7 +808,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 300066107
-  m_SortingLayer: 1
+  m_SortingLayer: -1
   m_SortingOrder: -10
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -944,7 +944,7 @@ GameObject:
   - component: {fileID: 7450122205375557893}
   - component: {fileID: 3302436971715193692}
   - component: {fileID: 4562043721672242776}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1050,7 +1050,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 300066107
-  m_SortingLayer: 1
+  m_SortingLayer: -1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -1183,7 +1183,7 @@ GameObject:
   - component: {fileID: 4410638054941169290}
   - component: {fileID: 7203486340740206736}
   - component: {fileID: 6073106108117942033}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Buffer Zone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1289,7 +1289,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 300066107
-  m_SortingLayer: 1
+  m_SortingLayer: -1
   m_SortingOrder: -1
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -1310,7 +1310,7 @@ GameObject:
   - component: {fileID: 8257118125979160189}
   - component: {fileID: 1662028465717328082}
   - component: {fileID: 4187958004082352645}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Ground + 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1416,7 +1416,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 300066107
-  m_SortingLayer: 1
+  m_SortingLayer: -1
   m_SortingOrder: 2
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
