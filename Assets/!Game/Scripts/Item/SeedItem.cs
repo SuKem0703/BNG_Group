@@ -14,4 +14,23 @@ public class SeedItem : Item
     {
         Debug.Log("Đang gieo hạt: " + Name);
     }
+
+    public bool TryPlantSeed(FarmPlot plot)
+    {
+        if (InteractionDetector.Instance != null && InteractionDetector.Instance.IsPlotInRange(plot))
+        {
+            FarmController.Instance.TryPlantSeed(plot, this);
+
+            var ramData = InventoryController.Instance.GetInventoryItemsData().Find(x => x.dbID == dbID);
+            if (ramData != null) ramData.quantity = quantity;
+
+            if (InventoryService.Instance != null)
+            {
+                InventoryService.Instance.ScheduleQuantityUpdate(dbID, quantity);
+            }
+
+            return true;
+        }
+        return false;
+    }
 }

@@ -1252,7 +1252,6 @@ MonoBehaviour:
   potionCooldownDuration: 2
   potionCooldownTimer: 0
   playerCollider: {fileID: 7485599206526260792}
-  classController: {fileID: 2281157301833218261}
 --- !u!114 &2281157301833218261
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1269,6 +1268,11 @@ MonoBehaviour:
   knightObject: {fileID: 7031346279699142252}
   mageObject: {fileID: 8304542053625197770}
   swapAction: {fileID: 2469282036348653975, guid: c136ed93c04ca804a8cc737638e0cc1e, type: 3}
+  netIsKnightActive:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 1
   swapCooldown: 2
   knightAnimator: {fileID: 5691647660223253319}
   mageAnimator: {fileID: 5592546058136567945}
@@ -1306,9 +1310,9 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.53}
-  m_Size: {x: 0.7, y: 0.7}
-  m_Direction: 0
+  m_Offset: {x: 0, y: -0.6}
+  m_Size: {x: 0.7, y: 0.3}
+  m_Direction: 1
 --- !u!114 &5419666127035113273
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1465,13 +1469,15 @@ GameObject:
   - component: {fileID: 2008890344889586531}
   - component: {fileID: 8355681740071216224}
   - component: {fileID: 2756847178287482438}
+  - component: {fileID: 7736977994014315738}
+  - component: {fileID: 9103708712476269642}
   m_Layer: 3
   m_Name: Mage
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1445368280158805956
 Transform:
   m_ObjectHideFlags: 0
@@ -1537,7 +1543,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7410960421204419672, guid: e36c5d7afe0a2c7448bc86aba3681acd, type: 3}
+  m_Sprite: {fileID: 5783766721535396729, guid: 2ded6b49d35ee9044b469dd63c901da8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1559,6 +1565,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33ff170ac47fdea44965af6d8ed01f30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  ShowTopMostFoldoutHeaderGroup: 1
+  animator: {fileID: 5592546058136567945}
+  projectilePrefab: {fileID: 8199765309185903699, guid: 90248e4fad8a3b449ba8c1a49fe33f10, type: 3}
+  firePoint: {fileID: 1445368280158805956}
+  projectileSpeed: 10
+  attackManaCost: 5
+  mageDamageMultiplier: 1.5
+  targetSelector: {fileID: 7736977994014315738}
 --- !u!95 &5592546058136567945
 Animator:
   serializedVersion: 7
@@ -1569,7 +1583,7 @@ Animator:
   m_GameObject: {fileID: 8304542053625197770}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 1893ec7801e96fc41985802aa0488bbb, type: 2}
+  m_Controller: {fileID: 9100000, guid: 8071f3e185754f14fbd69a504329ea26, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1608,7 +1622,7 @@ MonoBehaviour:
   m_ActionEvents:
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 5419666127035113273}
         m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
         m_MethodName: Move
         m_Mode: 0
@@ -1664,7 +1678,7 @@ MonoBehaviour:
     m_ActionName: UI/TrackedDeviceOrientation
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 5419666127035113273}
         m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
         m_MethodName: Dash
         m_Mode: 0
@@ -1680,7 +1694,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Dash[/Keyboard/shift]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 6335061951577325273}
         m_TargetAssemblyTypeName: InteractionDetector, Assembly-CSharp
         m_MethodName: OnInteract
         m_Mode: 0
@@ -1696,8 +1710,8 @@ MonoBehaviour:
     m_ActionName: 'Player/Interact[/Keyboard/f]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: ComboAttack, Assembly-CSharp
+      - m_Target: {fileID: 8281217023510966055}
+        m_TargetAssemblyTypeName: MageNormalAttack, Assembly-CSharp
         m_MethodName: OnAttack
         m_Mode: 0
         m_Arguments:
@@ -1758,7 +1772,7 @@ CapsuleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: -0.53}
-  m_Size: {x: 0.7, y: 0.7}
+  m_Size: {x: 10, y: 10}
   m_Direction: 0
 --- !u!114 &2008890344889586531
 MonoBehaviour:
@@ -1805,5 +1819,38 @@ MonoBehaviour:
   yOffset: 0
   entityWeight: 3
   onlySortWhenVisible: 1
-  attachedCanvas: {fileID: 0}
+  attachedCanvas: {fileID: 1024426765374942261}
   canvasSortingOffset: 1
+--- !u!114 &7736977994014315738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8304542053625197770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d7e00d74e1ced248931fff02a929e77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatTargetSelector
+  ShowTopMostFoldoutHeaderGroup: 1
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  targetYOffset: 1.2
+  indicatorPrefab: {fileID: 984118000735452077, guid: cac8db452cec35643829dad2fb5ee4e6, type: 3}
+--- !u!114 &9103708712476269642
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8304542053625197770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e3d96a5f1e627c47b36a54f6240335b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimatorHandler
+  animator: {fileID: 5592546058136567945}
+  playerStats: {fileID: 3869098756464639400}
+  playerMovement: {fileID: 5419666127035113273}

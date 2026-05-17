@@ -13,7 +13,8 @@ public class CommonUIController : MonoBehaviour
     public GameObject statusUI;
     public GameObject miniMenu;
     public GameObject effectGrid;
-    public GameObject TargetInfoDisplayUI;
+    public GameObject targetInfoDisplayUI;
+    public GameObject miniMapUI;
 
     void Awake()
     {
@@ -35,7 +36,8 @@ public class CommonUIController : MonoBehaviour
         SetElementState(statusUI, visible, exceptions, "StatusUI");
         SetElementState(miniMenu, visible, exceptions, "MiniMenu");
         SetElementState(effectGrid, visible, exceptions, "EffectGrid");
-        SetElementState(TargetInfoDisplayUI, visible, exceptions, "TargetInfoDisplayUI");
+        SetElementState(targetInfoDisplayUI, visible, exceptions, "TargetInfoDisplayUI");
+        SetElementState(miniMapUI, visible, exceptions, "MiniMapUI");
     }
 
     public void SetStaticUIVisible(bool visible, params GameObject[] exceptions)

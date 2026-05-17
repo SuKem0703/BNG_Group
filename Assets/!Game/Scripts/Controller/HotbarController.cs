@@ -83,41 +83,86 @@ public class HotbarController : MonoBehaviour
         {
             Item item = slot.currentItem.GetComponent<Item>();
 
+            if (item.dbID == 0)
+            {
+                GameNotify.Show("Vật phẩm đang đồng bộ, vui lòng chờ!");
+                return;
+            }
+
             if (item is ConsumableItem consumable)
             {
-                if (consumable.dbID == 0)
-                {
-                    GameNotify.Show("Vật phẩm đang đồng bộ, vui lòng chờ!");
-                    return;
-                }
-
                 consumable.UseItem();
+            }
+            else if (item is SeedItem seedItem)
+            {
+                QuickPlantNearest(seedItem, slot);
+            }
+            else if (item is ItemTool toolItem)
+            {
+                toolItem.UseItem();
             }
         }
     }
 
-    public List<InventorySaveData> GetHotbarItems()
+    private void QuickPlantNearest(SeedItem seedItem, Slot slot)
     {
-        List<InventorySaveData> hotData = new List<InventorySaveData>();
-        foreach (Transform slotTransform in hotbarPanel.transform)
+        Transform playerTransform = GetPlayerTransform();
+        if (playerTransform == null) return;
+
+        float checkRadius = 2f;
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(playerTransform.position, checkRadius);
+
+        FarmPlot closestPlot = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (var col in colliders)
         {
-            Slot slot = slotTransform.GetComponent<Slot>();
-            if (slot.currentItem != null)
+            FarmPlot plot = col.GetComponent<FarmPlot>();
+
+            if (plot != null && !plot.isPlanted && InteractionDetector.Instance.IsPlotInRange(plot))
             {
-                Item item = slot.currentItem.GetComponent<Item>();
-                hotData.Add(new InventorySaveData
+                float distance = Vector2.Distance(playerTransform.position, plot.transform.position);
+                if (distance < closestDistance)
                 {
-                    dbID = item.dbID,
-                    itemID = item.ID,
-                    slotIndex = slotTransform.GetSiblingIndex() + 1000,
-                    quantity = item.quantity,
-                    isEquipped = false,
-                    rarity = item.rarity,
-                    qualityFactor = item.qualityFactor
-                });
+                    closestDistance = distance;
+                    closestPlot = plot;
+                }
             }
         }
-        return hotData;
+
+        if (closestPlot != null)
+        {
+            bool success = seedItem.TryPlantSeed(closestPlot);
+
+            if (success)
+            {
+                if (seedItem.quantity <= 0)
+                {
+                    InventoryController.Instance.GetInventoryItemsData().RemoveAll(x => x.dbID == seedItem.dbID);
+                    Destroy(slot.currentItem);
+                    slot.currentItem = null;
+                }
+
+                InventoryController.Instance.ReBuildItemCounts();
+            }
+        }
+        else
+        {
+            GameNotify.Show("Không có ô đất trống hợp lệ ở gần!");
+        }
+    }
+
+    private Transform GetPlayerTransform()
+    {
+        if (Unity.Netcode.NetworkManager.Singleton != null &&
+            Unity.Netcode.NetworkManager.Singleton.IsConnectedClient &&
+            Unity.Netcode.NetworkManager.Singleton.LocalClient.PlayerObject != null)
+        {
+            return Unity.Netcode.NetworkManager.Singleton.LocalClient.PlayerObject.transform;
+        }
+
+        GameObject player = GameObject.FindGameObjectWithTag("PlayerController");
+        return player != null ? player.transform : null;
     }
 
     private void RedrawHotbar(List<InventorySaveData> inventoryData, int maxSlotCount)

@@ -2,7 +2,7 @@
 using UnityEngine;
 using Unity.Netcode;
 
-public enum ItemType { QuestItem, Equipment, Consumable, Seed, Material }
+public enum ItemType { QuestItem, Equipment, Consumable, Seed, Material, Tool }
 public enum CurrencyType { Coin, Gem }
 public enum EquipSlot { None, Swords, Shield, Helmet, Armor, Scepter, Amulet, Hat, Robe, Gloves, Legs, Belt, Boots, Ring, Necklace }
 public enum ClassRestriction { None, Knight, Mage }
@@ -31,8 +31,7 @@ public abstract class Item : NetworkBehaviour
     public uint dropSeed = 0;
     public ulong ownerClientId = 999;
 
-    [SerializeField] protected TMP_Text quantityTextOnUI;
-    [SerializeField] protected TMP_Text quantityTextOnWorld;
+    private ItemQuantityDisplay quantityDisplay;
 
     // Các thuộc tính trừu tượng bắt buộc lớp con phải khai báo
     public abstract ItemType ItemType { get; }
@@ -40,25 +39,17 @@ public abstract class Item : NetworkBehaviour
 
     protected virtual void Awake()
     {
-        if (quantityTextOnUI == null || quantityTextOnWorld == null)
-        {
-            TMP_Text[] allTexts = GetComponentsInChildren<TMP_Text>(true);
-
-            foreach (TMP_Text text in allTexts)
-            {
-                if (text.name == "QuantityTextOnUI") quantityTextOnUI = text;
-                else if (text.name == "QuantityTextOnWorld") quantityTextOnWorld = text;
-            }
-        }
+        quantityDisplay = GetComponent<ItemQuantityDisplay>();
         UpdateQuantityDisplay();
     }
 
     public void UpdateQuantityDisplay()
     {
-        string displayText = (IsStackable && quantity > 1) ? quantity.ToString() : "";
-
-        if (quantityTextOnUI != null) quantityTextOnUI.text = displayText;
-        if (quantityTextOnWorld != null) quantityTextOnWorld.text = displayText;
+        if (quantityDisplay != null)
+        {
+            string displayText = (IsStackable && quantity > 1) ? quantity.ToString() : "";
+            quantityDisplay.UpdateDisplay(displayText);
+        }
     }
 
     protected float GetFinalMultiplier()

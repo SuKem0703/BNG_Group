@@ -56,7 +56,8 @@ public class FarmController : MonoBehaviour
 
         SeedItem seedScript = seedPrefab.GetComponent<SeedItem>();
         GameObject cropObj = Instantiate(seedScript.cropPrefab, plot.transform);
-        cropObj.transform.localPosition = Vector3.zero;
+
+        cropObj.transform.localPosition = new Vector3(-0.5f, -0.5f, 0f);
 
         Crop crop = cropObj.GetComponent<Crop>();
         crop.seedItemID = seedItemId;
@@ -80,7 +81,8 @@ public class FarmController : MonoBehaviour
         if (plot.isPlanted) return;
 
         GameObject obj = Instantiate(seed.cropPrefab, plot.transform);
-        obj.transform.localPosition = Vector3.zero;
+
+        obj.transform.localPosition = new Vector3(-0.5f, -0.5f, 0f);
 
         Crop crop = obj.GetComponent<Crop>();
         crop.seedItemID = seed.ID;
@@ -154,5 +156,19 @@ public class FarmController : MonoBehaviour
         }
 
         FarmService.Instance.RequestHarvest(plot.UniqueID);
+    }
+
+    public void TryDestroyCrop(FarmPlot plot)
+    {
+        if (!plot.isPlanted || plot.currentCrop == null) return;
+
+        Destroy(plot.currentCrop.gameObject);
+
+        plot.currentCrop = null;
+        plot.isPlanted = false;
+
+        // SoundEffectManager.Play("Destroying", true);
+
+        FarmService.Instance.RequestDestroy(plot.UniqueID);
     }
 }

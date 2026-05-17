@@ -57,9 +57,13 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (IsOwner)
         {
-            if (isDead || !GameStateManager.CanProcessInput() || !SaveController.IsDataLoaded)
+            bool isGameEnded = playerStats != null && playerStats.isGameOver;
+
+            if (isDead || isGameEnded || !GameStateManager.CanProcessInput() || !SaveController.IsDataLoaded)
             {
                 ResetMovementState();
+
+                if (isGameEnded && rb != null) rb.linearVelocity = Vector2.zero;
             }
             else
             {
@@ -113,7 +117,13 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (isDead) { rb.linearVelocity = Vector2.zero; return; }
+        bool isGameEnded = playerStats != null && playerStats.isGameOver;
+
+        if (isDead || isGameEnded)
+        {
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
 
         bool attackAllowsMovement = canMoveWhileAttacking;
         if (PauseController.IsGamePause || isDashing || (!attackAllowsMovement && isAttacking) || !SaveController.IsDataLoaded) return;
@@ -190,6 +200,12 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner) return;
 
+        if (playerStats != null && playerStats.isGameOver)
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
+
         Vector2 rawInput = context.ReadValue<Vector2>();
         moveInput = (PauseController.IsGamePause || isDead) ? Vector2.zero : rawInput;
 
@@ -216,7 +232,10 @@ public class PlayerMovement : NetworkBehaviour
             if (!isSprintLocked) canRunAfterDash = false;
         }
 
-        if (isDead || PauseController.IsGamePause) return;
+        bool isGameEnded = playerStats != null && playerStats.isGameOver;
+        if (isDead || isGameEnded || PauseController.IsGamePause) return;
+
+        if (isAttacking && !canMoveWhileAttacking) return;
 
         if (context.performed && !isDashing && !isDashOnCooldown && moveInput != Vector2.zero)
         {
@@ -244,13 +263,16 @@ public class PlayerMovement : NetworkBehaviour
 
         while (elapsed < dashDuration)
         {
+            bool isGameEnded = playerStats != null && playerStats.isGameOver;
+            if (isDead || isGameEnded) break;
+
             rb.MovePosition(rb.position + dashDirection * dashSpeed * Time.fixedDeltaTime);
             elapsed += Time.fixedDeltaTime;
             yield return new WaitForFixedUpdate();
         }
 
         isDashing = false;
-        playerStats?.SetInvincible(false);
+        if (!isDead) playerStats?.SetInvincible(false);
 
         if (isDashButtonHeld) canRunAfterDash = true;
 
@@ -313,5 +335,9 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
-    public void ResetDeathState() => isDead = false;
+    public void ResetDeathState()
+    {
+        isDead = false;
+        ResetMovementState();
+    }
 }

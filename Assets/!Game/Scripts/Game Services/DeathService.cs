@@ -107,6 +107,8 @@ public class DeathService : MonoBehaviour
         }
         else
         {
+            CleanUpBeforeCrossSceneRespawn();
+
             if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
             {
                 if (Unity.Netcode.NetworkManager.Singleton.IsServer)
@@ -119,6 +121,31 @@ public class DeathService : MonoBehaviour
                 SceneManager.LoadScene(targetScene, LoadSceneMode.Single);
             }
         }
+    }
+
+    private void CleanUpBeforeCrossSceneRespawn()
+    {
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.SetDeathStateServerRpc(false);
+            PlayerStats.Instance.RefreshStats();
+
+            var pMovement = PlayerStats.Instance.GetComponent<PlayerMovement>();
+            if (pMovement != null)
+            {
+                pMovement.ResetDeathState();
+                pMovement.enabled = true;
+            }
+
+            PlayerStats.Instance.SetInvincible(false);
+            if (PlayerStats.Instance.playerCollider != null)
+                PlayerStats.Instance.playerCollider.enabled = true;
+        }
+
+        if (CommonUIController.Instance != null)
+            CommonUIController.Instance.SetUIVisible(true);
+
+        IsRespawningFlag = false;
     }
 
     private System.Collections.IEnumerator HandleInSceneRespawn()

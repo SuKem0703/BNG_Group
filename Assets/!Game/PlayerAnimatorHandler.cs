@@ -36,7 +36,9 @@ public class PlayerAnimatorHandler : MonoBehaviour
         bool currentRun = playerMovement.IsOwner ? playerMovement.isRunning : playerMovement.netIsRunning.Value;
         Vector2 currentLast = playerMovement.netLastInput.Value;
 
-        bool isMoving = currentMove.magnitude > 0.1f;
+        bool canMove = !playerMovement.isAttacking || playerMovement.canMoveWhileAttacking;
+
+        bool isMoving = currentMove.magnitude > 0.1f && canMove;
 
         animator.SetBool("isWalking", isMoving && !currentRun);
         animator.SetBool("isRunning", isMoving && currentRun);
@@ -80,9 +82,9 @@ public class PlayerAnimatorHandler : MonoBehaviour
 
     public void OnDeathAnimationFinished()
     {
-        if (playerStats != null && playerStats.IsOwner && playerStats.netIsDead.Value && !DeathService.IsRespawningFlag)
+        if (playerStats != null && playerStats.IsOwner && !DeathService.IsRespawningFlag)
         {
-            GameOverUIAdapter.Instance.ShowGameOverUI();
+            playerStats.OnCharacterDeathAnimationFinished();
         }
     }
 }

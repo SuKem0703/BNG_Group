@@ -34,6 +34,7 @@ public class FarmService : MonoBehaviour
     }
 
     [Serializable] public class PlantRequest { public string plotId; public int seedItemId; }
+    [Serializable] public class DestroyRequest { public string plotId; }
 
     [Serializable] public class BulkHarvestRequest { public List<string> plotIds; }
 
@@ -71,6 +72,11 @@ public class FarmService : MonoBehaviour
     public void RequestPlant(string plotId, int seedItemId)
     {
         StartCoroutine(PostRequest("api/Farm/plant", new PlantRequest { plotId = plotId, seedItemId = seedItemId }));
+    }
+
+    public void RequestDestroy(string plotId)
+    {
+        StartCoroutine(PostRequest("api/Farm/destroy", new DestroyRequest { plotId = plotId }));
     }
 
     public void RequestHarvest(string plotId)

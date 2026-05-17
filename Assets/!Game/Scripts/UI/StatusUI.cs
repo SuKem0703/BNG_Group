@@ -53,8 +53,14 @@ public class StatusUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI coinText;
     [SerializeField] private TextMeshProUGUI gemText;
 
-    [Header("UI Mode")]
-    [SerializeField] private bool showBothHPInMenu = false;
+    // CÁC BIẾN CACHE ĐỂ TỐI ƯU HÓA
+    private float lastTimeUpdate = 0f;
+    private string lastClass = "";
+    private int _kHP = -1, _kMaxHP = -1, _mHP = -1, _mMaxHP = -1;
+    private int _kMP = -1, _kMaxMP = -1, _mMP = -1, _mMaxMP = -1;
+    private float _stamina = -1f, _maxStamina = -1f;
+    private int _level = -1;
+    private int _coin = -1, _gem = -1;
 
     void Awake()
     {
@@ -65,7 +71,6 @@ public class StatusUI : MonoBehaviour
     void AssignInspector()
     {
         portraitImage ??= transform.FindDeepChild("PortraitImage")?.GetComponent<Image>();
-
         timeText ??= transform.FindDeepChild("TimeText")?.GetComponent<TextMeshProUGUI>();
 
         knightHealthBarFill ??= transform.FindDeepChild("KnightHealthBarFill")?.GetComponent<Image>();
@@ -84,7 +89,6 @@ public class StatusUI : MonoBehaviour
         staminaText ??= transform.FindDeepChild("StaminaText")?.GetComponent<TextMeshProUGUI>();
 
         levelText ??= transform.FindDeepChild("LevelText")?.GetComponent<TextMeshProUGUI>();
-
         expBarFill ??= transform.FindDeepChild("ExpBarFill")?.GetComponent<Image>();
 
         physicDMGText ??= transform.FindDeepChild("PhysicDMGText")?.GetComponent<TextMeshProUGUI>();
@@ -103,16 +107,10 @@ public class StatusUI : MonoBehaviour
         if (classController == null) classController = ClassController.Instance;
     }
 
-    void Start()
-    {
-        TryFindPlayer();
-        UpdateUI();
-    }
-
     void OnEnable()
     {
+        ForceResetCache();
         TryFindPlayer();
-        UpdateUI();
     }
 
     void Update()
@@ -125,16 +123,14 @@ public class StatusUI : MonoBehaviour
             return;
         }
 
-        UpdateUI();
+        UpdateContinuousUI();
     }
 
-    void UpdateUI()
+    private void UpdateContinuousUI()
     {
-        if (playerStats == null || classController == null) return;
-
-        // Real Time
-        if (timeText != null)
+        if (timeText != null && Time.time - lastTimeUpdate >= 1f)
         {
+            lastTimeUpdate = Time.time;
             if (ServerTimeManager.ServerTime != default && ServerTimeManager.LocalTimeAtFetch > 0f)
             {
                 float secondsPassed = Time.time - ServerTimeManager.LocalTimeAtFetch;
@@ -148,112 +144,119 @@ public class StatusUI : MonoBehaviour
         }
 
         string currentClass = classController.GetCurrentClassName();
-        bool hasLyria = GameFlags.HasRecruitedLyria();
         bool isKnight = currentClass == "Knight";
         bool isMage = currentClass == "Mage";
 
-        // ========== HP ==========
-        if (knightHealthBarFill != null)
+        if (lastClass != currentClass)
         {
-            knightHealthBarFill.gameObject.SetActive(isKnight);
-            if (isKnight)
-                knightHealthBarFill.fillAmount = (float)playerStats.knightHealth / playerStats.finalKnightMaxHP;
+            lastClass = currentClass;
+            UpdateClassVisibility(isKnight, isMage);
         }
 
-        if (knightHealthText != null)
+        if (knightHealthBarFill != null && (isKnight == true))
+            knightHealthBarFill.fillAmount = (float)playerStats.knightHealth / playerStats.finalKnightMaxHP;
+
+        if (mageHealthBarFill != null && (isMage == true))
+            mageHealthBarFill.fillAmount = (float)playerStats.mageHealth / playerStats.finalMageMaxHP;
+
+        if (knightManaBarFill != null && (isKnight == true))
+            knightManaBarFill.fillAmount = (float)playerStats.knightMP / playerStats.finalKnightMaxMP;
+
+        if (mageManaBarFill != null && (isMage == true))
+            mageManaBarFill.fillAmount = (float)playerStats.mageMP / playerStats.finalMageMaxMP;
+
+        float maxSt = playerStats.finalStamina;
+        float curSt = playerStats.currentStamina;
+        if (staminaBarFill != null) staminaBarFill.fillAmount = maxSt > 0 ? curSt / maxSt : 0;
+
+        float expNeeded = playerStats.expToNextLevel;
+        if (expBarFill != null) expBarFill.fillAmount = expNeeded > 0 ? (float)playerStats.exp / expNeeded : 0;
+
+        if (_kHP != playerStats.knightHealth || _kMaxHP != playerStats.finalKnightMaxHP)
         {
-            knightHealthText.gameObject.SetActive(showBothHPInMenu || isKnight);
-            knightHealthText.text = $"{playerStats.knightHealth} / {playerStats.finalKnightMaxHP}";
+            _kHP = playerStats.knightHealth; _kMaxHP = playerStats.finalKnightMaxHP;
+            if (knightHealthText != null) knightHealthText.text = $"{_kHP} / {playerStats.finalKnightMaxHP}";
         }
 
-        if (mageHealthBarFill != null)
+        if (_mHP != playerStats.mageHealth || _mMaxHP != playerStats.finalMageMaxHP)
         {
-            mageHealthBarFill.gameObject.SetActive(isMage && hasLyria);
-            if (isMage && hasLyria)
-                mageHealthBarFill.fillAmount = (float)playerStats.mageHealth / playerStats.finalMageMaxHP;
+            _mHP = playerStats.mageHealth; _mMaxHP = playerStats.finalMageMaxHP;
+            if (mageHealthText != null) mageHealthText.text = $"{_mHP} / {playerStats.finalMageMaxHP}";
         }
 
-        if (mageHealthText != null)
+        if (_kMP != playerStats.knightMP || _kMaxMP != playerStats.finalKnightMaxMP)
         {
-            mageHealthText.gameObject.SetActive(hasLyria && (showBothHPInMenu || isMage));
-            if (hasLyria)
-                mageHealthText.text = $"{playerStats.mageHealth} / {playerStats.finalMageMaxHP}";
+            _kMP = playerStats.knightMP; _kMaxMP = playerStats.finalKnightMaxMP;
+            if (knightManaText != null) knightManaText.text = $"{_kMP} / {playerStats.finalKnightMaxMP}";
         }
 
-        // ========== MP ==========
-        if (knightManaBarFill != null)
+        if (_mMP != playerStats.mageMP || _mMaxMP != playerStats.finalMageMaxMP)
         {
-            knightManaBarFill.gameObject.SetActive(isKnight);
-            if (isKnight)
-                knightManaBarFill.fillAmount = (float)playerStats.knightMP / playerStats.finalKnightMaxMP;
+            _mMP = playerStats.mageMP; _mMaxMP = playerStats.finalMageMaxMP;
+            if (mageManaText != null) mageManaText.text = $"{_mMP} / {playerStats.finalMageMaxMP}";
         }
 
-        if (knightManaText != null)
+        if (_stamina != curSt || _maxStamina != maxSt)
         {
-            knightManaText.gameObject.SetActive(showBothHPInMenu || isKnight);
-            knightManaText.text = $"{playerStats.knightMP} / {playerStats.finalKnightMaxMP}";
+            _stamina = curSt; _maxStamina = maxSt;
+            if (staminaText != null) staminaText.text = $"{(int)_stamina} / {(int)_maxStamina}";
         }
 
-        if (mageManaBarFill != null)
+        if (_level != playerStats.level)
         {
-            mageManaBarFill.gameObject.SetActive(isMage && hasLyria);
-            if (isMage && hasLyria)
-                mageManaBarFill.fillAmount = (float)playerStats.mageMP / playerStats.finalMageMaxMP;
+            _level = playerStats.level;
+            if (levelText != null) levelText.text = _level.ToString();
+
+            UpdateStaticStats();
         }
 
-        if (mageManaText != null)
+        if (_coin != playerStats.coin)
         {
-            mageManaText.gameObject.SetActive(hasLyria && (showBothHPInMenu || isMage));
-            if (hasLyria)
-                mageManaText.text = $"{playerStats.mageMP} / {playerStats.finalMageMaxMP}";
+            _coin = playerStats.coin;
+            if (coinText != null) coinText.text = _coin.ToString();
         }
 
-        // ========== Stamina ==========
-        if (staminaBarFill != null)
+        if (_gem != playerStats.gem)
         {
-            float maxStamina = playerStats.finalStamina;
-            float currentStamina = playerStats.currentStamina;
-            staminaBarFill.fillAmount = maxStamina > 0 ? (float)currentStamina / maxStamina : 0;
-
-            if (staminaText != null)
-                staminaText.text = $"{currentStamina} / {maxStamina}";
+            _gem = playerStats.gem;
+            if (gemText != null) gemText.text = _gem.ToString();
         }
+    }
 
-        // ========== Level & EXP ==========
-        if (levelText != null) levelText.text = playerStats.level.ToString();
+    private void UpdateClassVisibility(bool isKnight, bool isMage)
+    {
+        bool showKnight = isKnight;
+        bool showMage = isMage;
 
-        if (expBarFill != null)
+        if (knightHealthBarFill != null) knightHealthBarFill.gameObject.SetActive(showKnight);
+        if (knightHealthText != null) knightHealthText.gameObject.SetActive(showKnight);
+        if (knightManaBarFill != null) knightManaBarFill.gameObject.SetActive(showKnight);
+        if (knightManaText != null) knightManaText.gameObject.SetActive(showKnight);
+
+        if (mageHealthBarFill != null) mageHealthBarFill.gameObject.SetActive(showMage);
+        if (mageHealthText != null) mageHealthText.gameObject.SetActive(showMage);
+        if (mageManaBarFill != null) mageManaBarFill.gameObject.SetActive(showMage);
+        if (mageManaText != null) mageManaText.gameObject.SetActive(showMage);
+
+        if (portraitImage != null)
         {
-            float expNeeded = playerStats.expToNextLevel;
-            expBarFill.fillAmount = expNeeded > 0 ? (float)playerStats.exp / expNeeded : 0;
+            portraitImage.sprite = isKnight ? elricSprite : lyriaSprite;
         }
+    }
 
-        // ========== Stats & Currency ==========
+    private void UpdateStaticStats()
+    {
         if (physicDMGText) physicDMGText.text = playerStats.finalPhysicalAttack.ToString();
         if (magicDMGText) magicDMGText.text = playerStats.finalMagicAttack.ToString();
         if (defenseText) defenseText.text = playerStats.finalDefense.ToString();
         if (critChanceText) critChanceText.text = playerStats.finalCritRate.ToString("F2") + "%";
         if (moveSpeedText) moveSpeedText.text = playerStats.finalMoveSpeed.ToString("F2");
-        if (coinText) coinText.text = playerStats.coin.ToString();
-        if (gemText) gemText.text = playerStats.gem.ToString();
+    }
 
-        // ========== Portraits ==========
-        if (portraitImage != null)
-        {
-            if (isKnight)
-            {
-                portraitImage.gameObject.SetActive(true);
-                portraitImage.sprite = elricSprite;
-            }
-            else if (isMage && hasLyria)
-            {
-                portraitImage.gameObject.SetActive(true);
-                portraitImage.sprite = lyriaSprite;
-            }
-            else
-            {
-                portraitImage.gameObject.SetActive(false);
-            }
-        }
+    private void ForceResetCache()
+    {
+        _kHP = -1; _mHP = -1; _kMP = -1; _mMP = -1;
+        _stamina = -1; _level = -1; _coin = -1; _gem = -1;
+        lastClass = "";
     }
 }

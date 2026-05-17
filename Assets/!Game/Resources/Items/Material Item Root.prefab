@@ -333,11 +333,13 @@ GameObject:
   - component: {fileID: -53285952322331646}
   - component: {fileID: 8762339516151771691}
   - component: {fileID: 5753184598981514552}
-  - component: {fileID: 1482633334720708346}
   - component: {fileID: 6114349204208936130}
   - component: {fileID: 3707744862691180340}
   - component: {fileID: 7126682973535686157}
   - component: {fileID: 3611744853601441757}
+  - component: {fileID: 1482633334720708346}
+  - component: {fileID: 8508727415699656525}
+  - component: {fileID: -3991555091310874873}
   m_Layer: 5
   m_Name: Material Item Root
   m_TagString: Item
@@ -513,8 +515,6 @@ MonoBehaviour:
   rarity: 1
   dropSeed: 0
   ownerClientId: 999
-  quantityTextOnUI: {fileID: 2516998600735140098}
-  quantityTextOnWorld: {fileID: 5911336944911711625}
 --- !u!225 &5753184598981514552
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -527,22 +527,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &1482633334720708346
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6837810065036512092}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b99fb75175488ef4ebc1cfeb61197977, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  minDropDistance: 2
-  maxDropDistance: 3
-  originalSlot: {fileID: 0}
-  inventoryController: {fileID: 0}
 --- !u!114 &6114349204208936130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -621,3 +605,41 @@ MonoBehaviour:
   sortingPrecision: 100
   sortingBuffer: 0
   yOffset: 0.5
+--- !u!114 &1482633334720708346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6837810065036512092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b99fb75175488ef4ebc1cfeb61197977, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &8508727415699656525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6837810065036512092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da4a74cedcfbf464fb85c71d1b99ff1b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+--- !u!114 &-3991555091310874873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6837810065036512092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbb3d36bc86abda49bd16b3ffe1535e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  quantityTextOnUI: {fileID: 2516998600735140098}
+  quantityTextOnWorld: {fileID: 5911336944911711625}

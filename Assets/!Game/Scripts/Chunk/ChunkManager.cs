@@ -182,13 +182,13 @@ public class ChunkManager : MonoBehaviour
         }
         else
         {
-            string finalSavePath = Path.Combine(savePath, currentSceneName);
-            string filePath = Path.Combine(finalSavePath, $"Chunk_{coord.x}_{coord.y}.json");
+            string resourcePath = $"ChunkData/{currentSceneName}/Chunk_{coord.x}_{coord.y}";
 
-            if (File.Exists(filePath))
+            TextAsset jsonFile = Resources.Load<TextAsset>(resourcePath);
+
+            if (jsonFile != null)
             {
-                string jsonContent = File.ReadAllText(filePath);
-                data = JsonUtility.FromJson<ChunkData>(jsonContent);
+                data = JsonUtility.FromJson<ChunkData>(jsonFile.text);
             }
             else
             {

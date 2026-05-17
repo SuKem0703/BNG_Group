@@ -15,17 +15,22 @@ public class ClassController : NetworkBehaviour
     [Header("Input Actions")]
     [SerializeField] private InputActionReference swapAction;
 
+    public NetworkVariable<bool> netIsKnightActive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     private GameObject currentClass;
 
     [SerializeField] private float swapCooldown = 2.0f;
     private bool canSwap = true;
 
-    private PlayerStats stats;
+    private PlayerStats stats => GetComponent<PlayerStats>();
+    private PlayerMovement playerMovement => GetComponent<PlayerMovement>();
 
     [SerializeField] private Animator knightAnimator;
     [SerializeField] private Animator mageAnimator;
 
     public event Action<string> OnClassSwapped;
+
+    public bool IsKnightActive => netIsKnightActive.Value;
 
     private void Awake()
     {
@@ -34,8 +39,6 @@ public class ClassController : NetworkBehaviour
 
         if (knightObject != null) knightAnimator = knightObject.GetComponentInChildren<Animator>(true);
         if (mageObject != null) mageAnimator = mageObject.GetComponentInChildren<Animator>(true);
-
-        stats = GetComponent<PlayerStats>();
     }
 
     public override void OnDestroy()
@@ -58,13 +61,13 @@ public class ClassController : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        netIsKnightActive.OnValueChanged += OnClassStateSynced;
+
         if (IsOwner)
         {
             Instance = this;
-
-            knightObject.SetActive(true);
-            mageObject.SetActive(false);
             currentClass = knightObject;
+            netIsKnightActive.Value = true;
 
             EnableLocalInput();
             OnClassSwapped?.Invoke("Knight");
@@ -73,6 +76,26 @@ public class ClassController : NetworkBehaviour
         {
             DisableInputForOthers();
         }
+
+        ApplyClassVisibility(netIsKnightActive.Value);
+    }
+
+    private void OnClassStateSynced(bool previous, bool current)
+    {
+        ApplyClassVisibility(current);
+    }
+
+    private void ApplyClassVisibility(bool isKnight)
+    {
+        ToggleClassVisuals(knightObject, isKnight);
+        ToggleClassVisuals(mageObject, !isKnight);
+    }
+
+    private void ToggleClassVisuals(GameObject classObj, bool isVisible)
+    {
+        if (classObj == null) return;
+        var sprites = classObj.GetComponentsInChildren<SpriteRenderer>(true);
+        foreach (var s in sprites) s.enabled = isVisible;
     }
 
     private void EnableLocalInput()
@@ -94,15 +117,16 @@ public class ClassController : NetworkBehaviour
 
     public string GetCurrentClassName()
     {
-        if (currentClass == knightObject) return "Knight";
-        if (currentClass == mageObject) return "Mage";
-        return null;
+        return netIsKnightActive.Value ? "Knight" : "Mage";
     }
 
     private void TrySwapClass()
     {
         if (!canSwap) return;
-        if (PauseController.IsGamePause || !GameFlags.HasRecruitedLyria()) return;
+
+        if (stats != null && (stats.IsProcessingDeath || stats.isGameOver)) return;
+
+        if (playerMovement != null && playerMovement.isAttacking && !playerMovement.canMoveWhileAttacking) return;
 
         GameObject target = (currentClass == knightObject) ? mageObject : knightObject;
 
@@ -155,12 +179,15 @@ public class ClassController : NetworkBehaviour
         {
             oldInput.DeactivateInput();
             oldInput.enabled = false;
-            currentClass.SetActive(false);
         }
 
         currentClass = newClass;
-        currentClass.SetActive(true);
         currentClass.tag = "Player";
+
+        if (IsOwner)
+        {
+            netIsKnightActive.Value = (currentClass == knightObject);
+        }
 
         Animator newAnimator = (currentClass == knightObject) ? knightAnimator : mageAnimator;
         if (newAnimator != null)
@@ -186,8 +213,12 @@ public class ClassController : NetworkBehaviour
             }
         }
 
-        var currentStats = GetComponent<PlayerStats>();
-        if (currentStats != null) currentStats.ApplyEquippedItems();
+        if (stats != null) stats.ApplyEquippedItems();
+
+        if (playerMovement != null)
+        {
+            playerMovement.ghostTrail = currentClass.GetComponentInChildren<GhostTrail>();
+        }
 
         if (IsOwner)
         {

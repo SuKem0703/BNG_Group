@@ -28,6 +28,11 @@ public class GhostTrail : MonoBehaviour
         {
             GameObject ghost = new GameObject("Ghost_" + i);
 
+            if (targetRenderer != null)
+            {
+                ghost.layer = targetRenderer.gameObject.layer;
+            }
+
             ghost.transform.SetParent(poolContainer.transform);
 
             SpriteRenderer sr = ghost.AddComponent<SpriteRenderer>();

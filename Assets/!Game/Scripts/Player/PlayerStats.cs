@@ -183,7 +183,7 @@ public class PlayerStats : NetworkBehaviour
 
             if (InventoryController.Instance == null) return false;
 
-            bool isKnightActive = classController.knightObject.activeSelf;
+            bool isKnightActive = classController.IsKnightActive;
 
             int weaponSlotIndex = isKnightActive ? 2003 : 2103;
 
@@ -198,12 +198,15 @@ public class PlayerStats : NetworkBehaviour
     private bool isProcessingDeath = false;
     public bool IsProcessingDeath => isProcessingDeath;
 
+    public bool isGameOver { get; private set; } = false;
+
     public float potionCooldownDuration = 2.0f;
     [SerializeField] private float potionCooldownTimer;
 
     public CapsuleCollider2D playerCollider;
 
-    [SerializeField] private ClassController classController;
+    private ClassController classController => GetComponent<ClassController>();
+    private PlayerMovement pm => GetComponent<PlayerMovement>();
 
     public static event System.Action<Slot[], string> OnEquipmentUIReady;
 
@@ -294,7 +297,7 @@ public class PlayerStats : NetworkBehaviour
 
     void HandleRegen()
     {
-        bool isKnight = classController.knightObject.activeSelf;
+        bool isKnight = classController.IsKnightActive;
 
         if (isKnight)
         {
@@ -363,7 +366,7 @@ public class PlayerStats : NetworkBehaviour
     {
         if (InventoryController.Instance == null || ItemDictionary.Instance == null) return;
 
-        bool isKnightActive = classController.knightObject.activeSelf;
+        bool isKnightActive = classController.IsKnightActive;
 
         bonusSTR = bonusDEX = bonusCON = bonusINT = 0;
         bonusPhysicalAttack = bonusMagicAttack = bonusDefense = 0;
@@ -443,6 +446,18 @@ public class PlayerStats : NetworkBehaviour
         knightMP = finalKnightMaxMP;
         mageMP = finalMageMaxMP;
         currentStamina = finalStamina;
+
+        isProcessingDeath = false;
+        isGameOver = false;
+
+        if (playerCollider != null) playerCollider.enabled = true;
+
+        if (pm != null) pm.ResetDeathState();
+
+        if (IsOwner)
+        {
+            SetDeathStateServerRpc(false);
+        }
     }
 
     [Header("Network Optimization")]
@@ -486,7 +501,7 @@ public class PlayerStats : NetworkBehaviour
 
     public int TakeDamage(int rawDamage)
     {
-        if (isInvincible || isProcessingDeath) return 0;
+        if (isInvincible || isProcessingDeath || isGameOver) return 0;
 
         if (IsServer && !IsOwner)
         {
@@ -508,7 +523,7 @@ public class PlayerStats : NetworkBehaviour
 
     private int ProcessDamageLocally(int rawDamage)
     {
-        if (isInvincible || isProcessingDeath) return 0;
+        if (isInvincible || isProcessingDeath || isGameOver) return 0;
 
         float def = finalDefense;
         float dmgRed = damageReduction;
@@ -517,7 +532,7 @@ public class PlayerStats : NetworkBehaviour
         float reductionFactor = (1f - mitigation) * (1f - dmgRed);
         int finalDamage = Mathf.Max(Mathf.CeilToInt(rawDamage * reductionFactor), 1);
 
-        bool isKnight = classController.knightObject.activeSelf;
+        bool isKnight = classController.IsKnightActive;
 
         int currentHP = isKnight ? knightHealth : mageHealth;
         currentHP -= finalDamage;
@@ -549,25 +564,72 @@ public class PlayerStats : NetworkBehaviour
 
         isProcessingDeath = true;
 
+        if (playerCollider != null) playerCollider.enabled = false;
+
+        if (pm != null)
+        {
+            pm.TriggerDeath();
+            if (pm.rb != null) pm.rb.linearVelocity = Vector2.zero;
+        }
+
+        var knightAttack = GetComponentInChildren<KnightNormalAttack>(true);
+        if (knightAttack != null) knightAttack.EndAttack();
+
+        var mageAttack = GetComponentInChildren<MageNormalAttack>(true);
+        if (mageAttack != null) mageAttack.EndAttack();
+
+        Animator activeAnimator = who == "Knight"
+            ? classController.knightObject.GetComponentInChildren<Animator>()
+            : classController.mageObject.GetComponentInChildren<Animator>();
+
+        if (activeAnimator != null)
+        {
+            activeAnimator.SetBool("isWalking", false);
+            activeAnimator.SetBool("isRunning", false);
+            activeAnimator.SetTrigger("Die");
+        }
+    }
+
+    public void OnCharacterDeathAnimationFinished()
+    {
+        if (!IsOwner) return;
+        if (isGameOver) return;
+
         bool knightAlive = knightHealth > 0;
         bool mageAlive = mageHealth > 0;
-        bool hasLyria = GameFlags.HasRecruitedLyria();
 
-        if (who == "Knight")
+        bool isKnightActive = classController.IsKnightActive;
+        Animator activeAnimator = isKnightActive
+            ? classController.knightObject.GetComponentInChildren<Animator>()
+            : classController.mageObject.GetComponentInChildren<Animator>();
+
+        if (isKnightActive)
         {
-            if (hasLyria && mageAlive)
+            if (mageAlive)
             {
+                if (activeAnimator != null)
+                {
+                    activeAnimator.ResetTrigger("Die");
+                    activeAnimator.Play("Idle");
+                }
+
                 classController.SwitchClass(classController.mageObject);
-                isProcessingDeath = false;
+                StartCoroutine(FinalizeRespawnProtection(1.5f));
             }
             else GameOver();
         }
-        else if (who == "Mage")
+        else
         {
             if (knightAlive)
             {
+                if (activeAnimator != null)
+                {
+                    activeAnimator.ResetTrigger("Die");
+                    activeAnimator.Play("Idle");
+                }
+
                 classController.SwitchClass(classController.knightObject);
-                isProcessingDeath = false;
+                StartCoroutine(FinalizeRespawnProtection(1.5f));
             }
             else GameOver();
         }
@@ -630,6 +692,9 @@ public class PlayerStats : NetworkBehaviour
     {
         SetInvincible(true);
         if (playerCollider != null) playerCollider.enabled = false;
+
+        if (pm != null) pm.ResetDeathState();
+
         yield return new WaitForSeconds(invincibilityDuration);
         SetInvincible(false);
         if (playerCollider != null) playerCollider.enabled = true;
@@ -658,13 +723,19 @@ public class PlayerStats : NetworkBehaviour
 
     private void GameOver()
     {
+        isGameOver = true;
+
+        if (pm != null && pm.rb != null) pm.rb.linearVelocity = Vector2.zero;
+
         if (PauseController.IsGamePause) return;
+
         DeathService.Instance.HandlePlayerDeath();
+        GameOverUIAdapter.Instance.ShowGameOverUI();
     }
 
     public void HealActiveCharacter(int amount)
     {
-        if (classController.knightObject.activeSelf)
+        if (classController.IsKnightActive)
         {
             if (knightHealth >= finalKnightMaxHP) Heal(amount, false); else Heal(amount, true);
         }
@@ -676,7 +747,7 @@ public class PlayerStats : NetworkBehaviour
 
     public void RecoverMPActiveCharacter(int amount)
     {
-        if (classController.knightObject.activeSelf)
+        if (classController.IsKnightActive)
         {
             if (knightMP >= finalKnightMaxMP) RecoverMP(amount, false); else RecoverMP(amount, true);
         }
@@ -698,7 +769,7 @@ public class PlayerStats : NetworkBehaviour
         if (amount <= 0 || DamagePopupPool.Instance == null) return;
 
         var classController = GetComponent<ClassController>();
-        Transform activeCharacterTransform = classController.knightObject.activeSelf
+        Transform activeCharacterTransform = classController.IsKnightActive
             ? classController.knightObject.transform : classController.mageObject.transform;
 
         Vector3 spawnPosition = activeCharacterTransform.position + new Vector3(0, 1.5f, 0);
