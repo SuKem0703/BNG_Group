@@ -39,7 +39,7 @@ public class SaveController : MonoBehaviour
     private SaveAdapter uiAdapter;
     public void RegisterUIAdapter(SaveAdapter adapter) => uiAdapter = adapter;
 
-    private LocalPlayerAdapter localPlayerAdapter;
+    private PlayerCore playerCore;
 
     private StorageChest[] storageChests;
 
@@ -76,14 +76,14 @@ public class SaveController : MonoBehaviour
         LocalizationManager.OnLanguageChanged += UpdateUIDText;
     }
 
-    public void RegisterLocalPlayer(LocalPlayerAdapter adapter)
+    public void RegisterLocalPlayer(PlayerCore adapter)
     {
-        localPlayerAdapter = adapter;
+        playerCore = adapter;
     }
 
     public void UnregisterLocalPlayer()
     {
-        localPlayerAdapter = null;
+        playerCore = null;
     }
 
     private void UpdateUIDText()
@@ -101,13 +101,13 @@ public class SaveController : MonoBehaviour
             yield return null;
         }
 
-        while (localPlayerAdapter == null || uiAdapter == null)
+        while (playerCore == null || uiAdapter == null)
         {
-            if (localPlayerAdapter == null)
+            if (playerCore == null)
             {
                 if (NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
                 {
-                    localPlayerAdapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LocalPlayerAdapter>();
+                    playerCore = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerCore>();
                 }
             }
             yield return null;
@@ -201,9 +201,9 @@ public class SaveController : MonoBehaviour
                     if (uiAdapter.mageEquipmentPanel != null) uiAdapter.mageEquipmentPanel.SetEquipmentItems(mageEquips);
                     if (uiAdapter.sharedEquipmentPanel != null) uiAdapter.sharedEquipmentPanel.SetEquipmentItems(sharedEquips);
 
-                    if (localPlayerAdapter != null && localPlayerAdapter.playerStats != null)
+                    if (playerCore != null && playerCore.playerStats != null)
                     {
-                        localPlayerAdapter.playerStats.ApplyEquippedItems();
+                        playerCore.playerStats.ApplyEquippedItems();
                     }
                 }
                 inventoryLoaded = true;
@@ -213,13 +213,13 @@ public class SaveController : MonoBehaviour
 
         while (!inventoryLoaded) yield return null;
 
-        if (localPlayerAdapter != null && tempSaveData != null)
+        if (playerCore != null && tempSaveData != null)
         {
-            localPlayerAdapter.playerStats.knightHealth = tempSaveData.currentKnightHP;
-            localPlayerAdapter.playerStats.mageHealth = tempSaveData.currentmageHP;
-            localPlayerAdapter.playerStats.knightMP = tempSaveData.currentKnightMP;
-            localPlayerAdapter.playerStats.mageMP = tempSaveData.currentMageMP;
-            localPlayerAdapter.playerStats.currentStamina = tempSaveData.currentStamina;
+            playerCore.playerVitals.netKnightHealth.Value = tempSaveData.currentKnightHP;
+            playerCore.playerVitals.netMageHealth.Value = tempSaveData.currentmageHP;
+            playerCore.playerVitals.knightMP = tempSaveData.currentKnightMP;
+            playerCore.playerVitals.mageMP = tempSaveData.currentMageMP;
+            playerCore.playerVitals.currentStamina = tempSaveData.currentStamina;
 
             tempSaveData = null;
         }
@@ -234,13 +234,13 @@ public class SaveController : MonoBehaviour
         if (DeathService.IsRespawningFlag)
         {
             DeathService.IsRespawningFlag = false;
-            if (localPlayerAdapter != null)
+            if (playerCore != null)
             {
-                localPlayerAdapter.playerStats.SetDeathStateServerRpc(false);
-                var pMovement = localPlayerAdapter.playerStats.GetComponentInChildren<PlayerMovement>();
+                playerCore.playerVitals.SetDeathStateServerRpc(false);
+                var pMovement = playerCore.playerStats.GetComponentInChildren<PlayerMovement>();
                 if (pMovement != null) pMovement.ResetDeathState();
 
-                StartCoroutine(localPlayerAdapter.playerStats.FinalizeRespawnProtection(0.5f));
+                StartCoroutine(playerCore.playerVitals.FinalizeRespawnProtection(0.5f));
             }
         }
     }
@@ -290,12 +290,12 @@ public class SaveController : MonoBehaviour
         if (InventoryService.Instance != null)
             InventoryService.Instance.ForceSyncPendingMoves();
 
-        if (localPlayerAdapter != null && localPlayerAdapter.playerStats != null)
-            localPlayerAdapter.playerStats.ForceSyncExpImmediate();
+        if (playerCore != null && playerCore.playerStats != null)
+            playerCore.playerStats.ForceSyncExpImmediate();
 
         if (!isSilent) ShowMiniLoadingScreen();
 
-        if (uiAdapter == null || uiAdapter.inventoryController == null || localPlayerAdapter == null)
+        if (uiAdapter == null || uiAdapter.inventoryController == null || playerCore == null)
         {
             if (!isSilent) HideMiniLoadingScreen();
             IsSaving = false;
@@ -316,16 +316,16 @@ public class SaveController : MonoBehaviour
             existingFarmData = serverSave.farmData ?? new FarmData();
         }
 
-        Vector3 savePos = localPlayerAdapter.GetPosition();
+        Vector3 savePos = playerCore.playerStats.transform.position;
         string saveScene = SceneManager.GetActiveScene().name;
         if (reason == SaveReason.SceneTransition && nextSpawnPosition != null) savePos = nextSpawnPosition.Value;
         if (reason == SaveReason.SceneTransition && !string.IsNullOrEmpty(pendingSceneName)) saveScene = pendingSceneName;
 
         SaveData saveData = new SaveData
         {
-            playerPosition = nextSpawnPosition ?? localPlayerAdapter.GetPosition(),
+            playerPosition = nextSpawnPosition ?? playerCore.playerStats.transform.position,
             currentSceneName = pendingSceneName ?? SceneManager.GetActiveScene().name,
-            checkpointPosition = currentCheckpointPos ?? localPlayerAdapter.GetPosition(),
+            checkpointPosition = currentCheckpointPos ?? playerCore.playerStats.transform.position,
             checkpointSceneName = currentCheckpointScene ?? SceneManager.GetActiveScene().name,
 
             mapBoundary = FindFirstObjectByType<CinemachineConfiner2D>()?.BoundingShape2D?.gameObject.name ?? "",
@@ -335,11 +335,11 @@ public class SaveController : MonoBehaviour
             questProgressData = QuestController.Instance.activeQuests,
             handInQuestIDs = QuestController.Instance.handInQuestIDs,
 
-            currentKnightHP = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalKnightMaxHP : localPlayerAdapter.playerStats.knightHealth,
-            currentmageHP = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalMageMaxHP : localPlayerAdapter.playerStats.mageHealth,
-            currentKnightMP = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalKnightMaxMP : localPlayerAdapter.playerStats.knightMP,
-            currentMageMP = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalMageMaxMP : localPlayerAdapter.playerStats.mageMP,
-            currentStamina = (reason == SaveReason.Death) ? localPlayerAdapter.playerStats.finalStamina : localPlayerAdapter.playerStats.currentStamina,
+            currentKnightHP = (reason == SaveReason.Death) ? playerCore.playerStats.finalKnightMaxHP : playerCore.playerVitals.netKnightHealth.Value,
+            currentmageHP = (reason == SaveReason.Death) ? playerCore.playerStats.finalMageMaxHP : playerCore.playerVitals.netMageHealth.Value,
+            currentKnightMP = (reason == SaveReason.Death) ? playerCore.playerStats.finalKnightMaxMP : playerCore.playerVitals.knightMP,
+            currentMageMP = (reason == SaveReason.Death) ? playerCore.playerStats.finalMageMaxMP : playerCore.playerVitals.mageMP,
+            currentStamina = (reason == SaveReason.Death) ? playerCore.playerStats.finalStamina : playerCore.playerVitals.currentStamina,
 
             currentDay = TimeManager.Instance != null ? TimeManager.Instance.currentDay : 1,
             currentTimeOfDay = TimeManager.Instance != null ? TimeManager.Instance.currentTimeOfDay : 6f,
@@ -548,9 +548,9 @@ public class SaveController : MonoBehaviour
             return true;
         }
 
-        if (localPlayerAdapter != null)
+        if (playerCore != null)
         {
-            localPlayerAdapter.SetPosition(targetPos);
+            playerCore.playerStats.transform.position = targetPos;
             nextSpawnPosition = null;
             pendingSceneName = null;
         }
@@ -607,9 +607,9 @@ public class SaveController : MonoBehaviour
         }
 
         var vcam = FindFirstObjectByType<CinemachineCamera>();
-        if (vcam != null && localPlayerAdapter != null)
+        if (vcam != null && playerCore != null)
         {
-            vcam.ForceCameraPosition(localPlayerAdapter.GetPosition(), Quaternion.identity);
+            vcam.ForceCameraPosition(playerCore.playerStats.transform.position, Quaternion.identity);
         }
         try { Unity.Cinemachine.CinemachineCore.ResetCameraState(); }
         catch { }

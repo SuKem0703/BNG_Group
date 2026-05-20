@@ -14,22 +14,22 @@ public class Effect : MonoBehaviour
     public float value;
 
     private float timer;
+    private PlayerVitals targetVitals;
     private PlayerStats targetStats;
     private bool isActive = false;
 
     // Biến cho DoT (Damage over Time)
     private float tickTimer;
-    private float tickInterval = 1.0f; // Gây sát thương mỗi 1 giây
+    private float tickInterval = 1.0f;
 
     public void Initialize(GameObject target, float duration, float value)
     {
-        this.targetStats = target.GetComponent<PlayerStats>();
+        this.targetVitals = target.GetComponent<PlayerVitals>();
         this.duration = duration;
         this.value = value;
 
         ApplyEffect();
 
-        // Nếu duration <= 0 nghĩa là effect tức thời (bình máu, mana) -> Xóa ngay
         if (duration <= 0f)
         {
             isActive = false;
@@ -48,17 +48,14 @@ public class Effect : MonoBehaviour
 
         timer -= Time.deltaTime;
 
-        // Cập nhật UI cooldown
         if (overlayImage != null)
             overlayImage.fillAmount = 1f - (timer / duration);
 
-        // --- XỬ LÝ DOT (BURN/POISON) ---
         if (effectID == "BURN_FIRE")
         {
             HandleDoT();
         }
 
-        // Hết thời gian
         if (timer <= 0f)
         {
             RemoveEffect();
@@ -71,11 +68,9 @@ public class Effect : MonoBehaviour
         tickTimer += Time.deltaTime;
         if (tickTimer >= tickInterval)
         {
-            // Gây sát thương mỗi giây
-            if (targetStats != null)
+            if (targetVitals != null)
             {
-                // value ở đây là sát thương mỗi giây (DPS)
-                targetStats.TakeDamage(Mathf.RoundToInt(value));
+                targetVitals.TakeDamage(Mathf.RoundToInt(value));
             }
             tickTimer = 0f;
         }
@@ -83,23 +78,21 @@ public class Effect : MonoBehaviour
 
     private void ApplyEffect()
     {
-        if (targetStats == null) return;
+        if (targetVitals == null) return;
 
         switch (effectID)
         {
             case "HEAL_INSTANT":
-                targetStats.HealActiveCharacter(Mathf.RoundToInt(value));
+                targetVitals.HealActiveCharacter(Mathf.RoundToInt(value));
                 SoundEffectManager.Play("Use Pot");
                 break;
             case "MANA_INSTANT":
-                targetStats.RecoverMPActiveCharacter(Mathf.RoundToInt(value));
+                targetVitals.RecoverMPActiveCharacter(Mathf.RoundToInt(value));
                 break;
 
             case "SWAP_CD":
-                // Logic giảm hồi chiêu swap (nếu có)
                 break;
 
-            // --- SỬA LỖI: Dùng hàm ModifyEffectStat thay vì cộng trực tiếp ---
             case "BUFF_STR":
                 targetStats.ModifyEffectStat("STR", Mathf.RoundToInt(value));
                 break;
@@ -107,25 +100,21 @@ public class Effect : MonoBehaviour
                 targetStats.ModifyEffectStat("DEX", Mathf.RoundToInt(value));
                 break;
             case "DEBUFF_DEX":
-                targetStats.ModifyEffectStat("DEX", -Mathf.RoundToInt(value)); // Trừ DEX
+                targetStats.ModifyEffectStat("DEX", -Mathf.RoundToInt(value));
                 break;
 
             case "BURN_FIRE":
-                // Burn Fire bây giờ xử lý trong Update (DoT) nên không làm gì ở đây
-                // Hoặc có thể gây sát thương ngay tick đầu tiên
-                targetStats.TakeDamage(Mathf.RoundToInt(value));
+                targetVitals.TakeDamage(Mathf.RoundToInt(value));
                 break;
         }
     }
 
     private void RemoveEffect()
     {
-        if (targetStats == null) return;
+        if (targetVitals == null) return;
 
-        // Hoàn trả lại chỉ số khi hết buff
         switch (effectID)
         {
-            // Các effect tức thời không cần hoàn trả
             case "HEAL_INSTANT":
             case "MANA_INSTANT":
             case "BURN_FIRE":
@@ -134,7 +123,6 @@ public class Effect : MonoBehaviour
             case "SWAP_CD":
                 break;
 
-            // --- SỬA LỖI: Hoàn trả lại chỉ số ---
             case "BUFF_STR":
                 targetStats.ModifyEffectStat("STR", -Mathf.RoundToInt(value));
                 break;
@@ -142,7 +130,7 @@ public class Effect : MonoBehaviour
                 targetStats.ModifyEffectStat("DEX", -Mathf.RoundToInt(value));
                 break;
             case "DEBUFF_DEX":
-                targetStats.ModifyEffectStat("DEX", Mathf.RoundToInt(value)); // Cộng lại DEX đã trừ
+                targetStats.ModifyEffectStat("DEX", Mathf.RoundToInt(value));
                 break;
         }
         isActive = false;

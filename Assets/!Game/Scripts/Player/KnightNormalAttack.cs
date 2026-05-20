@@ -30,8 +30,7 @@ public class KnightNormalAttack : NetworkBehaviour
     public float hitShakeFrequency = 2f;
     public float hitShakeDuration = 0.15f;
 
-    private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
-    private PlayerMovement playerMovement => GetComponentInParent<PlayerMovement>();
+    [SerializeField] private PlayerCore core;
 
     public bool isAttacking => animator.GetBool("isAttacking");
     public bool isWalking => animator.GetBool("isWalking");
@@ -71,7 +70,7 @@ public class KnightNormalAttack : NetworkBehaviour
             animator.SetBool("isWalkAttacking", false);
             animator.SetBool("isRunAttacking", false);
 
-            if (playerMovement != null) playerMovement.isAttacking = false;
+            if (core.playerMovement != null) core.playerMovement.isAttacking = false;
             return;
         }
 
@@ -104,7 +103,7 @@ public class KnightNormalAttack : NetworkBehaviour
         if (!IsOwner) return;
 
         if (PauseController.IsGamePause || !context.performed) return;
-        if (playerMovement != null && playerMovement.IsDead) return;
+        if (core.playerMovement != null && core.playerMovement.IsDead) return;
 
         attackPressed = true;
     }
@@ -113,12 +112,12 @@ public class KnightNormalAttack : NetworkBehaviour
     {
         if (isAttacking) return;
         if (comboTempo < minComboInterval) return;
-        if (playerMovement != null && playerMovement.IsDead) return;
-        if (!PlayerStats.Instance.CanAttack || !GameStateManager.CanProcessInput()) return;
+        if (core.playerMovement != null && core.playerMovement.IsDead) return;
+        if (!core.playerStats.CanAttack || !GameStateManager.CanProcessInput()) return;
 
-        int cost = (playerMovement != null && playerMovement.isRunning) ? runAttackStaminaCost : normalAttackStaminaCost;
+        int cost = (core.playerMovement != null && core.playerMovement.isRunning) ? runAttackStaminaCost : normalAttackStaminaCost;
 
-        if (playerStats != null && playerStats.currentStamina >= cost)
+        if (core.playerStats != null && core.playerVitals.currentStamina >= cost)
         {
             Combo(cost);
         }
@@ -128,16 +127,16 @@ public class KnightNormalAttack : NetworkBehaviour
     {
         if (comboTempo < 0) return;
 
-        playerStats.UseStamina(staminaCost);
+        core.playerVitals.UseStamina(staminaCost);
         animator.SetBool("isAttacking", true);
 
-        bool isMoving = playerMovement != null && playerMovement.moveInput.magnitude > 0.1f;
-        bool isRunningLocal = playerMovement != null && playerMovement.isRunning;
+        bool isMoving = core.playerMovement != null && core.playerMovement.moveInput.magnitude > 0.1f;
+        bool isRunningLocal = core.playerMovement != null && core.playerMovement.isRunning;
 
-        if (playerMovement != null)
+        if (core.playerMovement != null)
         {
-            playerMovement.isAttacking = true;
-            playerMovement.canMoveWhileAttacking = isRunningLocal || isMoving;
+            core.playerMovement.isAttacking = true;
+            core.playerMovement.canMoveWhileAttacking = isRunningLocal || isMoving;
         }
 
         if (isRunningLocal)
@@ -158,9 +157,9 @@ public class KnightNormalAttack : NetworkBehaviour
         animator.SetFloat("LastInputX", attackDirection.x);
         animator.SetFloat("LastInputY", attackDirection.y);
 
-        if (playerMovement != null)
+        if (core.playerMovement != null)
         {
-            playerMovement.netLastInput.Value = attackDirection;
+            core.playerMovement.netLastInput.Value = attackDirection;
         }
 
         enemiesHitThisAttack.Clear();
@@ -225,10 +224,10 @@ public class KnightNormalAttack : NetworkBehaviour
         animator.ResetTrigger("Attack");
         attackPressed = false;
 
-        if (playerMovement != null)
+        if (core.playerMovement != null)
         {
-            playerMovement.isAttacking = false;
-            playerMovement.canMoveWhileAttacking = false;
+            core.playerMovement.isAttacking = false;
+            core.playerMovement.canMoveWhileAttacking = false;
         }
     }
 
@@ -264,10 +263,10 @@ public class KnightNormalAttack : NetworkBehaviour
                 float comboScale = checkCombo(currentComboCache);
                 if (isRunAttacking) comboScale = 1.0f;
 
-                float rawDamage = playerStats.finalPhysicalAttack * comboScale * stanceMultiplier;
+                float rawDamage = core.playerStats.finalPhysicalAttack * comboScale * stanceMultiplier;
 
                 bool isCritical = false;
-                if (UnityEngine.Random.Range(0f, 100f) < playerStats.finalCritRate)
+                if (UnityEngine.Random.Range(0f, 100f) < core.playerStats.finalCritRate)
                 {
                     isCritical = true;
                     rawDamage *= 2;
@@ -335,8 +334,8 @@ public class KnightNormalAttack : NetworkBehaviour
 
         Vector3 basePosition = transform.parent != null ? transform.parent.position : transform.position;
 
-        Vector2 fallbackDir = playerMovement != null && playerMovement.moveInput.magnitude > 0.01f
-            ? playerMovement.moveInput.normalized
+        Vector2 fallbackDir = core.playerMovement != null && core.playerMovement.moveInput.magnitude > 0.01f
+            ? core.playerMovement.moveInput.normalized
             : attackDirection;
 
         if (targetSelector != null)

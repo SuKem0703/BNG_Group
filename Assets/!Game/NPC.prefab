@@ -194,6 +194,7 @@ GameObject:
   - component: {fileID: 5653614603172447540}
   - component: {fileID: 4971033556569165825}
   - component: {fileID: 8838461781748227053}
+  - component: {fileID: 3237247667978481267}
   - component: {fileID: 3197673541645581489}
   - component: {fileID: 6581016862903904268}
   - component: {fileID: 5637482189399178007}
@@ -318,11 +319,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f09b87ed534d1624cae7cd3564493884, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <UniqueID>k__BackingField: NPC_0_0
+  <UniqueID>k__BackingField: 
   dialogueDataList: []
   playerName: Elric
   playerPortrait: {fileID: 1942528367, guid: 346b5f769ed1fe948b5ff84bf1d4a1dd, type: 3}
   triggerOnEnter: 0
+--- !u!114 &3237247667978481267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8757576948480836762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2c073ab138db1446bba176d44eef5ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestHandler
 --- !u!114 &3197673541645581489
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -346,6 +359,8 @@ MonoBehaviour:
   colorNoQuest: {r: 1, g: 1, b: 1, a: 1}
   floatAmplitude: 0.02
   floatSpeed: 5
+  npc: {fileID: 8838461781748227053}
+  npcQuestHandler: {fileID: 3237247667978481267}
 --- !u!58 &6581016862903904268
 CircleCollider2D:
   m_ObjectHideFlags: 0

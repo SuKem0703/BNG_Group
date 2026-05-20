@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class Monologue : MonoBehaviour, IInteractable
@@ -27,15 +24,9 @@ public class Monologue : MonoBehaviour, IInteractable
     [SerializeField] protected string characterName = "Elric";
     [SerializeField] protected Sprite characterPortrait;
 
-    protected DialogueController dialogueUI;
-    protected int dialogueIndex;
-    protected bool isTyping;
-    protected bool maintainPauseAfterDialogue = false;
-    protected float lastSkipTime = -99f;
-
     private SceneMapMove mapTransition => GetComponent<SceneMapMove>();
 
-    private enum MonologueQuestState
+    public enum MonologueQuestState
     {
         NotStarted,
         InProgress,
@@ -46,11 +37,6 @@ public class Monologue : MonoBehaviour, IInteractable
 
     protected virtual void Start()
     {
-        dialogueUI = DialogueController.instance;
-
-        //if (characterPortrait == null)
-        //    characterPortrait = Resources.Load<Sprite>("Elric_Portrait");
-
         if (isOneTimeOnly)
         {
             if (!string.IsNullOrEmpty(uniqueID)) finalID = uniqueID;
@@ -99,7 +85,7 @@ public class Monologue : MonoBehaviour, IInteractable
         if (mapTransition != null && mapTransition.IsEntryAllowed()) return;
         if (monologueData == null || (PauseController.IsGamePause && !GameStateManager.IsDialogueActive)) return;
 
-        if (GameStateManager.IsDialogueActive) NextLine();
+        if (GameStateManager.IsDialogueActive) DialogueController.instance.NextLine();
         else StartDialogue();
     }
 
@@ -131,151 +117,51 @@ public class Monologue : MonoBehaviour, IInteractable
     protected virtual void StartDialogue()
     {
         CalculateQuestState();
+        int startIndex = 0;
 
-        if (currentQuestState == MonologueQuestState.NotStarted)
-        {
-            dialogueIndex = 0;
-        }
-        else if (currentQuestState == MonologueQuestState.InProgress)
-        {
-            dialogueIndex = monologueData.questInProgressIndex;
-        }
-        else if (currentQuestState == MonologueQuestState.Completed)
-        {
-            dialogueIndex = monologueData.questCompletedIndex;
-        }
-        else if (currentQuestState == MonologueQuestState.NoMoreQuests)
-        {
-            dialogueIndex = monologueData.noMoreQuestsIndex;
-        }
+        if (currentQuestState == MonologueQuestState.InProgress) startIndex = monologueData.questInProgressIndex;
+        else if (currentQuestState == MonologueQuestState.Completed) startIndex = monologueData.questCompletedIndex;
+        else if (currentQuestState == MonologueQuestState.NoMoreQuests) startIndex = monologueData.noMoreQuestsIndex;
 
-        if (dialogueIndex >= monologueData.dialogueLines.Length)
-        {
-            dialogueIndex = 0;
-        }
+        if (startIndex >= monologueData.dialogueLines.Length) startIndex = 0;
 
         if (InteractionDetector.Instance != null)
         {
-            bool showVisual = !triggerOnEnter;
-            InteractionDetector.Instance.ForceSetTarget(this, showVisual);
+            InteractionDetector.Instance.ForceSetTarget(this, !triggerOnEnter);
         }
 
-        lastSkipTime = -99f;
-        GameStateManager.IsDialogueActive = true;
-        GameStateManager.CanOpenMenu = false;
-        CommonUIController.Instance?.SetUIVisible(false);
-        dialogueUI.ClearChoices();
-        dialogueUI.SetNPCInfo(characterName, characterPortrait);
-        dialogueUI.ShowDialogueUI(true);
-        PauseController.SetPause(true);
-
-        DisplayCurrentLine();
+        DialogueController.instance.StartDialogue(
+            monologueData,
+            startIndex,
+            "Elric",
+            null,
+            characterName,
+            characterPortrait,
+            EndDialogue
+        );
     }
 
     private void CalculateQuestState()
     {
         currentQuestState = MonologueQuestState.NotStarted;
-
-        if (monologueData.quest == null) return;
-
-        var qc = QuestController.Instance;
-        if (qc == null) return;
+        if (monologueData.quest == null || QuestController.Instance == null) return;
 
         string qID = monologueData.quest.questID;
+        var qc = QuestController.Instance;
 
-        if (qc.IsQuestHandedIn(qID))
-        {
-            currentQuestState = MonologueQuestState.NoMoreQuests;
-        }
-        else if (qc.IsQuestCompleted(qID))
-        {
-            currentQuestState = MonologueQuestState.Completed;
-        }
-        else if (qc.IsQuestActive(qID))
-        {
-            currentQuestState = MonologueQuestState.InProgress;
-        }
-        else
-        {
-            currentQuestState = MonologueQuestState.NotStarted;
-        }
-    }
-
-    protected virtual void NextLine()
-    {
-        if (isTyping)
-        {
-            StopAllCoroutines();
-            if (monologueData.dialogueLines.Length > dialogueIndex)
-                dialogueUI.SetDialogueText(monologueData.dialogueLines[dialogueIndex]);
-            isTyping = false;
-            dialogueUI.continueIndicator.gameObject.SetActive(true);
-            lastSkipTime = Time.unscaledTime;
-            return;
-        }
-        if (Time.unscaledTime - lastSkipTime < 0.2f) return;
-
-        dialogueUI.continueIndicator.gameObject.SetActive(false);
-        dialogueUI.ClearChoices();
-
-        if (monologueData.endDialogueLines != null &&
-            dialogueIndex < monologueData.endDialogueLines.Length &&
-            monologueData.endDialogueLines[dialogueIndex])
-        {
-            EndDialogue();
-            return;
-        }
-
-        if (++dialogueIndex < monologueData.dialogueLines.Length) DisplayCurrentLine();
-        else EndDialogue();
-    }
-
-    protected virtual void DisplayCurrentLine()
-    {
-        StopAllCoroutines();
-        StartCoroutine(TypeLine());
-    }
-
-    protected virtual IEnumerator TypeLine()
-    {
-        isTyping = true;
-        dialogueUI.SetDialogueText("");
-        dialogueUI.continueIndicator.gameObject.SetActive(false);
-
-        string currentLine = "";
-        if (dialogueIndex < monologueData.dialogueLines.Length)
-            currentLine = monologueData.dialogueLines[dialogueIndex];
-
-        foreach (char letter in currentLine)
-        {
-            dialogueUI.SetDialogueText(dialogueUI.dialogueText.text + letter);
-            yield return new WaitForSecondsRealtime(monologueData.typingSpeed);
-        }
-        isTyping = false;
-        dialogueUI.continueIndicator.gameObject.SetActive(true);
-
-        if (monologueData.autoProgressLines != null &&
-            monologueData.autoProgressLines.Length > dialogueIndex &&
-            monologueData.autoProgressLines[dialogueIndex])
-        {
-            dialogueUI.continueIndicator.gameObject.SetActive(false);
-            yield return new WaitForSecondsRealtime(monologueData.autoProgressDelay);
-            NextLine();
-        }
+        if (qc.IsQuestHandedIn(qID)) currentQuestState = MonologueQuestState.NoMoreQuests;
+        else if (qc.IsQuestCompleted(qID)) currentQuestState = MonologueQuestState.Completed;
+        else if (qc.IsQuestActive(qID)) currentQuestState = MonologueQuestState.InProgress;
     }
 
     public virtual void EndDialogue()
     {
         if (monologueData.triggerQuestAtEnd && monologueData.quest != null)
         {
-            if (QuestController.Instance != null)
-            {
-                QuestController.Instance.AcceptQuest(monologueData.quest);
-            }
+            QuestController.Instance?.AcceptQuest(monologueData.quest);
         }
 
-        if (monologueData.handleQuestAtEnd && monologueData.quest != null &&
-            currentQuestState == MonologueQuestState.Completed)
+        if (monologueData.handleQuestAtEnd && monologueData.quest != null && currentQuestState == MonologueQuestState.Completed)
         {
             if (QuestController.Instance != null && !QuestController.Instance.IsQuestHandedIn(monologueData.quest.questID))
             {
@@ -283,30 +169,13 @@ public class Monologue : MonoBehaviour, IInteractable
             }
         }
 
-        StopAllCoroutines();
-        GameStateManager.IsDialogueActive = false;
-        GameStateManager.CanOpenMenu = true;
-        dialogueUI.continueIndicator.gameObject.SetActive(false);
-        dialogueUI.SetDialogueText("");
-        dialogueUI.ShowDialogueUI(false);
-        dialogueUI.ClearChoices();
+        CommonUIController.Instance?.SetUIVisible(true);
+        PauseController.SetPause(false);
 
-        if (!maintainPauseAfterDialogue)
-        {
-            CommonUIController.Instance?.SetUIVisible(true);
-            PauseController.SetPause(false);
-        }
-        maintainPauseAfterDialogue = false;
         OnDialogueEndEvent?.Invoke();
 
-        if (isOneTimeOnly)
-        {
-            FinishAndDestroySelf();
-        }
-        else
-        {
-            SaveController.Instance?.TriggerAutoSave();
-        }
+        if (isOneTimeOnly) FinishAndDestroySelf();
+        else SaveController.Instance?.TriggerAutoSave();
     }
 
     protected virtual void FinishAndDestroySelf()
@@ -321,16 +190,8 @@ public class Monologue : MonoBehaviour, IInteractable
 
     protected void HandleQuestCompletion(Quest quest)
     {
-        if (RewardController.Instance != null)
-        {
-            RewardController.Instance.GiveQuestReward(quest);
-        }
-
-        if (QuestController.Instance != null)
-        {
-            QuestController.Instance.HandInQuest(quest.questID);
-        }
-
+        RewardController.Instance?.GiveQuestReward(quest);
+        QuestController.Instance?.HandInQuest(quest.questID);
         currentQuestState = MonologueQuestState.NoMoreQuests;
     }
 

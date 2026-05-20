@@ -14,6 +14,8 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     private GameObject dummyDragIcon;
 
+    public Vector3 selectionBoxOffset = new Vector3(-0.5f, -0.5f, 0f);
+
     void Start()
     {
         canvasGroup = GetComponent<CanvasGroup>();
@@ -44,7 +46,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         CleanupDragObjects();
 
-        if (draggedItem is SeedItem && LoadResourceManager.Instance.SelectionBoxPrefab != null)
+        if ((draggedItem is SeedItem || draggedItem is ItemTool) && LoadResourceManager.Instance.SelectionBoxPrefab != null)
         {
             currentSelectionBox = Instantiate(LoadResourceManager.Instance.SelectionBoxPrefab);
             selectionBoxRenderer = currentSelectionBox.GetComponent<SpriteRenderer>();
@@ -95,6 +97,30 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         canvasGroup.blocksRaycasts = true;
         canvasGroup.alpha = 1f;
 
+        Item draggedItem = GetComponent<Item>();
+        if (draggedItem is ItemTool toolItem && toolItem.toolType == ToolType.FishingRod)
+        {
+            Vector2 worldPos = Camera.main.ScreenToWorldPoint(eventData.position);
+
+            Collider2D[] hits = Physics2D.OverlapCircleAll(worldPos, 0.2f);
+            bool touchedWater = false;
+
+            foreach (var hit in hits)
+            {
+                if (LayerMask.LayerToName(hit.gameObject.layer) == "Water")
+                {
+                    touchedWater = true;
+                    break;
+                }
+            }
+
+            if (touchedWater)
+            {
+                bool success = toolItem.TryUseFishingRodOnWater(worldPos);
+                if (success) return;
+            }
+        }
+
         InventoryActionManager.Instance.ProcessDragDrop(this, eventData);
     }
 
@@ -116,18 +142,60 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
+        Item draggedItem = GetComponent<Item>();
+        Vector2 worldPos = Camera.main.ScreenToWorldPoint(eventData.position);
+
+        if (draggedItem is ItemTool toolItem && toolItem.toolType == ToolType.FishingRod)
+        {
+            Collider2D[] hits = Physics2D.OverlapCircleAll(worldPos, 0.2f);
+            bool touchedWater = false;
+
+            foreach (var hit in hits)
+            {
+                if (LayerMask.LayerToName(hit.gameObject.layer) == "Water")
+                {
+                    touchedWater = true;
+                    break;
+                }
+            }
+
+            if (touchedWater && currentSelectionBox != null)
+            {
+                currentSelectionBox.SetActive(true);
+                currentSelectionBox.transform.position = new Vector3(Mathf.Floor(worldPos.x) + 0.5f, Mathf.Floor(worldPos.y) + 0.5f, 0) + selectionBoxOffset;
+
+                Transform playerTransform = InventoryActionManager.Instance.playerStats?.transform;
+                bool isNear = playerTransform != null && Vector2.Distance(playerTransform.position, worldPos) <= 2.5f;
+
+                selectionBoxRenderer.color = isNear ? Color.white : invalidColor;
+                return;
+            }
+        }
+
         FarmPlot plot = InventoryActionManager.Instance.GetFarmPlotAtMouse(eventData);
 
         if (plot != null && currentSelectionBox != null)
         {
             currentSelectionBox.SetActive(true);
-            currentSelectionBox.transform.position = plot.transform.position;
+            currentSelectionBox.transform.position = plot.transform.position + selectionBoxOffset;
 
             bool isPlotInRange = InteractionDetector.Instance != null && InteractionDetector.Instance.IsPlotInRange(plot);
             bool isPlanted = plot.isPlanted;
+            bool isValidTarget = false;
 
-            if (isPlotInRange && !isPlanted) selectionBoxRenderer.color = Color.white;
-            else selectionBoxRenderer.color = invalidColor;
+            if (isPlotInRange)
+            {
+                if (draggedItem is SeedItem)
+                {
+                    isValidTarget = !isPlanted;
+                }
+                else if (draggedItem is ItemTool pTool && pTool.toolType == ToolType.Pickaxe)
+                {
+                    isValidTarget = isPlanted;
+                }
+            }
+
+            selectionBoxRenderer.color = isValidTarget ? Color.white : invalidColor;
         }
         else if (currentSelectionBox != null)
         {

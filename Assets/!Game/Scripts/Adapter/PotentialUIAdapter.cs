@@ -43,7 +43,7 @@ public class PotentialUIAdapter : MonoBehaviour
                 NetworkManager.Singleton.IsConnectedClient &&
                 NetworkManager.Singleton.LocalClient.PlayerObject != null)
             {
-                var adapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LocalPlayerAdapter>();
+                var adapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerCore>();
                 if (adapter != null) return adapter.playerStats;
             }
             return FindFirstObjectByType<PlayerStats>();
@@ -119,9 +119,9 @@ public class PotentialUIAdapter : MonoBehaviour
 
     private void OnResetClicked()
     {
-        if (playerStats == null) return;
+        if (PlayerWallet.Instance == null) return;
 
-        if (playerStats.gem < 20)
+        if (PlayerWallet.Instance.gem < 20)
         {
             GameNotify.Show("Bạn không đủ 20 Gem để reset điểm!");
             return;

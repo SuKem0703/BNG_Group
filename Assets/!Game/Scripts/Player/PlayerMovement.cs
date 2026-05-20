@@ -40,24 +40,18 @@ public class PlayerMovement : NetworkBehaviour
     public bool isAttacking = false;
     public bool canMoveWhileAttacking = false;
 
-    [SerializeField] private PlayerStats playerStats;
+    [SerializeField] private PlayerCore core;
     public GhostTrail ghostTrail;
 
     public NetworkVariable<Vector2> netMoveInput = new NetworkVariable<Vector2>(Vector2.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<Vector2> netLastInput = new NetworkVariable<Vector2>(new Vector2(0, -1), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<bool> netIsRunning = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
-    void Awake()
-    {
-        if (rb == null) rb = GetComponent<Rigidbody2D>();
-        if (ghostTrail == null) ghostTrail = GetComponentInChildren<GhostTrail>();
-    }
-
     void Update()
     {
         if (IsOwner)
         {
-            bool isGameEnded = playerStats != null && playerStats.isGameOver;
+            bool isGameEnded = core.playerStats != null && core.playerVitals.isGameOver;
 
             if (isDead || isGameEnded || !GameStateManager.CanProcessInput() || !SaveController.IsDataLoaded)
             {
@@ -81,7 +75,7 @@ public class PlayerMovement : NetworkBehaviour
 
                 bool intentionToRun = (isDashButtonHeld && canRunAfterDash) || isSprintLocked;
 
-                if (intentionToRun && isMovingOwner && !isDashing && playerStats.currentStamina > 0)
+                if (intentionToRun && isMovingOwner && !isDashing && core.playerVitals.currentStamina > 0)
                 {
                     isRunning = true;
                     HandleRunStamina();
@@ -91,10 +85,10 @@ public class PlayerMovement : NetworkBehaviour
                     isRunning = false;
                     staminaDrainTimer = 0f;
 
-                    if (!isMovingOwner || playerStats.currentStamina <= 0)
+                    if (!isMovingOwner || core.playerVitals.currentStamina <= 0)
                     {
                         isSprintLocked = false;
-                        if (playerStats.currentStamina <= 0) canRunAfterDash = false;
+                        if (core.playerVitals.currentStamina <= 0) canRunAfterDash = false;
                     }
                 }
 
@@ -110,14 +104,14 @@ public class PlayerMovement : NetworkBehaviour
             }
         }
 
-        if (playerStats != null) moveSpeed = playerStats.finalMoveSpeed;
+        if (core.playerStats != null) moveSpeed = core.playerStats.finalMoveSpeed;
     }
 
     private void FixedUpdate()
     {
         if (!IsOwner) return;
 
-        bool isGameEnded = playerStats != null && playerStats.isGameOver;
+        bool isGameEnded = core.playerStats != null && core.playerVitals.isGameOver;
 
         if (isDead || isGameEnded)
         {
@@ -200,7 +194,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (playerStats != null && playerStats.isGameOver)
+        if (core.playerStats != null && core.playerVitals.isGameOver)
         {
             moveInput = Vector2.zero;
             return;
@@ -232,16 +226,16 @@ public class PlayerMovement : NetworkBehaviour
             if (!isSprintLocked) canRunAfterDash = false;
         }
 
-        bool isGameEnded = playerStats != null && playerStats.isGameOver;
+        bool isGameEnded = core.playerStats != null && core.playerVitals.isGameOver;
         if (isDead || isGameEnded || PauseController.IsGamePause) return;
 
         if (isAttacking && !canMoveWhileAttacking) return;
 
         if (context.performed && !isDashing && !isDashOnCooldown && moveInput != Vector2.zero)
         {
-            if (playerStats != null && playerStats.currentStamina >= dashStaminaCost)
+            if (core.playerStats != null && core.playerVitals.currentStamina >= dashStaminaCost)
             {
-                playerStats.UseStamina(dashStaminaCost);
+                core.playerVitals.UseStamina(dashStaminaCost);
                 StartCoroutine(DashRoutine());
             }
         }
@@ -253,7 +247,7 @@ public class PlayerMovement : NetworkBehaviour
         isDashOnCooldown = true;
         isRunning = false;
 
-        playerStats?.SetInvincible(true);
+        core.playerVitals?.SetInvincible(true);
         SoundEffectManager.Play("Dash", true);
 
         ghostTrail?.CreateTrail();
@@ -263,7 +257,7 @@ public class PlayerMovement : NetworkBehaviour
 
         while (elapsed < dashDuration)
         {
-            bool isGameEnded = playerStats != null && playerStats.isGameOver;
+            bool isGameEnded = core.playerStats != null && core.playerVitals.isGameOver;
             if (isDead || isGameEnded) break;
 
             rb.MovePosition(rb.position + dashDirection * dashSpeed * Time.fixedDeltaTime);
@@ -272,7 +266,7 @@ public class PlayerMovement : NetworkBehaviour
         }
 
         isDashing = false;
-        if (!isDead) playerStats?.SetInvincible(false);
+        if (!isDead) core.playerVitals?.SetInvincible(false);
 
         if (isDashButtonHeld) canRunAfterDash = true;
 
@@ -306,13 +300,13 @@ public class PlayerMovement : NetworkBehaviour
 
     private void HandleRunStamina()
     {
-        if (playerStats == null) return;
+        if (core.playerStats == null) return;
         staminaDrainTimer += Time.deltaTime;
         float timePerPoint = 1f / runStaminaCostPerSec;
 
         if (staminaDrainTimer >= timePerPoint)
         {
-            playerStats.UseStamina(0.1f);
+            core.playerVitals.UseStamina(0.1f);
             staminaDrainTimer = 0f;
         }
     }

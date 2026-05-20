@@ -497,7 +497,7 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         {
             EconomyService.Instance.EarnCurrency("Coin", goldGain, $"Kill: {enemyName}", (success) => {
                 if (success && PlayerStats.Instance != null)
-                    PlayerStats.Instance.SyncCoinFromServer(PlayerStats.Instance.coin + goldGain);
+                    PlayerWallet.Instance.SyncCoinFromServer(PlayerWallet.Instance.coin + goldGain);
             });
         }
 

@@ -144,7 +144,7 @@ public class PlayerStatsService : MonoBehaviour
                 if (PlayerStats.Instance != null)
                 {
                     PlayerStats.Instance.SyncStatsFromServer(response.newStats);
-                    PlayerStats.Instance.SyncCurrency(response.coin, response.gem);
+                    PlayerWallet.Instance.SyncFromServer(response.coin, response.gem);
                 }
                 onComplete?.Invoke(true);
             }

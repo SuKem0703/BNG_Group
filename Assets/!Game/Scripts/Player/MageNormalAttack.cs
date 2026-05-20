@@ -17,8 +17,7 @@ public class MageNormalAttack : NetworkBehaviour
     public int attackManaCost = 5;
     public float mageDamageMultiplier = 1.5f;
 
-    private PlayerStats playerStats => GetComponentInParent<PlayerStats>();
-    private PlayerMovement playerMovement => GetComponentInParent<PlayerMovement>();
+    [SerializeField] private PlayerCore core;
 
     public bool isAttacking => animator.GetBool("isAttacking");
 
@@ -38,7 +37,7 @@ public class MageNormalAttack : NetworkBehaviour
         if (PauseController.IsGamePause)
         {
             animator.SetBool("isAttacking", false);
-            if (playerMovement != null) playerMovement.isAttacking = false;
+            if (core.playerMovement != null) core.playerMovement.isAttacking = false;
             return;
         }
 
@@ -58,7 +57,7 @@ public class MageNormalAttack : NetworkBehaviour
         if (!IsOwner) return;
 
         if (PauseController.IsGamePause || !context.performed) return;
-        if (playerMovement != null && playerMovement.IsDead) return;
+        if (core.playerMovement != null && core.playerMovement.IsDead) return;
 
         attackPressed = true;
     }
@@ -66,10 +65,10 @@ public class MageNormalAttack : NetworkBehaviour
     private void TryAttack()
     {
         if (isAttacking) return;
-        if (playerMovement != null && playerMovement.IsDead) return;
-        if (!PlayerStats.Instance.CanAttack || !GameStateManager.CanProcessInput()) return;
+        if (core.playerMovement != null && core.playerMovement.IsDead) return;
+        if (!core.playerStats.CanAttack || !GameStateManager.CanProcessInput()) return;
 
-        if (playerStats != null && playerStats.mageMP >= attackManaCost)
+        if (core.playerStats != null && core.playerVitals.mageMP >= attackManaCost)
         {
             PerformAttack();
         }
@@ -77,22 +76,22 @@ public class MageNormalAttack : NetworkBehaviour
 
     private void PerformAttack()
     {
-        playerStats.UseMP(attackManaCost, false);
+        core.playerVitals.UseMP(attackManaCost, false);
 
         hasFiredThisAttack = false;
 
         animator.SetBool("isAttacking", true);
         animator.SetBool("isWalking", false);
 
-        if (playerMovement != null)
+        if (core.playerMovement != null)
         {
-            playerMovement.isAttacking = true;
-            playerMovement.canMoveWhileAttacking = false;
-            playerMovement.netLastInput.Value = attackDirection;
+            core.playerMovement.isAttacking = true;
+            core.playerMovement.canMoveWhileAttacking = false;
+            core.playerMovement.netLastInput.Value = attackDirection;
 
-            if (playerMovement.rb != null)
+            if (core.playerMovement.rb != null)
             {
-                playerMovement.rb.linearVelocity = Vector2.zero;
+                core.playerMovement.rb.linearVelocity = Vector2.zero;
             }
         }
 
@@ -142,8 +141,8 @@ public class MageNormalAttack : NetworkBehaviour
 
         Vector3 basePosition = transform.parent != null ? transform.parent.position : transform.position;
 
-        Vector2 fallbackDir = playerMovement != null && playerMovement.moveInput.magnitude > 0.01f
-            ? playerMovement.moveInput.normalized
+        Vector2 fallbackDir = core.playerMovement != null && core.playerMovement.moveInput.magnitude > 0.01f
+            ? core.playerMovement.moveInput.normalized
             : attackDirection;
 
         if (targetSelector != null)
@@ -165,10 +164,10 @@ public class MageNormalAttack : NetworkBehaviour
 
         SoundEffectManager.Play("Magic Shoot", true);
 
-        float rawDamage = playerStats.finalMagicAttack * mageDamageMultiplier;
+        float rawDamage = core.playerStats.finalMagicAttack * mageDamageMultiplier;
         bool isCritical = false;
 
-        if (UnityEngine.Random.Range(0f, 100f) < playerStats.finalCritRate)
+        if (UnityEngine.Random.Range(0f, 100f) < core.playerStats.finalCritRate)
         {
             isCritical = true;
             rawDamage *= 2;
@@ -201,10 +200,10 @@ public class MageNormalAttack : NetworkBehaviour
         animator.ResetTrigger("Attack");
         attackPressed = false;
 
-        if (playerMovement != null)
+        if (core.playerMovement != null)
         {
-            playerMovement.isAttacking = false;
-            playerMovement.canMoveWhileAttacking = false;
+            core.playerMovement.isAttacking = false;
+            core.playerMovement.canMoveWhileAttacking = false;
         }
     }
 }

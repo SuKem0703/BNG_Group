@@ -5,24 +5,23 @@ public class PlayerAnimatorHandler : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Animator animator;
-    [SerializeField] private PlayerStats playerStats;
-
+    [SerializeField] private PlayerVitals playerVitals;
     [SerializeField] private PlayerMovement playerMovement;
 
     private void Awake()
     {
-        if (animator == null) animator = GetComponent<Animator>();
-        if (playerStats == null) playerStats = GetComponentInParent<PlayerStats>();
-        if (playerMovement == null) playerMovement = GetComponentInParent<PlayerMovement>();
+        animator = animator ?? GetComponent<Animator>();
+        playerVitals = playerVitals ?? GetComponentInParent<PlayerVitals>();
+        playerMovement = playerMovement ?? GetComponentInParent<PlayerMovement>();
     }
 
     private void Start()
     {
-        if (playerStats == null) return;
+        if (playerVitals == null) return;
 
-        playerStats.netIsDead.OnValueChanged += OnDeathStateChanged;
+        playerVitals.netIsDead.OnValueChanged += OnDeathStateChanged;
 
-        if (playerStats.netIsDead.Value && !DeathService.IsRespawningFlag)
+        if (playerVitals.netIsDead.Value && !DeathService.IsRespawningFlag)
         {
             ApplyDeathVisuals();
         }
@@ -30,7 +29,7 @@ public class PlayerAnimatorHandler : MonoBehaviour
 
     private void Update()
     {
-        if (playerMovement == null || playerStats == null || animator == null) return;
+        if (playerMovement == null || playerVitals == null || animator == null) return;
 
         Vector2 currentMove = playerMovement.IsOwner ? playerMovement.moveInput : playerMovement.netMoveInput.Value;
         bool currentRun = playerMovement.IsOwner ? playerMovement.isRunning : playerMovement.netIsRunning.Value;
@@ -55,9 +54,9 @@ public class PlayerAnimatorHandler : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (playerStats != null)
+        if (playerVitals != null)
         {
-            playerStats.netIsDead.OnValueChanged -= OnDeathStateChanged;
+            playerVitals.netIsDead.OnValueChanged -= OnDeathStateChanged;
         }
     }
 
@@ -82,9 +81,9 @@ public class PlayerAnimatorHandler : MonoBehaviour
 
     public void OnDeathAnimationFinished()
     {
-        if (playerStats != null && playerStats.IsOwner && !DeathService.IsRespawningFlag)
+        if (playerVitals != null && playerVitals.IsOwner && !DeathService.IsRespawningFlag)
         {
-            playerStats.OnCharacterDeathAnimationFinished();
+            playerVitals.OnCharacterDeathAnimationFinished();
         }
     }
 }

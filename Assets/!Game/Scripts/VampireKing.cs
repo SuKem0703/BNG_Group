@@ -113,7 +113,7 @@ public class VampireKing : Enemy
         Transform currentPlayer = TargetPlayer;
         if (currentPlayer == null || Vector2.Distance(transform.position, currentPlayer.position) > attackRange) return;
 
-        var pStats = currentPlayer.GetComponentInParent<PlayerStats>();
+        var pStats = currentPlayer.GetComponentInParent<PlayerVitals>();
         if (pStats == null) return;
 
         switch (frameIndex)
@@ -261,7 +261,7 @@ public class VampireKing : Enemy
         Transform currentPlayer = TargetPlayer;
         if (currentPlayer != null && Vector2.Distance(transform.position, currentPlayer.position) <= attackRange)
         {
-            var pStats = currentPlayer.GetComponentInParent<PlayerStats>();
+            var pStats = currentPlayer.GetComponentInParent<PlayerVitals>();
             if (pStats != null)
             {
                 int deathDamage = Mathf.RoundToInt(maxHealth * 0.1f);

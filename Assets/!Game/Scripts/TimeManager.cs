@@ -142,10 +142,10 @@ public class TimeManager : MonoBehaviour
         CalculateTime();
         UpdateLighting();
 
-        PlayerStats stats = FindFirstObjectByType<PlayerStats>();
-        if (stats != null)
+        PlayerVitals playerVitals = PlayerStats.Instance.GetComponent<PlayerVitals>();
+        if (playerVitals != null)
         {
-            stats.RefreshStats();
+            playerVitals.ResetVitals();
         }
     }
 }

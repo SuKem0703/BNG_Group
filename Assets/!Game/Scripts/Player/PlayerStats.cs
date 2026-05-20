@@ -10,6 +10,9 @@ public class PlayerStats : NetworkBehaviour
 {
     public static PlayerStats Instance { get; private set; }
 
+    public event Action OnStatsUpdated;
+    public static event Action<Slot[], string> OnEquipmentUIReady;
+
     [Header("Base Stats (Read-Only from Server)")]
     public int STR { get; private set; }
     public int DEX { get; private set; }
@@ -21,50 +24,47 @@ public class PlayerStats : NetworkBehaviour
     public int exp { get; private set; }
     public int potentialPoints { get; private set; }
 
-    public void SyncStatsFromServer(PlayerStatsService.ServerUserStat data)
-    {
-        this.level = data.level;
-        this.exp = data.exp;
-        this.potentialPoints = data.potentialPoints;
+    [Header("Player Identity")]
+    public NetworkVariable<FixedString32Bytes> netUsername = new NetworkVariable<FixedString32Bytes>("", NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
-        this.STR = data.str;
-        this.DEX = data.dex;
-        this.INT = data.intStat;
-        this.CON = data.con;
+    [Header("Combat States")]
+    public NetworkVariable<bool> netIsOnBattle = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private int serverAggroCount = 0;
 
-        ApplyEquippedItems();
-    }
-
+    // --- CÁC BIẾN BUFF/DEBUFF TẠM THỜI ---
     private int effectSTR;
     private int effectDEX;
     private int effectINT;
     private int effectCON;
 
-    public void ModifyEffectStat(string statType, int amount)
-    {
-        switch (statType)
-        {
-            case "STR": effectSTR += amount; break;
-            case "DEX": effectDEX += amount; break;
-            case "INT": effectINT += amount; break;
-            case "CON": effectCON += amount; break;
-        }
-    }
+    // --- CÁC BIẾN CỘNG THÊM TỪ TRANG BỊ ---
+    private int bonusSTR, bonusDEX, bonusCON, bonusINT;
+    public int bonusPhysicalAttack, bonusMagicAttack, bonusDefense;
+    private int bonusKnightMaxHP, bonusMageMaxHP;
+    private int bonusKnightMaxMP, bonusMageMaxMP;
+    private int bonusHPRegen, bonusMPRegen, bonusStaminaRegen;
+    private float bonusCritRate, bonusMoveSpeed;
+    private int bonusStamina;
+    private float _damageReduction;
+
+    [Header("Cooldowns")]
+    public float potionCooldownDuration = 2.0f;
+    [SerializeField] private float potionCooldownTimer;
+
+    public CapsuleCollider2D playerCollider;
+    private ClassController classController => GetComponent<ClassController>();
 
     public int expToNextLevel
     {
         get
         {
-            if (level < 100)
-                return Mathf.FloorToInt(100 + level * 50 + Mathf.Pow(level, 2.2f));
-            else if (100 <= level && level < 200)
-                return Mathf.FloorToInt(100 + level * 80 + Mathf.Pow(level, 2.5f));
-            else
-                return Mathf.FloorToInt(100 + level * 100 + Mathf.Pow(level, 3f));
+            if (level < 100) return Mathf.FloorToInt(100 + level * 50 + Mathf.Pow(level, 2.2f));
+            else if (100 <= level && level < 200) return Mathf.FloorToInt(100 + level * 80 + Mathf.Pow(level, 2.5f));
+            else return Mathf.FloorToInt(100 + level * 100 + Mathf.Pow(level, 3f));
         }
     }
 
-    //Base stats
+    // Chỉ số cơ bản
     public int basePhysicalAttack => finalSTR * 2;
     public int baseMagicAttack => finalINT * 2;
     public int baseDefense => finalDEX * 1;
@@ -77,40 +77,7 @@ public class PlayerStats : NetworkBehaviour
     public float baseStaminaRegen => 1f * (1f + finalDEX * 0.02f);
     public float baseMoveSpeed => 4f + finalDEX * 0.01f;
 
-    //Stats từ trang bị
-    private int bonusSTR;
-    private int bonusDEX;
-    private int bonusCON;
-    private int bonusINT;
-    public int bonusPhysicalAttack;
-    public int bonusMagicAttack;
-    public int bonusDefense;
-    private int bonusKnightMaxHP;
-    private int bonusMageMaxHP;
-    private int bonusKnightMaxMP;
-    private int bonusMageMaxMP;
-    private int bonusHPRegen;
-    private int bonusMPRegen;
-    private float bonusCritRate;
-    private float bonusMoveSpeed;
-    private int bonusStaminaRegen;
-    private int bonusStamina;
-    private float _damageReduction;
-
-    [Header("Player Identity")]
-    public NetworkVariable<FixedString32Bytes> netUsername = new NetworkVariable<FixedString32Bytes>("", NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-
-    public NetworkVariable<int> netKnightHealth = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    public NetworkVariable<int> netMageHealth = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    public NetworkVariable<int> netMaxKnightHP = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    public NetworkVariable<int> netMaxMageHP = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-
-    public NetworkVariable<bool> netIsOnBattle = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private int serverAggroCount = 0;
-
-    public NetworkVariable<bool> netIsDead = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
-    [Header("Derived Final Stats")]
+    // Chỉ số cuối cùng
     public int finalSTR => STR + bonusSTR + effectSTR;
     public int finalDEX => DEX + bonusDEX + effectDEX;
     public int finalCON => CON + bonusCON + effectCON;
@@ -124,102 +91,35 @@ public class PlayerStats : NetworkBehaviour
     public float finalStaminaRegen => baseStaminaRegen + bonusStaminaRegen;
     public float finalMoveSpeed => baseMoveSpeed + bonusMoveSpeed;
 
-    public int finalKnightMaxHP => IsOwner ? Mathf.FloorToInt(baseMaxHP + bonusKnightMaxHP) : netMaxKnightHP.Value;
-    public int finalMageMaxHP => IsOwner ? Mathf.FloorToInt(baseMaxHP + bonusMageMaxHP) : netMaxMageHP.Value;
+    public int finalKnightMaxHP => Mathf.FloorToInt(baseMaxHP + bonusKnightMaxHP);
+    public int finalMageMaxHP => Mathf.FloorToInt(baseMaxHP + bonusMageMaxHP);
     public int finalKnightMaxMP => Mathf.FloorToInt(baseMaxMP + bonusKnightMaxMP);
     public int finalMageMaxMP => Mathf.FloorToInt(baseMaxMP + bonusMageMaxMP);
     public int finalDefense => baseDefense + bonusDefense;
     public float damageReduction => _damageReduction;
 
-    [Header("Current Stats (Local Except HP)")]
-    public int knightHealth { get => netKnightHealth.Value; set { if (IsOwner) netKnightHealth.Value = value; } }
-    public int mageHealth { get => netMageHealth.Value; set { if (IsOwner) netMageHealth.Value = value; } }
-
-    public int knightMP { get; set; } = 50;
-    public int mageMP { get; set; } = 50;
-    public float currentStamina { get; set; } = 20f;
-
-    [Header("Regen")]
-    public float healthRegenDelay = 5f;
-    public float mpRegenDelay = 2f;
-    public float staminaRegenDelay = 1.5f;
-
-    public float healthRegenInterval = 2f;
-    public float mpRegenInterval = 1f;
-    public float staminaRegenInterval = 0.5f;
-
-    private float healthRegenCooldown;
-    private float mpRegenCooldown;
-    private float staminaRegenCooldown;
-
-    private float healthRegenTimer;
-    private float mpRegenTimer;
-    private float staminaRegenTimer;
-
-    [Header("Currency")]
-    public int coin { get; private set; }
-    public int gem { get; private set; }
-    public void SyncCurrency(int svCoin, int svGem)
-    {
-        coin = svCoin;
-        gem = svGem;
-    }
-
-    public void ChangeAggro(int amount)
-    {
-        if (!IsServer) return;
-
-        serverAggroCount += amount;
-        if (serverAggroCount < 0) serverAggroCount = 0;
-
-        netIsOnBattle.Value = serverAggroCount > 0;
-    }
-
-    public bool CanAttack
-    {
-        get
-        {
-            if (MapController.Instance != null && MapController.Instance.IsSafeZone()) return false;
-
-            if (InventoryController.Instance == null) return false;
-
-            bool isKnightActive = classController.IsKnightActive;
-
-            int weaponSlotIndex = isKnightActive ? 2003 : 2103;
-
-            return InventoryController.Instance.GetInventoryItemsData()
-                .Any(item => item.isEquipped && item.slotIndex == weaponSlotIndex);
-        }
-    }
-
-    public static event System.Action<PlayerStats> OnInitialized;
-
-    public bool isInvincible = false;
-    private bool isProcessingDeath = false;
-    public bool IsProcessingDeath => isProcessingDeath;
-
-    public bool isGameOver { get; private set; } = false;
-
-    public float potionCooldownDuration = 2.0f;
-    [SerializeField] private float potionCooldownTimer;
-
-    public CapsuleCollider2D playerCollider;
-
-    private ClassController classController => GetComponent<ClassController>();
-    private PlayerMovement pm => GetComponent<PlayerMovement>();
-
-    public static event System.Action<Slot[], string> OnEquipmentUIReady;
-
     private void Awake()
     {
         Application.runInBackground = true;
-
         if (playerCollider == null) playerCollider = GetComponent<CapsuleCollider2D>();
 
         NetworkObject netObj = GetComponent<NetworkObject>();
-        if (netObj != null)
+        if (netObj != null) netObj.DestroyWithScene = true;
+    }
+
+    void Start()
+    {
+        NetworkObject netObj = GetComponent<NetworkObject>();
+        if (netObj != null && netObj.IsOwner)
         {
-            netObj.DestroyWithScene = true;
+            Instance = this;
+            netUsername.Value = PlayerPrefs.GetString("Username", "Unknown Player");
+
+            if (InventoryController.Instance != null)
+            {
+                InventoryController.Instance.OnInventoryChanged += OnInventoryUpdated;
+                ApplyEquippedItems();
+            }
         }
     }
 
@@ -228,50 +128,14 @@ public class PlayerStats : NetworkBehaviour
         if (Instance == this)
         {
             Instance = null;
-
             if (InventoryController.Instance != null)
                 InventoryController.Instance.OnInventoryChanged -= OnInventoryUpdated;
         }
     }
 
-    void Start()
-    {
-        NetworkObject netObj = GetComponent<NetworkObject>();
-
-        if (netObj != null && netObj.IsOwner)
-        {
-            Instance = this;
-
-            string savedName = PlayerPrefs.GetString("Username", "Unknown Player");
-            netUsername.Value = savedName;
-
-            OnInitialized?.Invoke(this);
-
-            if (InventoryController.Instance != null)
-            {
-                InventoryController.Instance.OnInventoryChanged += OnInventoryUpdated;
-                ApplyEquippedItems();
-            }
-        }
-
-        healthRegenCooldown = healthRegenDelay;
-        mpRegenCooldown = mpRegenDelay;
-        staminaRegenCooldown = staminaRegenDelay;
-    }
-
     void Update()
     {
         if (!IsOwner) return;
-
-        if (PauseController.IsGamePause)
-        {
-            healthRegenCooldown = healthRegenDelay;
-            mpRegenCooldown = mpRegenDelay;
-            staminaRegenCooldown = staminaRegenDelay;
-            return;
-        }
-
-        HandleRegen();
 
         if (potionCooldownTimer > 0)
         {
@@ -279,15 +143,17 @@ public class PlayerStats : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
-    public void SetDeathStateServerRpc(bool isDead)
+    public void SyncStatsFromServer(PlayerStatsService.ServerUserStat data)
     {
-        netIsDead.Value = isDead;
+        this.level = data.level;
+        this.exp = data.exp;
+        this.potentialPoints = data.potentialPoints;
+        this.STR = data.str;
+        this.DEX = data.dex;
+        this.INT = data.intStat;
+        this.CON = data.con;
 
-        if (isDead)
-        {
-            ChangeAggro(-serverAggroCount);
-        }
+        ApplyEquippedItems();
     }
 
     private void OnInventoryUpdated(List<InventorySaveData> inventoryData, int slotCount)
@@ -295,78 +161,11 @@ public class PlayerStats : NetworkBehaviour
         ApplyEquippedItems();
     }
 
-    void HandleRegen()
-    {
-        bool isKnight = classController.IsKnightActive;
-
-        if (isKnight)
-        {
-            if (knightHealth < finalKnightMaxHP)
-            {
-                healthRegenTimer += Time.unscaledDeltaTime;
-                if (healthRegenTimer >= healthRegenInterval)
-                {
-                    knightHealth = Mathf.Min(knightHealth + finalHPRegen, finalKnightMaxHP);
-                    healthRegenTimer = 0f;
-                }
-            }
-        }
-        else
-        {
-            if (mageHealth < finalMageMaxHP)
-            {
-                healthRegenTimer += Time.unscaledDeltaTime;
-                if (healthRegenTimer >= healthRegenInterval)
-                {
-                    mageHealth = Mathf.Min(mageHealth + finalHPRegen, finalMageMaxHP);
-                    healthRegenTimer = 0f;
-                }
-            }
-        }
-
-        if (isKnight)
-        {
-            if (knightMP < finalKnightMaxMP)
-            {
-                mpRegenTimer += Time.unscaledDeltaTime;
-                if (mpRegenTimer >= mpRegenInterval)
-                {
-                    knightMP = Mathf.Min(knightMP + finalMPRegen, finalKnightMaxMP);
-                    mpRegenTimer = 0f;
-                }
-            }
-        }
-        else
-        {
-            if (mageMP < finalMageMaxMP)
-            {
-                mpRegenTimer += Time.unscaledDeltaTime;
-                if (mpRegenTimer >= mpRegenInterval)
-                {
-                    mageMP = Mathf.Min(mageMP + finalMPRegen, finalMageMaxMP);
-                    mpRegenTimer = 0f;
-                }
-            }
-        }
-
-        if (currentStamina < finalStamina)
-        {
-            staminaRegenTimer += Time.unscaledDeltaTime;
-            if (staminaRegenTimer >= staminaRegenInterval)
-            {
-                currentStamina += finalStaminaRegen;
-                currentStamina = (float)System.Math.Round(currentStamina, 2);
-                currentStamina = Mathf.Min(currentStamina, finalStamina);
-                staminaRegenTimer = 0f;
-            }
-        }
-    }
-
     public void ApplyEquippedItems()
     {
         if (InventoryController.Instance == null || ItemDictionary.Instance == null) return;
 
-        bool isKnightActive = classController.IsKnightActive;
+        bool isKnightActive = classController != null && classController.IsKnightActive;
 
         bonusSTR = bonusDEX = bonusCON = bonusINT = 0;
         bonusPhysicalAttack = bonusMagicAttack = bonusDefense = 0;
@@ -422,42 +221,33 @@ public class PlayerStats : NetworkBehaviour
 
                 bonusCritRate += equip.critRateBonus * svQuality;
                 bonusMoveSpeed += equip.moveSpeedBonus * svQuality;
-
                 _damageReduction += equip.damageReduction * svQuality;
             }
         }
 
-        knightHealth = Mathf.Min(knightHealth, finalKnightMaxHP);
-        knightMP = Mathf.Min(knightMP, finalKnightMaxMP);
-        mageHealth = Mathf.Min(mageHealth, finalMageMaxHP);
-        mageMP = Mathf.Min(mageMP, finalMageMaxMP);
-
-        if (IsOwner)
-        {
-            netMaxKnightHP.Value = finalKnightMaxHP;
-            netMaxMageHP.Value = finalMageMaxHP;
-        }
+        OnStatsUpdated?.Invoke();
     }
 
-    public void RefreshStats()
+    public void ModifyEffectStat(string statType, int amount)
     {
-        knightHealth = finalKnightMaxHP;
-        mageHealth = finalMageMaxHP;
-        knightMP = finalKnightMaxMP;
-        mageMP = finalMageMaxMP;
-        currentStamina = finalStamina;
-
-        isProcessingDeath = false;
-        isGameOver = false;
-
-        if (playerCollider != null) playerCollider.enabled = true;
-
-        if (pm != null) pm.ResetDeathState();
-
-        if (IsOwner)
+        switch (statType)
         {
-            SetDeathStateServerRpc(false);
+            case "STR": effectSTR += amount; break;
+            case "DEX": effectDEX += amount; break;
+            case "INT": effectINT += amount; break;
+            case "CON": effectCON += amount; break;
         }
+        OnStatsUpdated?.Invoke();
+    }
+
+    public void ResetPotential()
+    {
+        int basePoints = 5;
+        int pointsPerLevel = 5;
+        int totalPoints = basePoints + (level - 1) * pointsPerLevel;
+        STR = 0; DEX = 0; CON = 0; INT = 0;
+        potentialPoints = totalPoints;
+        OnStatsUpdated?.Invoke();
     }
 
     [Header("Network Optimization")]
@@ -483,11 +273,6 @@ public class PlayerStats : NetworkBehaviour
         }
     }
 
-    public void PlayLevelUpEffect()
-    {
-        SoundEffectManager.Play("LevelUp");
-    }
-
     private IEnumerator SendExpBatchRoutine()
     {
         yield return new WaitForSeconds(expDebounceTime);
@@ -499,282 +284,31 @@ public class PlayerStats : NetworkBehaviour
         }
     }
 
-    public int TakeDamage(int rawDamage)
-    {
-        if (isInvincible || isProcessingDeath || isGameOver) return 0;
+    public void PlayLevelUpEffect() => SoundEffectManager.Play("LevelUp");
 
-        if (IsServer && !IsOwner)
+    public void ChangeAggro(int amount)
+    {
+        if (!IsServer) return;
+        serverAggroCount += amount;
+        if (serverAggroCount < 0) serverAggroCount = 0;
+        netIsOnBattle.Value = serverAggroCount > 0;
+    }
+
+    public bool CanAttack
+    {
+        get
         {
-            TakeDamageClientRpc(rawDamage);
-            return rawDamage;
-        }
+            if (MapController.Instance != null && MapController.Instance.IsSafeZone()) return false;
+            if (InventoryController.Instance == null || classController == null) return false;
 
-        return ProcessDamageLocally(rawDamage);
-    }
+            int weaponSlotIndex = classController.IsKnightActive ? 2003 : 2103;
 
-    [ClientRpc]
-    private void TakeDamageClientRpc(int rawDamage)
-    {
-        if (IsOwner)
-        {
-            ProcessDamageLocally(rawDamage);
-        }
-    }
-
-    private int ProcessDamageLocally(int rawDamage)
-    {
-        if (isInvincible || isProcessingDeath || isGameOver) return 0;
-
-        float def = finalDefense;
-        float dmgRed = damageReduction;
-
-        float mitigation = def / (def + 100f);
-        float reductionFactor = (1f - mitigation) * (1f - dmgRed);
-        int finalDamage = Mathf.Max(Mathf.CeilToInt(rawDamage * reductionFactor), 1);
-
-        bool isKnight = classController.IsKnightActive;
-
-        int currentHP = isKnight ? knightHealth : mageHealth;
-        currentHP -= finalDamage;
-
-        if (DamagePopupPool.Instance != null)
-        {
-            Vector3 spawnPosition = transform.position + new Vector3(0, 1f, 0);
-            DamagePopup popup = DamagePopupPool.Instance.GetPopup(spawnPosition);
-            popup.Setup(finalDamage, DamageSourceType.Enemy);
-        }
-
-        if (isKnight) knightHealth = currentHP;
-        else mageHealth = currentHP;
-
-        if (currentHP <= 0)
-        {
-            isProcessingDeath = true;
-            HandleDeath(isKnight ? "Knight" : "Mage");
-        }
-
-        return finalDamage;
-    }
-
-    public void SetInvincible(bool value) => isInvincible = value;
-
-    private void HandleDeath(string who)
-    {
-        Debug.Log($"{who} has fallen!");
-
-        isProcessingDeath = true;
-
-        if (playerCollider != null) playerCollider.enabled = false;
-
-        if (pm != null)
-        {
-            pm.TriggerDeath();
-            if (pm.rb != null) pm.rb.linearVelocity = Vector2.zero;
-        }
-
-        var knightAttack = GetComponentInChildren<KnightNormalAttack>(true);
-        if (knightAttack != null) knightAttack.EndAttack();
-
-        var mageAttack = GetComponentInChildren<MageNormalAttack>(true);
-        if (mageAttack != null) mageAttack.EndAttack();
-
-        Animator activeAnimator = who == "Knight"
-            ? classController.knightObject.GetComponentInChildren<Animator>()
-            : classController.mageObject.GetComponentInChildren<Animator>();
-
-        if (activeAnimator != null)
-        {
-            activeAnimator.SetBool("isWalking", false);
-            activeAnimator.SetBool("isRunning", false);
-            activeAnimator.SetTrigger("Die");
-        }
-    }
-
-    public void OnCharacterDeathAnimationFinished()
-    {
-        if (!IsOwner) return;
-        if (isGameOver) return;
-
-        bool knightAlive = knightHealth > 0;
-        bool mageAlive = mageHealth > 0;
-
-        bool isKnightActive = classController.IsKnightActive;
-        Animator activeAnimator = isKnightActive
-            ? classController.knightObject.GetComponentInChildren<Animator>()
-            : classController.mageObject.GetComponentInChildren<Animator>();
-
-        if (isKnightActive)
-        {
-            if (mageAlive)
-            {
-                if (activeAnimator != null)
-                {
-                    activeAnimator.ResetTrigger("Die");
-                    activeAnimator.Play("Idle");
-                }
-
-                classController.SwitchClass(classController.mageObject);
-                StartCoroutine(FinalizeRespawnProtection(1.5f));
-            }
-            else GameOver();
-        }
-        else
-        {
-            if (knightAlive)
-            {
-                if (activeAnimator != null)
-                {
-                    activeAnimator.ResetTrigger("Die");
-                    activeAnimator.Play("Idle");
-                }
-
-                classController.SwitchClass(classController.knightObject);
-                StartCoroutine(FinalizeRespawnProtection(1.5f));
-            }
-            else GameOver();
-        }
-    }
-
-    public void UseMP(int amount, bool isKnight)
-    {
-        if (isKnight) knightMP = Mathf.Max(knightMP - amount, 0);
-        else mageMP = Mathf.Max(mageMP - amount, 0);
-
-        mpRegenCooldown = mpRegenDelay;
-        mpRegenTimer = 0f;
-    }
-
-    public void RecoverMP(int amount, bool isKnight)
-    {
-        if (isKnight) knightMP = Mathf.Min(knightMP + amount, finalKnightMaxMP);
-        else mageMP = Mathf.Min(mageMP + amount, finalMageMaxMP);
-    }
-
-    public void UseStamina(float amount)
-    {
-        if (amount <= 0) return;
-        currentStamina = Mathf.Max(currentStamina - amount, 0);
-        currentStamina = (float)System.Math.Round(currentStamina, 2);
-        staminaRegenCooldown = staminaRegenDelay;
-        staminaRegenTimer = 0f;
-    }
-
-    public void Heal(int amount, bool isKnight)
-    {
-        if (isKnight)
-        {
-            int current = knightHealth;
-            knightHealth = Mathf.Min(knightHealth + amount, finalKnightMaxHP);
-            int actualHeal = knightHealth - current;
-            if (actualHeal > 0) ShowRecoveryPopup(actualHeal, DamageSourceType.Heal);
-        }
-        else
-        {
-            int current = mageHealth;
-            mageHealth = Mathf.Min(mageHealth + amount, finalMageMaxHP);
-            int actualHeal = mageHealth - current;
-            if (actualHeal > 0) ShowRecoveryPopup(actualHeal, DamageSourceType.Heal);
-        }
-    }
-
-    public void RecoverStamina(int amount)
-    {
-        currentStamina = Mathf.Min(currentStamina + amount, finalStamina);
-        currentStamina = (float)System.Math.Round(currentStamina, 2);
-    }
-
-    public void AddCoin(int amount) => coin += amount;
-    public void AddGem(int amount) => gem += amount;
-    public void SyncCoinFromServer(int serverCoin) => coin = serverCoin;
-    public void SyncGemFromServer(int serverGem) => gem = serverGem;
-
-    public IEnumerator FinalizeRespawnProtection(float invincibilityDuration = 0.5f)
-    {
-        SetInvincible(true);
-        if (playerCollider != null) playerCollider.enabled = false;
-
-        if (pm != null) pm.ResetDeathState();
-
-        yield return new WaitForSeconds(invincibilityDuration);
-        SetInvincible(false);
-        if (playerCollider != null) playerCollider.enabled = true;
-        isProcessingDeath = false;
-    }
-
-    public void RequestSpendCoin(int amount, string reason, System.Action onSuccess, System.Action onFail)
-    {
-        if (coin < amount) { onFail?.Invoke(); return; }
-        EconomyService.Instance.SpendCurrency("Coin", amount, reason, (isSuccess) => { if (isSuccess) onSuccess?.Invoke(); else onFail?.Invoke(); });
-    }
-
-    public void RequestSpendGem(int amount, string reason, System.Action onSuccess, System.Action onFail)
-    {
-        EconomyService.Instance.SpendCurrency("Gem", amount, reason, (isSuccess) => { if (isSuccess) onSuccess?.Invoke(); else onFail?.Invoke(); });
-    }
-
-    public void ResetPotential()
-    {
-        int basePoints = 5;
-        int pointsPerLevel = 5;
-        int totalPoints = basePoints + (level - 1) * pointsPerLevel;
-        STR = 0; DEX = 0; CON = 0; INT = 0;
-        potentialPoints = totalPoints;
-    }
-
-    private void GameOver()
-    {
-        isGameOver = true;
-
-        if (pm != null && pm.rb != null) pm.rb.linearVelocity = Vector2.zero;
-
-        if (PauseController.IsGamePause) return;
-
-        DeathService.Instance.HandlePlayerDeath();
-        GameOverUIAdapter.Instance.ShowGameOverUI();
-    }
-
-    public void HealActiveCharacter(int amount)
-    {
-        if (classController.IsKnightActive)
-        {
-            if (knightHealth >= finalKnightMaxHP) Heal(amount, false); else Heal(amount, true);
-        }
-        else
-        {
-            if (mageHealth >= finalMageMaxHP) Heal(amount, true); else Heal(amount, false);
-        }
-    }
-
-    public void RecoverMPActiveCharacter(int amount)
-    {
-        if (classController.IsKnightActive)
-        {
-            if (knightMP >= finalKnightMaxMP) RecoverMP(amount, false); else RecoverMP(amount, true);
-        }
-        else
-        {
-            if (mageMP >= finalMageMaxMP) RecoverMP(amount, true); else RecoverMP(amount, false);
+            return InventoryController.Instance.GetInventoryItemsData()
+                .Any(item => item.isEquipped && item.slotIndex == weaponSlotIndex);
         }
     }
 
     public bool IsPotionOnCooldown() => potionCooldownTimer > 0;
     public void TriggerPotionCooldown() => potionCooldownTimer = potionCooldownDuration;
     public float GetPotionCooldownRemaining() => potionCooldownTimer;
-
-    public bool CanHeal() => (knightHealth < finalKnightMaxHP) || (mageHealth < finalMageMaxHP);
-    public bool CanRecoverMP() => (knightMP < finalKnightMaxMP) || (mageMP < finalMageMaxMP);
-
-    private void ShowRecoveryPopup(int amount, DamageSourceType type)
-    {
-        if (amount <= 0 || DamagePopupPool.Instance == null) return;
-
-        var classController = GetComponent<ClassController>();
-        Transform activeCharacterTransform = classController.IsKnightActive
-            ? classController.knightObject.transform : classController.mageObject.transform;
-
-        Vector3 spawnPosition = activeCharacterTransform.position + new Vector3(0, 1.5f, 0);
-
-        DamagePopup popup = DamagePopupPool.Instance.GetPopup(spawnPosition);
-        popup.Setup(amount, type);
-    }
 }

@@ -66,9 +66,9 @@ public class EconomyService : MonoBehaviour
             if (response.success)
             {
                 if (type == "Coin")
-                    PlayerStats.Instance.SyncCoinFromServer(response.newBalance);
+                    PlayerWallet.Instance.SyncCoinFromServer(response.newBalance);
                 else
-                    PlayerStats.Instance.SyncGemFromServer(response.newBalance);
+                    PlayerWallet.Instance.SyncGemFromServer(response.newBalance);
 
                 Debug.Log($"[Economy] Success! New Balance: {response.newBalance}");
                 onComplete?.Invoke(true);
@@ -76,12 +76,12 @@ public class EconomyService : MonoBehaviour
             else
             {
                 Debug.LogWarning($"[Economy] Giao dịch thất bại: {response.message}");
-                Debug.LogWarning($"[Economy] Server Balance: {response.newBalance} | Client Balance: {(type == "Coin" ? PlayerStats.Instance.coin : PlayerStats.Instance.gem)}");
+                Debug.LogWarning($"[Economy] Server Balance: {response.newBalance} | Client Balance: {(type == "Coin" ? PlayerWallet.Instance.coin : PlayerWallet.Instance.gem)}");
 
                 if (type == "Coin")
-                    PlayerStats.Instance.SyncCoinFromServer(response.newBalance);
+                    PlayerWallet.Instance.SyncCoinFromServer(response.newBalance);
                 else
-                    PlayerStats.Instance.SyncGemFromServer(response.newBalance);
+                    PlayerWallet.Instance.SyncGemFromServer(response.newBalance);
 
                 onComplete?.Invoke(false);
             }
@@ -122,9 +122,9 @@ public class EconomyService : MonoBehaviour
         {
             var res = JsonUtility.FromJson<BalanceResponse>(request.downloadHandler.text);
 
-            if (PlayerStats.Instance != null)
+            if (PlayerWallet.Instance != null)
             {
-                PlayerStats.Instance.SyncCurrency(res.coin, res.gem);
+                PlayerWallet.Instance.SyncFromServer(res.coin, res.gem);
             }
         }
         else
@@ -164,8 +164,8 @@ public class EconomyService : MonoBehaviour
             var response = JsonUtility.FromJson<EconomyResponse>(request.downloadHandler.text);
             if (response.success)
             {
-                if (type == "Coin") PlayerStats.Instance.SyncCoinFromServer(response.newBalance);
-                else PlayerStats.Instance.SyncGemFromServer(response.newBalance);
+                if (type == "Coin") PlayerWallet.Instance.SyncCoinFromServer(response.newBalance);
+                else PlayerWallet.Instance.SyncGemFromServer(response.newBalance);
 
                 onComplete?.Invoke(true);
             }

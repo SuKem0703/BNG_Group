@@ -21,11 +21,11 @@ public class InventoryActionManager : MonoBehaviour
         {
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient && NetworkManager.Singleton.LocalClient.PlayerObject != null)
             {
-                LocalPlayerAdapter localAdapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LocalPlayerAdapter>();
+                PlayerCore localAdapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerCore>();
                 if (localAdapter != null) return localAdapter.playerStats;
             }
 
-            LocalPlayerAdapter[] allAdapters = Object.FindObjectsByType<LocalPlayerAdapter>(FindObjectsSortMode.None);
+            PlayerCore[] allAdapters = Object.FindObjectsByType<PlayerCore>(FindObjectsSortMode.None);
             foreach (var adapter in allAdapters)
             {
                 if (adapter.IsOwner || NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)

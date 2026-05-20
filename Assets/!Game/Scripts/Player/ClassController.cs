@@ -6,8 +6,6 @@ using UnityEngine.InputSystem;
 
 public class ClassController : NetworkBehaviour
 {
-    public static ClassController Instance { get; private set; }
-
     [Header("Classes")]
     public GameObject knightObject;
     public GameObject mageObject;
@@ -22,8 +20,7 @@ public class ClassController : NetworkBehaviour
     [SerializeField] private float swapCooldown = 2.0f;
     private bool canSwap = true;
 
-    private PlayerStats stats => GetComponent<PlayerStats>();
-    private PlayerMovement playerMovement => GetComponent<PlayerMovement>();
+    [SerializeField] private PlayerCore core;
 
     [SerializeField] private Animator knightAnimator;
     [SerializeField] private Animator mageAnimator;
@@ -31,21 +28,6 @@ public class ClassController : NetworkBehaviour
     public event Action<string> OnClassSwapped;
 
     public bool IsKnightActive => netIsKnightActive.Value;
-
-    private void Awake()
-    {
-        if (knightObject == null) knightObject = transform.FindDeepChild("Knight").gameObject;
-        if (mageObject == null) mageObject = transform.FindDeepChild("Mage").gameObject;
-
-        if (knightObject != null) knightAnimator = knightObject.GetComponentInChildren<Animator>(true);
-        if (mageObject != null) mageAnimator = mageObject.GetComponentInChildren<Animator>(true);
-    }
-
-    public override void OnDestroy()
-    {
-        base.OnDestroy();
-        if (Instance == this) Instance = null;
-    }
 
     private void OnEnable()
     {
@@ -65,7 +47,6 @@ public class ClassController : NetworkBehaviour
 
         if (IsOwner)
         {
-            Instance = this;
             currentClass = knightObject;
             netIsKnightActive.Value = true;
 
@@ -124,9 +105,9 @@ public class ClassController : NetworkBehaviour
     {
         if (!canSwap) return;
 
-        if (stats != null && (stats.IsProcessingDeath || stats.isGameOver)) return;
+        if (core.playerStats != null && (core.playerVitals.isProcessingDeath || core.playerVitals.isGameOver)) return;
 
-        if (playerMovement != null && playerMovement.isAttacking && !playerMovement.canMoveWhileAttacking) return;
+        if (core.playerMovement != null && core.playerMovement.isAttacking && !core.playerMovement.canMoveWhileAttacking) return;
 
         GameObject target = (currentClass == knightObject) ? mageObject : knightObject;
 
@@ -153,9 +134,9 @@ public class ClassController : NetworkBehaviour
 
     private bool CanSwap(GameObject targetClass)
     {
-        if (stats == null) return true;
-        if (targetClass == knightObject) return stats.knightHealth > 0;
-        else if (targetClass == mageObject) return stats.mageHealth > 0;
+        if (core.playerStats == null) return true;
+        if (targetClass == knightObject) return core.playerVitals.netKnightHealth.Value > 0;
+        else if (targetClass == mageObject) return core.playerVitals.netMageHealth.Value > 0;
         return true;
     }
 
@@ -213,11 +194,11 @@ public class ClassController : NetworkBehaviour
             }
         }
 
-        if (stats != null) stats.ApplyEquippedItems();
+        if (core.playerStats != null) core.playerStats.ApplyEquippedItems();
 
-        if (playerMovement != null)
+        if (core.playerMovement != null)
         {
-            playerMovement.ghostTrail = currentClass.GetComponentInChildren<GhostTrail>();
+            core.playerMovement.ghostTrail = currentClass.GetComponentInChildren<GhostTrail>();
         }
 
         if (IsOwner)

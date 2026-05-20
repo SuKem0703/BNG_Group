@@ -42,12 +42,12 @@ public class ChunkManager : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerStats.OnInitialized += OnLocalPlayerSpawned;
+        PlayerCore.OnPlayerSpawned += OnPlayerSpawned;
     }
 
     private void OnDisable()
     {
-        PlayerStats.OnInitialized -= OnLocalPlayerSpawned;
+        PlayerCore.OnPlayerSpawned -= OnPlayerSpawned;
     }
 
     private void Start()
@@ -69,9 +69,9 @@ public class ChunkManager : MonoBehaviour
         }
     }
 
-    private void OnLocalPlayerSpawned(PlayerStats stats)
+    private void OnPlayerSpawned(PlayerCore core)
     {
-        InitPlayerTracking(stats.transform);
+        InitPlayerTracking(core.transform);
     }
 
     private void InitPlayerTracking(Transform localPlayer)
@@ -261,10 +261,10 @@ public class ChunkManager : MonoBehaviour
 
                     if (data.npcDialoguePaths != null && data.npcDialoguePaths.Length > 0)
                     {
-                        npc.dialogueDataList = new NPCDialogue[data.npcDialoguePaths.Length];
+                        npc.dialogueDataList = new NPCDialogueData[data.npcDialoguePaths.Length];
                         for (int i = 0; i < data.npcDialoguePaths.Length; i++)
                         {
-                            npc.dialogueDataList[i] = Resources.Load<NPCDialogue>(data.npcDialoguePaths[i]);
+                            npc.dialogueDataList[i] = Resources.Load<NPCDialogueData>(data.npcDialoguePaths[i]);
                         }
                     }
                 }

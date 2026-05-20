@@ -30,10 +30,10 @@ public class ShopController : MonoBehaviour
 
     void Update()
     {
-        if (PlayerStats.Instance != null && coinText != null && gemText != null)
+        if (PlayerWallet.Instance != null && coinText != null && gemText != null)
         {
-            coinText.text = PlayerStats.Instance.coin.ToString();
-            gemText.text = PlayerStats.Instance.gem.ToString();
+            coinText.text = PlayerWallet.Instance.coin.ToString();
+            gemText.text = PlayerWallet.Instance.gem.ToString();
         }
     }
 
@@ -86,7 +86,7 @@ public class ShopController : MonoBehaviour
     private void ExecuteBuyItem(int itemID, int price, CurrencyType currency, int quantity)
     {
         bool isCoin = currency == CurrencyType.Coin;
-        int currentBalance = isCoin ? PlayerStats.Instance.coin : PlayerStats.Instance.gem;
+        int currentBalance = isCoin ? PlayerWallet.Instance.coin : PlayerWallet.Instance.gem;
 
         int totalCost = price * quantity;
 
@@ -106,8 +106,8 @@ public class ShopController : MonoBehaviour
 
                 int newBalance = currentBalance - totalCost;
 
-                if (isCoin) PlayerStats.Instance.SyncCoinFromServer(newBalance);
-                else PlayerStats.Instance.SyncGemFromServer(newBalance);
+                if (isCoin) PlayerWallet.Instance.SyncCoinFromServer(newBalance);
+                else PlayerWallet.Instance.SyncGemFromServer(newBalance);
 
                 if (InventoryController.Instance != null) InventoryController.Instance.RefreshInventory();
             }

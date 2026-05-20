@@ -5,8 +5,9 @@ using TMPro;
 
 public class StatusUI : MonoBehaviour
 {
-    private PlayerStats playerStats;
+    private PlayerVitals playerVitals;
     private ClassController classController;
+    private PlayerStats playerStats;
 
     [Header("Portrait")]
     [SerializeField] private Image portraitImage;
@@ -65,7 +66,25 @@ public class StatusUI : MonoBehaviour
     void Awake()
     {
         AssignInspector();
-        TryFindPlayer();
+    }
+
+    private void Start()
+    {
+        PlayerCore.OnPlayerSpawned += InitializeReference;
+    }
+
+    private void InitializeReference(PlayerCore core)
+    {
+        PlayerCore.OnPlayerSpawned -= InitializeReference;
+
+        playerStats = core.playerStats;
+        playerVitals = core.playerVitals;
+        classController = core.classController;
+    }
+
+    private void OnDestroy()
+    {
+        PlayerCore.OnPlayerSpawned -= InitializeReference;
     }
 
     void AssignInspector()
@@ -103,21 +122,24 @@ public class StatusUI : MonoBehaviour
 
     private void TryFindPlayer()
     {
-        if (playerStats == null) playerStats = PlayerStats.Instance;
-        if (classController == null) classController = ClassController.Instance;
+        if (PlayerStats.Instance != null)
+        {
+            if (playerStats == null) playerStats = PlayerStats.Instance;
+            if (playerVitals == null) playerVitals = playerStats.GetComponent<PlayerVitals>();
+            if (classController == null) classController = playerStats.GetComponent<ClassController>();
+        }
     }
 
     void OnEnable()
     {
         ForceResetCache();
-        TryFindPlayer();
     }
 
     void Update()
     {
         if (!gameObject.activeInHierarchy) return;
 
-        if (playerStats == null || classController == null)
+        if (playerVitals == null || classController == null || playerStats == null)
         {
             TryFindPlayer();
             return;
@@ -154,45 +176,45 @@ public class StatusUI : MonoBehaviour
         }
 
         if (knightHealthBarFill != null && (isKnight == true))
-            knightHealthBarFill.fillAmount = (float)playerStats.knightHealth / playerStats.finalKnightMaxHP;
+            knightHealthBarFill.fillAmount = (float)playerVitals.netKnightHealth.Value / playerStats.finalKnightMaxHP;
 
         if (mageHealthBarFill != null && (isMage == true))
-            mageHealthBarFill.fillAmount = (float)playerStats.mageHealth / playerStats.finalMageMaxHP;
+            mageHealthBarFill.fillAmount = (float)playerVitals.netMageHealth.Value / playerStats.finalMageMaxHP;
 
         if (knightManaBarFill != null && (isKnight == true))
-            knightManaBarFill.fillAmount = (float)playerStats.knightMP / playerStats.finalKnightMaxMP;
+            knightManaBarFill.fillAmount = (float)playerVitals.knightMP / playerStats.finalKnightMaxMP;
 
         if (mageManaBarFill != null && (isMage == true))
-            mageManaBarFill.fillAmount = (float)playerStats.mageMP / playerStats.finalMageMaxMP;
+            mageManaBarFill.fillAmount = (float)playerVitals.mageMP / playerStats.finalMageMaxMP;
 
         float maxSt = playerStats.finalStamina;
-        float curSt = playerStats.currentStamina;
+        float curSt = playerVitals.currentStamina;
         if (staminaBarFill != null) staminaBarFill.fillAmount = maxSt > 0 ? curSt / maxSt : 0;
 
         float expNeeded = playerStats.expToNextLevel;
         if (expBarFill != null) expBarFill.fillAmount = expNeeded > 0 ? (float)playerStats.exp / expNeeded : 0;
 
-        if (_kHP != playerStats.knightHealth || _kMaxHP != playerStats.finalKnightMaxHP)
+        if (_kHP != playerVitals.netKnightHealth.Value || _kMaxHP != playerStats.finalKnightMaxHP)
         {
-            _kHP = playerStats.knightHealth; _kMaxHP = playerStats.finalKnightMaxHP;
+            _kHP = playerVitals.netKnightHealth.Value; _kMaxHP = playerStats.finalKnightMaxHP;
             if (knightHealthText != null) knightHealthText.text = $"{_kHP} / {playerStats.finalKnightMaxHP}";
         }
 
-        if (_mHP != playerStats.mageHealth || _mMaxHP != playerStats.finalMageMaxHP)
+        if (_mHP != playerVitals.netMageHealth.Value || _mMaxHP != playerStats.finalMageMaxHP)
         {
-            _mHP = playerStats.mageHealth; _mMaxHP = playerStats.finalMageMaxHP;
+            _mHP = playerVitals.netMageHealth.Value; _mMaxHP = playerStats.finalMageMaxHP;
             if (mageHealthText != null) mageHealthText.text = $"{_mHP} / {playerStats.finalMageMaxHP}";
         }
 
-        if (_kMP != playerStats.knightMP || _kMaxMP != playerStats.finalKnightMaxMP)
+        if (_kMP != playerVitals.knightMP || _kMaxMP != playerStats.finalKnightMaxMP)
         {
-            _kMP = playerStats.knightMP; _kMaxMP = playerStats.finalKnightMaxMP;
+            _kMP = playerVitals.knightMP; _kMaxMP = playerStats.finalKnightMaxMP;
             if (knightManaText != null) knightManaText.text = $"{_kMP} / {playerStats.finalKnightMaxMP}";
         }
 
-        if (_mMP != playerStats.mageMP || _mMaxMP != playerStats.finalMageMaxMP)
+        if (_mMP != playerVitals.mageMP || _mMaxMP != playerStats.finalMageMaxMP)
         {
-            _mMP = playerStats.mageMP; _mMaxMP = playerStats.finalMageMaxMP;
+            _mMP = playerVitals.mageMP; _mMaxMP = playerStats.finalMageMaxMP;
             if (mageManaText != null) mageManaText.text = $"{_mMP} / {playerStats.finalMageMaxMP}";
         }
 
@@ -210,16 +232,19 @@ public class StatusUI : MonoBehaviour
             UpdateStaticStats();
         }
 
-        if (_coin != playerStats.coin)
+        if (PlayerWallet.Instance != null)
         {
-            _coin = playerStats.coin;
-            if (coinText != null) coinText.text = _coin.ToString();
-        }
+            if (_coin != PlayerWallet.Instance.coin)
+            {
+                _coin = PlayerWallet.Instance.coin;
+                if (coinText != null) coinText.text = _coin.ToString();
+            }
 
-        if (_gem != playerStats.gem)
-        {
-            _gem = playerStats.gem;
-            if (gemText != null) gemText.text = _gem.ToString();
+            if (_gem != PlayerWallet.Instance.gem)
+            {
+                _gem = PlayerWallet.Instance.gem;
+                if (gemText != null) gemText.text = _gem.ToString();
+            }
         }
     }
 

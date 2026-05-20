@@ -12,21 +12,38 @@ public class DeathService : MonoBehaviour
 
     public static event System.Action OnPlayerDied;
 
+    private PlayerVitals playerVitals;
+
     private void Awake()
     {
         if (Instance != null && Instance != this) Destroy(gameObject);
         else Instance = this;
     }
 
+    private void Start()
+    {
+        PlayerCore.OnPlayerSpawned += InitializeReference;
+    }
+
+    private void InitializeReference(PlayerCore core)
+    {
+        PlayerCore.OnPlayerSpawned -= InitializeReference;
+
+        playerVitals = core.playerVitals;
+    }
+
+    private void OnDestroy()
+    {
+        PlayerCore.OnPlayerSpawned -= InitializeReference;
+    }
+
     public void HandlePlayerDeath()
     {
-        if (PlayerStats.Instance == null) return;
-
-        PlayerStats.Instance.SetDeathStateServerRpc(true);
+        playerVitals.SetDeathStateServerRpc(true);
 
         Debug.Log("DeathService: Bắt đầu quy trình xử lý tử vong (Logic)...");
 
-        PlayerStats.Instance.SetInvincible(true);
+        playerVitals.SetInvincible(true);
         if (PlayerStats.Instance.playerCollider != null)
         {
             PlayerStats.Instance.playerCollider.enabled = false;
@@ -88,7 +105,7 @@ public class DeathService : MonoBehaviour
     {
         if (PlayerStats.Instance != null)
         {
-            PlayerStats.Instance.SetInvincible(false);
+            playerVitals.SetInvincible(false);
             if (PlayerStats.Instance.playerCollider != null)
                 PlayerStats.Instance.playerCollider.enabled = true;
         }
@@ -127,8 +144,8 @@ public class DeathService : MonoBehaviour
     {
         if (PlayerStats.Instance != null)
         {
-            PlayerStats.Instance.SetDeathStateServerRpc(false);
-            PlayerStats.Instance.RefreshStats();
+            playerVitals.SetDeathStateServerRpc(false);
+            playerVitals.ResetVitals();
 
             var pMovement = PlayerStats.Instance.GetComponent<PlayerMovement>();
             if (pMovement != null)
@@ -137,7 +154,7 @@ public class DeathService : MonoBehaviour
                 pMovement.enabled = true;
             }
 
-            PlayerStats.Instance.SetInvincible(false);
+            playerVitals.SetInvincible(false);
             if (PlayerStats.Instance.playerCollider != null)
                 PlayerStats.Instance.playerCollider.enabled = true;
         }
@@ -152,7 +169,7 @@ public class DeathService : MonoBehaviour
     {
         if (PlayerStats.Instance != null)
         {
-            PlayerStats.Instance.SetDeathStateServerRpc(false);
+            playerVitals.SetDeathStateServerRpc(false);
 
             if (PlayerStats.Instance.playerCollider != null)
                 PlayerStats.Instance.playerCollider.enabled = false;
@@ -160,7 +177,7 @@ public class DeathService : MonoBehaviour
             Vector3 spawnPos = SaveController.currentCheckpointPos ?? Vector3.zero;
             PlayerStats.Instance.transform.position = spawnPos;
 
-            PlayerStats.Instance.RefreshStats();
+            playerVitals.ResetVitals();
 
             var vcam = FindFirstObjectByType<Unity.Cinemachine.CinemachineCamera>();
             if (vcam != null)
@@ -170,7 +187,7 @@ public class DeathService : MonoBehaviour
 
             yield return new WaitForSeconds(0.2f);
 
-            yield return PlayerStats.Instance.FinalizeRespawnProtection(1.5f);
+            yield return playerVitals.FinalizeRespawnProtection(1.5f);
 
             var pMovement = PlayerStats.Instance.GetComponent<PlayerMovement>();
             if (pMovement != null)

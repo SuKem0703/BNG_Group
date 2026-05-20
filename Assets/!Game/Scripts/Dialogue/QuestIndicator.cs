@@ -2,7 +2,7 @@
 using System.Collections;
 
 [RequireComponent(typeof(NPC))]
-public class NPCQuestIndicator : MonoBehaviour
+public class QuestIndicator : MonoBehaviour
 {
     [Header("Main Indicator (Màn hình chính)")]
     public GameObject indicatorChildObject;
@@ -11,7 +11,6 @@ public class NPCQuestIndicator : MonoBehaviour
     public Sprite spriteCompleted;
 
     [Header("Minimap Indicator (Bản đồ nhỏ)")]
-    [Tooltip("Kéo Object Square (Layer MinimapUI) vào đây")]
     public GameObject minimapIndicatorObject;
     public Color colorNotStarted = Color.yellow;
     public Color colorInProgress = Color.gray;
@@ -19,14 +18,14 @@ public class NPCQuestIndicator : MonoBehaviour
     public Color colorNoQuest = Color.white;
 
     [Header("Cài đặt hiệu ứng đung đưa")]
-    [Tooltip("Biên độ (khoảng cách) di chuyển lên xuống")]
     public float floatAmplitude = 0.02f;
-    [Tooltip("Tốc độ di chuyển lên xuống")]
     public float floatSpeed = 5f;
 
     private SpriteRenderer indicatorSpriteRenderer;
     private SpriteRenderer minimapSpriteRenderer;
-    private NPC npc;
+
+    [SerializeField] private NPC npc;
+    [SerializeField] private QuestHandler questHandler;
 
     private Vector3 initialLocalPosition;
     private Coroutine floatCoroutine;
@@ -34,6 +33,7 @@ public class NPCQuestIndicator : MonoBehaviour
     void Awake()
     {
         npc = GetComponent<NPC>();
+        questHandler = GetComponent<QuestHandler>();
 
         if (indicatorChildObject != null)
         {
@@ -56,8 +56,8 @@ public class NPCQuestIndicator : MonoBehaviour
     {
         if (npc != null)
         {
-            npc.OnQuestStateUpdated += UpdateIndicator;
-            UpdateIndicator(npc.CurrentQuestState);
+            questHandler.OnQuestStateUpdated += UpdateIndicator;
+            UpdateIndicator(questHandler.CurrentQuestState);
         }
     }
 
@@ -65,7 +65,7 @@ public class NPCQuestIndicator : MonoBehaviour
     {
         if (npc != null)
         {
-            npc.OnQuestStateUpdated -= UpdateIndicator;
+            questHandler.OnQuestStateUpdated -= UpdateIndicator;
         }
         if (floatCoroutine != null)
         {
@@ -73,7 +73,7 @@ public class NPCQuestIndicator : MonoBehaviour
         }
     }
 
-    private void UpdateIndicator(NPC.QuestState state)
+    private void UpdateIndicator(QuestState state)
     {
         if (indicatorChildObject == null || indicatorSpriteRenderer == null) return;
 
@@ -100,22 +100,22 @@ public class NPCQuestIndicator : MonoBehaviour
 
         switch (state)
         {
-            case NPC.QuestState.NotStarted:
+            case QuestState.NotStarted:
                 indicatorSpriteRenderer.sprite = spriteNotStarted;
                 if (minimapSpriteRenderer != null) minimapSpriteRenderer.color = colorNotStarted;
                 break;
 
-            case NPC.QuestState.InProgress:
+            case QuestState.InProgress:
                 indicatorSpriteRenderer.sprite = spriteInProgress;
                 if (minimapSpriteRenderer != null) minimapSpriteRenderer.color = colorInProgress;
                 break;
 
-            case NPC.QuestState.Completed:
+            case QuestState.Completed:
                 indicatorSpriteRenderer.sprite = spriteCompleted;
                 if (minimapSpriteRenderer != null) minimapSpriteRenderer.color = colorCompleted;
                 break;
 
-            case NPC.QuestState.NoMoreQuests:
+            case QuestState.NoMoreQuests:
                 indicatorChildObject.SetActive(false);
 
                 if (minimapIndicatorObject != null)

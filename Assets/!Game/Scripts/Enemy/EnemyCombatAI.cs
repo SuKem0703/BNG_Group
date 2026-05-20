@@ -158,8 +158,8 @@ public class EnemyCombatAI : MonoBehaviour
 
         if (player != null && Vector2.Distance(transform.position, player.position) <= enemy.attackRange)
         {
-            var health = player.GetComponentInParent<PlayerStats>();
-            if (health != null && !health.isInvincible && !health.IsProcessingDeath)
+            var health = player.GetComponentInParent<PlayerVitals>();
+            if (health != null && !health.isInvincible && !health.isProcessingDeath)
             {
                 health.TakeDamage((int)enemy.damage);
                 enemy.hasDealtDamageThisAttack = true;

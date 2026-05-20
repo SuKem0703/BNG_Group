@@ -14,27 +14,33 @@ public class ConsumableItem : Item
     [Header("Cooldown")]
     public bool triggersGlobalPotionCooldown = false;
 
-    private PlayerStats GetLocalPlayerStats()
+    private bool GetLocalPlayerComponents(out PlayerStats stats, out PlayerVitals vitals)
     {
+        stats = null;
+        vitals = null;
+
         if (NetworkManager.Singleton != null &&
             NetworkManager.Singleton.IsConnectedClient &&
             NetworkManager.Singleton.LocalClient.PlayerObject != null)
         {
-            var adapter = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LocalPlayerAdapter>();
-            if (adapter != null) return adapter.playerStats;
+            GameObject playerObj = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
+            stats = playerObj.GetComponent<PlayerStats>();
+            vitals = playerObj.GetComponent<PlayerVitals>();
+
+            return stats != null && vitals != null;
         }
-        return null;
+        return false;
     }
 
     public override void UseItem()
     {
-        PlayerStats playerStats = GetLocalPlayerStats();
-
-        if (playerStats == null || EffectService.Instance == null)
+        if (!GetLocalPlayerComponents(out PlayerStats playerStats, out PlayerVitals playerVitals))
         {
-            Debug.LogWarning("Không thể dùng item: Thiếu PlayerStats của chủ sở hữu.");
+            Debug.LogWarning("Không thể dùng item: Không tìm thấy PlayerStats hoặc PlayerVitals của chủ sở hữu.");
             return;
         }
+
+        if (EffectService.Instance == null) return;
 
         if (triggersGlobalPotionCooldown && playerStats.IsPotionOnCooldown()) return;
 
@@ -42,10 +48,10 @@ public class ConsumableItem : Item
         switch (effectID)
         {
             case "HEAL_INSTANT":
-                if (!playerStats.CanHeal()) { canBeUsed = false; GameNotify.Show("HP đã đầy!"); }
+                if (!playerVitals.CanHeal()) { canBeUsed = false; GameNotify.Show("HP đã đầy!"); }
                 break;
             case "MANA_INSTANT":
-                if (!playerStats.CanRecoverMP()) { canBeUsed = false; GameNotify.Show("MP đã đầy!"); }
+                if (!playerVitals.CanRecoverMP()) { canBeUsed = false; GameNotify.Show("MP đã đầy!"); }
                 break;
         }
 
