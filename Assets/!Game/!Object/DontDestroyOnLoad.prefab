@@ -975,6 +975,7 @@ MonoBehaviour:
   mainLoadingCanvasPrefab: {fileID: 1186966195149484881, guid: 1002f86d2da9ac14aae16d460d5b4147, type: 3}
   miniLoadingScreenPrefab: {fileID: 2169108689158331059, guid: 578e1cc104490854594a6542e380e0d9, type: 3}
   mapInfoUIPrefab: {fileID: 3982446727728801820, guid: 8e7945f9b5b1e3b4aa3d09539f565309, type: 3}
+  elricPortrait: {fileID: 4614684051764153139, guid: a4fb28168c0b3c34eb6011342fafa161, type: 3}
 --- !u!1 &7817294540242393264
 GameObject:
   m_ObjectHideFlags: 0
@@ -1104,6 +1105,7 @@ MonoBehaviour:
   - {fileID: 2597069927010163724, guid: 0b7d943e58f1b4a45a935859051507d7, type: 3}
   - {fileID: 3744007507548600456, guid: 52fca917bd9812a4cbfaaa12e355cb08, type: 3}
   - {fileID: 8157532897697816553, guid: 3791d1b1a3b7aa346804abcf054afe0e, type: 3}
+  - {fileID: 437976697930620512, guid: 7c3a59b9039f332408236d30086f19fb, type: 3}
   - {fileID: 8087771781530353217, guid: 0c46747e67f50574789edeb9da05c821, type: 3}
   - {fileID: 8762339516151771691, guid: cc794f2dd120cca41b5f44c0c53296df, type: 3}
   - {fileID: 8842432767394619790, guid: 5262659cfa8340b4cbfb817a9e3876ce, type: 3}
@@ -1158,6 +1160,7 @@ MonoBehaviour:
     bgmVolume: 1
     graphicsLevel: 2
     lightIntensity: 1
+    targetFPS: 60
     fxaaEnabled: 1
     isFullScreen: 1
     language: 

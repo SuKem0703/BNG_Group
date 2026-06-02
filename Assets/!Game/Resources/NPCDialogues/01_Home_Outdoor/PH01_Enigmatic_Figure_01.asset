@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f2a72aeb33766d42868f6d9de333142, type: 3}
+  m_Name: PH01_Enigmatic_Figure_01
+  m_EditorClassIdentifier: Assembly-CSharp::NPCDialogueData
+  typingSpeed: 0.05
+  autoProgressDelay: 1.5
+  dialogueLines:
+  - 
+  - "Kh\xF4ng... v\xF4 \xEDch th\xF4i..."
+  - "L\xE0... ng\u01B0\u01A1i... L\u1EA7n n\xE0y... ta \u0111\xE3 v\u1EC1 k\u1ECBp
+    l\xFAc sao...?"
+  - "Nghe cho r\xF5 \u0111\xE2y... Ng\xF4i \u0111\u1EC1n \u0111\xE1... h\u01B0\u1EDBng
+    T\xE2y B\u1EAFc... Phong \u1EA5n \u0111ang n\u1EE9t v\u1EE1... B\u1ECDn ch\xFAng
+    \u0111ang khao kh\xE1t C\u1ED5 Ng\u1EEF..."
+  - "N\u1EBFu C\u1ED5 Ng\u1EEF r\u01A1i v\xE0o tay k\u1EBB \u0111\xF3... th\u1EA3m
+    k\u1ECBch s\u1EBD l\u1EB7p l\u1EA1i... M\u1ECDi th\u1EE9 ng\u01B0\u01A1i y\xEAu
+    th\u01B0\u01A1ng... \u0111\u1EC1u s\u1EBD h\xF3a th\xE0nh tro b\u1EE5i..."
+  - "\u0110\u1EEBng \u0111\u1EC3 v\xF2ng l\u1EB7p n\xE0y... ti\u1EBFp di\u1EC5n.
+    \u0110i \u0111i... L\u1EA5y n\xF3 tr\u01B0\u1EDBc khi 'h\u1EAFn' \u0111\u1EBFn...
+    \u0110\u1EEBng l\u1EB7p l\u1EA1i... sai l\u1EA7m c\u1EE7a ta..."
+  autoProgressLines: 010101010101
+  endDialogueLines: 000000000001
+  quest: {fileID: 11400000, guid: 288a6fb92227373478d707e72b16d878, type: 2}
+  questInProgressIndex: -1
+  questCompletedIndex: 0
+  noMoreQuestsIndex: -1
+  npcName: Martha
+  npcPortrait: {fileID: -875880131977736440, guid: 66cc4a7b23c823245a5698a4c18f26bf, type: 3}
+  choices:
+  - dialogueIndex: 0
+    choices:
+    - "N\xE0y anh! Anh b\u1ECB sao v\u1EADy? V\u1EBFt th\u01B0\u01A1ng n\xE0y...
+      \u0111\u1EC3 t\xF4i ch\u1EA1y v\u1EC1 g\u1ECDi m\u1EB9, m\u1EB9 t\xF4i l\xE0
+      D\u01B0\u1EE3c s\u01B0\u2014"
+    nextDialogueIndexes: 01000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  - dialogueIndex: 1
+    choices:
+    - "Anh m\u1EA5t nhi\u1EC1u m\xE1u qu\xE1 r\u1ED3i!"
+    nextDialogueIndexes: 02000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  - dialogueIndex: 2
+    choices:
+    - "Anh n\xF3i g\xEC c\u01A1? Anh bi\u1EBFt t\xF4i?"
+    nextDialogueIndexes: 03000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  - dialogueIndex: 4
+    choices:
+    - "\u0110\u1EC1n \u0111\xE1? C\u1ED5 Ng\u1EEF? Ch\xFA \u0111ang n\xF3i s\u1EA3ng
+      c\xE1i g\xEC v\u1EADy?!"
+    nextDialogueIndexes: 05000000
+    endDialogues: 
+    specialActions: 
+    specialTargetNames: []
+    giveQuest: 
+  hideWhenInProgress: 0
+  hideWhenCompleted: 0
+  hideWhenHandedIn: 1
+  triggerOnEnter_NotStarted: 0
+  triggerOnEnter_InProgress: 0
+  triggerOnEnter_Completed: 0
+  triggerOnEnter_NoMoreQuests: 0
+  autoGiveQuestOnEnd: 0

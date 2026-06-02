@@ -26,17 +26,14 @@ public class DynamicSorting : MonoBehaviour
 
     void Awake()
     {
-        if (frontRenderer == null) frontRenderer = transform.Find("front")?.GetComponent<TilemapRenderer>();
-        if (behindRenderer == null) behindRenderer = transform.Find("behind")?.GetComponent<TilemapRenderer>();
-
-        if (frontRenderer == null || behindRenderer == null)
+        if (frontRenderer == null && behindRenderer == null)
         {
             enabled = false;
             return;
         }
 
-        _frontTilemap = frontRenderer.GetComponent<Tilemap>();
-        _behindTilemap = behindRenderer.GetComponent<Tilemap>();
+        if (frontRenderer != null) _frontTilemap = frontRenderer.GetComponent<Tilemap>();
+        if (behindRenderer != null) _behindTilemap = behindRenderer.GetComponent<Tilemap>();
 
         _targetAlpha = normalAlpha;
     }
@@ -52,8 +49,8 @@ public class DynamicSorting : MonoBehaviour
 
         int baseSortOrder = Mathf.RoundToInt((transform.position.y + yOffset) * -sortingPrecision) + sortingBuffer;
 
-        frontRenderer.sortingOrder = baseSortOrder;
-        behindRenderer.sortingOrder = baseSortOrder;
+        if (frontRenderer != null) frontRenderer.sortingOrder = baseSortOrder;
+        if (behindRenderer != null) behindRenderer.sortingOrder = baseSortOrder;
 
         _isInitialized = true;
     }
@@ -68,7 +65,10 @@ public class DynamicSorting : MonoBehaviour
 
     private IEnumerator FadeRoutine()
     {
-        float currentAlpha = _behindTilemap.color.a;
+        float currentAlpha = normalAlpha;
+
+        if (_behindTilemap != null) currentAlpha = _behindTilemap.color.a;
+        else if (_frontTilemap != null) currentAlpha = _frontTilemap.color.a;
 
         while (Mathf.Abs(currentAlpha - _targetAlpha) > 0.01f)
         {
@@ -83,12 +83,18 @@ public class DynamicSorting : MonoBehaviour
 
     private void SetAlpha(float alpha)
     {
-        Color frontC = _frontTilemap.color;
-        frontC.a = alpha;
-        _frontTilemap.color = frontC;
+        if (_frontTilemap != null)
+        {
+            Color frontC = _frontTilemap.color;
+            frontC.a = alpha;
+            _frontTilemap.color = frontC;
+        }
 
-        Color behindC = _behindTilemap.color;
-        behindC.a = alpha;
-        _behindTilemap.color = behindC;
+        if (_behindTilemap != null)
+        {
+            Color behindC = _behindTilemap.color;
+            behindC.a = alpha;
+            _behindTilemap.color = behindC;
+        }
     }
 }

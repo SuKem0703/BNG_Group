@@ -25,10 +25,12 @@ public class QuestUI : MonoBehaviour
             questListContent = GameObject.Find("GameUI/Static_UI/Menu/Pages/QuestPage/QuestScroll/Viewport/Content").transform;
         }
     }
+
     void Start()
     {
         UpdateQuestUI();
     }
+
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
@@ -45,6 +47,14 @@ public class QuestUI : MonoBehaviour
         {
             GameObject questEntry = Instantiate(questEntryPrefab, questListContent);
             TMP_Text questNameText = questEntry.transform.Find("QuestNameText").GetComponent<TMP_Text>();
+
+            Transform titleTransform = questEntry.transform.Find("QuestTitleText");
+            if (titleTransform != null)
+            {
+                TMP_Text questTitleText = titleTransform.GetComponent<TMP_Text>();
+                questTitleText.text = quest.quest.questTitle;
+            }
+
             Transform objectList = questEntry.transform.Find("ObjectList");
 
             questNameText.text = quest.quest.questName;

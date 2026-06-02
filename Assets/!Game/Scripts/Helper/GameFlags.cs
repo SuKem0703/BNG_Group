@@ -63,6 +63,12 @@ public static class GameFlags
         return CheckQuestState(LyriaRecruitedQuestID, includeActive: false, includeHandedIn: true);
     }
 
+    private const string TutorialDropUnlockQuestID = "MQ_CH01_PH01_02";
+    public static bool IsTutorialDropUnlocked()
+    {
+        return CheckQuestState(TutorialDropUnlockQuestID, includeActive: false, includeHandedIn: true);
+    }
+
     // Skill Menu example
     private const string OpenSkillQuestID = "OpenSkillQuestID";
     public static bool IsOpenedSkillMenu()

@@ -2,22 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+enum QuestType
+{
+    Main,
+    Side,
+    Daily,
+    Event
+}
+
 [CreateAssetMenu(menuName = "Quests/Quest")]
 public class Quest : ScriptableObject
 {
     public string questID;
     public string questName;
+    [TextArea(2, 10)]
     public string questTitle;
     public List<QuestObject> questObjects;
     public List<QuestReward> questRewards;
 
-    //private void OnValidate()
-    //{
-    //    if (string.IsNullOrEmpty(questID))
-    //    {
-    //        questID = questName + Guid.NewGuid().ToString();
-    //    }
-    //}
     private void Awake()
     {
         if (string.IsNullOrEmpty(questID))
@@ -35,6 +37,12 @@ public class QuestObject
     public ObjectType objectType;
     public int requiredAmount;
     public int currentAmount;
+
+    [Tooltip("Nếu bật, hệ thống sẽ tính cả những item người chơi đã nhặt TRƯỚC khi nhận quest (Phù hợp cho Item giới hạn).")]
+    public bool allowRetroactive;
+
+    [Tooltip("Nếu TẮT, NPC sẽ KHÔNG thu hồi lại item này lúc trả quest (Dùng cho item đã bị tiêu hao lúc làm nhiệm vụ như gieo hạt, chế tạo).")]
+    public bool removeItemOnComplete = true;
 
     public bool IsCompleted => currentAmount >= requiredAmount;
 }
@@ -56,7 +64,6 @@ public class QuestProgress
     [System.NonSerialized] public Quest quest;
     public List<QuestObject> questObjects;
 
-    // Runtime-only: baseline counts for collect-item quests at the moment the quest was accepted or loaded
     [System.NonSerialized]
     public Dictionary<int, int> baselineCounts = new Dictionary<int, int>();
 
@@ -74,11 +81,11 @@ public class QuestProgress
                 objectTitle = obj.objectTitle,
                 objectType = obj.objectType,
                 requiredAmount = obj.requiredAmount,
+                allowRetroactive = obj.allowRetroactive,
+                removeItemOnComplete = obj.removeItemOnComplete,
                 currentAmount = 0
             });
         }
-
-        // baselineCounts will be set by QuestController when the quest is accepted (based on current inventory)
     }
 
     public bool IsCompleted => questObjects.TrueForAll(qo => qo.IsCompleted);
@@ -88,7 +95,7 @@ public class QuestProgress
 
 [System.Serializable]
 public class QuestReward
-{ 
+{
     public RewardType rewardType;
     public int rewardID;
     public int amount = 1;

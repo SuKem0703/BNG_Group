@@ -277,7 +277,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1730221035
-  m_SortingLayer: 5
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
@@ -447,7 +447,7 @@ GameObject:
   - component: {fileID: 6335061951577325273}
   m_Layer: 0
   m_Name: InteractionDetector
-  m_TagString: Player
+  m_TagString: PlayerInteract
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -503,7 +503,7 @@ CapsuleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: -0.5}
-  m_Size: {x: 2, y: 2}
+  m_Size: {x: 1, y: 1}
   m_Direction: 0
 --- !u!114 &6335061951577325273
 MonoBehaviour:
@@ -599,7 +599,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1710315361
-  m_SortingLayer: 1
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2122837972990275081, guid: 6a2896e398fd4e049904a827775fff97, type: 3}
@@ -1067,7 +1067,7 @@ MonoBehaviour:
   yOffset: 0
   entityWeight: 3
   onlySortWhenVisible: 1
-  attachedCanvas: {fileID: 0}
+  attachedCanvas: {fileID: 7000442953988643021}
   canvasSortingOffset: 1
 --- !u!114 &8363902136144710776
 MonoBehaviour:
@@ -1086,6 +1086,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   targetYOffset: 1.2
+  floatAmplitude: 0.05
+  floatSpeed: 5
   indicatorPrefab: {fileID: 984118000735452077, guid: cac8db452cec35643829dad2fb5ee4e6, type: 3}
 --- !u!114 &4866363441426797200
 MonoBehaviour:
@@ -1102,6 +1104,12 @@ MonoBehaviour:
   animator: {fileID: 5691647660223253319}
   playerVitals: {fileID: 4707892669319800991}
   playerMovement: {fileID: 5419666127035113273}
+  enableIdleLook: 1
+  minIdleTime: 5
+  maxIdleTime: 10
+  enableIdleBlink: 1
+  minBlinkTime: 2
+  maxBlinkTime: 4
 --- !u!1 &7053962648512897917
 GameObject:
   m_ObjectHideFlags: 0
@@ -1371,7 +1379,7 @@ CapsuleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: -0.6}
-  m_Size: {x: 0.7, y: 0.3}
+  m_Size: {x: 0.65, y: 0.3}
   m_Direction: 1
 --- !u!114 &5419666127035113273
 MonoBehaviour:
@@ -1503,8 +1511,6 @@ MonoBehaviour:
   ghostLerpSpeed: 3
   ghostDelay: 0.5
   minimapSpriteRenderer: {fileID: 6620393319781054300}
-  localColor: {r: 0, g: 1, b: 0, a: 1}
-  remoteColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &-3181974643858917946
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1903,7 +1909,7 @@ MonoBehaviour:
   yOffset: 0
   entityWeight: 3
   onlySortWhenVisible: 1
-  attachedCanvas: {fileID: 0}
+  attachedCanvas: {fileID: 7000442953988643021}
   canvasSortingOffset: 1
 --- !u!114 &7736977994014315738
 MonoBehaviour:
@@ -1922,6 +1928,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   targetYOffset: 1.2
+  floatAmplitude: 0.05
+  floatSpeed: 5
   indicatorPrefab: {fileID: 984118000735452077, guid: cac8db452cec35643829dad2fb5ee4e6, type: 3}
 --- !u!114 &9103708712476269642
 MonoBehaviour:
@@ -1938,6 +1946,12 @@ MonoBehaviour:
   animator: {fileID: 5592546058136567945}
   playerVitals: {fileID: 4707892669319800991}
   playerMovement: {fileID: 5419666127035113273}
+  enableIdleLook: 1
+  minIdleTime: 5
+  maxIdleTime: 10
+  enableIdleBlink: 1
+  minBlinkTime: 3
+  maxBlinkTime: 5
 --- !u!1 &9057428816844036757
 GameObject:
   m_ObjectHideFlags: 0

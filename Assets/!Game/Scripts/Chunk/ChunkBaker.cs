@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 public class ChunkBaker : MonoBehaviour
 {
+#if UNITY_EDITOR
     [Header("Cấu hình lưới")]
     public float chunkSize = 16f;
     [Header("Đầu ra")]
@@ -41,20 +42,6 @@ public class ChunkBaker : MonoBehaviour
                 if (spriteSort != null)
                 {
                     data.sortingBuffer = spriteSort.sortingBuffer;
-                }
-            }
-
-            if (marker.entityType == EntityType.Interactable || marker.entityType == EntityType.NPC)
-            {
-                BoxCollider2D[] colliders = marker.GetComponents<BoxCollider2D>();
-                foreach (var col in colliders)
-                {
-                    if (col.isTrigger)
-                    {
-                        data.triggerSize = col.size;
-                        data.triggerOffset = col.offset;
-                        break;
-                    }
                 }
             }
 
@@ -108,6 +95,46 @@ public class ChunkBaker : MonoBehaviour
                 }
             }
 
+            else if (marker.entityType == EntityType.QuestLocation)
+            {
+                var trigger = marker.GetComponent<QuestLocationTrigger>();
+                if (trigger != null)
+                {
+                    data.uniqueID = trigger.locationID;
+                }
+            }
+
+            else if (marker.entityType == EntityType.MapTransition)
+            {
+                var mapMove = marker.GetComponent<MapMove>();
+                if (mapMove != null)
+                {
+                    data.targetSceneName = mapMove.sceneName;
+                    data.targetPosition = mapMove.playerPosition;
+                    data.mapMoveCanEnter = mapMove.canEnter;
+                    data.reqQuestID = mapMove.requiredQuestID;
+                    data.reqQuestStates = new bool[] {
+                        mapMove.requireNotStarted,
+                        mapMove.requireInProgress,
+                        mapMove.requireCompleted,
+                        mapMove.requireNoMoreQuests
+                    };
+
+                    if (mapMove.newMapBoundary != null)
+                    {
+                        var boundaryScript = mapMove.newMapBoundary.GetComponent<MapBoundary>();
+                        if (boundaryScript != null && !string.IsNullOrEmpty(boundaryScript.boundaryID))
+                        {
+                            data.mapBoundaryName = boundaryScript.boundaryID;
+                        }
+                        else
+                        {
+                            data.mapBoundaryName = mapMove.newMapBoundary.gameObject.name;
+                        }
+                    }
+                }
+            }
+
             mapData[coord].entities.Add(data);
             count++;
         }
@@ -138,7 +165,6 @@ public class ChunkBaker : MonoBehaviour
     private string GetResourcePath(Object obj)
     {
         if (obj == null) return string.Empty;
-#if UNITY_EDITOR
         string fullPath = UnityEditor.AssetDatabase.GetAssetPath(obj);
         if (string.IsNullOrEmpty(fullPath)) return string.Empty;
 
@@ -156,7 +182,7 @@ public class ChunkBaker : MonoBehaviour
             return pathWithoutRes;
         }
         Debug.LogWarning($"<color=orange>[Cảnh Báo]</color> Asset '{obj.name}' không nằm trong thư mục Resources! Hãy di chuyển nó vào thư mục Resources để game có thể Load ở Runtime.");
-#endif
         return string.Empty;
     }
+#endif
 }

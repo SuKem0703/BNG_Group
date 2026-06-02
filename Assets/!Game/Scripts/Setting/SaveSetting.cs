@@ -9,6 +9,8 @@ public class SaveSetting
     public int graphicsLevel = 2;
     public float lightIntensity = 1.0f;
 
+    public int targetFPS = 60;
+
     public bool fxaaEnabled = true;
     public bool isFullScreen = true;
 

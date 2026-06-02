@@ -13,9 +13,11 @@ public class NPC : AutoIDBehaviour, IInteractable, ITargetableInfo
     [Header("Danh sách hội thoại (theo thứ tự)")]
     public NPCDialogueData[] dialogueDataList;
 
-    [Header("Player Info")]
-    [SerializeField] private string playerName = "Elric";
-    [SerializeField] private Sprite playerPortrait;
+    private string playerName = "Elric";
+    private Sprite playerPortrait => LoadResourceManager.Instance?.ElricPortrait;
+
+    [Header("Dialogue Settings")]
+    public bool resetFacingOnDialogueEnd = true;
 
     public NPCDialogueData CurrentActiveDialogue { get; set; }
     public bool triggerOnEnter = false;
@@ -101,6 +103,12 @@ public class NPC : AutoIDBehaviour, IInteractable, ITargetableInfo
     {
         QuestHandler questHandler = GetComponent<QuestHandler>();
         if (questHandler != null) questHandler.OnDialogueEnded();
+
+        if (resetFacingOnDialogueEnd)
+        {
+            NPCAnimation nPCAnimation = GetComponent<NPCAnimation>();
+            if (nPCAnimation != null) nPCAnimation.ResetFacing();
+        }
 
         SaveController.Instance?.TriggerAutoSave();
     }

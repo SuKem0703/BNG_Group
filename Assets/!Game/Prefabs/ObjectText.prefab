@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1480, y: 200}
+  m_SizeDelta: {x: 1480, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6925768278411957446
 CanvasRenderer:
@@ -65,14 +65,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Sau khi t\u1EC9nh l\u1EA1i t\u1EA1i nh\xE0 c\u1EE7a Gi\xE1o s\u01B0 Elros,
-    b\u1EA1n c\u1EA3m th\u1EA5y trong \u0111\u1EA7u c\xF2n v\u0103ng v\u1EB3ng h\xECnh
-    \u1EA3nh m\u1ED9t \xE1nh s\xE1ng k\u1EF3 l\u1EA1\u2026 t\u1EEB trong r\u1EEBng.
-    Gi\xE1o s\u01B0 Elros n\xF3i r\u1EB1ng \xF4ng t\xECm th\u1EA5y b\u1EA1n b\u1EA5t
-    t\u1EC9nh g\u1EA7n m\u1ED9t l\u1ED1i m\xF2n c\u0169 m\xE0 \xEDt ng\u01B0\u1EDDi
-    qua l\u1EA1i.\n\nD\xF9 ch\u01B0a ho\xE0n to\xE0n b\xECnh ph\u1EE5c, b\u1EA1n
-    quy\u1EBFt \u0111\u1ECBnh quay l\u1EA1i n\u01A1i \u1EA5y \u2013 bi\u1EBFt \u0111\xE2u
-    c\xF3 manh m\u1ED1i\u2026"
+  m_text: "\u0110i \u0111\u1EBFn con su\u1ED1i r\xECa r\u1EEBng ph\xEDa B\u1EAFc.
+    (0/1)"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: c140818cb180f76488cbd05ace0444d7, type: 2}
   m_sharedMaterial: {fileID: -3968359637268153238, guid: c140818cb180f76488cbd05ace0444d7, type: 2}
@@ -110,6 +104,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

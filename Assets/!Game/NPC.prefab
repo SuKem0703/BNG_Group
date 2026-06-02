@@ -78,7 +78,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1730221035
-  m_SortingLayer: 5
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
@@ -169,7 +169,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1730221035
-  m_SortingLayer: 5
+  m_SortingLayer: 2
   m_SortingOrder: -10
   m_MaskInteraction: 0
   m_Sprite: {fileID: 8147004107710021074, guid: 2303e70181e57db4398456a2e6c6b043, type: 3}
@@ -275,12 +275,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -664501723113990750, guid: 8c291f7e1123485448a4e8855dae4ddc, type: 3}
+  m_Sprite: {fileID: -8578759038881823194, guid: 31885ffacf3449e4da85f669a701e965, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.0416666, y: 1.7083334}
+  m_Size: {x: 1.3333334, y: 1.3333334}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -295,7 +295,7 @@ Animator:
   m_GameObject: {fileID: 8757576948480836762}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 172d17117aecd9e47ba0c23aa406da4b, type: 2}
+  m_Controller: {fileID: 9100000, guid: 3c403a56dd200eb4fb5cc8bdf7f960e3, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -321,8 +321,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <UniqueID>k__BackingField: 
   dialogueDataList: []
-  playerName: Elric
-  playerPortrait: {fileID: 1942528367, guid: 346b5f769ed1fe948b5ff84bf1d4a1dd, type: 3}
+  resetFacingOnDialogueEnd: 1
   triggerOnEnter: 0
 --- !u!114 &3237247667978481267
 MonoBehaviour:
@@ -360,7 +359,7 @@ MonoBehaviour:
   floatAmplitude: 0.02
   floatSpeed: 5
   npc: {fileID: 8838461781748227053}
-  npcQuestHandler: {fileID: 3237247667978481267}
+  questHandler: {fileID: 3237247667978481267}
 --- !u!58 &6581016862903904268
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -409,7 +408,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6b184dfb3398c145854234d271eb6b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SnapToGrid
-  gridSize: 1
+  gridSize: 0.5
 --- !u!70 &8833251898576531316
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -444,9 +443,9 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.53}
-  m_Size: {x: 0.7, y: 0.7}
-  m_Direction: 0
+  m_Offset: {x: 0, y: -0.6}
+  m_Size: {x: 0.7, y: 0.3}
+  m_Direction: 1
 --- !u!114 &8657469189403248438
 MonoBehaviour:
   m_ObjectHideFlags: 0

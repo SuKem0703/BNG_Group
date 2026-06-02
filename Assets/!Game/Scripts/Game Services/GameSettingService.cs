@@ -128,6 +128,19 @@ public class GameSettingService : MonoBehaviour
         ApplyAllSettings();
     }
 
+    public void SetTargetFPS(int fps)
+    {
+        currentSettings.targetFPS = fps;
+        ApplyFPS();
+    }
+
+    private void ApplyFPS()
+    {
+        QualitySettings.vSyncCount = 0;
+
+        Application.targetFrameRate = currentSettings.targetFPS;
+    }
+
     public void ApplyAllSettings()
     {
         int w = currentSettings.graphicsLevel == 1 ? 1280 : (currentSettings.graphicsLevel == 2 ? 1920 : 3840);

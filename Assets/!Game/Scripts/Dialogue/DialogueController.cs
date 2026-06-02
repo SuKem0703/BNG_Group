@@ -80,13 +80,18 @@ public class DialogueController : MonoBehaviour
 
         StopAllCoroutines();
 
-        continueIndicator.gameObject.SetActive(false);
-        dialogueText.text = "";
-        dialoguePanel.SetActive(false);
+        if (continueIndicator != null) continueIndicator.gameObject.SetActive(false);
+        if (dialogueText != null) dialogueText.text = "";
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
         ClearChoices();
 
         isPlayerTalking = false;
         pendingChoiceLogic = null;
+
+        GameStateManager.IsDialogueActive = false;
+        GameStateManager.CanOpenMenu = true;
+        CommonUIController.Instance?.SetUIVisible(true);
+        PauseController.SetPause(false);
 
         onDialogueEnded?.Invoke();
     }
@@ -100,7 +105,7 @@ public class DialogueController : MonoBehaviour
                 StopAllCoroutines();
                 dialogueText.text = currentTypingText;
                 isTyping = false;
-                continueIndicator.gameObject.SetActive(true);
+                if (continueIndicator != null) continueIndicator.gameObject.SetActive(true);
             }
             else
             {
@@ -114,11 +119,11 @@ public class DialogueController : MonoBehaviour
             StopAllCoroutines();
             dialogueText.text = currentTypingText;
             isTyping = false;
-            continueIndicator.gameObject.SetActive(true);
+            if (continueIndicator != null) continueIndicator.gameObject.SetActive(true);
             return;
         }
 
-        continueIndicator.gameObject.SetActive(false);
+        if (continueIndicator != null) continueIndicator.gameObject.SetActive(false);
         ClearChoices();
 
         if (currentDialogue.endDialogueLines != null && currentDialogue.dialogueLines.Length > dialogueIndex && currentDialogue.endDialogueLines[dialogueIndex])
@@ -156,7 +161,7 @@ public class DialogueController : MonoBehaviour
     {
         isTyping = true;
         dialogueText.text = "";
-        continueIndicator.gameObject.SetActive(false);
+        if (continueIndicator != null) continueIndicator.gameObject.SetActive(false);
         currentTypingText = currentDialogue.dialogueLines[dialogueIndex];
 
         if (string.IsNullOrWhiteSpace(currentTypingText))
@@ -175,11 +180,11 @@ public class DialogueController : MonoBehaviour
         }
 
         isTyping = false;
-        continueIndicator.gameObject.SetActive(true);
+        if (continueIndicator != null) continueIndicator.gameObject.SetActive(true);
 
         if (currentDialogue.autoProgressLines != null && currentDialogue.autoProgressLines.Length > dialogueIndex && currentDialogue.autoProgressLines[dialogueIndex])
         {
-            continueIndicator.gameObject.SetActive(false);
+            if (continueIndicator != null) continueIndicator.gameObject.SetActive(false);
             yield return new WaitForSecondsRealtime(currentDialogue.autoProgressDelay);
             NextLine();
         }
@@ -190,7 +195,7 @@ public class DialogueController : MonoBehaviour
         isTyping = true;
         currentTypingText = text;
         dialogueText.text = "";
-        continueIndicator.gameObject.SetActive(false);
+        if (continueIndicator != null) continueIndicator.gameObject.SetActive(false);
 
         foreach (char letter in text)
         {
@@ -217,7 +222,7 @@ public class DialogueController : MonoBehaviour
 
     private void DisplayChoices(DialogueChoice choice)
     {
-        continueIndicator.gameObject.SetActive(false);
+        if (continueIndicator != null) continueIndicator.gameObject.SetActive(false);
 
         if (choice.choices.Length == 1)
         {

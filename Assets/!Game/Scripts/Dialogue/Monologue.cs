@@ -11,7 +11,7 @@ public class Monologue : MonoBehaviour, IInteractable
     [Header("Settings")]
     public bool triggerOnEnter = false;
 
-    [Tooltip("Nếu true, người chơi sẽ không thể Aim hay bấm nút tương tác (dùng cho các object do script khác điều khiển).")]
+    [Tooltip("Nếu true, người chơi sẽ không thể Aim hay bấm nút tương tác.")]
     public bool disableManualInteraction = false;
 
     [Tooltip("Nếu true, monologue sẽ tự hủy sau khi hoàn tất và lưu lại trạng thái.")]
@@ -21,10 +21,10 @@ public class Monologue : MonoBehaviour, IInteractable
     public string uniqueID;
     protected string finalID;
 
-    [SerializeField] protected string characterName = "Elric";
-    [SerializeField] protected Sprite characterPortrait;
+    protected string characterName = "Elric";
+    protected Sprite characterPortrait => LoadResourceManager.Instance?.ElricPortrait;
 
-    private SceneMapMove mapTransition => GetComponent<SceneMapMove>();
+    private MapMove mapTransition => GetComponent<MapMove>();
 
     public enum MonologueQuestState
     {
@@ -156,6 +156,33 @@ public class Monologue : MonoBehaviour, IInteractable
 
     public virtual void EndDialogue()
     {
+        CommonUIController.Instance?.SetUIVisible(true);
+        PauseController.SetPause(false);
+
+        bool needsFading = false;
+
+        if ((monologueData.triggerQuestAtEnd && monologueData.quest != null) ||
+            (monologueData.handleQuestAtEnd && monologueData.quest != null && currentQuestState == MonologueQuestState.Completed) ||
+            isOneTimeOnly)
+        {
+            needsFading = true;
+        }
+
+        if (needsFading)
+        {
+            ScreenFader.FadeAndExecute(0.5f, () =>
+            {
+                ExecutePostDialogueLogic();
+            });
+        }
+        else
+        {
+            ExecutePostDialogueLogic();
+        }
+    }
+
+    private void ExecutePostDialogueLogic()
+    {
         if (monologueData.triggerQuestAtEnd && monologueData.quest != null)
         {
             QuestController.Instance?.AcceptQuest(monologueData.quest);
@@ -168,9 +195,6 @@ public class Monologue : MonoBehaviour, IInteractable
                 HandleQuestCompletion(monologueData.quest);
             }
         }
-
-        CommonUIController.Instance?.SetUIVisible(true);
-        PauseController.SetPause(false);
 
         OnDialogueEndEvent?.Invoke();
 
@@ -194,19 +218,4 @@ public class Monologue : MonoBehaviour, IInteractable
         QuestController.Instance?.HandInQuest(quest.questID);
         currentQuestState = MonologueQuestState.NoMoreQuests;
     }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (characterPortrait == null && !string.IsNullOrEmpty(characterName))
-        {
-            characterPortrait = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Resources/{characterName}_Portrait.png");
-
-            if (characterPortrait == null)
-            {
-                characterPortrait = Resources.Load<Sprite>($"{characterName}_Portrait");
-            }
-        }
-    }
-#endif
 }

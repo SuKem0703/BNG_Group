@@ -249,8 +249,6 @@ public class ChunkManager : MonoBehaviour
                 {
                     monologue.monologueData = Resources.Load<MonologueData>(data.monologueDataPath);
                 }
-
-                EnsureCollider(obj, data);
                 break;
 
             case EntityType.NPC:
@@ -290,7 +288,6 @@ public class ChunkManager : MonoBehaviour
                         chest.itemPrefab = Resources.Load<GameObject>(data.rewardItemPath);
                     }
                 }
-                EnsureCollider(obj, data);
                 break;
 
             case EntityType.Static:
@@ -308,32 +305,42 @@ public class ChunkManager : MonoBehaviour
                     Debug.LogWarning($"[Chunk] Cảnh báo: {obj.name} là Enemy/Spawner nhưng thiếu EnemySpawnArea!");
                 }
                 break;
-        }
-    }
 
-    private void EnsureCollider(GameObject obj, EntitySaveData data)
-    {
-        BoxCollider2D triggerCol = null;
-        BoxCollider2D[] cols = obj.GetComponents<BoxCollider2D>();
-        foreach (var c in cols)
-        {
-            if (c.isTrigger)
-            {
-                triggerCol = c;
+            case EntityType.QuestLocation:
+                var locationTrigger = obj.GetComponent<QuestLocationTrigger>();
+                if (locationTrigger != null)
+                {
+                    locationTrigger.locationID = data.uniqueID;
+                }
+                else
+                {
+                    Debug.LogWarning($"[ChunkManager] Prefab {data.entityID} đang thiếu script QuestLocationTrigger!");
+                }
                 break;
-            }
-        }
 
-        if (triggerCol == null)
-        {
-            triggerCol = obj.AddComponent<BoxCollider2D>();
-            triggerCol.isTrigger = true;
-        }
+            case EntityType.MapTransition:
+                var mapMove = obj.GetComponent<MapMove>();
+                if (mapMove != null)
+                {
+                    mapMove.sceneName = data.targetSceneName;
+                    mapMove.playerPosition = data.targetPosition;
+                    mapMove.canEnter = data.mapMoveCanEnter;
+                    mapMove.requiredQuestID = data.reqQuestID;
 
-        if (data.triggerSize != Vector2.zero)
-        {
-            triggerCol.size = data.triggerSize;
-            triggerCol.offset = data.triggerOffset;
+                    if (data.reqQuestStates != null && data.reqQuestStates.Length >= 4)
+                    {
+                        mapMove.requireNotStarted = data.reqQuestStates[0];
+                        mapMove.requireInProgress = data.reqQuestStates[1];
+                        mapMove.requireCompleted = data.reqQuestStates[2];
+                        mapMove.requireNoMoreQuests = data.reqQuestStates[3];
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(data.mapBoundaryName))
+                {
+                    mapMove.newMapBoundary = MapBoundary.GetBoundary(data.mapBoundaryName);
+                }
+                break;
         }
     }
 

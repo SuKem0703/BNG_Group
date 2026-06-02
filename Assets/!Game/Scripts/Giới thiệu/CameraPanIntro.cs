@@ -2,39 +2,38 @@
 using Unity.Cinemachine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using Unity.Netcode;
+
+public enum PanTriggerMode
+{
+    PlayOnFirstLoad,
+    ManualOnly
+}
 
 public class CameraPanIntro : MonoBehaviour
 {
-    [Header("Camera Config")]
-    public CinemachineCamera targetCamera;
-
     [Header("Settings")]
+    public PanTriggerMode triggerMode = PanTriggerMode.PlayOnFirstLoad;
     public float focusDuration = 2.0f;
     public float blendDuration = 2.0f;
 
     [Header("Save Logic")]
     public string introID;
-
     private string finalID;
+
+    private bool isPlaying = false;
 
     private void Start()
     {
-        if (targetCamera == null) targetCamera = GetComponent<CinemachineCamera>();
+        finalID = !string.IsNullOrEmpty(introID) ? introID : GenerateDeterministicID();
 
-        if (targetCamera != null)
+        if (triggerMode == PanTriggerMode.PlayOnFirstLoad)
         {
-            var p = targetCamera.transform.position;
-            p.z = -10f;
-            targetCamera.transform.position = p;
+            if (!SaveController.IsDataLoaded)
+                SaveController.OnDataLoaded += HandleLoaded;
+            else
+                CheckSaveAndPlay();
         }
-
-        if (!string.IsNullOrEmpty(introID)) finalID = introID;
-        else finalID = GenerateDeterministicID();
-
-        if (!SaveController.IsDataLoaded)
-            SaveController.OnDataLoaded += HandleLoaded;
-        else
-            CheckSaveAndPlay();
     }
 
     private void OnDestroy()
@@ -52,54 +51,83 @@ public class CameraPanIntro : MonoBehaviour
     {
         if (SaveController.Instance == null) return;
 
-        if (SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, finalID))
+        if (!SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, finalID))
         {
-            if (targetCamera != null) Destroy(targetCamera.gameObject);
-            Destroy(gameObject);
-        }
-        else
-        {
-            StartCoroutine(PlayIntro());
+            StartCoroutine(PlayIntroSequence(true));
         }
     }
 
-    IEnumerator PlayIntro()
+    public void TriggerManualPan()
     {
-        // Chờ hết các sequence khác nếu có
+        if (!isPlaying)
+        {
+            StartCoroutine(PlayIntroSequence(false));
+        }
+    }
+
+    private IEnumerator PlayIntroSequence(bool markAsSaved)
+    {
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsClient) yield break;
+
+        var localClient = NetworkManager.Singleton.LocalClient;
+        if (localClient == null || localClient.PlayerObject == null) yield break;
+
+        Transform playerTransform = localClient.PlayerObject.transform;
+
+        var vCam = FindFirstObjectByType<CinemachineCamera>();
+        if (vCam == null) yield break;
+
+        isPlaying = true;
+
         var chapterIntro = FindFirstObjectByType<ChapterIntroSequence>();
-        if (chapterIntro != null)
-        {
-            yield return new WaitUntil(() => chapterIntro == null);
-        }
+        if (chapterIntro != null) yield return new WaitUntil(() => chapterIntro == null);
 
-        // Chờ hết story scroll nếu có
         var storyScroll = FindFirstObjectByType<StoryScrollController>();
-        if (storyScroll != null)
-        {
-            yield return new WaitUntil(() => storyScroll == null);
-        }
+        if (storyScroll != null) yield return new WaitUntil(() => storyScroll == null);
 
-        // Bắt đầu quay camera
         GameStateManager.StartLoading();
 
-        if (targetCamera != null) targetCamera.Priority = 20;
-        yield return new WaitForSeconds(blendDuration);
+        Transform originalTarget = vCam.Target.TrackingTarget;
+
+        GameObject dummyTarget = new GameObject("DummyPanTarget");
+        dummyTarget.transform.position = originalTarget != null ? originalTarget.position : playerTransform.position;
+
+        vCam.Target.TrackingTarget = dummyTarget.transform;
+
+        Vector3 startPos = dummyTarget.transform.position;
+        Vector3 targetPos = transform.position;
+
+        float elapsed = 0f;
+        while (elapsed < blendDuration)
+        {
+            dummyTarget.transform.position = Vector3.Lerp(startPos, targetPos, elapsed / blendDuration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        dummyTarget.transform.position = targetPos;
 
         yield return new WaitForSeconds(focusDuration);
 
-        if (targetCamera != null) targetCamera.Priority = 0;
-        yield return new WaitForSeconds(blendDuration);
+        elapsed = 0f;
+        while (elapsed < blendDuration)
+        {
+            Vector3 returnPos = originalTarget != null ? originalTarget.position : playerTransform.position;
+            dummyTarget.transform.position = Vector3.Lerp(targetPos, returnPos, elapsed / blendDuration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        vCam.Target.TrackingTarget = originalTarget;
+        Destroy(dummyTarget);
 
         GameStateManager.EndLoading();
+        isPlaying = false;
 
-        if (SaveController.Instance != null)
+        if (markAsSaved && SaveController.Instance != null)
         {
             SaveController.Instance.MarkCollected(SceneManager.GetActiveScene().name, finalID);
             SaveController.Instance.TriggerAutoSave();
         }
-
-        if (targetCamera != null) Destroy(targetCamera.gameObject);
-        Destroy(gameObject);
     }
 
     private string GenerateDeterministicID()

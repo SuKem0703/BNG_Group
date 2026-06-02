@@ -13,6 +13,10 @@ public class SettingUIAdapter : MonoBehaviour
     [SerializeField] private Toggle fullscreenToggle;
     [SerializeField] private Slider lightSlider;
     [SerializeField] private TextMeshProUGUI languageText;
+    [SerializeField] private Slider fpsSlider;
+    [SerializeField] private TextMeshProUGUI fpsLabel;
+
+    private readonly int[] fpsValues = { 24, 30, 60, -1 };
 
     private void Start()
     {
@@ -32,6 +36,22 @@ public class SettingUIAdapter : MonoBehaviour
         bgmSlider.onValueChanged.AddListener(val => GameSettingService.Instance.SetAudioVolume("BGM", val));
         lightSlider.onValueChanged.AddListener(val => GameSettingService.Instance.SetLightIntensity(val));
         graphicsSlider.onValueChanged.AddListener(val => UpdateGraphicsLabel(Mathf.RoundToInt(val * 2f) + 1));
+
+        int currentFPSIndex = System.Array.IndexOf(fpsValues, ram.targetFPS);
+        if (currentFPSIndex == -1) currentFPSIndex = 2;
+
+        if (fpsSlider != null)
+        {
+            fpsSlider.value = currentFPSIndex;
+            UpdateFPSLabel(ram.targetFPS);
+
+            fpsSlider.onValueChanged.AddListener(val =>
+            {
+                int fps = fpsValues[Mathf.RoundToInt(val)];
+                GameSettingService.Instance.SetTargetFPS(fps);
+                UpdateFPSLabel(fps);
+            });
+        }
     }
 
     public void OnSaveSettingsClick()
@@ -67,6 +87,14 @@ public class SettingUIAdapter : MonoBehaviour
     {
         if (graphicsLabel != null)
             graphicsLabel.text = level == 1 ? "Thấp" : (level == 2 ? "Trung bình" : "Cao");
+    }
+
+    private void UpdateFPSLabel(int fps)
+    {
+        if (fpsLabel != null)
+        {
+            fpsLabel.text = fps == -1 ? "Không giới hạn" : $"{fps} FPS";
+        }
     }
 
     private void UpdateLanguageText(string lang)

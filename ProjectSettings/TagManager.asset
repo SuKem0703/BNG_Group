@@ -8,10 +8,9 @@ TagManager:
   - Enemy
   - PlayerController
   - Map
-  - SFXSlider
-  - BGMSlider
   - FarmPlot
   - PlayerCamera
+  - PlayerInteract
   layers:
   - Default
   - TransparentFX
@@ -46,35 +45,17 @@ TagManager:
   - 
   - 
   m_SortingLayers:
-  - name: Walk in front
-    uniqueID: 2513978855
-    locked: 0
-  - name: Item
-    uniqueID: 2463957479
-    locked: 0
-  - name: Chests
-    uniqueID: 172092471
-    locked: 0
-  - name: NPC
-    uniqueID: 946148091
-    locked: 0
   - name: Ground
     uniqueID: 300066107
+    locked: 0
+  - name: Walk in front
+    uniqueID: 2513978855
     locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Player
-    uniqueID: 2584651935
-    locked: 0
-  - name: Enermy
-    uniqueID: 2197673875
-    locked: 0
   - name: Walk behind
     uniqueID: 1926694469
-    locked: 0
-  - name: Behind
-    uniqueID: 3390766189
     locked: 0
   - name: UI
     uniqueID: 1730221035

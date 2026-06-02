@@ -6,6 +6,11 @@ using UnityEngine.UI;
 
 public class RelayUIAdapter : MonoBehaviour
 {
+    [Header("UI Page & Toggles")]
+    [SerializeField] private GameObject relayPage;
+    [SerializeField] private Button openPageButton;
+    [SerializeField] private Button closePageButton;
+
     [Header("INTERNET - UI Host (Tạo Phòng)")]
     [SerializeField] private Button createRoomButton;
     [SerializeField] private TextMeshProUGUI joinCodeDisplayText;
@@ -28,6 +33,11 @@ public class RelayUIAdapter : MonoBehaviour
 
     private void Start()
     {
+        if (openPageButton != null) openPageButton.onClick.AddListener(OpenPage);
+        if (closePageButton != null) closePageButton.onClick.AddListener(ClosePage);
+
+        if (relayPage != null) relayPage.SetActive(false);
+
         if (createRoomButton != null) createRoomButton.onClick.AddListener(OnCreateRoomClicked);
         if (joinRoomButton != null) joinRoomButton.onClick.AddListener(OnJoinRoomClicked);
 
@@ -37,6 +47,38 @@ public class RelayUIAdapter : MonoBehaviour
         if (joinCodeDisplayText != null) joinCodeDisplayText.text = "Chưa có mã phòng";
         if (lanInfoDisplayText != null) lanInfoDisplayText.text = "Chưa mở máy chủ LAN";
         if (statusText != null) statusText.text = "";
+    }
+
+    public void OpenPage()
+    {
+        if (!GameStateManager.CanProcessInput() || !GameStateManager.CanOpenMenu) return;
+
+        if (relayPage != null) relayPage.SetActive(true);
+
+        GameStateManager.IsMenuOpen = true;
+        PauseController.SetPause(true);
+
+        if (CommonUIController.Instance != null)
+        {
+            CommonUIController.Instance.SetUIVisible(false);
+        }
+    }
+
+    public void ClosePage()
+    {
+        if (relayPage != null) relayPage.SetActive(false);
+
+        GameStateManager.IsMenuOpen = false;
+
+        if (!GameStateManager.IsDialogueActive)
+        {
+            PauseController.SetPause(false);
+        }
+
+        if (CommonUIController.Instance != null)
+        {
+            CommonUIController.Instance.SetUIVisible(true);
+        }
     }
 
     private async void OnCreateRoomClicked()
@@ -74,7 +116,11 @@ public class RelayUIAdapter : MonoBehaviour
 
         bool success = await RelayManager.Instance.JoinRelayClient(code);
 
-        if (success) UpdateStatus("Kết nối Internet thành công! Đang vào game...");
+        if (success)
+        {
+            UpdateStatus("Kết nối Internet thành công! Đang vào game...");
+            ClosePage();
+        }
         else
         {
             UpdateStatus("Kết nối thất bại. Mã phòng sai hoặc đã đầy.");
@@ -119,7 +165,11 @@ public class RelayUIAdapter : MonoBehaviour
 
         bool success = await RelayManager.Instance.JoinLANClient(ip, port);
 
-        if (success) UpdateStatus("Kết nối LAN thành công! Đang vào game...");
+        if (success)
+        {
+            UpdateStatus("Kết nối LAN thành công! Đang vào game...");
+            ClosePage();
+        }
         else
         {
             UpdateStatus("Kết nối LAN thất bại. Vui lòng kiểm tra lại IP/Port.");

@@ -90,6 +90,13 @@ public class InventoryActionManager : MonoBehaviour
                     }
                 }
 
+                if (!GameFlags.IsTutorialDropUnlocked())
+                {
+                    GameNotify.Show("Không thể vứt bỏ vật phẩm này!");
+                    dragHandler.SnapBack();
+                    return;
+                }
+
                 bool isEquipped = draggedItem is EquipmentItem eq && eq.isEquipped;
                 bool isNeededForQuest = QuestController.Instance != null && QuestController.Instance.IsItemNeededForActiveQuest(draggedItem.ID);
 

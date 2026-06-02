@@ -12,19 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f2a72aeb33766d42868f6d9de333142, type: 3}
   m_Name: Dog test
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialogue
-  npcName: "Ch\xF3"
-  npcPortrait: {fileID: 121669337377858937, guid: 31885ffacf3449e4da85f669a701e965, type: 3}
+  typingSpeed: 0.05
+  autoProgressDelay: 1.5
   dialogueLines:
-  - "Nh\xECn c\xE1i \u0111\u1ECBt m\u1EB9"
+  - "Nh\xECn con m\u1EB9 m\xE0y \xE0?"
   autoProgressLines: 01
   endDialogueLines: 01
-  autoProgressDelay: 1.5
-  typingSpeed: 0.05
-  choices: []
+  quest: {fileID: 0}
   questInProgressIndex: 0
   questCompletedIndex: 0
   noMoreQuestsIndex: 0
-  quest: {fileID: 0}
+  npcName: "Ch\xF3"
+  npcPortrait: {fileID: 121669337377858937, guid: 31885ffacf3449e4da85f669a701e965, type: 3}
+  choices: []
   hideWhenInProgress: 0
   hideWhenCompleted: 0
   hideWhenHandedIn: 0

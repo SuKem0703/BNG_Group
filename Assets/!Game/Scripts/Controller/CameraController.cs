@@ -301,6 +301,8 @@ public class CameraController : MonoBehaviour
             confiner.BoundingShape2D = newBounds;
             confiner.InvalidateBoundingShapeCache();
         }
+
+        instantSnapMinimap = true;
     }
 
     public float GetCurrentZoom() => userDesiredSize;

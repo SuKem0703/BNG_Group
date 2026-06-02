@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
@@ -10,17 +9,27 @@ public class CombatTargetSelector : NetworkBehaviour
     [Header("Settings")]
     public LayerMask enemyLayer;
     public float targetYOffset = 1.2f;
+    public float floatAmplitude = 0.05f;
+    public float floatSpeed = 5f;
 
     [Header("Visual")]
     public GameObject indicatorPrefab;
 
-    private GameObject indicatorInstance;
     private Enemy currentTarget;
+    private Renderer currentTargetRenderer;
     public Enemy CurrentTarget => currentTarget;
 
     private List<Enemy> enemiesInRange = new List<Enemy>();
 
     public static event Action<Enemy> OnEnemyTargetChanged;
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            InteractionDetector.InitSharedIndicator(indicatorPrefab);
+        }
+    }
 
     private void Update()
     {
@@ -55,12 +64,18 @@ public class CombatTargetSelector : NetworkBehaviour
 
     private void SetTarget(Enemy newTarget)
     {
-        ClearTarget();
+        if (currentTarget == newTarget) return;
+
         currentTarget = newTarget;
 
-        if (indicatorPrefab != null)
+        if (currentTarget != null)
         {
-            indicatorInstance = Instantiate(indicatorPrefab);
+            currentTargetRenderer = currentTarget.GetComponentInChildren<Renderer>();
+        }
+
+        if (InteractionDetector.SharedIndicator != null)
+        {
+            InteractionDetector.SharedIndicator.SetActive(true);
         }
 
         OnEnemyTargetChanged?.Invoke(currentTarget);
@@ -71,10 +86,11 @@ public class CombatTargetSelector : NetworkBehaviour
         if (currentTarget == null) return;
 
         currentTarget = null;
-        if (indicatorInstance != null)
+        currentTargetRenderer = null;
+
+        if (InteractionDetector.SharedIndicator != null)
         {
-            Destroy(indicatorInstance);
-            indicatorInstance = null;
+            InteractionDetector.SharedIndicator.SetActive(false);
         }
 
         OnEnemyTargetChanged?.Invoke(null);
@@ -82,11 +98,31 @@ public class CombatTargetSelector : NetworkBehaviour
 
     private void UpdateIndicatorPosition()
     {
-        if (indicatorInstance != null && currentTarget != null)
+        if (InteractionDetector.SharedIndicator != null && InteractionDetector.SharedIndicator.activeSelf && currentTarget != null)
         {
-            float floatEffect = Mathf.Sin(Time.time * 5f) * 0.05f;
-            indicatorInstance.transform.position = currentTarget.transform.position + new Vector3(0, targetYOffset + floatEffect, 0);
+            Vector3 targetCenter = GetEnemyCenterPosition(currentTarget);
+            float dynamicYOffset = targetYOffset + (Mathf.Sin(Time.time * floatSpeed) * floatAmplitude);
+
+            InteractionDetector.SharedIndicator.transform.position = targetCenter + new Vector3(0, dynamicYOffset, 0);
+
+            if (InteractionDetector.SharedIndicatorRenderer != null && currentTargetRenderer != null)
+            {
+                InteractionDetector.SharedIndicatorRenderer.sortingOrder = currentTargetRenderer.sortingOrder + 1;
+            }
         }
+    }
+
+    private Vector3 GetEnemyCenterPosition(Enemy target)
+    {
+        Collider2D[] colliders = target.GetComponentsInChildren<Collider2D>();
+        if (colliders.Length > 0)
+        {
+            Collider2D targetCol = colliders.FirstOrDefault(c => !c.isTrigger);
+            if (targetCol == null) targetCol = colliders[0];
+
+            return new Vector3(targetCol.bounds.center.x, targetCol.bounds.max.y, target.transform.position.z);
+        }
+        return target.transform.position;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)

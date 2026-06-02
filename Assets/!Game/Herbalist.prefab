@@ -64,9 +64,25 @@ PrefabInstance:
       propertyPath: m_Name
       value: Herbalist
       objectReference: {fileID: 0}
+    - target: {fileID: 8833251898576531316, guid: 6fbad1a74f443ee4dae02117603a4fd1, type: 3}
+      propertyPath: m_Size.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8833251898576531316, guid: 6fbad1a74f443ee4dae02117603a4fd1, type: 3}
+      propertyPath: m_Size.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8833251898576531316, guid: 6fbad1a74f443ee4dae02117603a4fd1, type: 3}
+      propertyPath: m_Offset.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8833251898576531316, guid: 6fbad1a74f443ee4dae02117603a4fd1, type: 3}
+      propertyPath: m_Offset.y
+      value: -0.7
+      objectReference: {fileID: 0}
     - target: {fileID: 8838461781748227053, guid: 6fbad1a74f443ee4dae02117603a4fd1, type: 3}
       propertyPath: <UniqueID>k__BackingField
-      value: Herbalist_0_0
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

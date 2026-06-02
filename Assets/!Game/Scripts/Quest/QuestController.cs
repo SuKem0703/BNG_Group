@@ -12,6 +12,7 @@ public class QuestController : MonoBehaviour
     public List<string> handInQuestIDs = new();
 
     public static event System.Action<string> OnQuestStatusUpdated;
+
     private void Awake()
     {
         if (Instance == null)
@@ -39,7 +40,6 @@ public class QuestController : MonoBehaviour
         if (IsQuestActive(quest.questID)) return;
 
         QuestProgress newQuest = new QuestProgress(quest);
-
         Dictionary<int, int> currentItemCounts = InventoryController.Instance.GetItemCounts();
 
         foreach (var questObject in newQuest.questObjects)
@@ -48,16 +48,21 @@ public class QuestController : MonoBehaviour
             {
                 if (int.TryParse(questObject.objectID, out int itemID))
                 {
-                    int baseline = currentItemCounts.GetValueOrDefault(itemID, 0);
-                    newQuest.baselineCounts[itemID] = baseline;
+                    if (questObject.allowRetroactive)
+                    {
+                        newQuest.baselineCounts[itemID] = 0;
+                    }
+                    else
+                    {
+                        int baseline = currentItemCounts.GetValueOrDefault(itemID, 0);
+                        newQuest.baselineCounts[itemID] = baseline;
+                    }
                 }
             }
         }
 
         activeQuests.Add(newQuest);
-
         CheckInventoryForQuest();
-
         OnQuestStatusUpdated?.Invoke(quest.questID);
     }
 
@@ -78,28 +83,16 @@ public class QuestController : MonoBehaviour
                 if (!int.TryParse(questObject.objectID, out int itemID)) continue;
 
                 int currentTotalCount = itemCounts.GetValueOrDefault(itemID, 0);
-
                 int baselineCount = quest.baselineCounts.GetValueOrDefault(itemID, 0);
-
                 int newAmount = currentTotalCount - baselineCount;
 
-                if (newAmount < 0)
-                {
-                    newAmount = 0;
-                }
-
+                if (newAmount < 0) newAmount = 0;
                 newAmount = Mathf.Min(newAmount, questObject.requiredAmount);
 
                 if (questObject.currentAmount != newAmount)
                 {
                     questObject.currentAmount = newAmount;
-
                     questProgressChanged = true;
-
-                    if (questObject.IsCompleted)
-                    {
-                        Debug.Log($"Quest object {questObject.objectTitle} completed.");
-                    }
                 }
             }
             if (questProgressChanged)
@@ -127,8 +120,6 @@ public class QuestController : MonoBehaviour
                     {
                         questObject.currentAmount = questObject.requiredAmount;
                         questProgressChanged = true;
-
-                        Debug.Log($"Location Reached: {questObject.objectTitle}");
                     }
                 }
             }
@@ -199,8 +190,6 @@ public class QuestController : MonoBehaviour
                     {
                         questObject.currentAmount++;
                         questProgressChanged = true;
-
-                        Debug.Log($"Enemy Defeated: {questObject.objectTitle} ({questObject.currentAmount}/{questObject.requiredAmount})");
                     }
                 }
             }
@@ -217,11 +206,13 @@ public class QuestController : MonoBehaviour
             questUI.UpdateQuestUI();
         }
     }
+
     public bool IsQuestCompleted(string questID)
     {
         QuestProgress quest = activeQuests.Find(q => q.QuestID == questID);
         return quest != null && quest.questObjects.TrueForAll(o => o.IsCompleted);
     }
+
     public void HandInQuest(string questID)
     {
         if (!RemoveRequiredItemsFromInventory(questID))
@@ -240,10 +231,12 @@ public class QuestController : MonoBehaviour
             OnQuestStatusUpdated?.Invoke(questID);
         }
     }
+
     public bool IsQuestHandedIn(string questID)
     {
         return handInQuestIDs.Contains(questID);
     }
+
     public bool RemoveRequiredItemsFromInventory(string questID)
     {
         QuestProgress quest = activeQuests.Find(q => q.QuestID == questID);
@@ -253,9 +246,12 @@ public class QuestController : MonoBehaviour
 
         foreach (QuestObject questObject in quest.questObjects)
         {
-            if (questObject.objectType == ObjectType.CollectItem && int.TryParse(questObject.objectID, out int itemID))
+            if (questObject.objectType == ObjectType.CollectItem && questObject.removeItemOnComplete)
             {
-                requiredItems[itemID] = questObject.requiredAmount;
+                if (int.TryParse(questObject.objectID, out int itemID))
+                {
+                    requiredItems[itemID] = questObject.requiredAmount;
+                }
             }
         }
 
@@ -276,10 +272,10 @@ public class QuestController : MonoBehaviour
 
         return true;
     }
+
     public void LoadQuestProgress(List<QuestProgress> saveQuest)
     {
         activeQuests = new List<QuestProgress>();
-
         Dictionary<int, int> currentItemCounts = InventoryController.Instance.GetItemCounts();
 
         if (saveQuest != null)
@@ -302,9 +298,7 @@ public class QuestController : MonoBehaviour
                                 if (int.TryParse(progress.questObjects[i].objectID, out int itemID))
                                 {
                                     int totalCountInInventory = currentItemCounts.GetValueOrDefault(itemID, 0);
-
                                     int baseline = totalCountInInventory - savedObj.currentAmount;
-
                                     progress.baselineCounts[itemID] = baseline;
                                 }
                             }
@@ -312,16 +306,11 @@ public class QuestController : MonoBehaviour
                     }
                     activeQuests.Add(progress);
                 }
-                else
-                {
-                    Debug.LogWarning($"Không tìm thấy Quest với ID: {savedProgress.questID}");
-                }
             }
         }
 
         CheckInventoryForQuest();
     }
-
 
     public Quest FindQuestByID(string questID)
     {

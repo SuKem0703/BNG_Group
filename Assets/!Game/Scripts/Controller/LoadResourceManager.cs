@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 // Class này chịu trách nhiệm giữ các prefab UI dùng chung
 public class LoadResourceManager : MonoBehaviour
@@ -13,6 +14,7 @@ public class LoadResourceManager : MonoBehaviour
     [SerializeField] private GameObject mainLoadingCanvasPrefab;
     [SerializeField] private GameObject miniLoadingScreenPrefab;
     [SerializeField] private GameObject mapInfoUIPrefab;
+    [SerializeField] private Sprite elricPortrait;
     public GameObject ConfirmUIPrefab => confirmUIPrefab;
     public GameObject NotifyUIPrefab => notifyUIPrefab;
     public GameObject SelectionBoxPrefab => selectionBoxPrefab;
@@ -20,6 +22,7 @@ public class LoadResourceManager : MonoBehaviour
     public GameObject MainLoadingCanvasPrefab => mainLoadingCanvasPrefab;
     public GameObject MiniLoadingScreenPrefab => miniLoadingScreenPrefab;
     public GameObject MapInfoUIPrefab => mapInfoUIPrefab;
+    public Sprite ElricPortrait => elricPortrait;
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -71,6 +74,10 @@ public class LoadResourceManager : MonoBehaviour
         if (mapInfoUIPrefab == null)
         {
             Debug.LogWarning("MapInfoUIPrefab chưa được gán.");
+        }
+        if (elricPortrait == null)
+        {
+            Debug.LogWarning("ElricPortrait chưa được gán.");
         }
     }
 

@@ -13,10 +13,15 @@ MonoBehaviour:
   m_Name: Can't Scene Move
   m_EditorClassIdentifier: Assembly-CSharp::MonologueData
   typingSpeed: 0.05
+  autoProgressDelay: 1.5
   dialogueLines:
   - "M\xECnh ch\u01B0a th\u1EC3 \u0111i l\u1ED1i n\xE0y. V\u1EABn c\xF2n vi\u1EC7c
     ph\u1EA3i l\xE0m \u1EDF \u0111\xE2y."
   autoProgressLines: 01
-  autoProgressDelay: 1.5
-  questToGive: {fileID: 0}
+  endDialogueLines: 01
+  quest: {fileID: 0}
+  questInProgressIndex: 0
+  questCompletedIndex: 0
+  noMoreQuestsIndex: 0
   triggerQuestAtEnd: 0
+  handleQuestAtEnd: 0

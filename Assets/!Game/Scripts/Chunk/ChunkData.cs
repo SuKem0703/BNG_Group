@@ -7,7 +7,9 @@ public enum EntityType
     Interactable,   // Monologue (Độc thoại, biển báo, tương tác 1 lần)
     NPC,            // NPC (Nhiều hội thoại, có choice)
     Enemy,          // Quái vật
-    Container       // Rương, kho đồ
+    Container,       // Rương, kho đồ
+    QuestLocation,
+    MapTransition
 }
 
 [System.Serializable]
@@ -36,9 +38,13 @@ public class EntitySaveData
     public ItemRarity fixedRarity;
     public QualityFactorMode qualityMode;
 
-    // --- Dữ liệu Collider Tương Tác ---
-    public Vector2 triggerSize;
-    public Vector2 triggerOffset;
+    // --- Dữ liệu cho Map Transition ---
+    public string targetSceneName;
+    public Vector3 targetPosition;
+    public string mapBoundaryName;
+    public bool mapMoveCanEnter;
+    public string reqQuestID;
+    public bool[] reqQuestStates;
 }
 
 [System.Serializable]

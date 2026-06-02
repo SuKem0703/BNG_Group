@@ -7,7 +7,7 @@ public abstract class BaseDialogueData : ScriptableObject
     public float autoProgressDelay = 1.5f;
 
     [Header("Content")]
-    [TextArea(3, 10)]
+    [TextArea(2, 10)]
     public string[] dialogueLines;
     public bool[] autoProgressLines;
     public bool[] endDialogueLines;
@@ -27,6 +27,7 @@ public abstract class BaseDialogueData : ScriptableObject
 public class DialogueChoice
 {
     public int dialogueIndex;
+    [TextArea(2, 10)]
     public string[] choices;
     public int[] nextDialogueIndexes;
     public bool[] endDialogues;

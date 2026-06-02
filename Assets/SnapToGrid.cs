@@ -1,16 +1,18 @@
+#if UNITY_EDITOR
+
 using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class SnapToGrid : MonoBehaviour
 {
-    public float gridSize = 1f;
+    public float gridSize = 0.5f;
 
     private void Update()
     {
         if (!Application.isPlaying)
         {
-            if (gridSize <= 0f) gridSize = 1f;
+            if (gridSize <= 0f) gridSize = 0.5f;
 
             Vector3 pos = transform.position;
             transform.position = new Vector3
@@ -22,3 +24,5 @@ public class SnapToGrid : MonoBehaviour
         }
     }
 }
+
+#endif

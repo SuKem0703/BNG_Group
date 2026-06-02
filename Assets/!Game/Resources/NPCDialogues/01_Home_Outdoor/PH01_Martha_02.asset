@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f2a72aeb33766d42868f6d9de333142, type: 3}
+  m_Name: PH01_Martha_02
+  m_EditorClassIdentifier: Assembly-CSharp::NPCDialogueData
+  typingSpeed: 0.05
+  autoProgressDelay: 1.5
+  dialogueLines:
+  - "Con \u0111\u1EBFn \u0111\xFAng l\xFAc l\u1EAFm, v\xE0o nh\xE0 t\xECm t\xFAi
+    h\u1EA1t gi\u1ED1ng Hoa H\u01B0\u1EDBng D\u01B0\u01A1ng trong r\u01B0\u01A1ng
+    g\u1ED7 r\u1ED3i mang ra \u0111\xE2y gieo gi\xFAp m\u1EB9."
+  - "Nhanh ch\xE2n l\xEAn Elric! V\xE0o nh\xE0 l\u1EA5y t\xFAi h\u1EA1t gi\u1ED1ng
+    h\u01B0\u1EDBng d\u01B0\u01A1ng trong r\u01B0\u01A1ng g\u1ED7, sau \u0111\xF3
+    mang ra \u0111\xE2y gieo xu\u1ED1ng \u0111\u1EA5t gi\xFAp m\u1EB9. \u0110\u1EEBng
+    c\xF3 la c\xE0 n\u1EEFa!"
+  - "T\u1EA1m \u1ED5n r\u1ED3i \u0111\u1EA5y. Ch\u1ECBu kh\xF3 t\u01B0\u1EDBi t\u1EAFm
+    v\xE0i b\u1EEFa l\xE0 n\u1EA3y m\u1EA7m th\xF4i."
+  autoProgressLines: 010101
+  endDialogueLines: 010101
+  quest: {fileID: 11400000, guid: 0c299b21135885943815cc94ea83f3a1, type: 2}
+  questInProgressIndex: 1
+  questCompletedIndex: 2
+  noMoreQuestsIndex: -1
+  npcName: Martha
+  npcPortrait: {fileID: -875880131977736440, guid: 66cc4a7b23c823245a5698a4c18f26bf, type: 3}
+  choices: []
+  hideWhenInProgress: 0
+  hideWhenCompleted: 0
+  hideWhenHandedIn: 0
+  triggerOnEnter_NotStarted: 0
+  triggerOnEnter_InProgress: 0
+  triggerOnEnter_Completed: 0
+  triggerOnEnter_NoMoreQuests: 0
+  autoGiveQuestOnEnd: 1
