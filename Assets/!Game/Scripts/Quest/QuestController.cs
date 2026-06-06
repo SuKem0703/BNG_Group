@@ -27,11 +27,11 @@ public class QuestController : MonoBehaviour
 
         if (InventoryController.Instance != null)
         {
-            InventoryController.Instance.OnInventoryChanged += (data, slotCount) => CheckInventoryForQuest();
+            InventoryController.Instance.OnInventoryChanged += (data, slotCount) => CheckInventoryForQuest(false);
         }
         else
         {
-            Debug.LogError("QuestController Awake: InventoryController.Instance is null!");
+            Debug.LogError("<color=#FF0000>QuestController Awake: InventoryController.Instance is null!</color>");
         }
     }
 
@@ -62,17 +62,19 @@ public class QuestController : MonoBehaviour
         }
 
         activeQuests.Add(newQuest);
-        CheckInventoryForQuest();
+        CheckInventoryForQuest(true);
         OnQuestStatusUpdated?.Invoke(quest.questID);
     }
 
     public bool IsQuestActive(string questID) => activeQuests.Exists(q => q.quest.questID == questID);
 
-    public void CheckInventoryForQuest()
+    public void CheckInventoryForQuest(bool suppressNotify = false)
     {
         if (InventoryController.Instance == null) return;
 
         Dictionary<int, int> itemCounts = InventoryController.Instance.GetItemCounts();
+        List<QuestProgress> questsToAutoHandIn = new List<QuestProgress>();
+
         foreach (QuestProgress quest in activeQuests)
         {
             bool questProgressChanged = false;
@@ -91,6 +93,11 @@ public class QuestController : MonoBehaviour
 
                 if (questObject.currentAmount != newAmount)
                 {
+                    if (!suppressNotify && newAmount > questObject.currentAmount)
+                    {
+                        GameNotify.Show($"<color=#00FFFF>{questObject.objectTitle}: {newAmount}/{questObject.requiredAmount}</color>");
+                    }
+                    
                     questObject.currentAmount = newAmount;
                     questProgressChanged = true;
                 }
@@ -98,14 +105,23 @@ public class QuestController : MonoBehaviour
             if (questProgressChanged)
             {
                 OnQuestStatusUpdated?.Invoke(quest.QuestID);
+                
+                if (quest.IsCompleted && quest.quest.autoHandInOnComplete)
+                {
+                    questsToAutoHandIn.Add(quest);
+                }
             }
         }
+
+        foreach (var q in questsToAutoHandIn) CompleteAndHandInQuest(q);
+
         if (questUI != null) questUI.UpdateQuestUI();
     }
 
     public void MarkLocationReached(string locationID)
     {
         bool anyQuestUpdated = false;
+        List<QuestProgress> questsToAutoHandIn = new List<QuestProgress>();
 
         foreach (QuestProgress quest in activeQuests)
         {
@@ -120,6 +136,8 @@ public class QuestController : MonoBehaviour
                     {
                         questObject.currentAmount = questObject.requiredAmount;
                         questProgressChanged = true;
+                        
+                        GameNotify.Show($"<color=#00FFFF>{questObject.objectTitle}: {questObject.currentAmount}/{questObject.requiredAmount}</color>");
                     }
                 }
             }
@@ -128,18 +146,19 @@ public class QuestController : MonoBehaviour
             {
                 OnQuestStatusUpdated?.Invoke(quest.QuestID);
                 anyQuestUpdated = true;
+                
+                if (quest.IsCompleted && quest.quest.autoHandInOnComplete) questsToAutoHandIn.Add(quest);
             }
         }
 
-        if (anyQuestUpdated)
-        {
-            questUI.UpdateQuestUI();
-        }
+        foreach (var q in questsToAutoHandIn) CompleteAndHandInQuest(q);
+        if (anyQuestUpdated) questUI.UpdateQuestUI();
     }
 
     public void MarkCropPlanted(int seedItemID)
     {
         bool anyQuestUpdated = false;
+        List<QuestProgress> questsToAutoHandIn = new List<QuestProgress>();
 
         foreach (QuestProgress quest in activeQuests)
         {
@@ -155,6 +174,8 @@ public class QuestController : MonoBehaviour
                         {
                             questObject.currentAmount++;
                             questProgressChanged = true;
+                            
+                            GameNotify.Show($"<color=#00FFFF>{questObject.objectTitle}: {questObject.currentAmount}/{questObject.requiredAmount}</color>");
                         }
                     }
                 }
@@ -164,18 +185,19 @@ public class QuestController : MonoBehaviour
             {
                 OnQuestStatusUpdated?.Invoke(quest.QuestID);
                 anyQuestUpdated = true;
+                
+                if (quest.IsCompleted && quest.quest.autoHandInOnComplete) questsToAutoHandIn.Add(quest);
             }
         }
 
-        if (anyQuestUpdated)
-        {
-            questUI.UpdateQuestUI();
-        }
+        foreach (var q in questsToAutoHandIn) CompleteAndHandInQuest(q);
+        if (anyQuestUpdated) questUI.UpdateQuestUI();
     }
 
     public void MarkEnemyDefeated(string enemyID)
     {
         bool anyQuestUpdated = false;
+        List<QuestProgress> questsToAutoHandIn = new List<QuestProgress>();
 
         foreach (QuestProgress quest in activeQuests)
         {
@@ -190,6 +212,8 @@ public class QuestController : MonoBehaviour
                     {
                         questObject.currentAmount++;
                         questProgressChanged = true;
+                        
+                        GameNotify.Show($"<color=#00FFFF>{questObject.objectTitle}: {questObject.currentAmount}/{questObject.requiredAmount}</color>");
                     }
                 }
             }
@@ -198,13 +222,20 @@ public class QuestController : MonoBehaviour
             {
                 OnQuestStatusUpdated?.Invoke(quest.QuestID);
                 anyQuestUpdated = true;
+                
+                if (quest.IsCompleted && quest.quest.autoHandInOnComplete) questsToAutoHandIn.Add(quest);
             }
         }
 
-        if (anyQuestUpdated)
-        {
-            questUI.UpdateQuestUI();
-        }
+        foreach (var q in questsToAutoHandIn) CompleteAndHandInQuest(q);
+        if (anyQuestUpdated) questUI.UpdateQuestUI();
+    }
+
+    private void CompleteAndHandInQuest(QuestProgress questProgress)
+    {
+        RewardController.Instance?.GiveQuestReward(questProgress.quest);
+        HandInQuest(questProgress.QuestID);
+        GameNotify.Show($"<color=#FFD700>Đã hoàn thành nhiệm vụ: {questProgress.quest.questName}</color>");
     }
 
     public bool IsQuestCompleted(string questID)
@@ -217,7 +248,7 @@ public class QuestController : MonoBehaviour
     {
         if (!RemoveRequiredItemsFromInventory(questID))
         {
-            Debug.LogWarning($"Failed to remove required items for quest {questID}.");
+            Debug.LogWarning($"<color=#FFA500>Failed to remove required items for quest {questID}.</color>");
             return;
         }
         QuestProgress quest = activeQuests.Find(q => q.QuestID == questID);
@@ -260,7 +291,7 @@ public class QuestController : MonoBehaviour
         {
             if (itemCounts.GetValueOrDefault(item.Key) < item.Value)
             {
-                Debug.LogWarning($"Not enough items in inventory to remove for quest {questID}. Required: {item.Value}, Available: {itemCounts.GetValueOrDefault(item.Key, 0)}");
+                Debug.LogWarning($"<color=#FFA500>Not enough items in inventory to remove for quest {questID}. Required: {item.Value}, Available: {itemCounts.GetValueOrDefault(item.Key, 0)}</color>");
                 return false;
             }
         }
@@ -309,7 +340,7 @@ public class QuestController : MonoBehaviour
             }
         }
 
-        CheckInventoryForQuest();
+        CheckInventoryForQuest(true);
     }
 
     public Quest FindQuestByID(string questID)

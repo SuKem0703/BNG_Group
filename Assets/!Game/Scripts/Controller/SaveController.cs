@@ -555,16 +555,14 @@ public class SaveController : MonoBehaviour
             pendingSceneName = null;
         }
 
-        var boundaryObj = GameObject.Find(saveData?.mapBoundary);
-        var boundary = boundaryObj != null ? boundaryObj.GetComponent<BoxCollider2D>() : null;
+        BoxCollider2D boundary = MapBoundary.GetBoundary(saveData?.mapBoundary);
 
         if (boundary != null)
         {
-            var confiner = FindFirstObjectByType<CinemachineConfiner2D>();
-            if (confiner != null)
+            var camController = FindFirstObjectByType<CameraController>();
+            if (camController != null)
             {
-                confiner.BoundingShape2D = boundary;
-                confiner.InvalidateBoundingShapeCache();
+                camController.UpdateMapBounds(boundary);
             }
         }
 

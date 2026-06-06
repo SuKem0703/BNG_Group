@@ -18,22 +18,15 @@ MonoBehaviour:
     m\xF3n canh cho b\u1EEFa tr\u01B0a. V\xF9ng su\u1ED1i nh\u1ECF ven r\u1EEBng
     l\xE0 n\u01A1i tuy\u1EC7t v\u1EDDi \u0111\u1EC3 th\u01B0 gi\xE3n, v\xE0 t\u1ED1t
     nh\u1EA5t l\xE0 kh\xF4ng n\xEAn ki\u1EBFm chuy\u1EC7n."
+  autoHandInOnComplete: 1
   questObjects:
-  - objectID: MQ_CH01_PH01_03
-    objectTitle: "Trang b\u1ECB \u0111\u1ED3 ngh\u1EC1: T\xECm v\xE0 l\u1EA5y C\u1EA7n
-      C\xE2u."
-    objectType: 0
-    requiredAmount: 1
-    currentAmount: 0
-    allowRetroactive: 0
-    removeItemOnComplete: 0
   - objectID: MQ_CH01_PH01_03
     objectTitle: "\u0110\u1EBFn khu v\u1EF1c con su\u1ED1i nh\u1ECF (Ranh gi\u1EDBi
       R\u1EEBng T\xE0n S\u01B0\u01A1ng T\xE2y B\u1EAFc)."
     objectType: 2
     requiredAmount: 1
     currentAmount: 0
-    allowRetroactive: 0
+    allowRetroactive: 1
     removeItemOnComplete: 1
   questRewards:
   - rewardType: 3

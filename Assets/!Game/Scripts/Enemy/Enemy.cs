@@ -30,6 +30,8 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
     public bool isQuestEnemy = false;
     public string UniqueID;
 
+    public EnemySpawnArea parentArea { get; private set; }
+
     public string enemyName => data != null ? data.enemyName : "Enemy";
     public string questTargetID => data != null ? (string.IsNullOrEmpty(data.questTargetID) ? data.enemyName : data.questTargetID) : "";
     public EnemyRank enemyRank => data != null ? data.enemyRank : EnemyRank.Normal;
@@ -119,6 +121,11 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
             if (SaveController.IsDataLoaded) CheckPersistence();
             else SaveController.OnDataLoaded += HandleDataLoaded;
         }
+    }
+
+    public void SetSpawnArea(EnemySpawnArea area)
+    {
+        parentArea = area;
     }
 
     private void GetTimeMultipliers(out float statMult, out float speedMult, out float rewardMult)
@@ -379,7 +386,7 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         if (enemyAnimator != null) enemyAnimator.TriggerHurt();
     }
 
-    public virtual void Die()
+    public virtual void Die(bool giveReward = true)
     {
         if (hasProcessedDeath) return;
         hasProcessedDeath = true;
@@ -391,94 +398,93 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         healthLogic?.StopHurt();
         aiLogic?.StopMovement();
 
-        if (data != null && SaveController.Instance != null)
+        if (giveReward)
         {
-            SaveController.Instance.RecordEnemyDefeat(data.enemyName);
-        }
-
-        uint subSeed = SaveController.MasterSeed + (uint)NetworkObjectId;
-        SeededRandom rng = new SeededRandom(subSeed);
-
-        int totalExpDrop = Mathf.FloorToInt(experienceReward * (0.9f + rng.NextFloat() * 0.2f));
-        int totalGoldDrop = Mathf.FloorToInt(goldReward * (0.9f + rng.NextFloat() * 0.2f));
-        ulong mvpClientId = 999;
-
-        if (IsServer)
-        {
-            if (damageContributions.Count > 0)
+            if (data != null && SaveController.Instance != null)
             {
-                var mvpEntry = damageContributions.OrderByDescending(x => x.Value).First();
-                mvpClientId = mvpEntry.Key;
-                float totalDamageGained = damageContributions.Sum(x => x.Value);
+                SaveController.Instance.RecordEnemyDefeat(data.enemyName);
+            }
 
-                foreach (var entry in damageContributions)
+            uint subSeed = SaveController.MasterSeed + (uint)NetworkObjectId;
+            SeededRandom rng = new SeededRandom(subSeed);
+
+            int totalExpDrop = Mathf.FloorToInt(experienceReward * (0.9f + rng.NextFloat() * 0.2f));
+            int totalGoldDrop = Mathf.FloorToInt(goldReward * (0.9f + rng.NextFloat() * 0.2f));
+            ulong mvpClientId = 999;
+
+            if (IsServer)
+            {
+                if (damageContributions.Count > 0)
                 {
-                    ulong clientId = entry.Key;
-                    int dmgDone = entry.Value;
+                    var mvpEntry = damageContributions.OrderByDescending(x => x.Value).First();
+                    mvpClientId = mvpEntry.Key;
+                    float totalDamageGained = damageContributions.Sum(x => x.Value);
 
-                    float contributionRatio = (float)dmgDone / totalDamageGained;
-
-                    int playerExp = Mathf.FloorToInt(totalExpDrop * contributionRatio);
-                    int playerGold = Mathf.FloorToInt(totalGoldDrop * contributionRatio);
-
-                    if (playerExp > 0 || playerGold > 0)
+                    foreach (var entry in damageContributions)
                     {
-                        ClientRpcParams clientRpcParams = new ClientRpcParams
+                        ulong clientId = entry.Key;
+                        int dmgDone = entry.Value;
+
+                        float contributionRatio = (float)dmgDone / totalDamageGained;
+
+                        int playerExp = Mathf.FloorToInt(totalExpDrop * contributionRatio);
+                        int playerGold = Mathf.FloorToInt(totalGoldDrop * contributionRatio);
+
+                        if (playerExp > 0 || playerGold > 0)
                         {
-                            Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { clientId } }
-                        };
-                        RewardKillerClientRpc(playerExp, playerGold, clientRpcParams);
+                            ClientRpcParams clientRpcParams = new ClientRpcParams
+                            {
+                                Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { clientId } }
+                            };
+                            RewardKillerClientRpc(playerExp, playerGold, clientRpcParams);
+                        }
                     }
                 }
             }
-            else
+
+            if (QuestController.Instance != null && !string.IsNullOrEmpty(questTargetID))
+                QuestController.Instance.MarkEnemyDefeated(questTargetID);
+
+            if (isQuestEnemy && SaveController.Instance != null && !string.IsNullOrEmpty(UniqueID))
             {
-                // Trường hợp quái chết do nguyên nhân khác (VD: môi trường, code), hoặc không có ai đánh mà vẫn chết
+                SaveController.Instance.MarkCollected(SceneManager.GetActiveScene().name, UniqueID);
+                SaveController.Instance.TriggerAutoSave();
             }
-        }
 
-        if (QuestController.Instance != null && !string.IsNullOrEmpty(questTargetID))
-            QuestController.Instance.MarkEnemyDefeated(questTargetID);
-
-        if (isQuestEnemy && SaveController.Instance != null && !string.IsNullOrEmpty(UniqueID))
-        {
-            SaveController.Instance.MarkCollected(SceneManager.GetActiveScene().name, UniqueID);
-            SaveController.Instance.TriggerAutoSave();
-        }
-
-        if (IsServer && data != null && data.lootTable != null)
-        {
-            int droppedItemID = data.lootTable.GetRandomDrop(rng);
-
-            if (droppedItemID > 0)
+            if (IsServer && data != null && data.lootTable != null)
             {
-                GameObject prefabToDrop = ItemDictionary.Instance != null ? ItemDictionary.Instance.GetItemPrefab(droppedItemID) : null;
+                int droppedItemID = data.lootTable.GetRandomDrop(rng);
 
-                if (prefabToDrop != null)
+                if (droppedItemID > 0)
                 {
-                    Vector3 dropPos = transform.position + new Vector3(0, 0.5f, 0);
-                    GameObject droppedItem = Instantiate(prefabToDrop, dropPos, Quaternion.identity);
+                    GameObject prefabToDrop = ItemDictionary.Instance != null ? ItemDictionary.Instance.GetItemPrefab(droppedItemID) : null;
 
-                    Item item = droppedItem.GetComponent<Item>();
-                    if (item != null)
+                    if (prefabToDrop != null)
                     {
-                        item.ownerClientId = mvpClientId;
+                        Vector3 dropPos = transform.position + new Vector3(0, 0.5f, 0);
+                        GameObject droppedItem = Instantiate(prefabToDrop, dropPos, Quaternion.identity);
 
-                        uint itemStatSeed = (uint)rng.NextInt(0, int.MaxValue);
-                        SeededRandom itemRng = new SeededRandom(itemStatSeed);
+                        Item item = droppedItem.GetComponent<Item>();
+                        if (item != null)
+                        {
+                            item.ownerClientId = mvpClientId;
 
-                        item.rarity = ItemGenerationHelper.GetRandomRarity(itemRng);
-                        item.qualityFactor = ItemGenerationHelper.GetWeightedQualityFactor(itemRng);
-                        item.dropSeed = itemStatSeed;
-                    }
+                            uint itemStatSeed = (uint)rng.NextInt(0, int.MaxValue);
+                            SeededRandom itemRng = new SeededRandom(itemStatSeed);
 
-                    var netObj = droppedItem.GetComponent<NetworkObject>();
-                    if (netObj != null && !netObj.IsSpawned) netObj.Spawn();
+                            item.rarity = ItemGenerationHelper.GetRandomRarity(itemRng);
+                            item.qualityFactor = ItemGenerationHelper.GetWeightedQualityFactor(itemRng);
+                            item.dropSeed = itemStatSeed;
+                        }
 
-                    BounceEffect bounce = droppedItem.GetComponent<BounceEffect>();
-                    if (bounce != null)
-                    {
-                        bounce.StartBounce();
+                        var netObj = droppedItem.GetComponent<NetworkObject>();
+                        if (netObj != null && !netObj.IsSpawned) netObj.Spawn();
+
+                        BounceEffect bounce = droppedItem.GetComponent<BounceEffect>();
+                        if (bounce != null)
+                        {
+                            bounce.StartBounce();
+                        }
                     }
                 }
             }

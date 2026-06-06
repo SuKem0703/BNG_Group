@@ -4,6 +4,8 @@ using Unity.Netcode;
 
 public class CameraController : MonoBehaviour
 {
+    public static CameraController Instance { get; private set; }
+
     [Header("Basic Settings")]
     public float defaultSize = 5f;
     public float maxSize = 10f;
@@ -37,6 +39,18 @@ public class CameraController : MonoBehaviour
     private float currentVelocity;
 
     private Vector2 debugClosestPoint;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     void Start()
     {

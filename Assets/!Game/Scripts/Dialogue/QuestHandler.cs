@@ -25,31 +25,35 @@ public class QuestHandler : MonoBehaviour
 
     private void Start()
     {
-        if (SaveController.IsDataLoaded)
-        {
-            UpdateActiveDialogue();
-            SyncQuestState();
-            UpdateVisibility();
-        }
-        else
+        if (!SaveController.IsDataLoaded)
         {
             SaveController.OnDataLoaded += HandleDataLoaded;
         }
+    }
 
+    private void OnEnable()
+    {
         QuestController.OnQuestStatusUpdated += HandleQuestUpdate;
+        
+        if (SaveController.IsDataLoaded)
+        {
+            RefreshState();
+        }
+    }
+
+    private void OnDisable()
+    {
+        QuestController.OnQuestStatusUpdated -= HandleQuestUpdate;
     }
 
     private void OnDestroy()
     {
         SaveController.OnDataLoaded -= HandleDataLoaded;
-        QuestController.OnQuestStatusUpdated -= HandleQuestUpdate;
     }
 
     private void HandleDataLoaded()
     {
-        UpdateActiveDialogue();
-        SyncQuestState();
-        UpdateVisibility();
+        RefreshState();
         SaveController.OnDataLoaded -= HandleDataLoaded;
     }
 
@@ -88,6 +92,11 @@ public class QuestHandler : MonoBehaviour
             else if (isHandedIn)
             {
                 if (data.hideWhenHandedIn) shouldHide = true;
+                break;
+            }
+            else
+            {
+                if (data.hideWhenNotStarted) shouldHide = true;
                 break;
             }
         }

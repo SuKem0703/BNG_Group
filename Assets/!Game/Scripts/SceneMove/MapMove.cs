@@ -188,14 +188,13 @@ public class MapMove : MonoBehaviour
 
         if (newMapBoundary != null)
         {
-            var camController = FindFirstObjectByType<CameraController>();
-            if (camController != null)
+            if (CameraController.Instance != null)
             {
-                camController.UpdateMapBounds(newMapBoundary);
+                CameraController.Instance.UpdateMapBounds(newMapBoundary);
             }
             else
             {
-                var confiner = FindFirstObjectByType<CinemachineConfiner2D>();
+                var confiner = CameraController.Instance.GetComponent<CinemachineConfiner2D>();
                 if (confiner != null)
                 {
                     confiner.BoundingShape2D = newMapBoundary;
@@ -204,7 +203,7 @@ public class MapMove : MonoBehaviour
             }
         }
 
-        var cam = FindFirstObjectByType<CinemachineCamera>();
+        var cam = CameraController.Instance?.GetComponent<CinemachineCamera>();
         if (cam != null) cam.PreviousStateIsValid = false;
 
         Debug.Log($"[SceneMapMove] Đã dịch chuyển nội bộ tới {playerPosition}");

@@ -6,7 +6,6 @@ public class MapBoundary : MonoBehaviour
 {
     private static Dictionary<string, BoxCollider2D> boundaryRegistry = new Dictionary<string, BoxCollider2D>();
 
-    [Tooltip("ID của Boundary, tự động lấy theo tên GameObject.")]
     public string boundaryID;
 
 #if UNITY_EDITOR

@@ -44,6 +44,7 @@ MonoBehaviour:
     specialActions: 
     specialTargetNames: []
     giveQuest: 01
+  hideWhenNotStarted: 0
   hideWhenInProgress: 0
   hideWhenCompleted: 1
   hideWhenHandedIn: 0
@@ -51,4 +52,4 @@ MonoBehaviour:
   triggerOnEnter_InProgress: 0
   triggerOnEnter_Completed: 0
   triggerOnEnter_NoMoreQuests: 0
-  autoGiveQuestOnEnd: 0
+  autoGiveQuestOnEnd: 1

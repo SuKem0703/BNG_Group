@@ -14,7 +14,9 @@ namespace Chronicles.StoryEvents.Chapter1
 
         [Header("References")]
         [SerializeField] private Animator animator;
-        [SerializeField] private GameObject npcRootObject;
+        [SerializeField] private GameObject npcActor;
+        [SerializeField] private GameObject npcObject;
+        [SerializeField] private bool hideActorAtEnd = true; 
 
         [Header("NPC Movement Path")]
         [SerializeField] private Transform pointA;
@@ -25,7 +27,7 @@ namespace Chronicles.StoryEvents.Chapter1
 
         [Header("Player Actions")]
         [SerializeField] private Transform pointD;
-        [SerializeField] private float playerWalkSpeed = 3f;
+        [SerializeField] private float playerRunSpeed = 5f; 
 
         [Header("Camera Logic")]
         [SerializeField] private float cameraBlendDuration = 2f;
@@ -34,7 +36,7 @@ namespace Chronicles.StoryEvents.Chapter1
 
         private void Start()
         {
-            if (npcRootObject != null) npcRootObject.SetActive(false);
+            if (npcActor != null) npcActor.SetActive(false);
 
             if (SaveController.IsDataLoaded) CheckSaveState();
             else SaveController.OnDataLoaded += HandleDataLoaded;
@@ -59,22 +61,36 @@ namespace Chronicles.StoryEvents.Chapter1
             if (SaveController.Instance != null && SaveController.Instance.IsCollected(SceneManager.GetActiveScene().name, eventSaveID))
             {
                 eventTriggered = true;
-                if (npcRootObject != null && pointC != null)
+                
+                if (npcActor != null && pointC != null)
                 {
-                    Vector3 endPos = new Vector3(pointC.position.x, pointC.position.y, npcRootObject.transform.position.z);
-                    npcRootObject.transform.position = endPos;
-                    npcRootObject.SetActive(true);
-
-                    // [Sửa lỗi] Đảm bảo khi load save, NPC nằm gục theo đúng hướng đi cuối cùng (B -> C)
-                    if (pointB != null && animator != null)
+                    if (hideActorAtEnd)
                     {
-                        Vector3 finalDir = (pointC.position - pointB.position).normalized;
-                        animator.SetFloat("LastInputX", finalDir.x);
-                        animator.SetFloat("LastInputY", finalDir.y);
+                        npcActor.SetActive(false);
+                    }
+                    else
+                    {
+                        Vector3 endPos = new Vector3(pointC.position.x, pointC.position.y, npcActor.transform.position.z);
+                        npcActor.transform.position = endPos;
+                        npcActor.SetActive(true);
+
+                        if (pointB != null && animator != null)
+                        {
+                            Vector3 finalDir = (pointC.position - pointB.position).normalized;
+                            animator.SetFloat("LastInputX", finalDir.x);
+                            animator.SetFloat("LastInputY", finalDir.y);
+                        }
                     }
                 }
 
-                if (animator != null) animator.SetTrigger("Die");
+                if (animator != null && !hideActorAtEnd) animator.SetTrigger("Die");
+
+                if (npcObject != null && pointC != null)
+                {
+                    Vector3 npcEndPos = new Vector3(pointC.position.x, pointC.position.y, npcObject.transform.position.z);
+                    npcObject.transform.position = npcEndPos;
+                    npcObject.SetActive(true);
+                }
             }
             else
             {
@@ -105,13 +121,18 @@ namespace Chronicles.StoryEvents.Chapter1
 
         private IEnumerator PlayEventSequence()
         {
-            if (npcRootObject == null || pointA == null || pointB == null || pointC == null || animator == null)
+            if (npcActor == null || pointA == null || pointB == null || pointC == null || animator == null)
             {
-                Debug.LogError("[DyingNPC Event] LỖI: Thiếu tham chiếu tới các điểm A, B, C hoặc NPC!");
+                Debug.LogError("[DyingNPC Event] LỖI: Thiếu tham chiếu tới các điểm A, B, C hoặc NPC Actor!");
                 yield break;
             }
 
             GameStateManager.StartLoading();
+
+            if (npcObject != null)
+            {
+                npcObject.SetActive(false);
+            }
 
             CinemachineCamera vCam = null;
             Transform originalTarget = null;
@@ -138,23 +159,23 @@ namespace Chronicles.StoryEvents.Chapter1
                 }
             }
 
-            Vector3 startPos = new Vector3(pointA.position.x, pointA.position.y, npcRootObject.transform.position.z);
-            npcRootObject.transform.position = startPos;
-            npcRootObject.SetActive(true);
+            Vector3 startPos = new Vector3(pointA.position.x, pointA.position.y, npcActor.transform.position.z);
+            npcActor.transform.position = startPos;
+            npcActor.SetActive(true);
 
             if (playerMovement != null)
             {
-                playerMovement.LookTowards(npcRootObject.transform.position);
+                playerMovement.LookTowards(npcActor.transform.position);
             }
 
             if (vCam != null)
             {
-                vCam.Target.TrackingTarget = npcRootObject.transform;
+                vCam.Target.TrackingTarget = npcActor.transform;
                 yield return new WaitForSeconds(cameraBlendDuration);
             }
 
-            yield return StartCoroutine(MoveCharacterToPoint(npcRootObject.transform, animator, pointB.position, npcWalkSpeed));
-            yield return StartCoroutine(MoveCharacterToPoint(npcRootObject.transform, animator, pointC.position, npcWalkSpeed));
+            yield return StartCoroutine(MoveCharacterToPoint(npcActor.transform, animator, pointB.position, npcWalkSpeed));
+            yield return StartCoroutine(MoveCharacterToPoint(npcActor.transform, animator, pointC.position, npcWalkSpeed));
 
             yield return new WaitForSeconds(waitBeforeDie);
             animator.SetTrigger("Die");
@@ -166,17 +187,26 @@ namespace Chronicles.StoryEvents.Chapter1
                 yield return new WaitForSeconds(cameraBlendDuration);
             }
 
+            if (hideActorAtEnd)
+            {
+                npcActor.SetActive(false);
+            }
+
+            if (npcObject != null)
+            {
+                Vector3 realNpcEndPos = new Vector3(pointC.position.x, pointC.position.y, npcObject.transform.position.z);
+                npcObject.transform.position = realNpcEndPos;
+                npcObject.SetActive(true);
+            }
+
             if (playerTransform != null && pointD != null && playerAnimator != null)
             {
                 if (playerAnimHandler != null) playerAnimHandler.enabled = false;
 
-                // [Sửa lỗi] Lưu hướng đi trước khi coroutine snap tọa độ player vào tâm điểm D
                 Vector3 finalDirection = (pointD.position - playerTransform.position).normalized;
+                
+                yield return StartCoroutine(MoveCharacterToPoint(playerTransform, playerAnimator, pointD.position, playerRunSpeed, true));
 
-                yield return StartCoroutine(MoveCharacterToPoint(playerTransform, playerAnimator, pointD.position, playerWalkSpeed));
-
-                // [Sửa lỗi] Cập nhật lại netLastInput cho PlayerMovement thông qua LookTowards 
-                // Sử dụng vị trí ảo (vị trí hiện tại + hướng) để tránh lỗi vector (0,0)
                 if (playerMovement != null && finalDirection != Vector3.zero)
                 {
                     playerMovement.LookTowards(playerTransform.position + finalDirection);
@@ -194,11 +224,12 @@ namespace Chronicles.StoryEvents.Chapter1
             }
         }
 
-        private IEnumerator MoveCharacterToPoint(Transform charTransform, Animator charAnimator, Vector3 targetPoint, float speed)
+        private IEnumerator MoveCharacterToPoint(Transform charTransform, Animator charAnimator, Vector3 targetPoint, float speed, bool isRunningAnim = false)
         {
             Vector3 destination = new Vector3(targetPoint.x, targetPoint.y, charTransform.position.z);
 
-            charAnimator.SetBool("isWalking", true);
+            string currentAnimParam = isRunningAnim ? "isRunning" : "isWalking";
+            charAnimator.SetBool(currentAnimParam, true);
 
             while (Vector3.Distance(charTransform.position, destination) > 0.05f)
             {
@@ -215,7 +246,7 @@ namespace Chronicles.StoryEvents.Chapter1
 
             charTransform.position = destination;
 
-            charAnimator.SetBool("isWalking", false);
+            charAnimator.SetBool(currentAnimParam, false);
             charAnimator.SetFloat("InputX", 0);
             charAnimator.SetFloat("InputY", 0);
         }

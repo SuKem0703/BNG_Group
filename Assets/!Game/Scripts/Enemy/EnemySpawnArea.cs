@@ -8,7 +8,7 @@ public class EnemySpawnArea : MonoBehaviour
     [Header("Cấu hình Spawn")]
     [SerializeField] private GameObject[] enemyPrefabs;
     [SerializeField] private int maxEnemies = 3;
-    [SerializeField] private float respawnDelay = 10f;
+    [SerializeField] private float respawnDelay = 90f;
 
     [SerializeField] private List<GameObject> pooledEnemies = new List<GameObject>();
     private BoxCollider2D spawnBounds;
@@ -112,7 +112,17 @@ public class EnemySpawnArea : MonoBehaviour
         }
 
         var enemyScript = enemyObj.GetComponent<Enemy>();
-        if (enemyScript != null) enemyScript.ResetEnemyState();
+        if (enemyScript != null)
+        {
+            enemyScript.ResetEnemyState();
+            enemyScript.SetSpawnArea(this); 
+        }
+
+        var detectionScript = enemyObj.GetComponentInChildren<EnemyDetection>();
+        if (detectionScript != null)
+        {
+            detectionScript.SetSpawnOrigin(spawnPos);
+        }
 
         var netObj = enemyObj.GetComponent<NetworkObject>();
         if (netObj != null && !netObj.IsSpawned)
@@ -146,6 +156,27 @@ public class EnemySpawnArea : MonoBehaviour
         if (this != null && gameObject.activeInHierarchy)
         {
             SpawnEnemy();
+        }
+    }
+
+    public void AlertEcosystem(Transform targetPlayer, Enemy caller)
+    {
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
+
+        foreach (var enemyObj in pooledEnemies)
+        {
+            if (enemyObj != null && enemyObj.activeInHierarchy)
+            {
+                var allyEnemy = enemyObj.GetComponent<Enemy>();
+                if (allyEnemy != null && allyEnemy != caller && !allyEnemy.isDead)
+                {
+                    var ai = allyEnemy.GetComponent<EnemyCombatAI>();
+                    if (ai != null)
+                    {
+                        ai.OnPlayerDetected(targetPlayer);
+                    }
+                }
+            }
         }
     }
 }

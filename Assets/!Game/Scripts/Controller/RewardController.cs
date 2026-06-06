@@ -73,7 +73,7 @@ public class RewardController : MonoBehaviour
             else
             {
                 item.ShowPopUp();
-                Debug.Log($"Đã nhận phần thưởng: {item.Name} x{amount}");
+                Debug.Log($"<color=#00FF00>Đã nhận phần thưởng: {item.Name} x{amount}</color>");
                 Destroy(itemInstance);
             }
         }
@@ -83,7 +83,7 @@ public class RewardController : MonoBehaviour
     {
         EconomyService.Instance.EarnCurrency("Coin", amount, "Reward", (success) =>
         {
-            if (success) Debug.Log($"Đã nhận thưởng {amount} Coin từ Server.");
+            if (success) Debug.Log($"<color=#00FF00>Đã nhận thưởng {amount} Coin từ Server.</color>");
         });
     }
 
@@ -91,7 +91,7 @@ public class RewardController : MonoBehaviour
     {
         EconomyService.Instance.EarnCurrency("Gem", amount, "Reward", (success) =>
         {
-            if (success) Debug.Log($"Đã nhận thưởng {amount} Gem từ Server.");
+            if (success) Debug.Log($"<color=#00FF00>Đã nhận thưởng {amount} Gem từ Server.</color>");
         });
     }
 
@@ -100,7 +100,7 @@ public class RewardController : MonoBehaviour
         if (PlayerStats.Instance != null)
         {
             PlayerStats.Instance.AddEXP(amount);
-            Debug.Log($"Đã nhận thưởng: {amount} EXP");
+            Debug.Log($"<color=#00FF00>Đã nhận thưởng: {amount} EXP</color>");
         }
     }
 }

@@ -283,7 +283,7 @@ public class VampireKing : Enemy
         }
     }
 
-    public override void Die()
+    public override void Die(bool giveReward = true)
     {
         if (IsServer)
         {

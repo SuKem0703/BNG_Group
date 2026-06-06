@@ -10,6 +10,8 @@ public class EnemyCombatAI : MonoBehaviour
 
     private PlayerStats currentAggroTarget;
 
+    private bool hasCalledForHelp = false;
+
     public void Init(Enemy mainScript)
     {
         enemy = mainScript;
@@ -70,6 +72,12 @@ public class EnemyCombatAI : MonoBehaviour
                 currentAggroTarget = targetStats;
                 currentAggroTarget.ChangeAggro(1);
             }
+
+            if (!hasCalledForHelp && player != null)
+            {
+                CallForHelp(player);
+                hasCalledForHelp = true;
+            }
         }
         else
         {
@@ -78,8 +86,18 @@ public class EnemyCombatAI : MonoBehaviour
                 currentAggroTarget.ChangeAggro(-1);
                 currentAggroTarget = null;
             }
+            
+            hasCalledForHelp = false; 
         }
         isInBattleState = state;
+    }
+
+    private void CallForHelp(Transform targetPlayer)
+    {
+        if (enemy.parentArea != null)
+        {
+            enemy.parentArea.AlertEcosystem(targetPlayer, enemy);
+        }
     }
 
     public void OnUpdate()
@@ -101,14 +119,15 @@ public class EnemyCombatAI : MonoBehaviour
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
-        if (distanceToPlayer <= enemy.detectionRadius)
+        float chaseRadius = enemy.detectionRadius;
+
+        if (distanceToPlayer > chaseRadius)
         {
-            SetBattleState(true, targetStats); // [Cập nhật]
+            OnPlayerLost(player);
+            return;
         }
-        else
-        {
-            SetBattleState(false);
-        }
+
+        SetBattleState(true, targetStats);
 
         if (distanceToPlayer <= enemy.attackRange - enemy.attackTriggerBuffer)
         {
@@ -127,6 +146,7 @@ public class EnemyCombatAI : MonoBehaviour
     private void OnDisable()
     {
         SetBattleState(false);
+        hasCalledForHelp = false;
     }
 
     private void ChasePlayer()
@@ -177,7 +197,7 @@ public class EnemyCombatAI : MonoBehaviour
         if (enemy.netHealth.Value <= 0 && !enemy.isDead)
         {
             enemy.isDead = true;
-            enemy.Die();
+            enemy.Die(); 
         }
     }
 }

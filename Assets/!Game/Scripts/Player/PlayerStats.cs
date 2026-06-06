@@ -298,6 +298,8 @@ public class PlayerStats : NetworkBehaviour
     {
         get
         {
+            if (!netIsOnBattle.Value) return false;
+
             if (MapController.Instance != null && MapController.Instance.IsSafeZone()) return false;
             if (InventoryController.Instance == null || classController == null) return false;
 

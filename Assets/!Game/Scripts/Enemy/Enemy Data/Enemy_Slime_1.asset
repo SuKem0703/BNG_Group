@@ -15,6 +15,7 @@ MonoBehaviour:
   enemyName: "Slime Nguy\xEAn Thu\u1EF7"
   questTargetID: 
   enemyRank: 0
+  enemyRace: 0
   enemyIcon: {fileID: 1202984965197363600, guid: 7223a834a4a97c04392ab80121d6e67e, type: 3}
   timeScalingType: 1
   levelEnemy: 1
@@ -24,7 +25,7 @@ MonoBehaviour:
   experienceReward: 10
   goldReward: 5
   chaseSpeed: 3
-  detectionRadius: 15
+  detectionRadius: 5
   attackRange: 1.25
   attackCooldown: 0.25
   enemyDescription: 

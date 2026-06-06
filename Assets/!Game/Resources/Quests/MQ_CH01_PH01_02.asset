@@ -19,6 +19,7 @@ MonoBehaviour:
     m\xF9a m\u1EDBi. H\xE3y v\xE0o nh\xE0, m\u1EDF chi\u1EBFc r\u01B0\u01A1ng g\u1ED7
     \u0111\u1EC3 t\xECm t\xFAi h\u1EA1t gi\u1ED1ng Hoa H\u01B0\u1EDBng D\u01B0\u01A1ng
     v\xE0 mang ra ru\u1ED9ng gieo xu\u1ED1ng \u0111\u1EA5t."
+  autoHandInOnComplete: 0
   questObjects:
   - objectID: 1211
     objectTitle: "T\xECm h\u1EA1t gi\u1ED1ng Hoa H\u01B0\u1EDBng D\u01B0\u01A1ng
@@ -26,7 +27,7 @@ MonoBehaviour:
     objectType: 0
     requiredAmount: 3
     currentAmount: 0
-    allowRetroactive: 1
+    allowRetroactive: 0
     removeItemOnComplete: 0
   - objectID: 1211
     objectTitle: "Gieo h\u1EA1t Hoa H\u01B0\u1EDBng D\u01B0\u01A1ng ngo\xE0i ru\u1ED9ng."

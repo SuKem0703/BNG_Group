@@ -9,6 +9,7 @@ public class NPCDialogueData : BaseDialogueData
     public DialogueChoice[] choices;
 
     [Header("Trạng thái hiển thị (Quest)")]
+    public bool hideWhenNotStarted = false;
     public bool hideWhenInProgress = false;
     public bool hideWhenCompleted = false;
     public bool hideWhenHandedIn = false;

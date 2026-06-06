@@ -17,6 +17,7 @@ public class Quest : ScriptableObject
     public string questName;
     [TextArea(2, 10)]
     public string questTitle;
+    public bool autoHandInOnComplete = false;
     public List<QuestObject> questObjects;
     public List<QuestReward> questRewards;
 

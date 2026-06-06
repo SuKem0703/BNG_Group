@@ -91,7 +91,7 @@ public class Monologue : MonoBehaviour, IInteractable
 
     protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!triggerOnEnter || !collision.CompareTag("Player")) return;
+        if (!triggerOnEnter || !collision.CompareTag("PlayerInteract")) return;
         if (!SaveController.IsDataLoaded) return;
         if (!string.IsNullOrEmpty(SaveController.pendingSceneName)) return;
         if (collision.GetComponent<PlayerItemCollector>() != null) return;
