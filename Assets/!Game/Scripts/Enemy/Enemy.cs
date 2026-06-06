@@ -51,7 +51,7 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
     public float attackRange { get; set; }
     public float attackCooldown { get; set; }
 
-    [Header("Runtime State (Trạng thái thực tế)")]
+    [Header("Runtime State")]
     public int currentPhaseIndex = 0;
     public NetworkVariable<int> netHealth = new NetworkVariable<int>(100);
     public NetworkVariable<bool> netIsWalking = new NetworkVariable<bool>(false);
@@ -109,6 +109,12 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         if (IsServer)
         {
             InitializePhase(0);
+        }
+
+        var agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+        if (agent != null)
+        {
+            agent.enabled = IsServer; 
         }
 
         if (enemyRank == EnemyRank.Boss && BossHUD.Instance != null)
@@ -223,11 +229,36 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
 
     protected virtual void Update()
     {
+        var agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+
         if (PauseController.IsGamePause)
         {
             if (rb != null) rb.linearVelocity = Vector2.zero;
 
+            if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+            }
+
+            if (isAttacking)
+            {
+                isAttacking = false;
+                Animator anim = GetComponent<Animator>();
+                if (anim != null)
+                {
+                    anim.SetBool("IsAttacking", false);
+                }
+            }
             return;
+        }
+
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            if (agent.isStopped && !isAttacking && !isStunned && !isKnockedBack && !isDead)
+            {
+                agent.isStopped = false;
+            }
         }
 
         if (aiLogic != null) aiLogic.OnUpdate();
@@ -246,7 +277,7 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
     public void OnPlayerLost(Transform lostPlayer) => aiLogic?.OnPlayerLost(lostPlayer);
 
     public virtual void DealDamage() => aiLogic?.ProcessDealDamage();
-    public void EndAttack() => aiLogic?.ProcessEndAttack();
+    public void EnemyEndAttack() => aiLogic?.ProcessEndAttack();
 
     public void TakeDamage(int rawDamage, DamageSourceType damageSourceType, Transform attacker = null, bool isCritical = false, bool forceKnockback = false)
     {
@@ -297,8 +328,11 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
 
         if (enemyAnimator != null)
         {
-            enemyAnimator.SetWalking(false);
+            Animator anim = GetComponent<Animator>();
+            if (anim != null) anim.SetBool("IsChasing", false);
+
             enemyAnimator.SetFacingDirection(attackDirection);
+            
             enemyAnimator.TriggerAttack();
         }
     }
@@ -375,7 +409,7 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         {
             Animator anim = GetComponent<Animator>();
             if (anim != null) anim.Play("Idle");
-            enemyAnimator.SetWalking(false);
+            enemyAnimator.EndAttack();
         }
     }
 
@@ -524,7 +558,6 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         Animator anim = GetComponent<Animator>();
         if (anim != null)
         {
-            anim.ResetTrigger("Attack");
             anim.ResetTrigger("Hurt");
             anim.SetBool("IsAttacking", false);
 
@@ -533,7 +566,7 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
 
         if (enemyAnimator != null)
         {
-            enemyAnimator.SetWalking(false);
+            enemyAnimator.EndAttack();
             enemyAnimator.TriggerDie();
         }
     }
@@ -591,7 +624,7 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
 
         if (enemyAnimator != null)
         {
-            enemyAnimator.SetWalking(false);
+            enemyAnimator.EndAttack();
         }
 
         Animator anim = GetComponent<Animator>();

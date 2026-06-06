@@ -184,8 +184,9 @@ GameObject:
   - component: {fileID: -8381273182027989757}
   - component: {fileID: 7878015985245193972}
   - component: {fileID: 9130439874268511456}
+  - component: {fileID: 8047538575742654657}
   m_Layer: 6
-  m_Name: Slime 1
+  m_Name: Enemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -313,7 +314,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3107261148613328395}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -559,6 +560,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef9d30581b24c934ab0abfd672cb0d57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombatAI
+  agent: {fileID: 8047538575742654657}
+--- !u!195 &8047538575742654657
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3107261148613328395}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.01
+  m_Speed: 3.5
+  m_Acceleration: 999
+  avoidancePriority: 50
+  m_AngularSpeed: 999
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 0.01
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &5537452638752057694
 GameObject:
   m_ObjectHideFlags: 0

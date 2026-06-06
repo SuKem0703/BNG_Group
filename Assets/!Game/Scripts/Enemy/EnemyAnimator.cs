@@ -16,14 +16,16 @@ public class EnemyAnimator : MonoBehaviour
     {
         if (PauseController.IsGamePause || enemyCore == null)
         {
-            animator.SetBool("isWalking", false);
+            animator.SetBool("IsChasing", false);
+            
+            animator.SetBool("IsAttacking", false);
             return;
         }
 
         bool isMoving = enemyCore.netIsWalking.Value;
         Vector2 dir = enemyCore.netDirection.Value;
 
-        animator.SetBool("isWalking", isMoving);
+        animator.SetBool("IsChasing", isMoving);
 
         if (dir != Vector2.zero)
         {
@@ -45,15 +47,21 @@ public class EnemyAnimator : MonoBehaviour
         animator.SetFloat("LastInputY", dir.y);
     }
 
-    public void SetWalking(bool walking)
-    {
-        if (animator == null) return;
-        animator.SetBool("isWalking", walking);
-    }
-
     public void TriggerAttack()
     {
-        animator.SetTrigger("Attack");
+        animator.SetBool("IsAttacking", true);
+    }
+
+    public void EndAttack()
+    {
+        animator.SetBool("IsAttacking", false);
+        
+        if (enemyCore != null)
+        {
+            enemyCore.isAttacking = false;
+        }
+
+        enemyCore.EnemyEndAttack();
     }
 
     public void TriggerHurt()

@@ -559,10 +559,9 @@ public class SaveController : MonoBehaviour
 
         if (boundary != null)
         {
-            var camController = FindFirstObjectByType<CameraController>();
-            if (camController != null)
+            if (CameraController.Instance != null)
             {
-                camController.UpdateMapBounds(boundary);
+                CameraController.Instance.UpdateMapBounds(boundary);
             }
         }
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemyCombatAI : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class EnemyCombatAI : MonoBehaviour
     private List<Transform> playersInRange = new List<Transform>();
     private bool isInBattleState = false;
 
+    [SerializeField] private NavMeshAgent agent;
     private PlayerStats currentAggroTarget;
 
     private bool hasCalledForHelp = false;
@@ -15,6 +17,12 @@ public class EnemyCombatAI : MonoBehaviour
     public void Init(Enemy mainScript)
     {
         enemy = mainScript;
+        
+        if (agent != null)
+        {
+            agent.updateRotation = false; 
+            agent.updateUpAxis = false;   
+        }
     }
 
     public void OnPlayerDetected(Transform detectedPlayer)
@@ -104,6 +112,14 @@ public class EnemyCombatAI : MonoBehaviour
     {
         if (!enemy.IsServer) return;
 
+        if (agent != null && agent.isActiveAndEnabled && !agent.isOnNavMesh)
+        {
+            // agent.Warp(transform.position); 
+            return; 
+        }
+
+        if (agent != null) agent.speed = enemy.chaseSpeed;
+
         UpdateTarget();
 
         PlayerStats targetStats = player != null ? player.GetComponentInParent<PlayerStats>() : null;
@@ -115,11 +131,14 @@ public class EnemyCombatAI : MonoBehaviour
             return;
         }
 
-        if (enemy.isAttacking || enemy.isStunned) return;
+        if (enemy.isAttacking || enemy.isStunned) 
+        {
+            StopMovement();
+            return;
+        }
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-
-        float chaseRadius = enemy.detectionRadius;
+        float chaseRadius = enemy.detectionRadius * 1.5f;
 
         if (distanceToPlayer > chaseRadius)
         {
@@ -127,7 +146,7 @@ public class EnemyCombatAI : MonoBehaviour
             return;
         }
 
-        SetBattleState(true, targetStats);
+        SetBattleState(true, targetStats); 
 
         if (distanceToPlayer <= enemy.attackRange - enemy.attackTriggerBuffer)
         {
@@ -149,19 +168,38 @@ public class EnemyCombatAI : MonoBehaviour
         hasCalledForHelp = false;
     }
 
-    private void ChasePlayer()
+private void ChasePlayer()
     {
-        Vector2 direction = (player.position - transform.position).normalized;
-        enemy.rb.linearVelocity = direction * enemy.chaseSpeed;
-        enemy.netDirection.Value = direction;
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            agent.isStopped = false;
+            agent.SetDestination(player.position);
+
+            Vector2 direction = (agent.steeringTarget - transform.position).normalized;
+            if (direction != Vector2.zero)
+            {
+                enemy.netDirection.Value = direction;
+            }
+        }
+        
         enemy.netIsWalking.Value = true;
     }
 
-    public void StopMovement()
+public void StopMovement()
+{
+    if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
     {
-        if (enemy.rb != null) enemy.rb.linearVelocity = Vector2.zero;
-        enemy.netIsWalking.Value = false;
+        agent.isStopped = true;
+        agent.velocity = Vector3.zero;
     }
+    else if (agent != null && !agent.isOnNavMesh)
+    {
+        // Debug.LogWarning("Agent chưa trên NavMesh!");
+    }
+
+    if (enemy.rb != null) enemy.rb.linearVelocity = Vector2.zero;
+    enemy.netIsWalking.Value = false;
+}
 
     private void PerformAttack()
     {

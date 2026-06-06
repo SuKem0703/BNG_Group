@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemySpawnArea : MonoBehaviour
 {
@@ -83,9 +84,21 @@ public class EnemySpawnArea : MonoBehaviour
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
         if (enemyPrefabs.Length == 0 || spawnBounds == null) return;
 
-        Vector2 spawnPos = GetRandomPointInBounds();
-        GameObject selectedPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+        Vector2 randomPos = GetRandomPointInBounds();
+        
+        Vector3 spawnPos = new Vector3(randomPos.x, randomPos.y, transform.position.z);
 
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(spawnPos, out hit, 3.0f, NavMesh.AllAreas))
+        {
+            spawnPos = hit.position; 
+        }
+        else
+        {
+            return; 
+        }
+
+        GameObject selectedPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
         GameObject enemyObj = null;
 
         pooledEnemies.RemoveAll(item => item == null);
@@ -107,7 +120,18 @@ public class EnemySpawnArea : MonoBehaviour
         }
         else
         {
+            var agent = enemyObj.GetComponent<NavMeshAgent>();
+            
+            if (agent != null) agent.enabled = false; 
+            
             enemyObj.transform.position = spawnPos;
+            
+            if (agent != null)
+            {
+                agent.enabled = true;
+                agent.Warp(spawnPos);
+            }
+            
             enemyObj.SetActive(true);
         }
 
