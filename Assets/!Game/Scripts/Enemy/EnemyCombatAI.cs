@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -14,6 +15,17 @@ public class EnemyCombatAI : MonoBehaviour
 
     private bool hasCalledForHelp = false;
 
+    [Header("Patrol Settings")]
+    [SerializeField] private float patrolSpeed = 1.5f;
+    [SerializeField] private float minWaitTime = 2f;
+    [SerializeField] private float maxWaitTime = 5f;
+
+    private Vector2 patrolTarget;
+    private float patrolWaitTimer;
+    private bool isWaitingAtPatrolPoint = true;
+    public bool IsReturningHome { get; private set; }
+    private Vector2 homePos;
+
     public void Init(Enemy mainScript)
     {
         enemy = mainScript;
@@ -28,6 +40,9 @@ public class EnemyCombatAI : MonoBehaviour
     public void OnPlayerDetected(Transform detectedPlayer)
     {
         if (!enemy.IsServer) return;
+        
+        if (IsReturningHome) return; 
+
         if (!playersInRange.Contains(detectedPlayer)) playersInRange.Add(detectedPlayer);
     }
 
@@ -108,57 +123,146 @@ public class EnemyCombatAI : MonoBehaviour
         }
     }
 
-    public void OnUpdate()
+    public void StartReturnHome(Vector2 origin)
+    {
+        IsReturningHome = true;
+        player = null;
+        playersInRange.Clear();
+        SetBattleState(false);
+        homePos = origin;
+
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            agent.isStopped = false;
+            agent.SetDestination(homePos);
+        }
+        
+        enemy.netIsChasing.Value = false;
+        enemy.netIsWalking.Value = true;
+    }
+
+    public void OnProvoked(Transform attacker)
     {
         if (!enemy.IsServer) return;
 
-        if (agent != null && agent.isActiveAndEnabled && !agent.isOnNavMesh)
+        if (IsReturningHome)
         {
-            // agent.Warp(transform.position); 
-            return; 
+            IsReturningHome = false;
         }
 
-        if (agent != null) agent.speed = enemy.chaseSpeed;
+        if (attacker != null && !playersInRange.Contains(attacker))
+        {
+            playersInRange.Add(attacker);
+        }
+    }
 
-        UpdateTarget();
+    public void OnUpdate()
+    {
+        if (!enemy.IsServer) return;
+        if (agent != null && agent.isActiveAndEnabled && !agent.isOnNavMesh) return;
 
-        PlayerStats targetStats = player != null ? player.GetComponentInParent<PlayerStats>() : null;
-
-        if (enemy.isDead || enemy.isTransitioning || enemy.netHealth.Value <= 0 || player == null || targetStats == null)
+        if (enemy.isDead || enemy.isTransitioning || enemy.netHealth.Value <= 0)
         {
             SetBattleState(false);
             StopMovement();
             return;
         }
 
-        if (enemy.isAttacking || enemy.isStunned) 
+        if (enemy.isAttacking || enemy.isStunned || enemy.isKnockedBack) 
         {
             StopMovement();
             return;
         }
 
-        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-        float chaseRadius = enemy.detectionRadius * 1.5f;
-
-        if (distanceToPlayer > chaseRadius)
+        if (IsReturningHome)
         {
-            OnPlayerLost(player);
+            if (agent != null)
+            {
+                agent.speed = patrolSpeed;
+                Vector2 moveDir = agent.velocity.normalized;
+                if (moveDir.sqrMagnitude > 0.01f) enemy.netDirection.Value = moveDir;
+
+                if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.1f)
+                {
+                    IsReturningHome = false;
+                    StopMovement();
+                    
+                    isWaitingAtPatrolPoint = true;
+                    patrolWaitTimer = Random.Range(minWaitTime, maxWaitTime);
+                }
+            }
             return;
         }
 
-        SetBattleState(true, targetStats); 
+        UpdateTarget();
+        PlayerStats targetStats = player != null ? player.GetComponentInParent<PlayerStats>() : null;
 
-        if (distanceToPlayer <= enemy.attackRange - enemy.attackTriggerBuffer)
+        if (player != null && targetStats != null)
         {
-            StopMovement();
-            enemy.netDirection.Value = (player.position - transform.position).normalized;
+            isWaitingAtPatrolPoint = false;
+            if (agent != null) agent.speed = enemy.chaseSpeed;
 
-            if (Time.time >= enemy.lastAttackTime + enemy.attackCooldown)
-                PerformAttack();
+            float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+            float chaseRadius = enemy.detectionRadius * 1.5f;
+
+            if (distanceToPlayer > chaseRadius)
+            {
+                OnPlayerLost(player);
+                return;
+            }
+
+            SetBattleState(true, targetStats); 
+
+            if (distanceToPlayer <= enemy.attackRange - enemy.attackTriggerBuffer)
+            {
+                StopMovement();
+                enemy.netDirection.Value = (player.position - transform.position).normalized;
+
+                if (Time.time >= enemy.lastAttackTime + enemy.attackCooldown)
+                    PerformAttack();
+            }
+            else
+            {
+                ChasePlayer();
+            }
         }
         else
         {
-            ChasePlayer();
+            if (enemy.parentArea == null) return;
+            if (agent != null) agent.speed = patrolSpeed;
+
+            if (isWaitingAtPatrolPoint)
+            {
+                patrolWaitTimer -= Time.deltaTime;
+                if (patrolWaitTimer <= 0f)
+                {
+                    patrolTarget = enemy.parentArea.GetValidPatrolPoint();
+                    if (agent != null && agent.isOnNavMesh)
+                    {
+                        agent.isStopped = false;
+                        agent.SetDestination(patrolTarget);
+                    }
+                    isWaitingAtPatrolPoint = false;
+                    
+                    enemy.netIsWalking.Value = true;
+                    enemy.netIsChasing.Value = false;
+                }
+            }
+            else
+            {
+                if (agent != null && agent.isOnNavMesh)
+                {
+                    Vector2 moveDir = agent.velocity.normalized;
+                    if (moveDir.sqrMagnitude > 0.01f) enemy.netDirection.Value = moveDir;
+
+                    if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.1f)
+                    {
+                        StopMovement();
+                        isWaitingAtPatrolPoint = true;
+                        patrolWaitTimer = Random.Range(minWaitTime, maxWaitTime);
+                    }
+                }
+            }
         }
     }
 
@@ -168,9 +272,9 @@ public class EnemyCombatAI : MonoBehaviour
         hasCalledForHelp = false;
     }
 
-private void ChasePlayer()
+    private void ChasePlayer()
     {
-        if (agent != null && agent.isActiveAndEnabled)
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
             agent.isStopped = false;
             agent.SetDestination(player.position);
@@ -182,24 +286,23 @@ private void ChasePlayer()
             }
         }
         
-        enemy.netIsWalking.Value = true;
+        enemy.netIsChasing.Value = true;
+        enemy.netIsWalking.Value = false;
     }
 
-public void StopMovement()
-{
-    if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+    public void StopMovement()
     {
-        agent.isStopped = true;
-        agent.velocity = Vector3.zero;
-    }
-    else if (agent != null && !agent.isOnNavMesh)
-    {
-        // Debug.LogWarning("Agent chưa trên NavMesh!");
-    }
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+        }
 
-    if (enemy.rb != null) enemy.rb.linearVelocity = Vector2.zero;
-    enemy.netIsWalking.Value = false;
-}
+        if (enemy.rb != null) enemy.rb.linearVelocity = Vector2.zero;
+        
+        enemy.netIsWalking.Value = false;
+        enemy.netIsChasing.Value = false;
+    }
 
     private void PerformAttack()
     {
@@ -214,14 +317,52 @@ public void StopMovement()
     {
         if (!enemy.IsServer || enemy.isDead || enemy.isStunned || enemy.hasDealtDamageThisAttack || PauseController.IsGamePause) return;
 
-        if (player != null && Vector2.Distance(transform.position, player.position) <= enemy.attackRange)
+        enemy.hasDealtDamageThisAttack = true; 
+        StartCoroutine(AutoUnlockDamageRoutine());
+
+        if (player != null)
         {
-            var health = player.GetComponentInParent<PlayerVitals>();
-            if (health != null && !health.isInvincible && !health.isProcessingDeath)
+            Collider2D playerCollider = player.GetComponent<Collider2D>();
+            if (playerCollider == null) playerCollider = player.GetComponentInParent<Collider2D>();
+            if (playerCollider == null) playerCollider = player.GetComponentInChildren<Collider2D>();
+
+            Collider2D enemyCollider = enemy.GetComponent<Collider2D>();
+
+            Vector2 targetCenter = playerCollider != null ? (Vector2)playerCollider.bounds.center : (Vector2)player.position;
+            Vector2 attackerCenter = enemyCollider != null ? (Vector2)enemyCollider.bounds.center : (Vector2)transform.position;
+
+            Vector2 targetHitPoint = playerCollider != null ? playerCollider.ClosestPoint(attackerCenter) : targetCenter;
+
+            if (Vector2.Distance(attackerCenter, targetHitPoint) <= enemy.attackRange)
             {
-                health.TakeDamage((int)enemy.damage);
-                enemy.hasDealtDamageThisAttack = true;
+                if (enemy.attackType == EnemyAttackType.Directional)
+                {
+                    Vector2 dirToTargetCenter = (targetCenter - attackerCenter).normalized;
+                    Vector2 currentFacingDir = enemy.netDirection.Value; 
+                    
+                    float angle = Vector2.Angle(currentFacingDir, dirToTargetCenter);
+
+                    if (angle > enemy.attackAngle / 2f)
+                    {
+                        return;
+                    }
+                }
+
+                var health = player.GetComponentInParent<PlayerVitals>();
+                if (health != null && !health.isInvincible && !health.isProcessingDeath)
+                {
+                    health.TakeDamage((int)enemy.damage);
+                }
             }
+        }
+    }
+
+    private IEnumerator AutoUnlockDamageRoutine()
+    {
+        yield return new WaitForSeconds(0.1f);
+        if (enemy != null)
+        {
+            enemy.hasDealtDamageThisAttack = false;
         }
     }
 
@@ -236,6 +377,36 @@ public void StopMovement()
         {
             enemy.isDead = true;
             enemy.Die(); 
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (enemy == null) enemy = GetComponent<Enemy>();
+        if (enemy == null || enemy.data == null) return;
+
+        Collider2D col = GetComponent<Collider2D>();
+        Vector3 pos = col != null ? col.bounds.center : transform.position;
+        float range = enemy.data.attackRange;
+
+        if (enemy.data.attackType == EnemyAttackType.AOE)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(pos, range);
+        }
+        else
+        {
+            Gizmos.color = Color.cyan;
+            Vector2 dir = Application.isPlaying && enemy.netDirection.Value != Vector2.zero ? enemy.netDirection.Value : Vector2.down;
+
+            Vector3 rightLimit = Quaternion.Euler(0, 0, enemy.data.attackAngle / 2f) * dir;
+            Vector3 leftLimit = Quaternion.Euler(0, 0, -enemy.data.attackAngle / 2f) * dir;
+
+            Gizmos.DrawLine(pos, pos + rightLimit * range);
+            Gizmos.DrawLine(pos, pos + leftLimit * range);
+            
+            Gizmos.color = new Color(1, 0, 0, 0.3f);
+            Gizmos.DrawWireSphere(pos, range);
         }
     }
 }

@@ -15,6 +15,12 @@ public class EnemyHealth : MonoBehaviour
     {
         if (!enemy.IsServer || enemy.isDead || enemy.isTransitioning) return;
 
+        if (attacker != null)
+        {
+            var ai = enemy.GetComponent<EnemyCombatAI>();
+            if (ai != null) ai.OnProvoked(attacker);
+        }
+
         float reductionMultiplier = 100f / (enemy.defense + 100f);
         int finalDamage = Mathf.Max(Mathf.CeilToInt(rawDamage * reductionMultiplier), 1);
 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Aqua_Slime
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyName: "Slime Nguy\xEAn thu\u1EF7"
-  questTargetID: 
+  questTargetID: Aqua_Slime
   enemyRank: 0
   enemyRace: 0
   enemyIcon: {fileID: 1202984965197363600, guid: 7223a834a4a97c04392ab80121d6e67e, type: 3}
@@ -22,12 +22,12 @@ MonoBehaviour:
   damage: 10
   maxHealth: 100
   defense: 0
-  experienceReward: 10
-  goldReward: 5
+  experienceReward: 5
+  goldReward: 2
   chaseSpeed: 3
   detectionRadius: 5
   attackRange: 1.25
   attackCooldown: 0.25
   enemyDescription: 
   bossPhases: []
-  lootTable: {fileID: 11400000, guid: 4fc354dd8425dd24abd01cb120f9e61f, type: 2}
+  lootTable: {fileID: 0}

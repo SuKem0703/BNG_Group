@@ -20,28 +20,20 @@ public class EnemyDetection : MonoBehaviour
     {
         if (!isLeashActive || enemyChase == null || !enemyChase.IsServer || enemyChase.isDead) return;
 
+        var ai = enemyChase.GetComponent<EnemyCombatAI>();
+        if (ai == null) return;
+
+        if (ai.IsReturningHome) return;
+
         if (Vector2.Distance(transform.position, spawnOrigin) > maxLeashDistance)
         {
-            BreakLeash();
+            BreakLeash(ai);
         }
     }
 
-    private void BreakLeash()
+    private void BreakLeash(EnemyCombatAI ai)
     {
-        isLeashActive = false;
-
-        var ai = enemyChase.GetComponent<EnemyCombatAI>();
-        if (ai != null && ai.player != null)
-        {
-            ai.OnPlayerLost(ai.player);
-            ai.StopMovement();
-        }
-
-        if (enemyChase.IsServer)
-        {
-            enemyChase.netHealth.Value = 0;
-            enemyChase.Die(false);
-        }
+        ai.StartReturnHome(spawnOrigin);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -51,15 +43,4 @@ public class EnemyDetection : MonoBehaviour
             enemyChase.OnPlayerDetected(other.transform);
         }
     }
-
-/*
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.CompareTag("PlayerController"))
-        {
-            enemyChase.OnPlayerLost(other.transform);
-        }
-    }
-*/
-
 }

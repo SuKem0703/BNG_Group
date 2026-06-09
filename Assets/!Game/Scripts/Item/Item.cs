@@ -4,7 +4,7 @@ using Unity.Netcode;
 
 public enum ItemType { QuestItem, Equipment, Consumable, Seed, Material, Tool }
 public enum CurrencyType { Coin, Gem }
-public enum EquipSlot { None, Swords, Shield, Helmet, Armor, Scepter, Amulet, Hat, Robe, Gloves, Legs, Belt, Boots, Ring, Necklace }
+public enum EquipSlot { None, MainHand, OffHand, Helmet, Armor, Hat, Robe, Gloves, Legs, Belt, Boots, Ring, Necklace }
 public enum ClassRestriction { None, Knight, Mage }
 public enum ItemRarity { Rusty, Common, Refined, Rare, Relic, Glacial, Legendary, Celestial, Mythic }
 

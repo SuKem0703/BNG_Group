@@ -60,27 +60,22 @@ public class EquipTooltip : MonoBehaviour
         RectTransform canvasRect = GetComponentInParent<Canvas>().GetComponent<RectTransform>();
         RectTransform tooltipRect = gameObject.GetComponent<RectTransform>();
 
-        // Pivot: góc dưới phải trùng chuột
         tooltipRect.pivot = new Vector2(1f, 0f);
 
         Vector2 mousePos = Input.mousePosition;
 
-        // Offset nhẹ lên trên-trái
         Vector2 offset = new Vector2(0f, 0f);
         mousePos += offset;
 
-        // Chuyển vị trí chuột sang toạ độ canvas
         Vector2 anchoredPos;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, mousePos, null, out anchoredPos);
 
-        // Kích thước tooltip thực tế (600x800 scale 0.75)
         float tooltipWidth = 600f * 0.6f;
         float tooltipHeight = 800f * 0.6f;
 
         float canvasWidth = canvasRect.rect.width;
         float canvasHeight = canvasRect.rect.height;
 
-        // Giới hạn trong vùng hiển thị canvas
         float minX = -canvasWidth / 2f + tooltipWidth;
         float maxX = canvasWidth / 2f;
         float minY = -canvasHeight / 2f;
@@ -98,7 +93,6 @@ public class EquipTooltip : MonoBehaviour
         if (item is not EquipmentItem equipItem) return;
         gameObject.SetActive(true);
 
-        // ---- Load khung theo phẩm ----
         ItemRarity rarity = equipItem.rarity;
         string path = $"Vertical Card/{rarity}";
         Sprite raritySprite = Resources.Load<Sprite>(path);
@@ -107,7 +101,6 @@ public class EquipTooltip : MonoBehaviour
         else
             Debug.LogWarning($"Không tìm thấy sprite cho rarity '{rarity}' tại: {path}");
 
-        // ==== Hiển thị cơ bản ====
         nameText.text = equipItem.Name;
         backGround.color = RarityColorHelper.GetColorByRarity(equipItem.rarity);
         itemPortrait.sprite = equipItem.icon;
@@ -116,8 +109,6 @@ public class EquipTooltip : MonoBehaviour
         classText.text = "Class: " + equipItem.classRestriction;
         descriptionText.text = equipItem.description;
 
-        // Cập nhật trạng thái Trang bị (isEquip)
-        // ===============================================
         if (isEquip != null)
         {
             if (item.isDisplayOnly == true && equipItem.isEquipped == false || slot.isShopSlot == true)
@@ -167,7 +158,6 @@ public class EquipTooltip : MonoBehaviour
             }
         }
 
-        // ==== Xác định 3 chỉ số ====
         string[] stats = GetStatsFor(item);
         FillStatLine(statName1, statValue1, stats[0], item);
         FillStatLine(statName2, statValue2, stats[1], item);
@@ -279,8 +269,8 @@ public class EquipTooltip : MonoBehaviour
         {
             switch (equip.equipSlot)
             {
-                case EquipSlot.Swords: return new[] { "PhysDmg", "HP", "STR" };
-                case EquipSlot.Shield: return new[] { "DEF", "DEX", "HPRegen" };
+                case EquipSlot.MainHand: return new[] { "PhysDmg", "HP", "STR" };
+                case EquipSlot.OffHand: return new[] { "DEF", "DEX", "HPRegen" };
                 case EquipSlot.Helmet: return new[] { "DEF", "CON", "HP" };
                 case EquipSlot.Armor: return new[] { "DEF", "DEX", "DmgReduction" };
             }
@@ -289,8 +279,8 @@ public class EquipTooltip : MonoBehaviour
         {
             switch (equip.equipSlot)
             {
-                case EquipSlot.Scepter: return new[] { "MagicDmg", "MP", "INT" };
-                case EquipSlot.Amulet: return new[] { "CritRate", "CON", "MPRegen" };
+                case EquipSlot.MainHand: return new[] { "MagicDmg", "MP", "INT" };
+                case EquipSlot.OffHand: return new[] { "CritRate", "CON", "MPRegen" };
                 case EquipSlot.Hat: return new[] { "DEF", "DEX", "HP" };
                 case EquipSlot.Robe: return new[] { "CON", "HPRegen", "DmgReduction" };
             }

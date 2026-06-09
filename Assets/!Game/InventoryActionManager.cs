@@ -119,7 +119,7 @@ public class InventoryActionManager : MonoBehaviour
         {
             if (draggedItem is not EquipmentItem equipItem ||
                 equipItem.equipSlot != dropSlot.acceptedEquipSlot ||
-                (dropSlot.classRestriction != ClassRestriction.None && equipItem.classRestriction != dropSlot.classRestriction) ||
+                (equipItem.classRestriction != ClassRestriction.None && dropSlot.classRestriction != ClassRestriction.None && equipItem.classRestriction != dropSlot.classRestriction) ||
                 (playerStats != null && playerStats.level < equipItem.requiredLevel))
             {
                 dragHandler.SnapBack(); return;
@@ -394,7 +394,8 @@ public class InventoryActionManager : MonoBehaviour
 
         Slot targetSlot = Object.FindObjectsByType<Slot>(FindObjectsInactive.Include, FindObjectsSortMode.None)
             .FirstOrDefault(s => s.isEquipmentSlot && s.acceptedEquipSlot == sourceEqItem.equipSlot &&
-            (s.classRestriction == ClassRestriction.None || s.classRestriction == sourceEqItem.classRestriction) && s.gameObject.scene.IsValid());
+            (sourceEqItem.classRestriction == ClassRestriction.None || s.classRestriction == ClassRestriction.None || s.classRestriction == sourceEqItem.classRestriction) && 
+            s.gameObject.scene.IsValid());
 
         if (targetSlot == null) return;
 

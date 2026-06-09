@@ -165,8 +165,6 @@ public class KnightNormalAttack : NetworkBehaviour
         enemiesHitThisAttack.Clear();
         currentComboCache = combo;
 
-        animator.SetTrigger("Attack");
-
         if (!isRunningLocal)
         {
             combo++;
@@ -207,8 +205,6 @@ public class KnightNormalAttack : NetworkBehaviour
         animator.SetFloat("LookY", dir.y);
         animator.SetFloat("LastInputX", dir.x);
         animator.SetFloat("LastInputY", dir.y);
-
-        animator.SetTrigger("Attack");
     }
 
     public void StartAttack()
@@ -221,7 +217,6 @@ public class KnightNormalAttack : NetworkBehaviour
         animator.SetBool("isAttacking", false);
         animator.SetBool("isWalkAttacking", false);
         animator.SetBool("isRunAttacking", false);
-        animator.ResetTrigger("Attack");
         attackPressed = false;
 
         if (core.playerMovement != null)

@@ -64,6 +64,8 @@ public class QuestController : MonoBehaviour
         activeQuests.Add(newQuest);
         CheckInventoryForQuest(true);
         OnQuestStatusUpdated?.Invoke(quest.questID);
+        
+        GameNotify.Show($"<color=#00FF00>Đã nhận nhiệm vụ: {quest.questName}</color>");
     }
 
     public bool IsQuestActive(string questID) => activeQuests.Exists(q => q.quest.questID == questID);

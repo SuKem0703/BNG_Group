@@ -166,6 +166,26 @@ public class EnemySpawnArea : MonoBehaviour
         );
     }
 
+    public Vector2 GetValidPatrolPoint()
+    {
+        Bounds bounds = spawnBounds.bounds;
+        
+        for (int i = 0; i < 5; i++)
+        {
+            Vector2 randomPoint = new Vector2(
+                Random.Range(bounds.min.x, bounds.max.x),
+                Random.Range(bounds.min.y, bounds.max.y)
+            );
+
+            if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+            {
+                return hit.position; 
+            }
+        }
+
+        return transform.position; 
+    }
+
     private IEnumerator TrackEnemyDeath(GameObject enemyObj)
     {
         while (enemyObj != null && enemyObj.activeInHierarchy)

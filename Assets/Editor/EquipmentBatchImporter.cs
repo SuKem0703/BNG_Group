@@ -59,12 +59,12 @@ public class EquipmentBatchImporter : EditorWindow
                     {
                         switch (data.equipSlot)
                         {
-                            case EquipSlot.Swords:
+                            case EquipSlot.MainHand:
                                 so.FindProperty("physDamageBase").intValue = (int)v1;
                                 so.FindProperty("hpKnightBase").intValue = (int)v2;
                                 so.FindProperty("strBase").intValue = (int)v3;
                                 break;
-                            case EquipSlot.Shield:
+                            case EquipSlot.OffHand:
                                 so.FindProperty("defenseBase").intValue = (int)v1;
                                 so.FindProperty("dexBase").intValue = (int)v2;
                                 so.FindProperty("hpRegenBase").intValue = (int)v3;
@@ -85,12 +85,12 @@ public class EquipmentBatchImporter : EditorWindow
                     {
                         switch (data.equipSlot)
                         {
-                            case EquipSlot.Scepter:
+                            case EquipSlot.MainHand:
                                 so.FindProperty("magicDamageBase").intValue = (int)v1;
                                 so.FindProperty("mpMageBase").intValue = (int)v2;
                                 so.FindProperty("intBase").intValue = (int)v3;
                                 break;
-                            case EquipSlot.Amulet:
+                            case EquipSlot.OffHand:
                                 so.FindProperty("critRateBase").floatValue = v1; // Ghi thẳng float
                                 so.FindProperty("conBase").intValue = (int)v2;
                                 so.FindProperty("mpRegenBase").intValue = (int)v3;

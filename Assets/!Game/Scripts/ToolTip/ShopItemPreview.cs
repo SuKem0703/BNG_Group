@@ -35,11 +35,9 @@ public class ShopItemPreview : MonoBehaviour
         nameText.text = item.Name;
         itemPortrait.sprite = item.icon;
 
-        // Hiển thị giá
         priceText.text = $"Giá: {price}";
         currencyImage.sprite = (currency == CurrencyType.Coin ? coinSprite : gemSprite);
 
-        // Kiểm tra nếu là Trang bị thì mới hiện chỉ số
         if (item is EquipmentItem equip)
         {
             if (statsPanel != null) statsPanel.SetActive(true);
@@ -55,7 +53,6 @@ public class ShopItemPreview : MonoBehaviour
         }
         else
         {
-            // Nếu là vật phẩm thường, ẩn bảng chỉ số
             if (statsPanel != null) statsPanel.SetActive(false);
             lvl.text = "";
             classText.text = "Phân loại: " + item.ItemType;
@@ -115,8 +112,8 @@ public class ShopItemPreview : MonoBehaviour
         {
             switch (item.equipSlot)
             {
-                case EquipSlot.Swords: return new[] { "PhysDmg", "HP", "STR" };
-                case EquipSlot.Shield: return new[] { "DEF", "HP", "CON" };
+                case EquipSlot.MainHand: return new[] { "PhysDmg", "HP", "STR" };
+                case EquipSlot.OffHand: return new[] { "DEF", "HP", "CON" };
                 case EquipSlot.Helmet: return new[] { "DEF", "CON", "HP" };
                 case EquipSlot.Armor: return new[] { "DEF", "STR", "HP" };
             }
@@ -125,8 +122,8 @@ public class ShopItemPreview : MonoBehaviour
         {
             switch (item.equipSlot)
             {
-                case EquipSlot.Scepter: return new[] { "MagicDmg", "MP", "INT" };
-                case EquipSlot.Amulet: return new[] { "MagicDmg", "CritRate", "INT" };
+                case EquipSlot.MainHand: return new[] { "MagicDmg", "MP", "INT" };
+                case EquipSlot.OffHand: return new[] { "MagicDmg", "CritRate", "INT" };
                 case EquipSlot.Hat: return new[] { "DEF", "HP", "INT" };
                 case EquipSlot.Robe: return new[] { "DEF", "MP", "INT" };
             }

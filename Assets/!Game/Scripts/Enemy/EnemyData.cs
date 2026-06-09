@@ -30,6 +30,12 @@ public enum EnemyRace
     Gnoll
 }
 
+public enum EnemyAttackType
+{
+    AOE,
+    Directional
+}
+
 [CreateAssetMenu(fileName = "NewEnemyData", menuName = "ScriptableObjects/EnemyData")]
 public class EnemyData : ScriptableObject
 {
@@ -57,6 +63,9 @@ public class EnemyData : ScriptableObject
     public float detectionRadius = 15f;
     public float attackRange = 2f;
     public float attackCooldown = 0.5f;
+    public EnemyAttackType attackType = EnemyAttackType.AOE;
+    [Range(0f, 360f)]
+    public float attackAngle = 90f;
 
     [Header("Lore & Description")]
     public string enemyDescription = "Nhập mô tả về kẻ thù tại đây...";

@@ -16,16 +16,19 @@ public class EnemyAnimator : MonoBehaviour
     {
         if (PauseController.IsGamePause || enemyCore == null)
         {
+            animator.SetBool("isWalking", false);
             animator.SetBool("IsChasing", false);
             
             animator.SetBool("IsAttacking", false);
             return;
         }
 
-        bool isMoving = enemyCore.netIsWalking.Value;
+        bool isWalking = enemyCore.netIsWalking.Value;
+        bool isChasing = enemyCore.netIsChasing.Value;
         Vector2 dir = enemyCore.netDirection.Value;
 
-        animator.SetBool("IsChasing", isMoving);
+        animator.SetBool("isWalking", isWalking);
+        animator.SetBool("IsChasing", isChasing);
 
         if (dir != Vector2.zero)
         {
