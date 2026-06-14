@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 507fb18a1a3490147ab94b513116ffd5, type: 3}
+  m_Name: Phys_Lv01
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  skillTree: 0
+  skillID: Phys_Lv01
+  skillName: Phys_Lv01
+  description: Phys_Lv01
+  skillIcon: {fileID: 21300000, guid: 8c5240a0f29d5c4428163eadc8470e88, type: 3}
+  skillType: 1
+  lvlReq: 1
+  playerAscensionRankReqToUnlock: 1
+  skillReqToUnlock: {fileID: 0}
+  skillRankReqToUnlock: 10
+  maxRank: 20
+  baseValue: 0.05
+  maxRankValue: 1
+  baseManaCost: 20
+  manaCostIncreasePerRank: 2
+  baseCooldown: 10
+  minCooldown: 5

@@ -8,7 +8,7 @@
   - Layers:
     - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Enemy, Map, NPC, Light2D, Farm, Decor, MinimapUI, Treasure, Water
 - Active game object:
-  - Name: Aqua_Slime_Area
+  - Name: Ground
   - Tag: Untagged
-  - Layer: Default
+  - Layer: Map
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

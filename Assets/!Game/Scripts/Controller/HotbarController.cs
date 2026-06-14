@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class HotbarController : MonoBehaviour
 {
@@ -8,13 +10,17 @@ public class HotbarController : MonoBehaviour
 
     public GameObject hotbarPanel;
     public GameObject slotPrefab;
+    public GameObject skillPrefab;
     public int slotCount = 9;
 
     private Key[] hotbarKeys;
+    private Dictionary<int, SkillData> assignedSkills = new Dictionary<int, SkillData>();
+
+    public bool isAssigningMode { get; private set; }
+    private SkillData skillToAssign;
 
     private void Awake()
     {
-        // Init Singleton
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -62,46 +68,181 @@ public class HotbarController : MonoBehaviour
 
     void Update()
     {
-        if (PauseController.IsGamePause)
-            return;
+        if (PauseController.IsGamePause) return;
 
         for (int i = 0; i < slotCount; i++)
         {
             if (Keyboard.current[hotbarKeys[i]].wasPressedThisFrame)
             {
-                UseItemInSlot(i);
+                UseSlot(i);
             }
         }
     }
 
-    void UseItemInSlot(int index)
+    public void EnterAssignMode(SkillData skill)
+    {
+        isAssigningMode = true;
+        skillToAssign = skill;
+        GameNotify.Show("Chọn một ô trống trên Hotbar để gán kỹ năng.");
+    }
+
+    public void CancelAssignMode()
+    {
+        isAssigningMode = false;
+        skillToAssign = null;
+    }
+
+    public void HandleSlotClick(int index, PointerEventData eventData)
+    {
+        if (isAssigningMode)
+        {
+            if (eventData.button != PointerEventData.InputButton.Left) return;
+
+            Slot targetSlot = hotbarPanel.transform.GetChild(index).GetComponent<Slot>();
+            
+            if (targetSlot.currentItem != null)
+            {
+                GameNotify.Show("Ô này đã có dữ liệu, vui lòng chọn ô trống!");
+                return;
+            }
+
+            AssignSkillToSlot(index, skillToAssign);
+            isAssigningMode = false;
+            skillToAssign = null;
+            GameNotify.Show("Gán kỹ năng thành công!");
+            return;
+        }
+
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            UseSlot(index);
+        }
+        else if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            Slot targetSlot = hotbarPanel.transform.GetChild(index).GetComponent<Slot>();
+            if (targetSlot.currentItem != null && targetSlot.currentItem.GetComponent<SkillItem>() != null)
+            {
+                RemoveSkillFromSlot(index);
+            }
+        }
+    }
+
+    void UseSlot(int index)
     {
         if (index >= hotbarPanel.transform.childCount) return;
 
         Slot slot = hotbarPanel.transform.GetChild(index).GetComponent<Slot>();
+        
         if (slot.currentItem != null)
         {
-            Item item = slot.currentItem.GetComponent<Item>();
-
-            if (item.dbID == 0)
+            SkillItem skillItem = slot.currentItem.GetComponent<SkillItem>();
+            if (skillItem != null)
             {
-                GameNotify.Show("Vật phẩm đang đồng bộ, vui lòng chờ!");
+                GameNotify.Show("Kích hoạt kỹ năng: " + skillItem.skillID);
                 return;
             }
 
-            if (item is ConsumableItem consumable)
+            Item item = slot.currentItem.GetComponent<Item>();
+            if (item != null)
             {
-                consumable.UseItem();
-            }
-            else if (item is SeedItem seedItem)
-            {
-                QuickPlantNearest(seedItem, slot);
-            }
-            else if (item is ItemTool toolItem)
-            {
-                toolItem.UseItem();
+                if (item.dbID == 0)
+                {
+                    GameNotify.Show("Vật phẩm đang đồng bộ, vui lòng chờ!");
+                    return;
+                }
+
+                if (item is ConsumableItem consumable)
+                {
+                    consumable.UseItem();
+                }
+                else if (item is SeedItem seedItem)
+                {
+                    QuickPlantNearest(seedItem, slot);
+                }
+                else if (item is ItemTool toolItem)
+                {
+                    toolItem.UseItem();
+                }
             }
         }
+    }
+
+    public void AssignSkillToSlot(int index, SkillData skillData)
+    {
+        if (index < 0 || index >= hotbarPanel.transform.childCount || skillData == null) return;
+
+        List<int> keysToRemove = new List<int>();
+        foreach (var kvp in assignedSkills)
+        {
+            if (kvp.Value.skillID == skillData.skillID)
+            {
+                keysToRemove.Add(kvp.Key);
+            }
+        }
+
+        foreach (int key in keysToRemove)
+        {
+            RemoveSkillFromSlot(key);
+        }
+
+        Slot targetSlot = hotbarPanel.transform.GetChild(index).GetComponent<Slot>();
+
+        assignedSkills[index] = skillData;
+        SpawnSkillItemInSlot(targetSlot, skillData);
+        
+        if (SaveController.Instance != null) SaveController.Instance.TriggerAutoSave();
+    }
+
+    public void RemoveSkillFromSlot(int index)
+    {
+        if (assignedSkills.ContainsKey(index))
+        {
+            assignedSkills.Remove(index);
+            Slot slot = hotbarPanel.transform.GetChild(index).GetComponent<Slot>();
+            if (slot.currentItem != null && slot.currentItem.GetComponent<SkillItem>() != null)
+            {
+                Destroy(slot.currentItem);
+                slot.currentItem = null;
+            }
+            if (SaveController.Instance != null) SaveController.Instance.TriggerAutoSave();
+        }
+    }
+
+    private void SpawnSkillItemInSlot(Slot slot, SkillData skillData)
+    {
+        if (skillPrefab != null)
+        {
+            GameObject skillObj = Instantiate(skillPrefab, slot.transform);
+            skillObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+            SkillItem skillComp = skillObj.GetComponent<SkillItem>();
+            if (skillComp != null)
+            {
+                skillComp.Setup(skillData);
+            }
+
+            slot.currentItem = skillObj;
+        }
+    }
+
+    public Dictionary<int, string> GetHotbarSkillsSaveData()
+    {
+        Dictionary<int, string> data = new Dictionary<int, string>();
+        foreach (var kvp in assignedSkills)
+        {
+            data[kvp.Key] = kvp.Value.skillID;
+        }
+        return data;
+    }
+
+    public void LoadHotbarSkillsSaveData(Dictionary<int, SkillData> loadedSkills)
+    {
+        assignedSkills.Clear();
+        foreach (var kvp in loadedSkills)
+        {
+            assignedSkills[kvp.Key] = kvp.Value;
+        }
+        RedrawHotbar(InventoryController.Instance != null ? InventoryController.Instance.GetInventoryItemsData() : null, slotCount);
     }
 
     private void QuickPlantNearest(SeedItem seedItem, Slot slot)
@@ -177,36 +318,55 @@ public class HotbarController : MonoBehaviour
             }
         }
 
-        if (inventoryData == null) return;
-
-        foreach (var data in inventoryData)
+        if (inventoryData != null)
         {
-            if (data.slotIndex >= 1000 && data.slotIndex < 2000)
+            foreach (var data in inventoryData)
             {
-                int localIndex = data.slotIndex - 1000;
-
-                if (localIndex >= 0 && localIndex < hotbarPanel.transform.childCount)
+                if (data.slotIndex >= 1000 && data.slotIndex < 2000)
                 {
-                    Slot slot = hotbarPanel.transform.GetChild(localIndex).GetComponent<Slot>();
-                    GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
+                    int localIndex = data.slotIndex - 1000;
 
-                    if (itemPrefab != null)
+                    if (localIndex >= 0 && localIndex < hotbarPanel.transform.childCount)
                     {
-                        GameObject itemObj = Instantiate(itemPrefab, slot.transform);
-                        itemObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-
-                        Item itemComponent = itemObj.GetComponent<Item>();
-                        if (itemComponent != null)
+                        if (assignedSkills.ContainsKey(localIndex))
                         {
-                            itemComponent.dbID = data.dbID;
-                            itemComponent.quantity = data.quantity;
-                            itemComponent.rarity = data.rarity;
-                            itemComponent.qualityFactor = data.qualityFactor;
-
-                            itemComponent.UpdateQuantityDisplay();
+                            assignedSkills.Remove(localIndex);
                         }
-                        slot.currentItem = itemObj;
+
+                        Slot slot = hotbarPanel.transform.GetChild(localIndex).GetComponent<Slot>();
+                        GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
+
+                        if (itemPrefab != null)
+                        {
+                            GameObject itemObj = Instantiate(itemPrefab, slot.transform);
+                            itemObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+                            Item itemComponent = itemObj.GetComponent<Item>();
+                            if (itemComponent != null)
+                            {
+                                itemComponent.dbID = data.dbID;
+                                itemComponent.quantity = data.quantity;
+                                itemComponent.rarity = data.rarity;
+                                itemComponent.qualityFactor = data.qualityFactor;
+
+                                itemComponent.UpdateQuantityDisplay();
+                            }
+                            slot.currentItem = itemObj;
+                        }
                     }
+                }
+            }
+        }
+
+        foreach (var kvp in assignedSkills)
+        {
+            int localIndex = kvp.Key;
+            if (localIndex >= 0 && localIndex < hotbarPanel.transform.childCount)
+            {
+                Slot slot = hotbarPanel.transform.GetChild(localIndex).GetComponent<Slot>();
+                if (slot.currentItem == null)
+                {
+                    SpawnSkillItemInSlot(slot, kvp.Value);
                 }
             }
         }

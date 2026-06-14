@@ -174,19 +174,19 @@ public class SaveController : MonoBehaviour
 
                         inventoryItems.Add(itemData);
 
-                        if (svItem.slotIndex >= 2200) // 2200+ Trang bị chung
+                        if (svItem.slotIndex >= 2200) 
                         {
                             EquippedSaveData eqData = JsonUtility.FromJson<EquippedSaveData>(JsonUtility.ToJson(itemData));
                             eqData.slotIndex = svItem.slotIndex - 2200;
                             sharedEquips.Add(eqData);
                         }
-                        else if (svItem.slotIndex >= 2100) // 2100+ Trang bị Mage
+                        else if (svItem.slotIndex >= 2100) 
                         {
                             EquippedSaveData eqData = JsonUtility.FromJson<EquippedSaveData>(JsonUtility.ToJson(itemData));
                             eqData.slotIndex = svItem.slotIndex - 2100;
                             mageEquips.Add(eqData);
                         }
-                        else if (svItem.slotIndex >= 2000) // 2000+ Trang bị Knight
+                        else if (svItem.slotIndex >= 2000) 
                         {
                             EquippedSaveData eqData = JsonUtility.FromJson<EquippedSaveData>(JsonUtility.ToJson(itemData));
                             eqData.slotIndex = svItem.slotIndex - 2000;
@@ -280,7 +280,6 @@ public class SaveController : MonoBehaviour
     {
         IsSaving = true;
 
-        // Ép gửi toàn bộ API đang kẹt chờ trong hàng đợi
         if (FarmService.Instance != null)
             FarmService.Instance.ForceSendPendingHarvests();
 
@@ -299,7 +298,6 @@ public class SaveController : MonoBehaviour
         {
             if (!isSilent) HideMiniLoadingScreen();
             IsSaving = false;
-            Debug.LogError("SaveController: Thiếu component quan trọng (Adapter/Inventory), hủy lưu.");
             onSaveFinished?.Invoke(false);
             yield break;
         }
@@ -346,7 +344,9 @@ public class SaveController : MonoBehaviour
 
             collectedByScene = collectedByScene,
 
-            bestiaryData = _bestiaryCache.Values.ToList()
+            bestiaryData = _bestiaryCache.Values.ToList(),
+            
+            skillTreeData = SkillTreeService.Instance != null ? SkillTreeService.Instance.GetSkillSaveData() : new SkillSaveData()
         };
 
         bool saveSuccess = false;
@@ -368,7 +368,6 @@ public class SaveController : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Lưu game thất bại! Hủy bỏ lệnh chuyển cảnh (nếu có).");
             pendingSceneName = null;
             nextSpawnPosition = null;
 
@@ -603,6 +602,11 @@ public class SaveController : MonoBehaviour
             }
         }
 
+        if (SkillTreeService.Instance != null && saveData != null)
+        {
+            SkillTreeService.Instance.LoadSkillSaveData(saveData.skillTreeData);
+        }
+
         var vcam = FindFirstObjectByType<CinemachineCamera>();
         if (vcam != null && playerCore != null)
         {
@@ -703,8 +707,6 @@ public class SaveController : MonoBehaviour
         else
         {
             isSuccess = false;
-            Debug.LogError($"[Client] Save Failed! Code: {request.responseCode} | Error: {request.error}");
-            Debug.LogError($"[Client] Server Reason: {request.downloadHandler.text}");
         }
 
         onComplete?.Invoke(isSuccess);
@@ -735,7 +737,6 @@ public class SaveController : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"[SaveController] Lỗi tải dữ liệu từ Server: {request.error}");
             PlayerPrefs.DeleteAll();
             PlayerPrefs.Save();
             SceneManager.LoadScene("MainMenu");

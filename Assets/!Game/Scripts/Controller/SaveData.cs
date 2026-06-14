@@ -32,6 +32,8 @@ public class SaveData
     public List<SaveController.SceneCollected> collectedByScene = new();
 
     public List<BestiaryEntry> bestiaryData = new List<BestiaryEntry>();
+
+    public SkillSaveData skillTreeData;
 }
 
 [System.Serializable]
@@ -61,4 +63,14 @@ public class BestiaryEntry
     public string enemyID;
     public int status;
     public int killCount;
+}
+
+[System.Serializable]
+public class SkillSaveData
+{
+    public List<string> keys = new List<string>();
+
+    public List<int> values = new List<int>();
+    public List<int> hotbarSlots = new List<int>();
+    public List<string> hotbarSkillIDs = new List<string>();
 }

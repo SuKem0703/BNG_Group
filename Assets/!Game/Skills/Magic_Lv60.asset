@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 507fb18a1a3490147ab94b513116ffd5, type: 3}
+  m_Name: Magic_Lv60
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  skillTree: 1
+  skillID: Magic_Lv60
+  skillName: Magic_Lv60
+  description: Magic_Lv60
+  skillIcon: {fileID: 21300000, guid: c1b30b1e596306b47855fd87ef06fbc2, type: 3}
+  skillType: 0
+  lvlReq: 60
+  playerAscensionRankReqToUnlock: 5
+  skillReqToUnlock: {fileID: 11400000, guid: 4351f4c081647e84a9c816e1de842746, type: 2}
+  skillRankReqToUnlock: 10
+  maxRank: 20
+  baseValue: 0.05
+  maxRankValue: 1
+  baseManaCost: 20
+  manaCostIncreasePerRank: 2
+  baseCooldown: 10
+  minCooldown: 5

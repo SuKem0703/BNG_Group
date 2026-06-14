@@ -40,6 +40,11 @@ public class PlayerMovement : NetworkBehaviour
     public bool isAttacking = false;
     public bool canMoveWhileAttacking = false;
 
+    private bool isMovingToClick = false;
+    private Vector2 targetClickPosition;
+    private Camera mainCamera;
+    private float stuckTimer = 0f;
+
     [SerializeField] private PlayerCore core;
     public GhostTrail ghostTrail;
 
@@ -61,6 +66,31 @@ public class PlayerMovement : NetworkBehaviour
             }
             else
             {
+                if (isMovingToClick)
+                {
+                    Vector2 currentPos = transform.position;
+                    if (Vector2.Distance(currentPos, targetClickPosition) > 0.1f)
+                    {
+                        moveInput = (targetClickPosition - currentPos).normalized;
+                        
+                        if (rb.linearVelocity.magnitude < 0.1f)
+                        {
+                            stuckTimer += Time.deltaTime;
+                            if (stuckTimer > 0.1f) CancelClickMovement();
+                        }
+                        else
+                        {
+                            stuckTimer = 0f;
+                        }
+
+                        if (moveInput.magnitude > 0.01f) netLastInput.Value = moveInput;
+                    }
+                    else
+                    {
+                        CancelClickMovement();
+                    }
+                }
+
                 bool isMovingOwner = moveInput.magnitude > 0.1f;
 
                 if (isDashButtonHeld && canRunAfterDash)
@@ -137,6 +167,7 @@ public class PlayerMovement : NetworkBehaviour
         isDead = false;
         isAttacking = false;
         canMoveWhileAttacking = false;
+        isMovingToClick = false;
     }
 
     public override void OnNetworkSpawn()
@@ -201,11 +232,39 @@ public class PlayerMovement : NetworkBehaviour
         }
 
         Vector2 rawInput = context.ReadValue<Vector2>();
-        moveInput = (PauseController.IsGamePause || isDead) ? Vector2.zero : rawInput;
+
+        if (rawInput.magnitude > 0.01f)
+        {
+            CancelClickMovement();
+        }
+
+        if (!isMovingToClick)
+        {
+            moveInput = (PauseController.IsGamePause || isDead) ? Vector2.zero : rawInput;
+        }
 
         if (moveInput.magnitude > 0.01f)
         {
             netLastInput.Value = moveInput;
+        }
+    }
+
+    public void OnClickMove(InputAction.CallbackContext context)
+    {
+        if (!IsOwner || isDead || PauseController.IsGamePause) return;
+        
+        bool isGameEnded = core.playerStats != null && core.playerVitals.isGameOver;
+        if (isGameEnded || !GameStateManager.CanProcessInput()) return;
+
+        if (context.performed)
+        {
+            if (mainCamera == null) mainCamera = Camera.main;
+            
+            Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
+            targetClickPosition = mainCamera.ScreenToWorldPoint(mouseScreenPos);
+            
+            stuckTimer = 0f;
+            isMovingToClick = true;
         }
     }
 
@@ -283,6 +342,8 @@ public class PlayerMovement : NetworkBehaviour
         moveInput = Vector2.zero;
         netMoveInput.Value = Vector2.zero;
         rb.linearVelocity = Vector2.zero;
+        
+        CancelClickMovement();
     }
 
     public void TriggerDeath()
@@ -311,6 +372,13 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
+    private void CancelClickMovement()
+    {
+        isMovingToClick = false;
+        moveInput = Vector2.zero;
+        stuckTimer = 0f;
+    }
+
     private void ResetMovementState()
     {
         rb.linearVelocity = Vector2.zero;
@@ -321,6 +389,8 @@ public class PlayerMovement : NetworkBehaviour
         isAttacking = false;
         canMoveWhileAttacking = false;
         moveInput = Vector2.zero;
+        
+        CancelClickMovement();
 
         if (IsOwner)
         {

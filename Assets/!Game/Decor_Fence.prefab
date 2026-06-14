@@ -756,6 +756,10 @@ PrefabInstance:
       propertyPath: m_Tiles.Array.data[26].second.m_TileObjectToInstantiateIndex
       value: 65535
       objectReference: {fileID: 0}
+    - target: {fileID: 1537773851201598664, guid: 001290198804cb94daae76a08c3f783a, type: 3}
+      propertyPath: behindRenderer
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 3013808689105433080, guid: 001290198804cb94daae76a08c3f783a, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2
@@ -997,7 +1001,8 @@ PrefabInstance:
       value: Decor_Fence
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 379406136323603177, guid: 001290198804cb94daae76a08c3f783a, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 001290198804cb94daae76a08c3f783a, type: 3}

@@ -53,7 +53,7 @@ public class DontDestroyOnLoad : MonoBehaviour
             if (transport != null)
             {
                 transport.SetConnectionData("127.0.0.1", dynamicPort, "0.0.0.0");
-                Debug.Log($"<color=green>[Dev Mode]</color> Đã gán Port tự động: {dynamicPort} để tránh trùng lặp!");
+                Debug.Log($"<color=green>[Dev Mode]</color> Đã gán Port tự động: {dynamicPort}");
             }
 
             Unity.Netcode.NetworkManager.Singleton.StartHost();
