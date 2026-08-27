@@ -31,13 +31,11 @@ public class PlayerStats : NetworkBehaviour
     public NetworkVariable<bool> netIsOnBattle = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private int serverAggroCount = 0;
 
-    // --- CÁC BIẾN BUFF/DEBUFF TẠM THỜI ---
     private int effectSTR;
     private int effectDEX;
     private int effectINT;
     private int effectCON;
 
-    // --- CÁC BIẾN CỘNG THÊM TỪ TRANG BỊ ---
     private int bonusSTR, bonusDEX, bonusCON, bonusINT;
     public int bonusPhysicalAttack, bonusMagicAttack, bonusDefense;
     private int bonusKnightMaxHP, bonusMageMaxHP;
@@ -64,7 +62,6 @@ public class PlayerStats : NetworkBehaviour
         }
     }
 
-    // Chỉ số cơ bản
     public int basePhysicalAttack => finalSTR * 2;
     public int baseMagicAttack => finalINT * 2;
     public int baseDefense => finalDEX * 1;
@@ -77,7 +74,6 @@ public class PlayerStats : NetworkBehaviour
     public float baseStaminaRegen => 1f * (1f + finalDEX * 0.02f);
     public float baseMoveSpeed => 4f + finalDEX * 0.01f;
 
-    // Chỉ số cuối cùng
     public int finalSTR => STR + bonusSTR + effectSTR;
     public int finalDEX => DEX + bonusDEX + effectDEX;
     public int finalCON => CON + bonusCON + effectCON;
@@ -300,7 +296,7 @@ public class PlayerStats : NetworkBehaviour
         {
             if (!netIsOnBattle.Value) return false;
 
-            if (MapController.Instance != null && MapController.Instance.IsSafeZone()) return false;
+            if (AreaController.currentArea != null && AreaController.currentArea.mapType == MapType.SafeZone) return false;
             if (InventoryController.Instance == null || classController == null) return false;
 
             int weaponSlotIndex = classController.IsKnightActive ? 2003 : 2103;

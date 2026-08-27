@@ -35,7 +35,7 @@ public class EconomyService : MonoBehaviour
 
     private IEnumerator SpendRoutine(string type, int amount, string reason, System.Action<bool> onComplete)
     {
-        string url = NetworkConfig.GetUrl("api/Economy/spend");
+        string url = NetworkConfig.GetUrl("Economy/spend");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         SpendRequest reqBody = new SpendRequest { currencyType = type, amount = amount, reason = reason };
@@ -107,7 +107,7 @@ public class EconomyService : MonoBehaviour
 
     private IEnumerator GetBalanceRoutine(System.Action<int, int> onComplete)
     {
-        string url = NetworkConfig.GetUrl("api/Economy/balance");
+        string url = NetworkConfig.GetUrl("Economy/balance");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
@@ -140,7 +140,7 @@ public class EconomyService : MonoBehaviour
 
     private IEnumerator EarnRoutine(string type, int amount, string reason, System.Action<bool> onComplete)
     {
-        string url = NetworkConfig.GetUrl("api/Economy/earn");
+        string url = NetworkConfig.GetUrl("Economy/earn");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         SpendRequest reqBody = new SpendRequest { currencyType = type, amount = amount, reason = reason };

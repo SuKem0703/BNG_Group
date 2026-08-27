@@ -30,8 +30,7 @@ public class ChapterIntroSequence : MonoBehaviour
 
     private void Awake()
     {
-        var map = FindFirstObjectByType<MapController>();
-        if (map != null) map.IsCutsceneMode = true;
+        AreaController.isGlobalCutsceneMode = true;
     }
 
     private void Start()
@@ -39,11 +38,8 @@ public class ChapterIntroSequence : MonoBehaviour
         if (!string.IsNullOrEmpty(uniqueID)) finalID = uniqueID;
         else finalID = GenerateDeterministicID();
 
-        // Ẩn trước để tránh nhấp nháy trong lúc chờ check save
         if (monologueText != null) SetAlpha(monologueText, 0);
 
-        // Nếu là chuyển cảnh (sceneToLoad có dữ liệu) thì luôn hiện nền
-        // Nếu là intro tại chỗ, tạm thời hiện nền để che map trong lúc check data
         if (backgroundImage != null) SetAlpha(backgroundImage, 1);
 
         if (!string.IsNullOrEmpty(sceneToLoad))
@@ -92,7 +88,6 @@ public class ChapterIntroSequence : MonoBehaviour
         else
             SoundEffectManager.StopBGM();
 
-        // Đảm bảo trạng thái alpha đúng trước khi diễn
         if (monologueText != null) SetAlpha(monologueText, 0);
         if (backgroundImage != null) SetAlpha(backgroundImage, 1);
 
@@ -112,7 +107,6 @@ public class ChapterIntroSequence : MonoBehaviour
 
     private IEnumerator TryPlayIntroBGM()
     {
-        // Wait until SoundEffectManager instance exists and has AudioSources
         float timeout = 2f;
         float elapsed = 0f;
 
@@ -121,13 +115,9 @@ public class ChapterIntroSequence : MonoBehaviour
             var mgr = FindFirstObjectByType<SoundEffectManager>();
             if (mgr != null)
             {
-                // Request play
                 SoundEffectManager.PlayBGM(introAudioClip, false);
-
-                // Give a short moment for AudioSource to start
                 yield return new WaitForSecondsRealtime(0.1f);
 
-                // Check if any AudioSource on manager is playing our clip
                 var srcs = mgr.GetComponents<AudioSource>();
                 foreach (var s in srcs)
                 {
@@ -138,7 +128,6 @@ public class ChapterIntroSequence : MonoBehaviour
                     }
                 }
 
-                // If not started yet, try again shortly
                 yield return new WaitForSecondsRealtime(0.1f);
                 elapsed += 0.2f;
                 continue;
@@ -212,11 +201,10 @@ public class ChapterIntroSequence : MonoBehaviour
 
     private void RestoreMapState()
     {
-        if (MapController.Instance != null)
+        AreaController.isGlobalCutsceneMode = false;
+        if (AreaController.currentArea != null)
         {
-            MapController.Instance.IsCutsceneMode = false;
-            MapController.Instance.PlayMapBGM();
-            MapController.Instance.ShowMapNameUI();
+            AreaController.currentArea.ActivateArea();
         }
     }
 

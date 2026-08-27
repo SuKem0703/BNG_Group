@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class CheckPoint : MonoBehaviour, IInteractable
@@ -31,8 +30,7 @@ public class CheckPoint : MonoBehaviour, IInteractable
     {
         if (checkpointName == "")
         {
-            MapController mapController = MapController.Instance;
-            string checkpointName = mapController.mapName;
+            checkpointName = AreaController.currentArea != null ? AreaController.currentArea.mapName : "Unknown Area";
         }
 
         UpdateVisual();
@@ -70,9 +68,6 @@ public class CheckPoint : MonoBehaviour, IInteractable
 
         if (SaveController.IsSaving) return;
 
-        // Nếu checkpoint này đã kích hoạt rồi và bạn không muốn lưu lại liên tục thì mở comment dòng dưới
-        // if (isActivated) return; 
-
         SaveController.nextSpawnPosition = transform.position;
         SaveController.pendingSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
 
@@ -97,8 +92,6 @@ public class CheckPoint : MonoBehaviour, IInteractable
             SaveController.Instance.SaveGame(SaveReason.Checkpoint, (isSuccess) =>
             {
                 Debug.Log("Lưu checkpoint hoàn tất!");
-                // SaveController.nextSpawnPosition = null; 
-                // SaveController.pendingSceneName = null;
             });
         }
     }

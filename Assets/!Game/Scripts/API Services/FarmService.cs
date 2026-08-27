@@ -49,7 +49,7 @@ public class FarmService : MonoBehaviour
 
     private IEnumerator SyncRoutine(Action<List<ServerFarmPlot>> onComplete)
     {
-        string url = NetworkConfig.GetUrl("api/Farm/sync");
+        string url = NetworkConfig.GetUrl("Farm/sync");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
@@ -71,12 +71,12 @@ public class FarmService : MonoBehaviour
 
     public void RequestPlant(string plotId, int seedItemId)
     {
-        StartCoroutine(PostRequest("api/Farm/plant", new PlantRequest { plotId = plotId, seedItemId = seedItemId }));
+        StartCoroutine(PostRequest("Farm/plant", new PlantRequest { plotId = plotId, seedItemId = seedItemId }));
     }
 
     public void RequestDestroy(string plotId)
     {
-        StartCoroutine(PostRequest("api/Farm/destroy", new DestroyRequest { plotId = plotId }));
+        StartCoroutine(PostRequest("Farm/destroy", new DestroyRequest { plotId = plotId }));
     }
 
     public void RequestHarvest(string plotId)
@@ -99,7 +99,7 @@ public class FarmService : MonoBehaviour
             BulkHarvestRequest body = new BulkHarvestRequest { plotIds = batchToSend };
 
             Debug.Log($"[Farm] CHỐT SỔ KHẨN CẤP: Gửi Bulk Harvest gồm {batchToSend.Count} ô đất do chuyển Scene!");
-            StartCoroutine(PostRequest("api/Farm/harvest", body, true));
+            StartCoroutine(PostRequest("Farm/harvest", body, true));
         }
     }
 
@@ -115,7 +115,7 @@ public class FarmService : MonoBehaviour
         BulkHarvestRequest body = new BulkHarvestRequest { plotIds = batchToSend };
 
         Debug.Log($"[Farm] Bắt đầu gửi Bulk Harvest gồm {batchToSend.Count} ô đất...");
-        yield return StartCoroutine(PostRequest("api/Farm/harvest", body, true));
+        yield return StartCoroutine(PostRequest("Farm/harvest", body, true));
     }
 
     private IEnumerator PostRequest(string endpoint, object body, bool isHarvest = false)

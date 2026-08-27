@@ -8,7 +8,7 @@
   - Layers:
     - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Enemy, Map, NPC, Light2D, Farm, Decor, MinimapUI, Treasure, Water
 - Active game object:
-  - Name: Ground
-  - Tag: Untagged
-  - Layer: Map
+  - Name: Player(Clone)
+  - Tag: PlayerController
+  - Layer: Player
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

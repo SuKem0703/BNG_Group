@@ -114,7 +114,7 @@ public class LoginManager : MonoBehaviour
         if (miniLoadingScreen != null) miniLoadingScreen.gameObject.SetActive(true);
 
         // [NETWORK] URL Ping
-        string url = NetworkConfig.GetUrl("api/GameData/ping");
+        string url = NetworkConfig.GetUrl("GameData/ping");
 
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
@@ -136,7 +136,7 @@ public class LoginManager : MonoBehaviour
         string json = JsonUtility.ToJson(requestData);
 
         // [NETWORK] URL Login
-        string url = NetworkConfig.GetUrl("api/Accounts/login");
+        string url = NetworkConfig.GetUrl("Accounts/login");
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
@@ -184,7 +184,7 @@ public class LoginManager : MonoBehaviour
             yield break;
         }
 
-        string url = NetworkConfig.GetUrl("api/GameData/get-save");
+        string url = NetworkConfig.GetUrl("GameData/get-save");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Authorization", $"Bearer {token}");

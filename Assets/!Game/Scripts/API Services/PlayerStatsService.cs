@@ -40,7 +40,7 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator SyncRoutine(System.Action<bool> onComplete)
     {
-        string url = NetworkConfig.GetUrl("api/PlayerStats/profile");
+        string url = NetworkConfig.GetUrl("PlayerStats/profile");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
@@ -74,7 +74,7 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator DistributeRoutine(int addStr, int addDex, int addInt, int addCon, System.Action<bool> onComplete)
     {
-        string url = NetworkConfig.GetUrl("api/PlayerStats/distribute");
+        string url = NetworkConfig.GetUrl("PlayerStats/distribute");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         DistributeRequest reqBody = new DistributeRequest
@@ -123,7 +123,7 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator ResetStatsRoutine(System.Action<bool> onComplete)
     {
-        string url = NetworkConfig.GetUrl("api/PlayerStats/reset");
+        string url = NetworkConfig.GetUrl("PlayerStats/reset");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");
@@ -192,7 +192,7 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator AddExpRoutine(int amount)
     {
-        string url = NetworkConfig.GetUrl("api/PlayerStats/add-exp");
+        string url = NetworkConfig.GetUrl("PlayerStats/add-exp");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         AddExpBody body = new AddExpBody { amount = amount };

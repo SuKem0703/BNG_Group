@@ -319,6 +319,13 @@ public class SaveController : MonoBehaviour
         if (reason == SaveReason.SceneTransition && nextSpawnPosition != null) savePos = nextSpawnPosition.Value;
         if (reason == SaveReason.SceneTransition && !string.IsNullOrEmpty(pendingSceneName)) saveScene = pendingSceneName;
 
+        string currentBoundary = FindFirstObjectByType<CinemachineConfiner2D>()?.BoundingShape2D?.gameObject.name ?? "";
+        
+        if (reason == SaveReason.SceneTransition || !string.IsNullOrEmpty(pendingSceneName))
+        {
+            currentBoundary = ""; 
+        }
+
         SaveData saveData = new SaveData
         {
             playerPosition = nextSpawnPosition ?? playerCore.playerStats.transform.position,
@@ -326,7 +333,7 @@ public class SaveController : MonoBehaviour
             checkpointPosition = currentCheckpointPos ?? playerCore.playerStats.transform.position,
             checkpointSceneName = currentCheckpointScene ?? SceneManager.GetActiveScene().name,
 
-            mapBoundary = FindFirstObjectByType<CinemachineConfiner2D>()?.BoundingShape2D?.gameObject.name ?? "",
+            mapBoundary = currentBoundary,
             backPackSlotCount = uiAdapter.inventoryController.slotCount,
 
             chestSaveData = MergeChestsState(existingChestStates),
@@ -517,14 +524,14 @@ public class SaveController : MonoBehaviour
         }
         else if (string.IsNullOrEmpty(targetScene))
         {
-            targetScene = "MAP_CH1_01";
+            targetScene = "01_Home_Indoor";
         }
 
         bool sceneExists = Enumerable.Range(0, SceneManager.sceneCountInBuildSettings)
             .Select(SceneUtility.GetScenePathByBuildIndex)
             .Any(scenePath => scenePath.EndsWith($"{targetScene}.unity"));
 
-        if (!sceneExists) targetScene = "MAP_CH1_01";
+        if (!sceneExists) targetScene = "01_Home_Indoor";
 
         nextSpawnPosition = targetPos;
 
@@ -556,11 +563,16 @@ public class SaveController : MonoBehaviour
 
         BoxCollider2D boundary = MapBoundary.GetBoundary(saveData?.mapBoundary);
 
-        if (boundary != null)
+        // Cập nhật: Tự động gán biên camera thay vì chờ MapMove kích hoạt
+        if (CameraController.Instance != null)
         {
-            if (CameraController.Instance != null)
+            if (boundary != null)
             {
                 CameraController.Instance.UpdateMapBounds(boundary);
+            }
+            else
+            {
+                CameraController.Instance.AutoFindAndSetBoundary();
             }
         }
 
@@ -680,7 +692,7 @@ public class SaveController : MonoBehaviour
     {
         string json = JsonUtility.ToJson(new SaveGameRequestDto { dataSave = JsonUtility.ToJson(saveData), reason = reason.ToString() });
 
-        string url = NetworkConfig.GetUrl("api/GameData/save-data");
+        string url = NetworkConfig.GetUrl("GameData/save-data");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");
@@ -714,7 +726,7 @@ public class SaveController : MonoBehaviour
 
     IEnumerator LoadFromServer(System.Action<SaveData> onLoaded)
     {
-        string url = NetworkConfig.GetUrl("api/GameData/get-save");
+        string url = NetworkConfig.GetUrl("GameData/get-save");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
@@ -729,6 +741,9 @@ public class SaveController : MonoBehaviour
         {
             string json = request.downloadHandler.text;
 
+            // Thêm log để xem chi tiết chuỗi JSON trả về
+            Debug.Log($"[LoadFromServer] Response JSON: {json}");
+
             GetSaveDataResponseDto responseDto = JsonUtility.FromJson<GetSaveDataResponseDto>(json);
             MasterSeed = responseDto.masterSeed;
 
@@ -737,6 +752,9 @@ public class SaveController : MonoBehaviour
         }
         else
         {
+            // Thêm log ghi lại lỗi từ server hoặc network
+            Debug.LogError($"[LoadFromServer] Request Error: {request.error} - Response Code: {request.responseCode}");
+
             PlayerPrefs.DeleteAll();
             PlayerPrefs.Save();
             SceneManager.LoadScene("MainMenu");

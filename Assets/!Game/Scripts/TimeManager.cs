@@ -24,6 +24,11 @@ public class TimeManager : MonoBehaviour
     [SerializeField] private Gradient lightColorGradient;
     [SerializeField] private AnimationCurve lightIntensityCurve;
 
+    [Header("Environment Lighting Override")]
+    [SerializeField] private float transitionSpeed = 1.5f;
+    private bool isOverrideLighting = false;
+    private float overrideIntensity = 0.1f;
+
     public Action<int, int> OnTimeChanged;
     public Action<int> OnDayChanged;
     public Action<TimePeriod> OnPeriodChanged;
@@ -113,8 +118,20 @@ public class TimeManager : MonoBehaviour
 
         float timePercent = currentTimeOfDay / 24f;
 
-        globalLight.color = lightColorGradient.Evaluate(timePercent);
-        globalLight.intensity = lightIntensityCurve.Evaluate(timePercent);
+        float targetIntensity;
+        Color targetColor = lightColorGradient.Evaluate(timePercent);
+
+        if (isOverrideLighting)
+        {
+            targetIntensity = overrideIntensity;
+        }
+        else
+        {
+            targetIntensity = lightIntensityCurve.Evaluate(timePercent);
+        }
+
+        globalLight.intensity = Mathf.Lerp(globalLight.intensity, targetIntensity, Time.deltaTime * transitionSpeed);
+        globalLight.color = Color.Lerp(globalLight.color, targetColor, Time.deltaTime * transitionSpeed);
     }
 
     private void TryFindGlobalLight()
@@ -147,5 +164,11 @@ public class TimeManager : MonoBehaviour
         {
             playerVitals.ResetVitals();
         }
+    }
+
+    public void SetEnvironmentOverride(bool isOverride, float intensity = 0.5f)
+    {
+        isOverrideLighting = isOverride;
+        overrideIntensity = intensity;
     }
 }

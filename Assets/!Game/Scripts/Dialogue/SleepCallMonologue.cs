@@ -29,49 +29,36 @@ public class SleepCallMonologue : Monologue
 
     private IEnumerator WaitAndAutoTrigger()
     {
-        // 1. Chờ Save load xong
         yield return new WaitUntil(() => SaveController.IsDataLoaded);
         yield return null;
 
         if (this == null || !gameObject.activeInHierarchy)
             yield break;
 
-        // 2. Chờ DialogueController
         yield return new WaitUntil(() => DialogueController.instance != null);
-
-        // 3. Chờ các intro / cutscene KẾT THÚC HOÀN TOÀN
         yield return new WaitUntil(() => FindFirstObjectByType<ChapterIntroSequence>() == null);
         yield return new WaitUntil(() => FindFirstObjectByType<StoryScrollController>() == null);
         yield return new WaitUntil(() => FindFirstObjectByType<CameraPanIntro>() == null);
 
-        // 4. Chờ MapController thoát cutscene
-        if (MapController.Instance != null)
-        {
-            yield return new WaitUntil(() => !MapController.Instance.IsCutsceneMode);
-        }
+        yield return new WaitUntil(() => !AreaController.isGlobalCutsceneMode);
 
-        // 5. Đảm bảo GameState sạch
         GameStateManager.IsDialogueActive = false;
         GameStateManager.EndLoading();
 
-        yield return null; // buffer 1 frame
+        yield return null;
 
         if (this == null || !gameObject.activeInHierarchy || _hasTriggered)
             yield break;
 
         _hasTriggered = true;
 
-        // 6. ÉP MỞ DIALOG – KHÔNG CHỜ CanInteract
         OpenDialogOnTrigger();
     }
 
     protected override void StartDialogue()
     {
-        if (MapController.Instance != null)
-        {
-            MapController.Instance.IsCutsceneMode = true;
-            _hasStartedCutsceneMode = true;
-        }
+        AreaController.isGlobalCutsceneMode = true;
+        _hasStartedCutsceneMode = true;
 
         if (_blackOverlay != null)
         {
@@ -106,16 +93,15 @@ public class SleepCallMonologue : Monologue
 
     private void RestoreMapState()
     {
-        if (MapController.Instance != null)
+        AreaController.isGlobalCutsceneMode = false;
+        if (AreaController.currentArea != null)
         {
-            MapController.Instance.IsCutsceneMode = false;
-            MapController.Instance.ShowMapNameUI();
+            AreaController.currentArea.ShowMapNameUI();
         }
 
         _hasStartedCutsceneMode = false;
     }
 
-    // OVERRIDE: Auto-trigger KHÔNG bị khóa bởi GameState cũ
     public override bool CanInteract()
     {
         if (!SaveController.IsDataLoaded) return false;

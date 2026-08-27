@@ -201,6 +201,13 @@ public class MapMove : MonoBehaviour
                     confiner.InvalidateBoundingShapeCache();
                 }
             }
+
+            AreaController newArea = newMapBoundary.GetComponent<AreaController>();
+            if (newArea != null)
+            {
+                AreaController.currentArea = newArea;
+                newArea.ActivateArea();
+            }
         }
 
         var cam = CameraController.Instance?.GetComponent<CinemachineCamera>();

@@ -105,7 +105,7 @@ public class InventoryService : MonoBehaviour
     public void RequestEquip(int itemDbId, bool isEquipped)
     {
         StartCoroutine(PostRequest(
-            "api/Inventory/equip",
+            "Inventory/equip",
             new EquipRequestDTO { itemDbId = itemDbId, isEquipped = isEquipped },
             null
         ));
@@ -120,13 +120,13 @@ public class InventoryService : MonoBehaviour
             isStackable = isStackable
         };
 
-        StartCoroutine(PostRequest("api/Inventory/move", body, onComplete));
+        StartCoroutine(PostRequest("Inventory/move", body, onComplete));
     }
 
     public void RequestUpdateQuantityImmediate(int dbId, int newQuantity)
     {
         StartCoroutine(PostRequest(
-            "api/Inventory/update-quantity",
+            "Inventory/update-quantity",
             new UpdateQtyRequestDTO { itemDbId = dbId, newQuantity = newQuantity },
             null
         ));
@@ -152,36 +152,36 @@ public class InventoryService : MonoBehaviour
 
     public void RequestRemoveItem(int itemDbId, System.Action<bool> onComplete = null)
     {
-        StartCoroutine(PostRequest("api/Inventory/remove", new RemoveRequestDTO { itemDbId = itemDbId }, onComplete));
+        StartCoroutine(PostRequest("Inventory/remove", new RemoveRequestDTO { itemDbId = itemDbId }, onComplete));
     }
 
     public void RequestSyncChest(string chestId, System.Action<List<ServerUserItem>> onComplete)
     {
-        string url = NetworkConfig.GetUrl($"api/Storage/sync/{chestId}");
+        string url = NetworkConfig.GetUrl($"Storage/sync/{chestId}");
         StartCoroutine(GetRequestList(url, onComplete));
     }
 
     public void RequestDeposit(int itemDbId, string chestId, int slotIndex, bool isStackable, System.Action<bool> onComplete)
     {
         var body = new DepositDTO { itemDbId = itemDbId, chestId = chestId, slotIndex = slotIndex, isStackable = isStackable };
-        StartCoroutine(PostRequest("api/Storage/deposit", body, onComplete));
+        StartCoroutine(PostRequest("Storage/deposit", body, onComplete));
     }
 
     public void RequestWithdraw(int itemDbId, int targetSlotIndex, bool isStackable, System.Action<bool> onComplete)
     {
         var body = new WithdrawDTO { itemDbId = itemDbId, slotIndex = targetSlotIndex, isStackable = isStackable };
-        StartCoroutine(PostRequest("api/Storage/withdraw", body, onComplete));
+        StartCoroutine(PostRequest("Storage/withdraw", body, onComplete));
     }
 
     public void RequestLoadMapStorage(string sceneName, System.Action<List<StorageItemDTO>> onComplete)
     {
-        string url = NetworkConfig.GetUrl($"api/Storage/load-map-storage?sceneName={sceneName}");
+        string url = NetworkConfig.GetUrl($"Storage/load-map-storage?sceneName={sceneName}");
         StartCoroutine(GetStorageList(url, onComplete));
     }
 
     public void RequestLoadSingleChest(string chestId, System.Action<List<StorageItemDTO>> onComplete)
     {
-        string url = NetworkConfig.GetUrl($"api/Storage/load-chest?chestId={chestId}");
+        string url = NetworkConfig.GetUrl($"Storage/load-chest?chestId={chestId}");
         StartCoroutine(GetStorageList(url, onComplete));
     }
 
@@ -191,7 +191,7 @@ public class InventoryService : MonoBehaviour
 
     private IEnumerator SyncRoutine(System.Action<List<ServerUserItem>> onComplete)
     {
-        string url = NetworkConfig.GetUrl("api/Inventory/sync");
+        string url = NetworkConfig.GetUrl("Inventory/sync");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         UnityWebRequest request = UnityWebRequest.Get(url);
@@ -227,7 +227,7 @@ public class InventoryService : MonoBehaviour
 
     private IEnumerator BuyRoutine(int itemId, int quantity, System.Action<bool, List<ServerUserItem>> onComplete)
     {
-        string url = NetworkConfig.GetUrl("api/Shop/buy");
+        string url = NetworkConfig.GetUrl("Shop/buy");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         var body = new BuyRequestDTO
@@ -279,7 +279,7 @@ public class InventoryService : MonoBehaviour
         bool isStackable,
         System.Action<int, string> onSuccess)
     {
-        string url = NetworkConfig.GetUrl("api/Inventory/add");
+        string url = NetworkConfig.GetUrl("Inventory/add");
         string token = PlayerPrefs.GetString("AuthToken", "");
 
         var body = new AddItemRequestDTO
@@ -510,7 +510,7 @@ public class InventoryService : MonoBehaviour
 
         foreach (var move in _pendingMoves)
         {
-            StartCoroutine(PostRequest("api/Inventory/move",
+            StartCoroutine(PostRequest("Inventory/move",
                 new MoveRequestDTO { itemDbId = move.Key, newSlotIndex = move.Value, isStackable = false },
                 null));
         }

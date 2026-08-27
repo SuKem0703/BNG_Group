@@ -78,6 +78,11 @@ public class CameraController : MonoBehaviour
             minimapCamera.clearFlags = CameraClearFlags.SolidColor;
             minimapCamera.orthographic = true;
         }
+
+        if (mapCollider == null)
+        {
+            AutoFindAndSetBoundary();
+        }
     }
 
     void LateUpdate()
@@ -211,6 +216,31 @@ public class CameraController : MonoBehaviour
             if (virtualCamera != null) virtualCamera.Target.TrackingTarget = playerTransform;
 
             if (oldTransform != playerTransform) instantSnapMinimap = true;
+        }
+    }
+
+    public void AutoFindAndSetBoundary()
+    {
+        if (playerTransform == null) FindLocalPlayer();
+        if (playerTransform == null) return;
+
+        Physics2D.SyncTransforms();
+
+        Collider2D[] colliders = Physics2D.OverlapPointAll(playerTransform.position);
+        foreach (var col in colliders)
+        {
+            MapBoundary boundary = col.GetComponent<MapBoundary>();
+            if (boundary != null)
+            {
+                UpdateMapBounds(col.GetComponent<Collider2D>());
+                return;
+            }
+        }
+
+        MapBoundary fallback = FindFirstObjectByType<MapBoundary>();
+        if (fallback != null)
+        {
+            UpdateMapBounds(fallback.GetComponent<Collider2D>());
         }
     }
 

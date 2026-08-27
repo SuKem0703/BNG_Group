@@ -57,7 +57,7 @@ public class ServerTimeManager : MonoBehaviour
 
     public IEnumerator FetchServerTime()
     {
-        string url = NetworkConfig.GetUrl("api/GameData/ping");
+        string url = NetworkConfig.GetUrl("GameData/ping");
 
         float requestStartTime = Time.realtimeSinceStartup;
 

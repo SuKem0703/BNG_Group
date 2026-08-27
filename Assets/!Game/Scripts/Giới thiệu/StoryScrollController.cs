@@ -31,7 +31,6 @@ public class StoryScrollController : MonoBehaviour
     private float stopPosition;
     private string finalID;
 
-    // 👉 THÊM
     private bool isAppPaused = false;
 
     void Awake()
@@ -63,9 +62,6 @@ public class StoryScrollController : MonoBehaviour
         GameStateManager.EndLoading();
     }
 
-    // ===============================
-    // OS / APP PAUSE HANDLING
-    // ===============================
     void OnApplicationFocus(bool hasFocus)
     {
         isAppPaused = !hasFocus;
@@ -93,7 +89,6 @@ public class StoryScrollController : MonoBehaviour
 
     IEnumerator PlaySequence()
     {
-        // --- STEP 1: Chờ Chapter Intro ---
         var chapterIntro = FindFirstObjectByType<ChapterIntroSequence>();
         if (chapterIntro != null)
         {
@@ -102,10 +97,8 @@ public class StoryScrollController : MonoBehaviour
             yield return new WaitUntil(() => chapterIntro == null);
         }
 
-        // --- STEP 2: Setup ---
         GameStateManager.StartLoading();
-        if (MapController.Instance != null)
-            MapController.Instance.IsCutsceneMode = true;
+        AreaController.isGlobalCutsceneMode = true;
 
         Canvas.ForceUpdateCanvases();
         yield return null;
@@ -116,11 +109,9 @@ public class StoryScrollController : MonoBehaviour
         if (textComponent != null)
             textComponent.alpha = 1f;
 
-        // --- STEP 3: Audio ---
         if (scrollAudioClip != null)
             SoundEffectManager.PlayBGM(scrollAudioClip, false);
 
-        // --- STEP 4: Fade In ---
         if (backgroundImage != null)
             backgroundImage.enabled = true;
 
@@ -134,10 +125,8 @@ public class StoryScrollController : MonoBehaviour
             }
         }
 
-        // --- STEP 5: Scroll ---
         while (true)
         {
-            // ⛔ App bị pause → không update
             if (isAppPaused)
             {
                 yield return null;
@@ -165,7 +154,6 @@ public class StoryScrollController : MonoBehaviour
             yield return null;
         }
 
-        // --- STEP 6: Fade Out ---
         if (canvasGroup != null)
         {
             while (canvasGroup.alpha > 0f)
@@ -219,10 +207,10 @@ public class StoryScrollController : MonoBehaviour
 
     private void RestoreMapState()
     {
-        if (MapController.Instance == null) return;
-
-        MapController.Instance.IsCutsceneMode = false;
-        MapController.Instance.PlayMapBGM();
-        MapController.Instance.ShowMapNameUI();
+        AreaController.isGlobalCutsceneMode = false;
+        if (AreaController.currentArea != null)
+        {
+            AreaController.currentArea.ActivateArea();
+        }
     }
 }

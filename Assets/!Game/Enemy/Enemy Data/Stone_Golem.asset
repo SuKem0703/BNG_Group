@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf278d9bce95ae744a36eba50185ef82, type: 3}
+  m_Name: Stone_Golem
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyName: "Golem \u0110\xE1"
+  questTargetID: 
+  enemyRank: 0
+  enemyRace: 3
+  enemyIcon: {fileID: 1202984965197363600, guid: 7223a834a4a97c04392ab80121d6e67e, type: 3}
+  timeScalingType: 0
+  levelEnemy: 10
+  damage: 40
+  maxHealth: 500
+  defense: 50
+  experienceReward: 10
+  goldReward: 5
+  chaseSpeed: 3
+  detectionRadius: 5
+  attackRange: 1.75
+  attackCooldown: 0.25
+  attackType: 0
+  attackAngle: 45
+  enemyDescription: 
+  bossPhases: []
+  lootTable: {fileID: 0}
