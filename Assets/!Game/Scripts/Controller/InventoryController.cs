@@ -27,7 +27,15 @@ public class InventoryController : MonoBehaviour
 
     private void Start()
     {
-        ReBuildItemCounts();
+        RefreshInventory();
+    }
+
+    // Hàm kiểm tra itemID hợp lệ trong ItemDictionary
+    private bool IsValidItemID(int itemID)
+    {
+        if (itemID <= 0) return false;
+        if (ItemDictionary.Instance != null && ItemDictionary.Instance.GetItemPrefab(itemID) == null) return false;
+        return true;
     }
 
     #region Public API
@@ -52,6 +60,14 @@ public class InventoryController : MonoBehaviour
     public bool AddItem(Item tempItem, uint validationSeed = 0)
     {
         if (tempItem == null) return false;
+
+        // Hủy GameObject ngay nếu Item nhặt vào có ID không hợp lệ
+        if (!IsValidItemID(tempItem.ID))
+        {
+            Debug.LogWarning($"[InventoryController] Phát hiện Item có ID không hợp lệ (ID: {tempItem.ID}, Object: {tempItem.name}). Tiến hành Destroy!");
+            Destroy(tempItem.gameObject);
+            return false;
+        }
 
         int quantityLeft = tempItem.quantity;
 
@@ -81,6 +97,10 @@ public class InventoryController : MonoBehaviour
             {
                 InventoryService.Instance.RequestRemoveItem(data.dbID);
                 _inventoryData.RemoveAt(i);
+            }
+            else
+            {
+                InventoryService.Instance.RequestUpdateQuantityImmediate(data.dbID, data.quantity);
             }
         }
 
@@ -188,67 +208,68 @@ public class InventoryController : MonoBehaviour
     {
         if (itemPrefab == null) return;
 
-        var existingData = _inventoryData.FirstOrDefault(x => x.itemID == itemPrefab.ID && x.slotIndex < 2000);
-
-        if (existingData != null)
+        if (!IsValidItemID(itemPrefab.ID))
         {
-            existingData.quantity += quantity;
+            Debug.LogWarning($"[InventoryController] Nông sản thu hoạch có ID không hợp lệ (ID: {itemPrefab.ID}). Đã bỏ qua!");
+            return;
         }
-        else
+
+        int emptySlotIndex = 0;
+        var occupiedSlots = _inventoryData.Select(x => x.slotIndex).ToHashSet();
+        for (int i = 0; i < slotCount; i++)
         {
-            int emptySlotIndex = -1;
-            var occupiedSlots = _inventoryData.Select(x => x.slotIndex).ToHashSet();
-
-            for (int i = 0; i < slotCount; i++)
+            if (!occupiedSlots.Contains(i))
             {
-                if (!occupiedSlots.Contains(i))
-                {
-                    emptySlotIndex = i;
-                    break;
-                }
-            }
-
-            if (emptySlotIndex != -1)
-            {
-                _inventoryData.Add(new InventorySaveData
-                {
-                    dbID = -1,
-                    itemID = itemPrefab.ID,
-                    quantity = quantity,
-                    slotIndex = emptySlotIndex,
-                    isEquipped = false,
-                    rarity = itemPrefab.rarity,
-                    qualityFactor = itemPrefab.qualityFactor
-                });
+                emptySlotIndex = i;
+                break;
             }
         }
 
-        ReBuildItemCounts();
+        InventoryService.Instance.RequestAddItem(
+            itemPrefab.ID,
+            quantity,
+            emptySlotIndex,
+            (int)itemPrefab.rarity,
+            itemPrefab.qualityFactor,
+            0,
+            itemPrefab.IsStackable,
+            (dbId, action) =>
+            {
+                RefreshInventory();
+            }
+        );
     }
 
     public void RefreshInventory()
     {
+        if (InventoryService.Instance == null) return;
+
         InventoryService.Instance.SyncInventory((serverItems) =>
         {
             if (serverItems == null) return;
 
             List<InventorySaveData> cleanData = new List<InventorySaveData>();
-            List<InventorySaveData> hotBarData = new List<InventorySaveData>();
 
             foreach (var sItem in serverItems)
             {
+                // Bỏ qua và xóa khỏi DB nếu phát hiện itemId không hợp lệ khi đồng bộ
+                if (!IsValidItemID(sItem.itemId))
+                {
+                    Debug.LogWarning($"[InventoryController] Loại bỏ vật phẩm lỗi (dbID: {sItem.id}, itemID: {sItem.itemId}) khi làm mới túi đồ!");
+                    if (sItem.id > 0) InventoryService.Instance.RequestRemoveItem(sItem.id);
+                    continue;
+                }
+
                 var data = new InventorySaveData
                 {
                     dbID = sItem.id,
                     itemID = sItem.itemId,
                     quantity = sItem.quantity,
                     slotIndex = sItem.slotIndex,
-                    isEquipped = sItem.slotIndex >= 2000,
+                    isEquipped = sItem.isEquipped || sItem.slotIndex >= 2000,
                     rarity = (ItemRarity)sItem.rarity,
                     qualityFactor = sItem.qualityFactor
                 };
-
-                if (sItem.slotIndex >= 2000) continue;
 
                 cleanData.Add(data);
             }
@@ -262,6 +283,25 @@ public class InventoryController : MonoBehaviour
     public void ReBuildItemCounts()
     {
         _itemCountCache.Clear();
+
+        // Quét dọn các phần tử có itemID không hợp lệ trong RAM và xóa khỏi DB trước khi phát event lên UI
+        for (int i = _inventoryData.Count - 1; i >= 0; i--)
+        {
+            var data = _inventoryData[i];
+            if (data == null || !IsValidItemID(data.itemID))
+            {
+                int invalidId = data != null ? data.itemID : -1;
+                int invalidDbId = data != null ? data.dbID : 0;
+                Debug.LogWarning($"[InventoryController] Phát hiện dữ liệu item không hợp lệ trên RAM (dbID: {invalidDbId}, itemID: {invalidId}). Đã xóa khỏi RAM và Database!");
+
+                if (invalidDbId > 0 && InventoryService.Instance != null)
+                {
+                    InventoryService.Instance.RequestRemoveItem(invalidDbId);
+                }
+
+                _inventoryData.RemoveAt(i);
+            }
+        }
 
         foreach (var data in _inventoryData)
         {

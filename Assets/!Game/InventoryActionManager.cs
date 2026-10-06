@@ -43,10 +43,39 @@ public class InventoryActionManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
+    private bool ValidateOrDestroyUIItem(Item item, Slot parentSlot)
+    {
+        if (item == null) return false;
+
+        bool isInvalid = item.ID <= 0 || (ItemDictionary.Instance != null && ItemDictionary.Instance.GetItemPrefab(item.ID) == null);
+        if (isInvalid)
+        {
+            Debug.LogWarning($"[InventoryActionManager] Phát hiện Item có ID không hợp lệ trên UI (ID: {item.ID}, dbID: {item.dbID}). Tiến hành xóa khỏi DB và Destroy!");
+            if (parentSlot != null && parentSlot.currentItem == item.gameObject)
+            {
+                parentSlot.currentItem = null;
+            }
+
+            if (item.dbID > 0)
+            {
+                InventoryController.Instance?.GetInventoryItemsData().RemoveAll(x => x.dbID == item.dbID);
+                InventoryService.Instance?.RequestRemoveItem(item.dbID);
+            }
+
+            Destroy(item.gameObject);
+            InventoryController.Instance?.ReBuildItemCounts();
+            return false;
+        }
+
+        return true;
+    }
+
     public void ProcessDragDrop(ItemDragHandler dragHandler, PointerEventData eventData)
     {
         Item draggedItem = dragHandler.GetComponent<Item>();
         Slot originalSlot = dragHandler.originalSlot;
+
+        if (!ValidateOrDestroyUIItem(draggedItem, originalSlot)) return;
 
         Slot dropSlot = eventData.pointerEnter?.GetComponent<Slot>();
         if (dropSlot == null)
@@ -127,6 +156,32 @@ public class InventoryActionManager : MonoBehaviour
         }
 
         Item targetItem = dropSlot.currentItem != null ? dropSlot.currentItem.GetComponent<Item>() : null;
+
+        if (targetItem != null && !ValidateOrDestroyUIItem(targetItem, dropSlot))
+        {
+            targetItem = null;
+        }
+
+        int originalGlobalIndex = originalSlot != null ? GetGlobalSlotIndex(originalSlot) : -1;
+        if (originalGlobalIndex == 2003 || originalGlobalIndex == 2103)
+        {
+            if (targetItem == null)
+            {
+                Debug.LogWarning("Không thể tháo vũ khí! Hãy kéo thả trực tiếp vào một vũ khí khác để đổi.");
+                dragHandler.SnapBack();
+                return;
+            }
+
+            if (targetItem is not EquipmentItem targetEquip ||
+                targetEquip.equipSlot != originalSlot.acceptedEquipSlot ||
+                (targetEquip.classRestriction != ClassRestriction.None && originalSlot.classRestriction != ClassRestriction.None && targetEquip.classRestriction != originalSlot.classRestriction) ||
+                (playerStats != null && playerStats.level < targetEquip.requiredLevel))
+            {
+                Debug.LogWarning("Chỉ có thể hoán đổi với vũ khí cùng loại và đủ cấp độ!");
+                dragHandler.SnapBack();
+                return;
+            }
+        }
 
         if (targetItem != null && draggedItem.ID == targetItem.ID && draggedItem.IsStackable)
         {
@@ -236,7 +291,6 @@ public class InventoryActionManager : MonoBehaviour
             }
         }
 
-
         playerStats?.ApplyEquippedItems();
         InventoryController.Instance.ReBuildItemCounts();
 
@@ -251,6 +305,9 @@ public class InventoryActionManager : MonoBehaviour
 
     public void ProcessDoubleClick(Item thisItem)
     {
+        Slot parentSlot = thisItem != null && thisItem.transform.parent != null ? thisItem.transform.parent.GetComponent<Slot>() : null;
+        if (!ValidateOrDestroyUIItem(thisItem, parentSlot)) return;
+
         if (!thisItem.IsOwnedByLocalPlayer()) return;
 
         if (StorageChestController.Instance != null && StorageChestController.Instance.chestPanel.activeSelf)
@@ -394,7 +451,7 @@ public class InventoryActionManager : MonoBehaviour
 
         Slot targetSlot = Object.FindObjectsByType<Slot>(FindObjectsInactive.Include, FindObjectsSortMode.None)
             .FirstOrDefault(s => s.isEquipmentSlot && s.acceptedEquipSlot == sourceEqItem.equipSlot &&
-            (sourceEqItem.classRestriction == ClassRestriction.None || s.classRestriction == ClassRestriction.None || s.classRestriction == sourceEqItem.classRestriction) && 
+            (sourceEqItem.classRestriction == ClassRestriction.None || s.classRestriction == ClassRestriction.None || s.classRestriction == sourceEqItem.classRestriction) &&
             s.gameObject.scene.IsValid());
 
         if (targetSlot == null) return;

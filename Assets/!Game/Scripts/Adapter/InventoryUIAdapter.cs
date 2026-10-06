@@ -53,17 +53,27 @@ public class InventoryUIAdapter : MonoBehaviour
 
         if (currentData == null || currentData.Count == 0) return;
 
-        foreach (var data in currentData)
+        for (int i = currentData.Count - 1; i >= 0; i--)
         {
-            if (data.slotIndex >= 1000) continue;
+            var data = currentData[i];
 
+            if (data.slotIndex >= 1000) continue;
             if (data.slotIndex >= inventoryPanel.childCount) continue;
 
+            // Kiểm tra tính hợp lệ của itemID và Prefab trước khi tạo UI
+            GameObject prefab = data.itemID > 0 ? dictionary.GetItemPrefab(data.itemID) : null;
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[InventoryUIAdapter] ItemID không hợp lệ ({data.itemID}, dbID: {data.dbID}) tại slot {data.slotIndex}. Tiến hành xóa khỏi RAM và Database!");
+                if (data.dbID > 0 && InventoryService.Instance != null)
+                {
+                    InventoryService.Instance.RequestRemoveItem(data.dbID);
+                }
+                currentData.RemoveAt(i);
+                continue;
+            }
+
             Slot slot = inventoryPanel.GetChild(data.slotIndex).GetComponent<Slot>();
-
-            GameObject prefab = dictionary.GetItemPrefab(data.itemID);
-
-            if (prefab == null) continue;
 
             GameObject itemObj = Instantiate(prefab, slot.transform);
             itemObj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
@@ -74,6 +84,19 @@ public class InventoryUIAdapter : MonoBehaviour
             Item item = itemObj.GetComponent<Item>();
             if (item != null)
             {
+                // Nếu Prefab gắn script Item nhưng ID cấu hình không hợp lệ thì Destroy ngay
+                if (item.ID <= 0)
+                {
+                    Debug.LogWarning($"[InventoryUIAdapter] Prefab {prefab.name} có Item.ID không hợp lệ ({item.ID}). Tiến hành Destroy UI Object!");
+                    Destroy(itemObj);
+                    if (data.dbID > 0 && InventoryService.Instance != null)
+                    {
+                        InventoryService.Instance.RequestRemoveItem(data.dbID);
+                    }
+                    currentData.RemoveAt(i);
+                    continue;
+                }
+
                 item.dbID = data.dbID;
                 item.quantity = Mathf.Max(1, data.quantity);
                 item.rarity = data.rarity;
@@ -85,6 +108,12 @@ public class InventoryUIAdapter : MonoBehaviour
                 }
 
                 item.UpdateQuantityDisplay();
+            }
+            else
+            {
+                Debug.LogWarning($"[InventoryUIAdapter] Prefab {prefab.name} thiếu component Item. Tiến hành Destroy!");
+                Destroy(itemObj);
+                continue;
             }
 
             slot.currentItem = itemObj;

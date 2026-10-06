@@ -1,5 +1,7 @@
 using UnityEngine;
 using TMPro;
+using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 
 public class SystemStatsUI : MonoBehaviour
 {
@@ -16,21 +18,21 @@ public class SystemStatsUI : MonoBehaviour
     private int currentFps = 0;
     private string pingColorHex = "green";
 
+    private bool showPing = false;
+
     private void OnEnable()
     {
         SaveController.OnUIDReady += UpdateUIDText;
-        ServerTimeManager.OnPingUpdated += UpdatePingText;
     }
 
     private void OnDisable()
     {
         SaveController.OnUIDReady -= UpdateUIDText;
-        ServerTimeManager.OnPingUpdated -= UpdatePingText;
     }
 
     private void Update()
     {
-        CalculateAndDisplayFPS();
+        CalculateAndDisplayStats();
     }
 
     private void UpdateUIDText(string uid)
@@ -41,18 +43,7 @@ public class SystemStatsUI : MonoBehaviour
         }
     }
 
-    private void UpdatePingText(int ping)
-    {
-        currentPing = ping;
-
-        if (ping < 100) pingColorHex = "green";
-        else if (ping < 200) pingColorHex = "yellow";
-        else pingColorHex = "red";
-
-        RefreshStatsDisplay();
-    }
-
-    private void CalculateAndDisplayFPS()
+    private void CalculateAndDisplayStats()
     {
         if (statsText == null) return;
 
@@ -70,15 +61,44 @@ public class SystemStatsUI : MonoBehaviour
             fpsAccumulator = 0f;
             fpsFrames = 0;
 
+            UpdateCoopPing();
+
             RefreshStatsDisplay();
         }
+    }
+
+    private void UpdateCoopPing()
+    {
+        showPing = false;
+        currentPing = 0;
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient && !NetworkManager.Singleton.IsServer)
+        {
+            showPing = true;
+            var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
+            if (transport != null)
+            {
+                currentPing = (int)transport.GetCurrentRtt(NetworkManager.ServerClientId);
+            }
+        }
+
+        if (currentPing < 100) pingColorHex = "green";
+        else if (currentPing < 200) pingColorHex = "yellow";
+        else pingColorHex = "red";
     }
 
     private void RefreshStatsDisplay()
     {
         if (statsText != null)
         {
-            statsText.text = $"<color={pingColorHex}>{currentPing} ms</color> - {currentFps} FPS";
+            if (showPing)
+            {
+                statsText.text = $"<color={pingColorHex}>{currentPing} ms</color> - {currentFps} FPS";
+            }
+            else
+            {
+                statsText.text = $"{currentFps} FPS";
+            }
         }
     }
 }

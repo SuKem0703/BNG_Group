@@ -15,6 +15,8 @@ public class RelayManager : MonoBehaviour
 {
     public static RelayManager Instance { get; private set; }
 
+    private bool isSigningIn = false;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -25,8 +27,22 @@ public class RelayManager : MonoBehaviour
         Instance = this;
     }
 
-    private async Task EnsureUnityServicesInitialized()
+    // ========================================================
+    // KIỂM TRA MẠNG & KHỞI TẠO UNITY SERVICES
+    // ========================================================
+    public bool CheckInternetConnection()
     {
+        return Application.internetReachability != NetworkReachability.NotReachable;
+    }
+
+    private async Task<bool> EnsureUnityServicesInitialized()
+    {
+        if (isSigningIn)
+        {
+            Debug.LogWarning("[Relay] Đang trong quá trình đăng nhập. Vui lòng chờ...");
+            return false;
+        }
+
         try
         {
             if (UnityServices.State != ServicesInitializationState.Initialized)
@@ -36,13 +52,18 @@ public class RelayManager : MonoBehaviour
 
             if (!AuthenticationService.Instance.IsSignedIn)
             {
+                isSigningIn = true;
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                isSigningIn = false;
                 Debug.Log($"[Relay] Đã kết nối Unity Services với ID: {AuthenticationService.Instance.PlayerId}");
             }
+            return true;
         }
         catch (Exception e)
         {
-            Debug.LogWarning($"[Relay] Khởi tạo Unity Services gặp vấn đề: {e.Message}");
+            isSigningIn = false;
+            Debug.LogError($"[Relay] Khởi tạo Unity Services gặp vấn đề: {e.Message}");
+            return false;
         }
     }
 
@@ -51,16 +72,21 @@ public class RelayManager : MonoBehaviour
     // ========================================================
     public async Task<string> CreateRelayHost(int maxPlayers = 3)
     {
+        if (!CheckInternetConnection())
+        {
+            Debug.LogError("[Relay] Không có kết nối Internet.");
+            return null;
+        }
+
+        bool initialized = await EnsureUnityServicesInitialized();
+        if (!initialized || !AuthenticationService.Instance.IsSignedIn)
+        {
+            Debug.LogError("[Relay] Không thể kết nối với dịch vụ xác thực của Unity.");
+            return null;
+        }
+
         try
         {
-            await EnsureUnityServicesInitialized();
-
-            if (!AuthenticationService.Instance.IsSignedIn)
-            {
-                Debug.LogError("[Relay] Không thể kết nối với dịch vụ xác thực của Unity.");
-                return null;
-            }
-
             CachePlayerPosition();
 
             if (NetworkManager.Singleton.IsListening)
@@ -73,7 +99,6 @@ public class RelayManager : MonoBehaviour
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
             UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-
             transport.SetRelayServerData(
                 allocation.RelayServer.IpV4,
                 (ushort)allocation.RelayServer.Port,
@@ -108,16 +133,21 @@ public class RelayManager : MonoBehaviour
 
     public async Task<bool> JoinRelayClient(string joinCode)
     {
+        if (!CheckInternetConnection())
+        {
+            Debug.LogError("[Relay] Không có kết nối Internet.");
+            return false;
+        }
+
+        bool initialized = await EnsureUnityServicesInitialized();
+        if (!initialized || !AuthenticationService.Instance.IsSignedIn)
+        {
+            Debug.LogError("[Relay] Không thể kết nối với dịch vụ xác thực của Unity.");
+            return false;
+        }
+
         try
         {
-            await EnsureUnityServicesInitialized();
-
-            if (!AuthenticationService.Instance.IsSignedIn)
-            {
-                Debug.LogError("[Relay] Không thể kết nối với dịch vụ xác thực của Unity.");
-                return false;
-            }
-
             if (NetworkManager.Singleton.IsListening)
             {
                 NetworkManager.Singleton.Shutdown();
@@ -147,7 +177,7 @@ public class RelayManager : MonoBehaviour
     }
 
     // ========================================================
-    // LOGIC MẠNG NỘI BỘ (LAN) - 0 PING, NO COST
+    // LOGIC MẠNG NỘI BỘ (LAN) - Giữ nguyên không cần Internet
     // ========================================================
     public async Task<(bool success, string ip, ushort port)> StartLANHost()
     {

@@ -21,7 +21,5 @@ public class CropSaveData
     public int seedItemID;
     public int currentStage;
     public float currentTimer;
-
-    // (Optional) Lưu timestamp để tính offline growth sau này
-    // public long lastSaveTime; 
+    public long lastSaveTime; 
 }

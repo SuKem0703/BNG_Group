@@ -5,7 +5,6 @@ using TMPro;
 using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
 public enum SaveReason
@@ -18,7 +17,7 @@ public class SaveController : MonoBehaviour
 {
     public static SaveController Instance { get; private set; }
 
-    public static uint MasterSeed { get; private set; }
+    public static uint MasterSeed { get; private set; } = 12345; // Gắn cứng seed hoặc lấy ngẫu nhiên vì offline
 
     private static HashSet<Chest> _activeChests = new HashSet<Chest>();
     private Dictionary<string, bool> _sessionChestStates = new Dictionary<string, bool>();
@@ -40,7 +39,6 @@ public class SaveController : MonoBehaviour
     public void RegisterUIAdapter(SaveAdapter adapter) => uiAdapter = adapter;
 
     private PlayerCore playerCore;
-
     private StorageChest[] storageChests;
 
     public static Vector3? nextSpawnPosition = null;
@@ -59,13 +57,15 @@ public class SaveController : MonoBehaviour
     {
         Instance = this;
         IsDataLoaded = false;
-
         _activeChests.Clear();
         _sessionChestStates.Clear();
+
+        PlayerCore.OnPlayerSpawned += HandlePlayerSpawned;
     }
 
     private void OnDestroy()
     {
+        PlayerCore.OnPlayerSpawned -= HandlePlayerSpawned;
         if (Instance == this) Instance = null;
     }
 
@@ -74,6 +74,11 @@ public class SaveController : MonoBehaviour
         ShowMainLoadingScreen();
         StartCoroutine(LoadAndFinalize());
         LocalizationManager.OnLanguageChanged += UpdateUIDText;
+    }
+
+    private void HandlePlayerSpawned(PlayerCore core)
+    {
+        RegisterLocalPlayer(core);
     }
 
     public void RegisterLocalPlayer(PlayerCore adapter)
@@ -129,90 +134,15 @@ public class SaveController : MonoBehaviour
         pendingSceneName = null;
         nextSpawnPosition = null;
 
-        if (EconomyService.Instance != null)
-            EconomyService.Instance.RefreshBalance();
+        // 2. LOẠI BỎ HTTP: Bypass qua các dịch vụ yêu cầu kết nối mạng (Túi đồ, Nông trại, Profile...)
+        // Nếu sau này bạn làm hệ thống lưu Túi Đồ offline bằng SQLite, bạn gọi hàm load từ SQLite ở đây.
 
-        bool profileLoaded = false;
-        if (PlayerStatsService.Instance != null)
-        {
-            PlayerStatsService.Instance.SyncProfile((success) => { profileLoaded = true; });
-        }
-        else profileLoaded = true;
+        // if (EconomyService.Instance != null) EconomyService.Instance.RefreshBalance();
+        // if (PlayerStatsService.Instance != null) PlayerStatsService.Instance.SyncProfile(...);
+        // if (FarmController.Instance != null) FarmController.Instance.FetchFarmDataFromServer();
+        // if (InventoryService.Instance != null) InventoryService.Instance.SyncInventory(...);
 
-        while (!profileLoaded) yield return null;
-
-        if (FarmController.Instance != null)
-            FarmController.Instance.FetchFarmDataFromServer();
-
-        bool inventoryLoaded = false;
-        if (InventoryService.Instance != null)
-        {
-            InventoryService.Instance.SyncInventory((serverItems) =>
-            {
-                if (serverItems != null)
-                {
-                    List<InventorySaveData> inventoryItems = new List<InventorySaveData>();
-
-                    List<EquippedSaveData> knightEquips = new List<EquippedSaveData>();
-                    List<EquippedSaveData> mageEquips = new List<EquippedSaveData>();
-                    List<EquippedSaveData> sharedEquips = new List<EquippedSaveData>();
-
-                    ItemDictionary itemDict = ItemDictionary.Instance;
-
-                    foreach (var svItem in serverItems)
-                    {
-                        var itemData = new InventorySaveData
-                        {
-                            dbID = svItem.id,
-                            itemID = svItem.itemId,
-                            quantity = svItem.quantity,
-                            slotIndex = svItem.slotIndex,
-                            isEquipped = svItem.slotIndex >= 2000,
-                            rarity = (ItemRarity)svItem.rarity,
-                            qualityFactor = svItem.qualityFactor
-                        };
-
-                        inventoryItems.Add(itemData);
-
-                        if (svItem.slotIndex >= 2200) 
-                        {
-                            EquippedSaveData eqData = JsonUtility.FromJson<EquippedSaveData>(JsonUtility.ToJson(itemData));
-                            eqData.slotIndex = svItem.slotIndex - 2200;
-                            sharedEquips.Add(eqData);
-                        }
-                        else if (svItem.slotIndex >= 2100) 
-                        {
-                            EquippedSaveData eqData = JsonUtility.FromJson<EquippedSaveData>(JsonUtility.ToJson(itemData));
-                            eqData.slotIndex = svItem.slotIndex - 2100;
-                            mageEquips.Add(eqData);
-                        }
-                        else if (svItem.slotIndex >= 2000) 
-                        {
-                            EquippedSaveData eqData = JsonUtility.FromJson<EquippedSaveData>(JsonUtility.ToJson(itemData));
-                            eqData.slotIndex = svItem.slotIndex - 2000;
-                            knightEquips.Add(eqData);
-                        }
-                    }
-
-                    if (uiAdapter.inventoryController != null)
-                        uiAdapter.inventoryController.SetInventoryItems(inventoryItems);
-
-                    if (uiAdapter.knightEquipmentPanel != null) uiAdapter.knightEquipmentPanel.SetEquipmentItems(knightEquips);
-                    if (uiAdapter.mageEquipmentPanel != null) uiAdapter.mageEquipmentPanel.SetEquipmentItems(mageEquips);
-                    if (uiAdapter.sharedEquipmentPanel != null) uiAdapter.sharedEquipmentPanel.SetEquipmentItems(sharedEquips);
-
-                    if (playerCore != null && playerCore.playerStats != null)
-                    {
-                        playerCore.playerStats.ApplyEquippedItems();
-                    }
-                }
-                inventoryLoaded = true;
-            });
-        }
-        else inventoryLoaded = true;
-
-        while (!inventoryLoaded) yield return null;
-
+        // Nạp các chỉ số đã đọc từ SQLite vào UI và nhân vật
         if (playerCore != null && tempSaveData != null)
         {
             playerCore.playerVitals.netKnightHealth.Value = tempSaveData.currentKnightHP;
@@ -258,7 +188,6 @@ public class SaveController : MonoBehaviour
     IEnumerator DebounceAutoSave()
     {
         yield return new WaitForSeconds(autoSaveDebounceTime);
-
         if (isAutoSavePending)
         {
             StartCoroutine(SaveRoutine(SaveReason.AutoSave, null, true));
@@ -276,21 +205,15 @@ public class SaveController : MonoBehaviour
         StartCoroutine(SaveRoutine(reason, onSaveFinished, isSilent));
     }
 
+    // 3. LOGIC LƯU GAME OFFLINE XUỐNG SQLITE
     public IEnumerator SaveRoutine(SaveReason reason, System.Action<bool> onSaveFinished = null, bool isSilent = false)
     {
         IsSaving = true;
 
-        if (FarmService.Instance != null)
-            FarmService.Instance.ForceSendPendingHarvests();
-
-        if (InventoryService.Instance != null)
-            InventoryService.Instance.ForceSyncPendingQuantities();
-
-        if (InventoryService.Instance != null)
-            InventoryService.Instance.ForceSyncPendingMoves();
-
-        if (playerCore != null && playerCore.playerStats != null)
-            playerCore.playerStats.ForceSyncExpImmediate();
+        if (FarmService.Instance != null) FarmService.Instance.ForceSendPendingHarvests();
+        if (InventoryService.Instance != null) InventoryService.Instance.ForceSyncPendingQuantities();
+        if (InventoryService.Instance != null) InventoryService.Instance.ForceSyncPendingMoves();
+        if (playerCore != null && playerCore.playerStats != null) playerCore.playerStats.ForceSyncExpImmediate();
 
         if (!isSilent) ShowMiniLoadingScreen();
 
@@ -302,16 +225,17 @@ public class SaveController : MonoBehaviour
             yield break;
         }
 
-        List<ChestSaveData> existingChestStates = new List<ChestSaveData>();
-        FarmData existingFarmData = new FarmData();
+        string currentProfileId = PlayerPrefs.GetString("CurrentProfileId", "");
+        ProfileRepository repo = new ProfileRepository();
+        ProfileEntity profile = repo.GetProfile(currentProfileId);
 
-        SaveData serverSave = null;
-        yield return LoadFromServer((sd) => { serverSave = sd; });
-
-        if (serverSave != null)
+        if (profile == null)
         {
-            existingChestStates = serverSave.chestSaveData ?? new List<ChestSaveData>();
-            existingFarmData = serverSave.farmData ?? new FarmData();
+            Debug.LogError("[SaveController] Lỗi: Không tìm thấy nhân vật trong database offline!");
+            if (!isSilent) HideMiniLoadingScreen();
+            IsSaving = false;
+            onSaveFinished?.Invoke(false);
+            yield break;
         }
 
         Vector3 savePos = playerCore.playerStats.transform.position;
@@ -320,70 +244,60 @@ public class SaveController : MonoBehaviour
         if (reason == SaveReason.SceneTransition && !string.IsNullOrEmpty(pendingSceneName)) saveScene = pendingSceneName;
 
         string currentBoundary = FindFirstObjectByType<CinemachineConfiner2D>()?.BoundingShape2D?.gameObject.name ?? "";
-        
-        if (reason == SaveReason.SceneTransition || !string.IsNullOrEmpty(pendingSceneName))
+        if (reason == SaveReason.SceneTransition || !string.IsNullOrEmpty(pendingSceneName)) currentBoundary = "";
+
+        // Merge dữ liệu rương đã mở với dữ liệu cũ từ Database
+        List<ChestSaveData> existingChestStates = JsonHelper.FromJson<ChestSaveData>(profile.ChestSaveDataJson);
+        existingChestStates = MergeChestsState(existingChestStates);
+
+        // Ghi các dữ liệu cơ bản
+        profile.CurrentSceneName = saveScene;
+        profile.PlayerPosX = savePos.x;
+        profile.PlayerPosY = savePos.y;
+        profile.PlayerPosZ = savePos.z;
+
+        profile.CheckpointSceneName = currentCheckpointScene ?? saveScene;
+        profile.CheckpointPosX = currentCheckpointPos?.x ?? savePos.x;
+        profile.CheckpointPosY = currentCheckpointPos?.y ?? savePos.y;
+        profile.CheckpointPosZ = currentCheckpointPos?.z ?? savePos.z;
+
+        profile.BackPackSlotCount = uiAdapter.inventoryController.slotCount;
+
+        profile.CurrentKnightHP = (reason == SaveReason.Death) ? playerCore.playerStats.finalKnightMaxHP : playerCore.playerVitals.netKnightHealth.Value;
+        profile.CurrentMageHP = (reason == SaveReason.Death) ? playerCore.playerStats.finalMageMaxHP : playerCore.playerVitals.netMageHealth.Value;
+        profile.CurrentKnightMP = (reason == SaveReason.Death) ? playerCore.playerStats.finalKnightMaxMP : playerCore.playerVitals.knightMP;
+        profile.CurrentMageMP = (reason == SaveReason.Death) ? playerCore.playerStats.finalMageMaxMP : playerCore.playerVitals.mageMP;
+        profile.CurrentStamina = (reason == SaveReason.Death) ? playerCore.playerStats.finalStamina : playerCore.playerVitals.currentStamina;
+
+        // Ghi các dữ liệu phức tạp thành JSON
+        profile.ChestSaveDataJson = JsonHelper.ToJson(existingChestStates);
+
+        if (QuestController.Instance != null)
         {
-            currentBoundary = ""; 
+            profile.QuestProgressDataJson = JsonHelper.ToJson(QuestController.Instance.activeQuests);
+            profile.HandInQuestIDsJson = JsonHelper.ToJson(QuestController.Instance.handInQuestIDs);
         }
 
-        SaveData saveData = new SaveData
-        {
-            playerPosition = nextSpawnPosition ?? playerCore.playerStats.transform.position,
-            currentSceneName = pendingSceneName ?? SceneManager.GetActiveScene().name,
-            checkpointPosition = currentCheckpointPos ?? playerCore.playerStats.transform.position,
-            checkpointSceneName = currentCheckpointScene ?? SceneManager.GetActiveScene().name,
+        profile.CollectedBySceneJson = JsonHelper.ToJson(collectedByScene);
 
-            mapBoundary = currentBoundary,
-            backPackSlotCount = uiAdapter.inventoryController.slotCount,
+        // Lưu xuống DB
+        repo.UpdateProfile(profile);
+        bool saveSuccess = true; // Lưu SQLite là thành công ngay
 
-            chestSaveData = MergeChestsState(existingChestStates),
-            questProgressData = QuestController.Instance.activeQuests,
-            handInQuestIDs = QuestController.Instance.handInQuestIDs,
-
-            currentKnightHP = (reason == SaveReason.Death) ? playerCore.playerStats.finalKnightMaxHP : playerCore.playerVitals.netKnightHealth.Value,
-            currentmageHP = (reason == SaveReason.Death) ? playerCore.playerStats.finalMageMaxHP : playerCore.playerVitals.netMageHealth.Value,
-            currentKnightMP = (reason == SaveReason.Death) ? playerCore.playerStats.finalKnightMaxMP : playerCore.playerVitals.knightMP,
-            currentMageMP = (reason == SaveReason.Death) ? playerCore.playerStats.finalMageMaxMP : playerCore.playerVitals.mageMP,
-            currentStamina = (reason == SaveReason.Death) ? playerCore.playerStats.finalStamina : playerCore.playerVitals.currentStamina,
-
-            currentDay = TimeManager.Instance != null ? TimeManager.Instance.currentDay : 1,
-            currentTimeOfDay = TimeManager.Instance != null ? TimeManager.Instance.currentTimeOfDay : 6f,
-
-            collectedByScene = collectedByScene,
-
-            bestiaryData = _bestiaryCache.Values.ToList(),
-            
-            skillTreeData = SkillTreeService.Instance != null ? SkillTreeService.Instance.GetSkillSaveData() : new SkillSaveData()
-        };
-
-        bool saveSuccess = false;
-        yield return SaveToServer(saveData, reason, (success) => saveSuccess = success);
-
-        if (saveSuccess)
-        {
-            if (reason != SaveReason.SceneTransition)
-            {
-                pendingSceneName = null;
-                nextSpawnPosition = null;
-            }
-
-            if (reason == SaveReason.Manual)
-            {
-                string msg = LocalizationManager.Instance.GetText("MSG_SAVE_SUCCESS");
-                GameNotify.Show(msg);
-            }
-        }
-        else
+        if (reason != SaveReason.SceneTransition)
         {
             pendingSceneName = null;
             nextSpawnPosition = null;
-
-            if (!isSilent)
-            {
-                string msg = LocalizationManager.Instance.GetText("MSG_SAVE_FAIL");
-                GameNotify.Show(msg);
-            }
         }
+
+        if (reason == SaveReason.Manual)
+        {
+            string msg = LocalizationManager.Instance.GetText("MSG_SAVE_SUCCESS");
+            GameNotify.Show(msg);
+        }
+
+        // Tạm dừng 1 frame để giả lập async (không block main thread)
+        yield return null;
 
         if (!isSilent) HideMiniLoadingScreen();
         IsSaving = false;
@@ -415,7 +329,6 @@ public class SaveController : MonoBehaviour
             mainLoadingCanvasInstance = Instantiate(prefab);
             mainLoadingCanvasInstance.SetActive(true);
         }
-
         PauseController.SetPause(true);
     }
 
@@ -426,21 +339,18 @@ public class SaveController : MonoBehaviour
             Destroy(mainLoadingCanvasInstance);
             mainLoadingCanvasInstance = null;
         }
-
         PauseController.SetPause(false);
     }
 
     private void ShowMiniLoadingScreen()
     {
         GameObject prefab = LoadResourceManager.Instance.MiniLoadingScreenPrefab;
-
         if (prefab != null)
         {
             if (miniLoadingScreenInstance == null)
             {
                 miniLoadingScreenInstance = Instantiate(prefab);
             }
-
             miniLoadingScreenInstance.SetActive(true);
             PauseController.SetPause(true);
         }
@@ -475,11 +385,7 @@ public class SaveController : MonoBehaviour
         List<ChestSaveData> chestStates = new List<ChestSaveData>();
         foreach (var kvp in _sessionChestStates)
         {
-            chestStates.Add(new ChestSaveData
-            {
-                chestID = kvp.Key,
-                isOpened = kvp.Value,
-            });
+            chestStates.Add(new ChestSaveData { chestID = kvp.Key, isOpened = kvp.Value });
         }
         return chestStates;
     }
@@ -498,16 +404,51 @@ public class SaveController : MonoBehaviour
         return existingChestStates;
     }
 
+    // 4. LOGIC ĐỌC GAME OFFLINE TỪ SQLITE
     public IEnumerator LoadRoutine(System.Action<bool> onComplete)
     {
         bool sceneLoadWasTriggered = false;
+        string currentProfileId = PlayerPrefs.GetString("CurrentProfileId", "");
 
-        yield return LoadFromServer((saveData) =>
+        ProfileRepository repo = new ProfileRepository();
+        ProfileEntity offlineProfile = repo.GetProfile(currentProfileId);
+
+        if (offlineProfile != null)
         {
-            sceneLoadWasTriggered = ApplySaveData(saveData);
-        });
+            // Parse dữ liệu từ ProfileEntity sang SaveData để game có thể đọc được
+            SaveData localData = new SaveData
+            {
+                currentSceneName = offlineProfile.CurrentSceneName,
+                playerPosition = new Vector3(offlineProfile.PlayerPosX, offlineProfile.PlayerPosY, offlineProfile.PlayerPosZ),
+
+                checkpointSceneName = offlineProfile.CheckpointSceneName,
+                checkpointPosition = new Vector3(offlineProfile.CheckpointPosX, offlineProfile.CheckpointPosY, offlineProfile.CheckpointPosZ),
+
+                backPackSlotCount = offlineProfile.BackPackSlotCount,
+
+                currentKnightHP = offlineProfile.CurrentKnightHP,
+                currentmageHP = offlineProfile.CurrentMageHP,
+                currentKnightMP = offlineProfile.CurrentKnightMP,
+                currentMageMP = offlineProfile.CurrentMageMP,
+                currentStamina = offlineProfile.CurrentStamina,
+
+                // Decode các chuỗi JSON từ Database
+                chestSaveData = JsonHelper.FromJson<ChestSaveData>(offlineProfile.ChestSaveDataJson),
+                questProgressData = JsonHelper.FromJson<QuestProgress>(offlineProfile.QuestProgressDataJson),
+                handInQuestIDs = JsonHelper.FromJson<string>(offlineProfile.HandInQuestIDsJson),
+                collectedByScene = JsonHelper.FromJson<SaveController.SceneCollected>(offlineProfile.CollectedBySceneJson)
+            };
+
+            sceneLoadWasTriggered = ApplySaveData(localData);
+        }
+        else
+        {
+            Debug.LogError("[SaveController] Không tìm thấy dữ liệu nhân vật offline trong Database!");
+            // Nếu lỗi nặng có thể văng về MainMenu tại đây
+        }
 
         onComplete(sceneLoadWasTriggered);
+        yield return null;
     }
 
     private bool ApplySaveData(SaveData saveData)
@@ -539,6 +480,7 @@ public class SaveController : MonoBehaviour
         {
             pendingSceneName = targetScene;
 
+            // XỬ LÝ COOP: Dùng NetworkManager để load Scene cho đồng bộ
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
             {
                 if (NetworkManager.Singleton.IsServer)
@@ -563,17 +505,10 @@ public class SaveController : MonoBehaviour
 
         BoxCollider2D boundary = MapBoundary.GetBoundary(saveData?.mapBoundary);
 
-        // Cập nhật: Tự động gán biên camera thay vì chờ MapMove kích hoạt
         if (CameraController.Instance != null)
         {
-            if (boundary != null)
-            {
-                CameraController.Instance.UpdateMapBounds(boundary);
-            }
-            else
-            {
-                CameraController.Instance.AutoFindAndSetBoundary();
-            }
+            if (boundary != null) CameraController.Instance.UpdateMapBounds(boundary);
+            else CameraController.Instance.AutoFindAndSetBoundary();
         }
 
         if (!string.IsNullOrEmpty(saveData?.checkpointSceneName))
@@ -644,10 +579,7 @@ public class SaveController : MonoBehaviour
         foreach (Chest chest in _activeChests.ToList())
         {
             var state = chestState?.FirstOrDefault(c => c.chestID == chest.UniqueID);
-            if (state != null)
-            {
-                chest.SetOpened(state.isOpened);
-            }
+            if (state != null) chest.SetOpened(state.isOpened);
         }
     }
 
@@ -670,7 +602,6 @@ public class SaveController : MonoBehaviour
             _bestiaryCache[enemyID].status = 2;
             _bestiaryCache[enemyID].killCount++;
         }
-
         TriggerAutoSave();
     }
 
@@ -688,80 +619,7 @@ public class SaveController : MonoBehaviour
         }
     }
 
-    IEnumerator SaveToServer(SaveData saveData, SaveReason reason, System.Action<bool> onComplete)
-    {
-        string json = JsonUtility.ToJson(new SaveGameRequestDto { dataSave = JsonUtility.ToJson(saveData), reason = reason.ToString() });
-
-        string url = NetworkConfig.GetUrl("GameData/save-data");
-        string token = PlayerPrefs.GetString("AuthToken", "");
-
-        UnityWebRequest request = new UnityWebRequest(url, "POST");
-        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
-        request.SetRequestHeader("Authorization", $"Bearer {token}");
-
-        float startTime = Time.realtimeSinceStartup;
-        yield return request.SendWebRequest();
-        float duration = Time.realtimeSinceStartup - startTime;
-        ServerTimeManager.ReportPing(duration);
-
-        bool isSuccess = false;
-
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            isSuccess = true;
-
-            SaveGameResponseDto responseDto = JsonUtility.FromJson<SaveGameResponseDto>(request.downloadHandler.text);
-            MasterSeed = responseDto.masterSeed;
-        }
-        else
-        {
-            isSuccess = false;
-        }
-
-        onComplete?.Invoke(isSuccess);
-    }
-
-    IEnumerator LoadFromServer(System.Action<SaveData> onLoaded)
-    {
-        string url = NetworkConfig.GetUrl("GameData/get-save");
-        string token = PlayerPrefs.GetString("AuthToken", "");
-
-        UnityWebRequest request = UnityWebRequest.Get(url);
-        request.SetRequestHeader("Authorization", $"Bearer {token}");
-
-        float startTime = Time.realtimeSinceStartup;
-        yield return request.SendWebRequest();
-        float duration = Time.realtimeSinceStartup - startTime;
-        ServerTimeManager.ReportPing(duration);
-
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            string json = request.downloadHandler.text;
-
-            // Thêm log để xem chi tiết chuỗi JSON trả về
-            Debug.Log($"[LoadFromServer] Response JSON: {json}");
-
-            GetSaveDataResponseDto responseDto = JsonUtility.FromJson<GetSaveDataResponseDto>(json);
-            MasterSeed = responseDto.masterSeed;
-
-            SaveData data = JsonUtility.FromJson<SaveData>(responseDto.dataSave);
-            onLoaded?.Invoke(data);
-        }
-        else
-        {
-            // Thêm log ghi lại lỗi từ server hoặc network
-            Debug.LogError($"[LoadFromServer] Request Error: {request.error} - Response Code: {request.responseCode}");
-
-            PlayerPrefs.DeleteAll();
-            PlayerPrefs.Save();
-            SceneManager.LoadScene("MainMenu");
-        }
-    }
-
-    public string GetPlayerUID() => PlayerPrefs.GetString("AccountId", "");
+    public string GetPlayerUID() => PlayerPrefs.GetString("AccountId", "OfflineUser");
 
     public List<SceneCollected> collectedByScene = new List<SceneCollected>();
 
@@ -791,24 +649,36 @@ public class SaveController : MonoBehaviour
     }
 }
 
-[System.Serializable]
-public class SaveGameRequestDto
+// LỚP HỖ TRỢ XỬ LÝ CHUỖI JSON DÀNH CHO CÁC LIST
+public static class JsonHelper
 {
-    public string dataSave;
-    public string reason;
-}
+    public static List<T> FromJson<T>(string json)
+    {
+        if (string.IsNullOrEmpty(json) || json == "[]")
+            return new List<T>();
 
-[System.Serializable]
-public class SaveGameResponseDto
-{
-    public string message;
-    public string context;
-    public uint masterSeed;
-}
+        // Nếu chuỗi JSON đã là dạng Wrapper (bắt đầu bằng {), giải mã luôn
+        if (json.TrimStart().StartsWith("{"))
+        {
+            Wrapper<T> wrapper = JsonUtility.FromJson<Wrapper<T>>(json);
+            return wrapper.Items ?? new List<T>();
+        }
 
-[System.Serializable]
-public class GetSaveDataResponseDto
-{
-    public string dataSave;
-    public uint masterSeed;
+        // Nếu chuỗi JSON đang là mảng thô (bắt đầu bằng [), bọc nó lại để JsonUtility của Unity hiểu được
+        string newJson = "{\"Items\":" + json + "}";
+        Wrapper<T> wrapper2 = JsonUtility.FromJson<Wrapper<T>>(newJson);
+        return wrapper2.Items ?? new List<T>();
+    }
+
+    public static string ToJson<T>(List<T> list)
+    {
+        Wrapper<T> wrapper = new Wrapper<T> { Items = list };
+        return JsonUtility.ToJson(wrapper);
+    }
+
+    [System.Serializable]
+    private class Wrapper<T>
+    {
+        public List<T> Items;
+    }
 }

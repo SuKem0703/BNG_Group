@@ -23,14 +23,5 @@ public class PauseController : MonoBehaviour
     void OnApplicationFocus(bool hasFocus)
     {
         IsFocusPause = !hasFocus;
-
-        if (hasFocus)
-        {
-            ServerTimeManager fetcher = FindFirstObjectByType<ServerTimeManager>();
-            if (fetcher != null)
-            {
-                StartCoroutine(fetcher.FetchServerTime());
-            }
-        }
     }
 }

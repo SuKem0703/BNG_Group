@@ -83,6 +83,12 @@ public class RelayUIAdapter : MonoBehaviour
 
     private async void OnCreateRoomClicked()
     {
+        if (!RelayManager.Instance.CheckInternetConnection())
+        {
+            UpdateStatus("Lỗi: Không có kết nối mạng Internet!");
+            return;
+        }
+
         SetUIInteractable(false);
         UpdateStatus("Đang chuyển đổi sang máy chủ Relay (Internet)...");
 
@@ -96,7 +102,7 @@ public class RelayUIAdapter : MonoBehaviour
         }
         else
         {
-            UpdateStatus("Lỗi: Không thể tạo phòng Internet.");
+            UpdateStatus("Không thể tạo phòng. Vui lòng kiểm tra mạng và thử lại.");
             SetUIInteractable(true);
         }
     }
@@ -108,6 +114,12 @@ public class RelayUIAdapter : MonoBehaviour
         if (string.IsNullOrEmpty(code) || code.Length != 6)
         {
             UpdateStatus("Vui lòng nhập đúng mã phòng Internet (6 ký tự)!");
+            return;
+        }
+
+        if (!RelayManager.Instance.CheckInternetConnection())
+        {
+            UpdateStatus("Lỗi: Không có kết nối mạng Internet!");
             return;
         }
 
@@ -123,7 +135,7 @@ public class RelayUIAdapter : MonoBehaviour
         }
         else
         {
-            UpdateStatus("Kết nối thất bại. Mã phòng sai hoặc đã đầy.");
+            UpdateStatus("Kết nối thất bại. Mã phòng sai, phòng đầy hoặc lỗi mạng.");
             SetUIInteractable(true);
         }
     }

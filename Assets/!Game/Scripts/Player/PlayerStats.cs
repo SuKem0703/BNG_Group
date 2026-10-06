@@ -299,10 +299,7 @@ public class PlayerStats : NetworkBehaviour
             if (AreaController.currentArea != null && AreaController.currentArea.mapType == MapType.SafeZone) return false;
             if (InventoryController.Instance == null || classController == null) return false;
 
-            int weaponSlotIndex = classController.IsKnightActive ? 2003 : 2103;
-
-            return InventoryController.Instance.GetInventoryItemsData()
-                .Any(item => item.isEquipped && item.slotIndex == weaponSlotIndex);
+            return true;
         }
     }
 

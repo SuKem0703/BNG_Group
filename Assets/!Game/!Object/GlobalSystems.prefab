@@ -3184,14 +3184,13 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 4719666695764453317}
-  m_Father: {fileID: 2549484588047993455}
+  m_Children: []
+  m_Father: {fileID: 9025456254974735992}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -265, y: 0}
+  m_SizeDelta: {x: 75, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4184847034764009063
 CanvasRenderer:
@@ -3299,7 +3298,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 246837826797061956}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 8466346636078263243}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
 --- !u!1 &899483845281877996
 GameObject:
   m_ObjectHideFlags: 0
@@ -12330,6 +12341,8 @@ RectTransform:
   - {fileID: 2700284895817938071}
   - {fileID: 377212692160446564}
   - {fileID: 5411999061085369706}
+  - {fileID: 4719666695764453317}
+  - {fileID: 5291457757342521499}
   m_Father: {fileID: 3253575163056112258}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -26234,7 +26247,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5291457757342521499}
   - {fileID: 4633698158433417930}
   - {fileID: 8381447959570475652}
   - {fileID: 2946716026288172550}
@@ -32684,11 +32696,11 @@ RectTransform:
   - {fileID: 8894026429183563924}
   - {fileID: 1509539279100623827}
   - {fileID: 1924116132498935723}
-  m_Father: {fileID: 5291457757342521499}
+  m_Father: {fileID: 9025456254974735992}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 171, y: -432}
+  m_AnchoredPosition: {x: -160, y: -5}
   m_SizeDelta: {x: 1500, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1890526702873868922

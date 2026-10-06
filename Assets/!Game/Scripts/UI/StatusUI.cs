@@ -153,16 +153,9 @@ public class StatusUI : MonoBehaviour
         if (timeText != null && Time.time - lastTimeUpdate >= 1f)
         {
             lastTimeUpdate = Time.time;
-            if (ServerTimeManager.ServerTime != default && ServerTimeManager.LocalTimeAtFetch > 0f)
-            {
-                float secondsPassed = Time.time - ServerTimeManager.LocalTimeAtFetch;
-                DateTime currentTime = ServerTimeManager.ServerTime.AddSeconds(secondsPassed);
-                timeText.text = currentTime.ToString("HH:mm:ss");
-            }
-            else
-            {
-                timeText.text = "Đang tải...";
-            }
+
+            DateTime currentTime = DateTime.Now;
+            timeText.text = currentTime.ToString("HH:mm:ss");
         }
 
         string currentClass = classController.GetCurrentClassName();

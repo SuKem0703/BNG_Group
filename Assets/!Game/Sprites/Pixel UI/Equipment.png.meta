@@ -276,10 +276,10 @@ TextureImporter:
       name: Equipment_5
       rect:
         serializedVersion: 2
-        x: 79
-        y: 63
-        width: 77
-        height: 34
+        x: 80
+        y: 80
+        width: 75
+        height: 16
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -342,9 +342,9 @@ TextureImporter:
       name: Equipment_8
       rect:
         serializedVersion: 2
-        x: 127
+        x: 128
         y: 60
-        width: 6
+        width: 5
         height: 9
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -646,6 +646,28 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Equipment_22
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 64
+        width: 27
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bc3953bff9cbc4d4190d54d24e21f47c
+      internalID: -825512983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -675,6 +697,7 @@ TextureImporter:
       Equipment_2: 2938694888572199486
       Equipment_20: -8724597279297049473
       Equipment_21: -5439441341514661981
+      Equipment_22: -825512983
       Equipment_3: 3651269845224825590
       Equipment_4: 7632534064518594670
       Equipment_5: 689900267781511802
