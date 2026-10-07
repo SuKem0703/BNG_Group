@@ -35,6 +35,15 @@ public class ProfileRepository
             CurrentMageMP = 50,
             CurrentStamina = 20.0f,
 
+            // Progression defaults
+            Level = 1,
+            Exp = 0,
+            PotentialPoints = 0,
+            Str = 0,
+            Dex = 0,
+            IntStat = 0,
+            Con = 0,
+
             Coin = 0,
             Gem = 0,
 

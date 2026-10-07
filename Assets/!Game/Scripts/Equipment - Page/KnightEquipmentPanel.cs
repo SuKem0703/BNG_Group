@@ -12,14 +12,82 @@ public class KnightEquipmentPanel : MonoBehaviour
 
     private void Awake()
     {
-        if (Swords == null) Swords = GameObject.Find("Swords");
-        if (Shield == null) Shield = GameObject.Find("Shield");
-        if (Helmet == null) Helmet = GameObject.Find("Helmet");
-        if (Armor == null) Armor = GameObject.Find("Armor");
+        EnsureSlotsInitialized();
+    }
+
+    // Hỗ trợ tìm kiếm Slot kể cả khi Panel đang bị ẩn lúc khởi chạy
+    private void EnsureSlotsInitialized()
+    {
+        if (Swords == null) Swords = transform.FindDeepChild("Swords")?.gameObject ?? GameObject.Find("Swords");
+        if (Shield == null) Shield = transform.FindDeepChild("Shield")?.gameObject ?? GameObject.Find("Shield");
+        if (Helmet == null) Helmet = transform.FindDeepChild("Helmet")?.gameObject ?? GameObject.Find("Helmet");
+        if (Armor == null) Armor = transform.FindDeepChild("Armor")?.gameObject ?? GameObject.Find("Armor");
+    }
+
+    // Đăng ký lắng nghe thay đổi từ InventoryController để tự động vẽ các ô 2000 - 2099
+    private void Start()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= SyncFromInventory;
+            InventoryController.Instance.OnInventoryChanged += SyncFromInventory;
+            SyncFromInventory(InventoryController.Instance.GetInventoryItemsData(), InventoryController.Instance.slotCount);
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= SyncFromInventory;
+            InventoryController.Instance.OnInventoryChanged += SyncFromInventory;
+            SyncFromInventory(InventoryController.Instance.GetInventoryItemsData(), InventoryController.Instance.slotCount);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= SyncFromInventory;
+        }
+    }
+
+    // Lọc các trang bị của Knight (slotIndex từ 2000 đến 2099) và đưa vào ô tương ứng
+    public void SyncFromInventory(List<InventorySaveData> inventoryData, int maxSlots = 0)
+    {
+        EnsureSlotsInitialized();
+
+        List<EquippedSaveData> knightEquips = new List<EquippedSaveData>();
+        if (inventoryData != null)
+        {
+            foreach (var data in inventoryData)
+            {
+                if (data != null && data.slotIndex >= 2000 && data.slotIndex < 2100)
+                {
+                    knightEquips.Add(new EquippedSaveData
+                    {
+                        dbID = data.dbID,
+                        itemID = data.itemID,
+                        slotIndex = data.slotIndex - 2000,
+                        quantity = data.quantity,
+                        isEquipped = true,
+                        rarity = data.rarity,
+                        qualityFactor = data.qualityFactor,
+                        sourceItemID = -1
+                    });
+                }
+            }
+        }
+
+        SetEquipmentItems(knightEquips);
+        InventoryActionManager.Instance?.RefreshPlayerStats();
     }
 
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
+        EnsureSlotsInitialized();
+
         ClearSlot(Swords);
         ClearSlot(Shield);
         ClearSlot(Helmet);
@@ -35,7 +103,10 @@ public class KnightEquipmentPanel : MonoBehaviour
         {
             if (data == null) continue;
 
-            GameObject targetSlot = GetSlotByIndex(data.slotIndex);
+            // Quy đổi Global Index (2000+) về Local Sibling Index nếu dữ liệu truyền vào chưa trừ
+            int localSlotIndex = data.slotIndex >= 2000 ? data.slotIndex - 2000 : data.slotIndex;
+
+            GameObject targetSlot = GetSlotByIndex(localSlotIndex);
             if (targetSlot != null)
             {
                 GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
@@ -43,6 +114,9 @@ public class KnightEquipmentPanel : MonoBehaviour
                 {
                     GameObject itemGO = Instantiate(itemPrefab, targetSlot.transform);
                     itemGO.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+                    if (itemGO.GetComponent<Collectible>()) Destroy(itemGO.GetComponent<Collectible>());
+                    if (itemGO.GetComponent<Monologue>()) Destroy(itemGO.GetComponent<Monologue>());
 
                     Item itemComponent = itemGO.GetComponent<Item>();
                     if (itemComponent != null)
@@ -104,10 +178,19 @@ public class KnightEquipmentPanel : MonoBehaviour
         }
     }
 
+    // Tách child khỏi Slot trước khi Destroy để childCount cập nhật ngay lập tức trong cùng frame
     private void ClearSlot(GameObject slotGO)
     {
         if (slotGO == null) return;
-        foreach (Transform child in slotGO.transform) Destroy(child.gameObject);
+        Slot slotComp = slotGO.GetComponent<Slot>();
+        if (slotComp != null) slotComp.currentItem = null;
+
+        for (int i = slotGO.transform.childCount - 1; i >= 0; i--)
+        {
+            Transform child = slotGO.transform.GetChild(i);
+            child.SetParent(null);
+            Destroy(child.gameObject);
+        }
     }
 
     private GameObject GetSlotByIndex(int slotIndex)

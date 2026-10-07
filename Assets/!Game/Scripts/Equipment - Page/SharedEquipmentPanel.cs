@@ -13,23 +13,94 @@ public class SharedEquipmentPanel : MonoBehaviour
 
     private void Awake()
     {
-        if (Legs == null) Legs = GameObject.Find("Legs");
-        if (Boots == null) Boots = GameObject.Find("Boots");
-        if (Gloves == null) Gloves = GameObject.Find("Gloves");
-        if (Belt == null) Belt = GameObject.Find("Belt");
-        if (Ring == null) Ring = GameObject.Find("Ring");
-        if (Necklace == null) Necklace = GameObject.Find("Necklace");
+        EnsureSlotsInitialized();
+    }
+
+    private void EnsureSlotsInitialized()
+    {
+        if (Legs == null) Legs = transform.FindDeepChild("Legs")?.gameObject ?? GameObject.Find("Legs");
+        if (Boots == null) Boots = transform.FindDeepChild("Boots")?.gameObject ?? GameObject.Find("Boots");
+        if (Gloves == null) Gloves = transform.FindDeepChild("Gloves")?.gameObject ?? GameObject.Find("Gloves");
+        if (Belt == null) Belt = transform.FindDeepChild("Belt")?.gameObject ?? GameObject.Find("Belt");
+        if (Ring == null) Ring = transform.FindDeepChild("Ring")?.gameObject ?? GameObject.Find("Ring");
+        if (Necklace == null) Necklace = transform.FindDeepChild("Necklace")?.gameObject ?? GameObject.Find("Necklace");
+    }
+
+    // Đăng ký lắng nghe thay đổi từ InventoryController để tự động vẽ các ô 2200 - 2299
+    private void Start()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= SyncFromInventory;
+            InventoryController.Instance.OnInventoryChanged += SyncFromInventory;
+            SyncFromInventory(InventoryController.Instance.GetInventoryItemsData(), InventoryController.Instance.slotCount);
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= SyncFromInventory;
+            InventoryController.Instance.OnInventoryChanged += SyncFromInventory;
+            SyncFromInventory(InventoryController.Instance.GetInventoryItemsData(), InventoryController.Instance.slotCount);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= SyncFromInventory;
+        }
+    }
+
+    public void SyncFromInventory(List<InventorySaveData> inventoryData, int maxSlots = 0)
+    {
+        EnsureSlotsInitialized();
+
+        List<EquippedSaveData> sharedEquips = new List<EquippedSaveData>();
+        if (inventoryData != null)
+        {
+            foreach (var data in inventoryData)
+            {
+                if (data != null && data.slotIndex >= 2200 && data.slotIndex < 2300)
+                {
+                    sharedEquips.Add(new EquippedSaveData
+                    {
+                        dbID = data.dbID,
+                        itemID = data.itemID,
+                        slotIndex = data.slotIndex - 2200,
+                        quantity = data.quantity,
+                        isEquipped = true,
+                        rarity = data.rarity,
+                        qualityFactor = data.qualityFactor,
+                        sourceItemID = -1
+                    });
+                }
+            }
+        }
+
+        SetEquipmentItems(sharedEquips);
+        InventoryActionManager.Instance?.RefreshPlayerStats();
     }
 
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
+        EnsureSlotsInitialized();
+
         foreach (var slot in GetAllSlots()) ClearSlot(slot);
 
         if (savedData == null) return;
 
         foreach (EquippedSaveData data in savedData)
         {
-            GameObject targetSlot = GetSlotByIndex(data.slotIndex);
+            if (data == null) continue;
+
+            // Quy đổi Global Index (2200+) về Local Sibling Index
+            int localSlotIndex = data.slotIndex >= 2200 ? data.slotIndex - 2200 : data.slotIndex;
+
+            GameObject targetSlot = GetSlotByIndex(localSlotIndex);
             if (targetSlot == null) continue;
 
             GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
@@ -37,6 +108,9 @@ public class SharedEquipmentPanel : MonoBehaviour
 
             GameObject itemGO = Instantiate(itemPrefab, targetSlot.transform);
             itemGO.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+            if (itemGO.GetComponent<Collectible>()) Destroy(itemGO.GetComponent<Collectible>());
+            if (itemGO.GetComponent<Monologue>()) Destroy(itemGO.GetComponent<Monologue>());
 
             Item itemComponent = itemGO.GetComponent<Item>();
             if (itemComponent != null)
@@ -98,7 +172,15 @@ public class SharedEquipmentPanel : MonoBehaviour
     private void ClearSlot(GameObject slotGO)
     {
         if (slotGO == null) return;
-        foreach (Transform child in slotGO.transform) Destroy(child.gameObject);
+        Slot slotComp = slotGO.GetComponent<Slot>();
+        if (slotComp != null) slotComp.currentItem = null;
+
+        for (int i = slotGO.transform.childCount - 1; i >= 0; i--)
+        {
+            Transform child = slotGO.transform.GetChild(i);
+            child.SetParent(null);
+            Destroy(child.gameObject);
+        }
     }
 
     private GameObject GetSlotByIndex(int slotIndex)

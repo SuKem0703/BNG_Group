@@ -32,6 +32,12 @@ public class PlayerCore : NetworkBehaviour
                 Debug.LogWarning("[PlayerCore] SaveController chưa khởi tạo, không thể đăng ký!");
             }
 
+            if (playerStats != null)
+            {
+                playerStats.ApplyEquippedItems();
+            }
+
+
             OnPlayerSpawned?.Invoke(this);
         }
     }

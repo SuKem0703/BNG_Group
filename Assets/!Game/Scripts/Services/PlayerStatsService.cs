@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using UnityEngine;
-using UnityEngine.Networking;
 
 public class PlayerStatsService : MonoBehaviour
 {
@@ -24,15 +23,6 @@ public class PlayerStatsService : MonoBehaviour
         public int con;
     }
 
-    [System.Serializable]
-    public class DistributeRequest
-    {
-        public int str;
-        public int dex;
-        public int intStat;
-        public int con;
-    }
-
     public void SyncProfile(System.Action<bool> onComplete = null)
     {
         StartCoroutine(SyncRoutine(onComplete));
@@ -40,149 +30,42 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator SyncRoutine(System.Action<bool> onComplete)
     {
-        string url = NetworkConfig.GetUrl("PlayerStats/profile");
-        string token = PlayerPrefs.GetString("AuthToken", "");
-
-        UnityWebRequest request = UnityWebRequest.Get(url);
-        request.SetRequestHeader("Authorization", $"Bearer {token}");
-
-        float startTime = Time.realtimeSinceStartup;
-        yield return request.SendWebRequest();
-        float duration = Time.realtimeSinceStartup - startTime;
-        ServerTimeManager.ReportPing(duration);
-
-        if (request.result == UnityWebRequest.Result.Success)
+        if (DatabaseManager.Instance != null)
         {
-            string json = request.downloadHandler.text.Replace("\"int\":", "\"intStat\":");
-            var data = JsonUtility.FromJson<ServerUserStat>(json);
+            string profileId = PlayerPrefs.GetString("CurrentProfileId", "");
+            if (string.IsNullOrEmpty(profileId)) profileId = "OfflineUser";
 
-            if (PlayerStats.Instance != null)
-                PlayerStats.Instance.SyncStatsFromServer(data);
-            onComplete?.Invoke(true);
-        }
-        else
-        {
-            Debug.LogError("Lỗi Sync Stats: " + request.error);
-            onComplete?.Invoke(false);
-        }
-    }
-
-    public void DistributePoints(int addStr, int addDex, int addInt, int addCon, System.Action<bool> onComplete)
-    {
-        StartCoroutine(DistributeRoutine(addStr, addDex, addInt, addCon, onComplete));
-    }
-
-    private IEnumerator DistributeRoutine(int addStr, int addDex, int addInt, int addCon, System.Action<bool> onComplete)
-    {
-        string url = NetworkConfig.GetUrl("PlayerStats/distribute");
-        string token = PlayerPrefs.GetString("AuthToken", "");
-
-        DistributeRequest reqBody = new DistributeRequest
-        {
-            str = addStr,
-            dex = addDex,
-            intStat = addInt,
-            con = addCon
-        };
-
-        string json = JsonUtility.ToJson(reqBody);
-
-        UnityWebRequest request = new UnityWebRequest(url, "POST");
-        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
-        request.SetRequestHeader("Authorization", $"Bearer {token}");
-
-        float startTime = Time.realtimeSinceStartup;
-        yield return request.SendWebRequest();
-        float duration = Time.realtimeSinceStartup - startTime;
-        ServerTimeManager.ReportPing(duration);
-
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            string responseJson = request.downloadHandler.text.Replace("\"int\":", "\"intStat\":");
-            var newData = JsonUtility.FromJson<ServerUserStat>(responseJson);
-
-            if (PlayerStats.Instance != null)
-                PlayerStats.Instance.SyncStatsFromServer(newData);
-
-            onComplete?.Invoke(true);
-        }
-        else
-        {
-            Debug.LogWarning("Lỗi cộng điểm: " + request.downloadHandler.text);
-            onComplete?.Invoke(false);
-        }
-    }
-
-    public void ResetStats(System.Action<bool> onComplete)
-    {
-        StartCoroutine(ResetStatsRoutine(onComplete));
-    }
-
-    private IEnumerator ResetStatsRoutine(System.Action<bool> onComplete)
-    {
-        string url = NetworkConfig.GetUrl("PlayerStats/reset");
-        string token = PlayerPrefs.GetString("AuthToken", "");
-
-        UnityWebRequest request = new UnityWebRequest(url, "POST");
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Authorization", $"Bearer {token}");
-
-        float startTime = Time.realtimeSinceStartup;
-        yield return request.SendWebRequest();
-        float duration = Time.realtimeSinceStartup - startTime;
-        ServerTimeManager.ReportPing(duration);
-
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            var response = JsonUtility.FromJson<ResetResponse>(request.downloadHandler.text);
-
-            if (response.success)
+            var db = DatabaseManager.Instance.GetConnection();
+            var profile = db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);
+            if (profile != null)
             {
-                if (PlayerStats.Instance != null)
+                var data = new ServerUserStat
                 {
-                    PlayerStats.Instance.SyncStatsFromServer(response.newStats);
-                    PlayerWallet.Instance.SyncFromServer(response.coin, response.gem);
-                }
+                    level = profile.Level,
+                    exp = profile.Exp,
+                    potentialPoints = profile.PotentialPoints,
+                    str = profile.Str,
+                    dex = profile.Dex,
+                    intStat = profile.IntStat,
+                    con = profile.Con
+                };
+
+                if (PlayerStats.Instance != null)
+                    PlayerStats.Instance.SyncStatsFromServer(data);
+
                 onComplete?.Invoke(true);
+                yield break;
             }
             else
             {
-                Debug.LogWarning("Reset thất bại: " + response.message);
+                Debug.LogWarning("[PlayerStatsService] No local profile found to sync.");
                 onComplete?.Invoke(false);
+                yield break;
             }
         }
-        else
-        {
-            Debug.LogError("Network Error: " + request.error);
-            onComplete?.Invoke(false);
-        }
-    }
 
-    [System.Serializable]
-    public class ResetResponse
-    {
-        public bool success;
-        public string message;
-        public ServerUserStat newStats;
-        public int coin;
-        public int gem;
-    }
-
-    [System.Serializable]
-    public class AddExpResponse
-    {
-        public bool success;
-        public bool leveledUp;
-        public ServerUserStat newStats;
-    }
-
-    [System.Serializable]
-    public class AddExpBody
-    {
-        public int amount;
+        onComplete?.Invoke(false);
+        yield break;
     }
 
     public void AddExp(int amount)
@@ -192,44 +75,232 @@ public class PlayerStatsService : MonoBehaviour
 
     private IEnumerator AddExpRoutine(int amount)
     {
-        string url = NetworkConfig.GetUrl("PlayerStats/add-exp");
-        string token = PlayerPrefs.GetString("AuthToken", "");
-
-        AddExpBody body = new AddExpBody { amount = amount };
-        string json = JsonUtility.ToJson(body);
-
-        UnityWebRequest request = new UnityWebRequest(url, "POST");
-        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
-        request.SetRequestHeader("Authorization", $"Bearer {token}");
-
-        float startTime = Time.realtimeSinceStartup;
-        yield return request.SendWebRequest();
-        float duration = Time.realtimeSinceStartup - startTime;
-        ServerTimeManager.ReportPing(duration);
-
-        Debug.Log($"[Server Response] Code: {request.responseCode} | Body: {request.downloadHandler.text}");
-
-        if (request.result == UnityWebRequest.Result.Success)
+        if (DatabaseManager.Instance != null)
         {
-            string resJson = request.downloadHandler.text.Replace("\"int\":", "\"intStat\":");
-            var res = JsonUtility.FromJson<AddExpResponse>(resJson);
+            string profileId = PlayerPrefs.GetString("CurrentProfileId", "");
+            if (string.IsNullOrEmpty(profileId)) profileId = "OfflineUser";
 
-            if (res.success && PlayerStats.Instance != null)
+            var db = DatabaseManager.Instance.GetConnection();
+            var profile = db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);
+
+            if (profile != null)
             {
-                PlayerStats.Instance.SyncStatsFromServer(res.newStats);
+                int oldLevel = profile.Level;
 
-                if (res.leveledUp)
+                profile.Exp += amount;
+
+                bool leveledUp = false;
+                while (true)
                 {
-                    PlayerStats.Instance.PlayLevelUpEffect();
+                    int requiredExp = CalculateExpForLevel(profile.Level);
+                    if (profile.Exp >= requiredExp && profile.Level < 200)
+                    {
+                        profile.Exp -= requiredExp;
+                        profile.Level++;
+                        profile.PotentialPoints += 5;
+                        leveledUp = true;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
+
+                if (PlayerStats.Instance != null)
+                {
+                    profile.Str = PlayerStats.Instance.STR;
+                    profile.Dex = PlayerStats.Instance.DEX;
+                    profile.IntStat = PlayerStats.Instance.INT;
+                    profile.Con = PlayerStats.Instance.CON;
+                }
+
+                db.Update(profile);
+
+                var newStats = new ServerUserStat
+                {
+                    level = profile.Level,
+                    exp = profile.Exp,
+                    potentialPoints = profile.PotentialPoints,
+                    str = profile.Str,
+                    dex = profile.Dex,
+                    intStat = profile.IntStat,
+                    con = profile.Con
+                };
+
+                if (PlayerStats.Instance != null)
+                {
+                    PlayerStats.Instance.SyncStatsFromServer(newStats);
+                    if (leveledUp) PlayerStats.Instance.PlayLevelUpEffect();
+                }
+
+                yield break;
+            }
+            else
+            {
+                Debug.LogWarning("[PlayerStatsService] No local profile found to write EXP.");
+                yield break;
             }
         }
-        else
+        yield break;
+    }
+
+    private int CalculateExpForLevel(int lvl)
+    {
+        if (lvl < 100) return Mathf.FloorToInt(100 + lvl * 50 + Mathf.Pow(lvl, 2.2f));
+        else if (100 <= lvl && lvl < 200) return Mathf.FloorToInt(100 + lvl * 80 + Mathf.Pow(lvl, 2.5f));
+        else return Mathf.FloorToInt(100 + lvl * 100 + Mathf.Pow(lvl, 3f));
+    }
+
+    public void DistributePoints(int addStr, int addDex, int addInt, int addCon, System.Action<bool> onComplete)
+    {
+        StartCoroutine(DistributeRoutine(addStr, addDex, addInt, addCon, onComplete));
+    }
+
+    private IEnumerator DistributeRoutine(int addStr, int addDex, int addInt, int addCon, System.Action<bool> onComplete)
+    {
+        if (DatabaseManager.Instance == null)
         {
-            Debug.LogError("Lỗi cộng EXP: " + request.downloadHandler.text);
+            onComplete?.Invoke(false);
+            yield break;
         }
+
+        string profileId = PlayerPrefs.GetString("CurrentProfileId", "");
+        if (string.IsNullOrEmpty(profileId)) profileId = "OfflineUser";
+
+        var db = DatabaseManager.Instance.GetConnection();
+        var profile = db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);
+
+        if (profile == null)
+        {
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        if (addStr < 0 || addDex < 0 || addInt < 0 || addCon < 0)
+        {
+            Debug.LogWarning("[PlayerStatsService] Số điểm cộng không hợp lệ.");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        int totalCost = addStr + addDex + addInt + addCon;
+        if (totalCost == 0)
+        {
+            onComplete?.Invoke(true);
+            yield break;
+        }
+
+        if (profile.PotentialPoints < totalCost)
+        {
+            Debug.LogWarning("[PlayerStatsService] Không đủ điểm tiềm năng.");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        int maxAllowedPoints = 5 + (profile.Level - 1) * 5;
+        int currentTotalPoints = profile.Str + profile.Dex + profile.IntStat + profile.Con + profile.PotentialPoints;
+
+        if (currentTotalPoints > maxAllowedPoints)
+        {
+            Debug.LogWarning("[PlayerStatsService] Phát hiện bất thường trong dữ liệu nhân vật! Vượt giới hạn điểm.");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        profile.Str += addStr;
+        profile.Dex += addDex;
+        profile.IntStat += addInt;
+        profile.Con += addCon;
+        profile.PotentialPoints -= totalCost;
+
+        db.Update(profile);
+
+        var newData = new ServerUserStat
+        {
+            level = profile.Level,
+            exp = profile.Exp,
+            potentialPoints = profile.PotentialPoints,
+            str = profile.Str,
+            dex = profile.Dex,
+            intStat = profile.IntStat,
+            con = profile.Con
+        };
+
+        if (PlayerStats.Instance != null)
+            PlayerStats.Instance.SyncStatsFromServer(newData);
+
+        onComplete?.Invoke(true);
+        yield return null;
+    }
+
+    public void ResetStats(System.Action<bool> onComplete)
+    {
+        StartCoroutine(ResetStatsRoutine(onComplete));
+    }
+
+    private IEnumerator ResetStatsRoutine(System.Action<bool> onComplete)
+    {
+        if (DatabaseManager.Instance == null)
+        {
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        string profileId = PlayerPrefs.GetString("CurrentProfileId", "");
+        if (string.IsNullOrEmpty(profileId)) profileId = "OfflineUser";
+
+        var db = DatabaseManager.Instance.GetConnection();
+        var profile = db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);
+
+        if (profile == null)
+        {
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        db.RunInTransaction(() =>
+        {
+            if (profile.Gem < 20)
+            {
+                Debug.LogWarning("[PlayerStatsService] Không đủ Gem (Cần 20) để tẩy điểm.");
+                onComplete?.Invoke(false);
+                return;
+            }
+
+            profile.Gem -= 20;
+
+            profile.Str = 0;
+            profile.Dex = 0;
+            profile.IntStat = 0;
+            profile.Con = 0;
+            profile.PotentialPoints = 5 + (profile.Level - 1) * 5;
+
+            db.Update(profile);
+
+            var newStats = new ServerUserStat
+            {
+                level = profile.Level,
+                exp = profile.Exp,
+                potentialPoints = profile.PotentialPoints,
+                str = profile.Str,
+                dex = profile.Dex,
+                intStat = profile.IntStat,
+                con = profile.Con
+            };
+
+            if (PlayerStats.Instance != null)
+            {
+                PlayerStats.Instance.SyncStatsFromServer(newStats);
+            }
+
+            if (PlayerWallet.Instance != null)
+            {
+                PlayerWallet.Instance.SyncGemFromServer(profile.Gem);
+            }
+
+            onComplete?.Invoke(true);
+        });
+
+        yield return null;
     }
 }

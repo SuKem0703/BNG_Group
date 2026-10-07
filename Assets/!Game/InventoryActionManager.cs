@@ -510,6 +510,12 @@ public class InventoryActionManager : MonoBehaviour
         var equippedRamData = invData.Find(x => x.dbID == equippedItem.dbID);
         if (equippedRamData == null) return;
 
+        if (equippedItem != null && (equippedItem.equipSlot == EquipSlot.MainHand || equippedItem.equipSlot == EquipSlot.OffHand))
+        {
+            Debug.LogWarning("Không thể tháo vũ khí! Chỉ có thể hoán đổi vũ khí.");
+            return;
+        }
+
         var occupied = invData.Where(x => x.slotIndex < 1000).Select(x => x.slotIndex).ToHashSet();
         int emptySlot = -1;
         for (int i = 0; i < InventoryController.Instance.slotCount; i++)

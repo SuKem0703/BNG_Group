@@ -12,14 +12,80 @@ public class MageEquipmentPanel : MonoBehaviour
 
     private void Awake()
     {
-        if (Staff == null) Staff = GameObject.Find("Staff");
-        if (Catalyst == null) Catalyst = GameObject.Find("Catalyst");
-        if (Hat == null) Hat = GameObject.Find("Hat");
-        if (Robe == null) Robe = GameObject.Find("Robe");
+        EnsureSlotsInitialized();
+    }
+
+    private void EnsureSlotsInitialized()
+    {
+        if (Staff == null) Staff = transform.FindDeepChild("Staff")?.gameObject ?? GameObject.Find("Staff");
+        if (Catalyst == null) Catalyst = transform.FindDeepChild("Catalyst")?.gameObject ?? GameObject.Find("Catalyst");
+        if (Hat == null) Hat = transform.FindDeepChild("Hat")?.gameObject ?? GameObject.Find("Hat");
+        if (Robe == null) Robe = transform.FindDeepChild("Robe")?.gameObject ?? GameObject.Find("Robe");
+    }
+
+    // Đăng ký lắng nghe thay đổi từ InventoryController để tự động vẽ các ô 2100 - 2199
+    private void Start()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= SyncFromInventory;
+            InventoryController.Instance.OnInventoryChanged += SyncFromInventory;
+            SyncFromInventory(InventoryController.Instance.GetInventoryItemsData(), InventoryController.Instance.slotCount);
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= SyncFromInventory;
+            InventoryController.Instance.OnInventoryChanged += SyncFromInventory;
+            SyncFromInventory(InventoryController.Instance.GetInventoryItemsData(), InventoryController.Instance.slotCount);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= SyncFromInventory;
+        }
+    }
+
+    public void SyncFromInventory(List<InventorySaveData> inventoryData, int maxSlots = 0)
+    {
+        EnsureSlotsInitialized();
+
+        List<EquippedSaveData> mageEquips = new List<EquippedSaveData>();
+        if (inventoryData != null)
+        {
+            foreach (var data in inventoryData)
+            {
+                if (data != null && data.slotIndex >= 2100 && data.slotIndex < 2200)
+                {
+                    mageEquips.Add(new EquippedSaveData
+                    {
+                        dbID = data.dbID,
+                        itemID = data.itemID,
+                        slotIndex = data.slotIndex - 2100,
+                        quantity = data.quantity,
+                        isEquipped = true,
+                        rarity = data.rarity,
+                        qualityFactor = data.qualityFactor,
+                        sourceItemID = -1
+                    });
+                }
+            }
+        }
+
+        SetEquipmentItems(mageEquips);
+        InventoryActionManager.Instance?.RefreshPlayerStats();
     }
 
     public void SetEquipmentItems(List<EquippedSaveData> savedData)
     {
+        EnsureSlotsInitialized();
+
         ClearSlot(Staff);
         ClearSlot(Catalyst);
         ClearSlot(Hat);
@@ -35,7 +101,10 @@ public class MageEquipmentPanel : MonoBehaviour
         {
             if (data == null) continue;
 
-            GameObject targetSlot = GetSlotByIndex(data.slotIndex);
+            // Quy đổi Global Index (2100+) về Local Sibling Index
+            int localSlotIndex = data.slotIndex >= 2100 ? data.slotIndex - 2100 : data.slotIndex;
+
+            GameObject targetSlot = GetSlotByIndex(localSlotIndex);
             if (targetSlot != null)
             {
                 GameObject itemPrefab = ItemDictionary.Instance.GetItemPrefab(data.itemID);
@@ -43,6 +112,9 @@ public class MageEquipmentPanel : MonoBehaviour
                 {
                     GameObject itemGO = Instantiate(itemPrefab, targetSlot.transform);
                     itemGO.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+                    if (itemGO.GetComponent<Collectible>()) Destroy(itemGO.GetComponent<Collectible>());
+                    if (itemGO.GetComponent<Monologue>()) Destroy(itemGO.GetComponent<Monologue>());
 
                     Item itemComponent = itemGO.GetComponent<Item>();
                     if (itemComponent != null)
@@ -107,7 +179,15 @@ public class MageEquipmentPanel : MonoBehaviour
     private void ClearSlot(GameObject slotGO)
     {
         if (slotGO == null) return;
-        foreach (Transform child in slotGO.transform) Destroy(child.gameObject);
+        Slot slotComp = slotGO.GetComponent<Slot>();
+        if (slotComp != null) slotComp.currentItem = null;
+
+        for (int i = slotGO.transform.childCount - 1; i >= 0; i--)
+        {
+            Transform child = slotGO.transform.GetChild(i);
+            child.SetParent(null);
+            Destroy(child.gameObject);
+        }
     }
 
     private GameObject GetSlotByIndex(int slotIndex)

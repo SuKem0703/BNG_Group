@@ -25,6 +25,15 @@ public class ProfileEntity
     public int CurrentMageMP { get; set; }
     public float CurrentStamina { get; set; }
 
+    // Player progression fields (for local SQLite storage)
+    public int Level { get; set; }
+    public int Exp { get; set; }
+    public int PotentialPoints { get; set; }
+    public int Str { get; set; }
+    public int Dex { get; set; }
+    public int IntStat { get; set; }
+    public int Con { get; set; }
+
     public int Coin { get; set; }
     public int Gem { get; set; }
 

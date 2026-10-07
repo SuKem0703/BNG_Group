@@ -74,7 +74,6 @@ public class PlayerWallet : MonoBehaviour
 
     public void RequestAddCoin(int amount, string reason)
     {
-        // Có thể cộng tạm View ở đây cho mượt UI nếu muốn: coin += amount; OnWalletUpdated?.Invoke();
         EconomyService.Instance.EarnCurrency("Coin", amount, reason, null);
     }
 

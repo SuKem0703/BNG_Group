@@ -116,6 +116,11 @@ public class PlayerStats : NetworkBehaviour
                 InventoryController.Instance.OnInventoryChanged += OnInventoryUpdated;
                 ApplyEquippedItems();
             }
+
+            if (PlayerStatsService.Instance != null)
+            {
+                PlayerStatsService.Instance.SyncProfile();
+            }
         }
     }
 
@@ -150,6 +155,8 @@ public class PlayerStats : NetworkBehaviour
         this.CON = data.con;
 
         ApplyEquippedItems();
+
+        OnStatsUpdated?.Invoke();
     }
 
     private void OnInventoryUpdated(List<InventorySaveData> inventoryData, int slotCount)

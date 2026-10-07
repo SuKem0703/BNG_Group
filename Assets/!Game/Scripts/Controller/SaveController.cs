@@ -17,7 +17,7 @@ public class SaveController : MonoBehaviour
 {
     public static SaveController Instance { get; private set; }
 
-    public static uint MasterSeed { get; private set; } = 12345; // Gắn cứng seed hoặc lấy ngẫu nhiên vì offline
+    public static uint MasterSeed { get; private set; } = 12345;
 
     private static HashSet<Chest> _activeChests = new HashSet<Chest>();
     private Dictionary<string, bool> _sessionChestStates = new Dictionary<string, bool>();
@@ -134,15 +134,19 @@ public class SaveController : MonoBehaviour
         pendingSceneName = null;
         nextSpawnPosition = null;
 
-        // 2. LOẠI BỎ HTTP: Bypass qua các dịch vụ yêu cầu kết nối mạng (Túi đồ, Nông trại, Profile...)
-        // Nếu sau này bạn làm hệ thống lưu Túi Đồ offline bằng SQLite, bạn gọi hàm load từ SQLite ở đây.
+        if (EconomyService.Instance != null) EconomyService.Instance.RefreshBalance();
+        if (PlayerStatsService.Instance != null) PlayerStatsService.Instance.SyncProfile();
+        if (FarmController.Instance != null) FarmController.Instance.FetchFarmDataFromServer();
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.RefreshInventory();
 
-        // if (EconomyService.Instance != null) EconomyService.Instance.RefreshBalance();
-        // if (PlayerStatsService.Instance != null) PlayerStatsService.Instance.SyncProfile(...);
-        // if (FarmController.Instance != null) FarmController.Instance.FetchFarmDataFromServer();
-        // if (InventoryService.Instance != null) InventoryService.Instance.SyncInventory(...);
+            var currentItems = InventoryController.Instance.GetInventoryItemsData();
+            FindFirstObjectByType<KnightEquipmentPanel>(FindObjectsInactive.Include)?.SyncFromInventory(currentItems);
+            FindFirstObjectByType<MageEquipmentPanel>(FindObjectsInactive.Include)?.SyncFromInventory(currentItems);
+            FindFirstObjectByType<SharedEquipmentPanel>(FindObjectsInactive.Include)?.SyncFromInventory(currentItems);
+        }
 
-        // Nạp các chỉ số đã đọc từ SQLite vào UI và nhân vật
         if (playerCore != null && tempSaveData != null)
         {
             playerCore.playerVitals.netKnightHealth.Value = tempSaveData.currentKnightHP;
@@ -205,9 +209,14 @@ public class SaveController : MonoBehaviour
         StartCoroutine(SaveRoutine(reason, onSaveFinished, isSilent));
     }
 
-    // 3. LOGIC LƯU GAME OFFLINE XUỐNG SQLITE
     public IEnumerator SaveRoutine(SaveReason reason, System.Action<bool> onSaveFinished = null, bool isSilent = false)
     {
+        if (!IsDataLoaded)
+        {
+            onSaveFinished?.Invoke(false);
+            yield break;
+        }
+
         IsSaving = true;
 
         if (FarmService.Instance != null) FarmService.Instance.ForceSendPendingHarvests();
@@ -246,11 +255,9 @@ public class SaveController : MonoBehaviour
         string currentBoundary = FindFirstObjectByType<CinemachineConfiner2D>()?.BoundingShape2D?.gameObject.name ?? "";
         if (reason == SaveReason.SceneTransition || !string.IsNullOrEmpty(pendingSceneName)) currentBoundary = "";
 
-        // Merge dữ liệu rương đã mở với dữ liệu cũ từ Database
         List<ChestSaveData> existingChestStates = JsonHelper.FromJson<ChestSaveData>(profile.ChestSaveDataJson);
         existingChestStates = MergeChestsState(existingChestStates);
 
-        // Ghi các dữ liệu cơ bản
         profile.CurrentSceneName = saveScene;
         profile.PlayerPosX = savePos.x;
         profile.PlayerPosY = savePos.y;
@@ -269,7 +276,6 @@ public class SaveController : MonoBehaviour
         profile.CurrentMageMP = (reason == SaveReason.Death) ? playerCore.playerStats.finalMageMaxMP : playerCore.playerVitals.mageMP;
         profile.CurrentStamina = (reason == SaveReason.Death) ? playerCore.playerStats.finalStamina : playerCore.playerVitals.currentStamina;
 
-        // Ghi các dữ liệu phức tạp thành JSON
         profile.ChestSaveDataJson = JsonHelper.ToJson(existingChestStates);
 
         if (QuestController.Instance != null)
@@ -280,9 +286,8 @@ public class SaveController : MonoBehaviour
 
         profile.CollectedBySceneJson = JsonHelper.ToJson(collectedByScene);
 
-        // Lưu xuống DB
         repo.UpdateProfile(profile);
-        bool saveSuccess = true; // Lưu SQLite là thành công ngay
+        bool saveSuccess = true;
 
         if (reason != SaveReason.SceneTransition)
         {
@@ -296,7 +301,6 @@ public class SaveController : MonoBehaviour
             GameNotify.Show(msg);
         }
 
-        // Tạm dừng 1 frame để giả lập async (không block main thread)
         yield return null;
 
         if (!isSilent) HideMiniLoadingScreen();
@@ -404,7 +408,6 @@ public class SaveController : MonoBehaviour
         return existingChestStates;
     }
 
-    // 4. LOGIC ĐỌC GAME OFFLINE TỪ SQLITE
     public IEnumerator LoadRoutine(System.Action<bool> onComplete)
     {
         bool sceneLoadWasTriggered = false;
@@ -415,7 +418,6 @@ public class SaveController : MonoBehaviour
 
         if (offlineProfile != null)
         {
-            // Parse dữ liệu từ ProfileEntity sang SaveData để game có thể đọc được
             SaveData localData = new SaveData
             {
                 currentSceneName = offlineProfile.CurrentSceneName,
@@ -432,7 +434,6 @@ public class SaveController : MonoBehaviour
                 currentMageMP = offlineProfile.CurrentMageMP,
                 currentStamina = offlineProfile.CurrentStamina,
 
-                // Decode các chuỗi JSON từ Database
                 chestSaveData = JsonHelper.FromJson<ChestSaveData>(offlineProfile.ChestSaveDataJson),
                 questProgressData = JsonHelper.FromJson<QuestProgress>(offlineProfile.QuestProgressDataJson),
                 handInQuestIDs = JsonHelper.FromJson<string>(offlineProfile.HandInQuestIDsJson),
@@ -444,7 +445,6 @@ public class SaveController : MonoBehaviour
         else
         {
             Debug.LogError("[SaveController] Không tìm thấy dữ liệu nhân vật offline trong Database!");
-            // Nếu lỗi nặng có thể văng về MainMenu tại đây
         }
 
         onComplete(sceneLoadWasTriggered);
@@ -480,7 +480,6 @@ public class SaveController : MonoBehaviour
         {
             pendingSceneName = targetScene;
 
-            // XỬ LÝ COOP: Dùng NetworkManager để load Scene cho đồng bộ
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
             {
                 if (NetworkManager.Singleton.IsServer)
@@ -649,7 +648,6 @@ public class SaveController : MonoBehaviour
     }
 }
 
-// LỚP HỖ TRỢ XỬ LÝ CHUỖI JSON DÀNH CHO CÁC LIST
 public static class JsonHelper
 {
     public static List<T> FromJson<T>(string json)
@@ -657,14 +655,12 @@ public static class JsonHelper
         if (string.IsNullOrEmpty(json) || json == "[]")
             return new List<T>();
 
-        // Nếu chuỗi JSON đã là dạng Wrapper (bắt đầu bằng {), giải mã luôn
         if (json.TrimStart().StartsWith("{"))
         {
             Wrapper<T> wrapper = JsonUtility.FromJson<Wrapper<T>>(json);
             return wrapper.Items ?? new List<T>();
         }
 
-        // Nếu chuỗi JSON đang là mảng thô (bắt đầu bằng [), bọc nó lại để JsonUtility của Unity hiểu được
         string newJson = "{\"Items\":" + json + "}";
         Wrapper<T> wrapper2 = JsonUtility.FromJson<Wrapper<T>>(newJson);
         return wrapper2.Items ?? new List<T>();
