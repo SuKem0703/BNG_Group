@@ -537,13 +537,9 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         if (PlayerStats.Instance != null && expGain > 0)
             PlayerStats.Instance.AddEXP(expGain);
 
-        if (EconomyService.Instance != null && goldGain > 0)
-        {
-            EconomyService.Instance.EarnCurrency("Coin", goldGain, $"Kill: {enemyName}", (success) => {
-                if (success && PlayerStats.Instance != null)
-                    PlayerWallet.Instance.SyncCoinFromServer(PlayerWallet.Instance.coin + goldGain);
-            });
-        }
+        // Thay vì gọi EconomyService trực tiếp gây nghẽn, gọi qua hệ thống gom nhóm của PlayerWallet
+        if (PlayerWallet.Instance != null && goldGain > 0)
+            PlayerWallet.Instance.AddCoin(goldGain);
 
         if (goldGain > 0 && GoldEffectPool.Instance != null)
         {

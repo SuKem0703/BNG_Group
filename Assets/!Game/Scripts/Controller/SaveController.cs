@@ -95,7 +95,12 @@ public class SaveController : MonoBehaviour
     {
         if (IsDataLoaded)
         {
-            OnUIDReady?.Invoke(GetPlayerUID());
+            string currentProfileId = PlayerPrefs.GetString("CurrentProfileId", "");
+            ProfileRepository repo = new ProfileRepository();
+            ProfileEntity profile = repo.GetProfile(currentProfileId);
+
+            string displayName = profile != null ? profile.PlayerName : PlayerPrefs.GetString("Username", "Player");
+            OnUIDReady?.Invoke(displayName);
         }
     }
 
@@ -223,6 +228,7 @@ public class SaveController : MonoBehaviour
         if (InventoryService.Instance != null) InventoryService.Instance.ForceSyncPendingQuantities();
         if (InventoryService.Instance != null) InventoryService.Instance.ForceSyncPendingMoves();
         if (playerCore != null && playerCore.playerStats != null) playerCore.playerStats.ForceSyncExpImmediate();
+        if (PlayerWallet.Instance != null) PlayerWallet.Instance.ForceSyncCoinImmediate();
 
         if (!isSilent) ShowMiniLoadingScreen();
 
@@ -275,6 +281,10 @@ public class SaveController : MonoBehaviour
         profile.CurrentKnightMP = (reason == SaveReason.Death) ? playerCore.playerStats.finalKnightMaxMP : playerCore.playerVitals.knightMP;
         profile.CurrentMageMP = (reason == SaveReason.Death) ? playerCore.playerStats.finalMageMaxMP : playerCore.playerVitals.mageMP;
         profile.CurrentStamina = (reason == SaveReason.Death) ? playerCore.playerStats.finalStamina : playerCore.playerVitals.currentStamina;
+        if (playerCore.classController != null)
+        {
+            profile.LastUsedClassId = (int)playerCore.classController.GetCurrentClassType();
+        }
 
         profile.ChestSaveDataJson = JsonHelper.ToJson(existingChestStates);
 
@@ -285,6 +295,21 @@ public class SaveController : MonoBehaviour
         }
 
         profile.CollectedBySceneJson = JsonHelper.ToJson(collectedByScene);
+
+        // Refresh coin/gem from DB before writing profile to avoid clobbering concurrent updates
+        try
+        {
+            var latestProfile = repo.GetProfile(currentProfileId);
+            if (latestProfile != null)
+            {
+                profile.Coin = latestProfile.Coin;
+                profile.Gem = latestProfile.Gem;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[SaveController] Failed to refresh latest coin/gem before save: {ex.Message}");
+        }
 
         repo.UpdateProfile(profile);
         bool saveSuccess = true;
@@ -418,6 +443,16 @@ public class SaveController : MonoBehaviour
 
         if (offlineProfile != null)
         {
+            if (playerCore != null && playerCore.classController != null)
+            {
+                PlayerClassType savedClass = System.Enum.IsDefined(
+                    typeof(PlayerClassType), offlineProfile.LastUsedClassId)
+                    ? (PlayerClassType)offlineProfile.LastUsedClassId
+                    : PlayerClassType.Knight;
+
+                playerCore.classController.RestoreClass(savedClass);
+            }
+
             SaveData localData = new SaveData
             {
                 currentSceneName = offlineProfile.CurrentSceneName,

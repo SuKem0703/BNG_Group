@@ -24,6 +24,11 @@ public class PlayerStats : NetworkBehaviour
     public int exp { get; private set; }
     public int potentialPoints { get; private set; }
 
+    [Header("Breakthrough Tiers")]
+    public NetworkVariable<int> netKnightBreakthroughTier = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> netMageBreakthroughTier = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> netArcherBreakthroughTier = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     [Header("Player Identity")]
     public NetworkVariable<FixedString32Bytes> netUsername = new NetworkVariable<FixedString32Bytes>("", NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
@@ -153,6 +158,13 @@ public class PlayerStats : NetworkBehaviour
         this.DEX = data.dex;
         this.INT = data.intStat;
         this.CON = data.con;
+
+        if (IsServer)
+        {
+            netKnightBreakthroughTier.Value = data.knightBreakthroughTier;
+            netMageBreakthroughTier.Value = data.mageBreakthroughTier;
+            netArcherBreakthroughTier.Value = data.archerBreakthroughTier;
+        }
 
         ApplyEquippedItems();
 
@@ -301,7 +313,7 @@ public class PlayerStats : NetworkBehaviour
     {
         get
         {
-            if (!netIsOnBattle.Value) return false;
+            // if (!netIsOnBattle.Value) return false;
 
             if (AreaController.currentArea != null && AreaController.currentArea.mapType == MapType.SafeZone) return false;
             if (InventoryController.Instance == null || classController == null) return false;

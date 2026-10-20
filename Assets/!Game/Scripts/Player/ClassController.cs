@@ -4,11 +4,20 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+public enum PlayerClassType
+{
+    Knight = 0,
+    Mage = 1,
+    Archer = 2
+}
+
 public class ClassController : NetworkBehaviour
 {
     [Header("Classes")]
     public GameObject knightObject;
     public GameObject mageObject;
+
+    // Archer is reserved in PlayerClassType but is not implemented yet.
 
     [Header("Input Actions")]
     [SerializeField] private InputActionReference swapAction;
@@ -16,6 +25,7 @@ public class ClassController : NetworkBehaviour
     public NetworkVariable<bool> netIsKnightActive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private GameObject currentClass;
+    public PlayerClassType CurrentClassType { get; private set; } = PlayerClassType.Knight;
 
     [SerializeField] private float swapCooldown = 2.0f;
     private bool canSwap = true;
@@ -48,6 +58,7 @@ public class ClassController : NetworkBehaviour
         if (IsOwner)
         {
             currentClass = knightObject;
+            CurrentClassType = PlayerClassType.Knight;
             netIsKnightActive.Value = true;
 
             EnableLocalInput();
@@ -96,9 +107,41 @@ public class ClassController : NetworkBehaviour
 
     private void OnSwapPerformed(InputAction.CallbackContext ctx) => TrySwapClass();
 
+    public PlayerClassType GetCurrentClassType()
+    {
+        return netIsKnightActive.Value ? PlayerClassType.Knight : PlayerClassType.Mage;
+    }
+
     public string GetCurrentClassName()
     {
-        return netIsKnightActive.Value ? "Knight" : "Mage";
+        return GetCurrentClassType().ToString();
+    }
+
+    public void RestoreClass(PlayerClassType savedClass)
+    {
+        if (!IsOwner)
+            return;
+
+        switch (savedClass)
+        {
+            case PlayerClassType.Knight:
+                SwitchClass(knightObject);
+                break;
+
+            case PlayerClassType.Mage:
+                SwitchClass(mageObject);
+                break;
+
+            case PlayerClassType.Archer:
+                Debug.LogWarning("[ClassController] Archer is not implemented yet; restoring Knight.");
+                SwitchClass(knightObject);
+                break;
+
+            default:
+                Debug.LogWarning($"[ClassController] Unknown class ID {(int)savedClass}; restoring Knight.");
+                SwitchClass(knightObject);
+                break;
+        }
     }
 
     private void TrySwapClass()
@@ -164,6 +207,8 @@ public class ClassController : NetworkBehaviour
 
         currentClass = newClass;
         currentClass.tag = "Player";
+
+        CurrentClassType = (currentClass == knightObject) ? PlayerClassType.Knight : PlayerClassType.Mage;
 
         if (IsOwner)
         {

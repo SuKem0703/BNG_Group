@@ -1,0 +1,741 @@
+fileFormatVersion: 2
+guid: 23db7e2a84f3d674da42df4b9bed8b91
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6832065414375954236
+    second: lvl5_Walk_body_0
+  - first:
+      213: -2798620052010867209
+    second: lvl5_Walk_body_1
+  - first:
+      213: -7042037476421786474
+    second: lvl5_Walk_body_2
+  - first:
+      213: -7106640838055186861
+    second: lvl5_Walk_body_3
+  - first:
+      213: -2348878230252198567
+    second: lvl5_Walk_body_4
+  - first:
+      213: 7206920441374383248
+    second: lvl5_Walk_body_5
+  - first:
+      213: -3842714464060143861
+    second: lvl5_Walk_body_6
+  - first:
+      213: -6255256103620426191
+    second: lvl5_Walk_body_7
+  - first:
+      213: 3286055687539882502
+    second: lvl5_Walk_body_8
+  - first:
+      213: -5879724353874101691
+    second: lvl5_Walk_body_9
+  - first:
+      213: -7469854044015193770
+    second: lvl5_Walk_body_10
+  - first:
+      213: 5440579017846165342
+    second: lvl5_Walk_body_11
+  - first:
+      213: -8195682178195627690
+    second: lvl5_Walk_body_12
+  - first:
+      213: -8816604234872927467
+    second: lvl5_Walk_body_13
+  - first:
+      213: 338298213886873474
+    second: lvl5_Walk_body_14
+  - first:
+      213: 4678404612400603583
+    second: lvl5_Walk_body_15
+  - first:
+      213: -4104787387903268356
+    second: lvl5_Walk_body_16
+  - first:
+      213: 1354485529175962686
+    second: lvl5_Walk_body_17
+  - first:
+      213: -6383660866633597034
+    second: lvl5_Walk_body_18
+  - first:
+      213: 8156655787758352468
+    second: lvl5_Walk_body_19
+  - first:
+      213: -843640753063842592
+    second: lvl5_Walk_body_20
+  - first:
+      213: 9140248177461120642
+    second: lvl5_Walk_body_21
+  - first:
+      213: 8570788290939796169
+    second: lvl5_Walk_body_22
+  - first:
+      213: -877314921939615652
+    second: lvl5_Walk_body_23
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: lvl5_Walk_body_0
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 211
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c375c1aeb4f50de50800000000000000
+      internalID: 6832065414375954236
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_1
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 211
+        width: 19
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f56b92f3ed4929d0800000000000000
+      internalID: -2798620052010867209
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_2
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 211
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69424eab938a54e90800000000000000
+      internalID: -7042037476421786474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_3
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 211
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35eaf657fc3206d90800000000000000
+      internalID: -7106640838055186861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_4
+      rect:
+        serializedVersion: 2
+        x: 279
+        y: 211
+        width: 19
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9556b29c1bb176fd0800000000000000
+      internalID: -2348878230252198567
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_5
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 211
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09c1f9025ff140460800000000000000
+      internalID: 7206920441374383248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_6
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 147
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b078074fd8febaac0800000000000000
+      internalID: -3842714464060143861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_7
+      rect:
+        serializedVersion: 2
+        x: 91
+        y: 147
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1364c9c27bdd039a0800000000000000
+      internalID: -6255256103620426191
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_8
+      rect:
+        serializedVersion: 2
+        x: 154
+        y: 147
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60a77ffcc3a6a9d20800000000000000
+      internalID: 3286055687539882502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_9
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 147
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54afe1e2ad5076ea0800000000000000
+      internalID: -5879724353874101691
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_10
+      rect:
+        serializedVersion: 2
+        x: 282
+        y: 147
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 651957ee25fb55890800000000000000
+      internalID: -7469854044015193770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_11
+      rect:
+        serializedVersion: 2
+        x: 347
+        y: 147
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5f0a239ac1d08b40800000000000000
+      internalID: 5440579017846165342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_12
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 83
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65166a44b76134e80800000000000000
+      internalID: -8195682178195627690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_13
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 83
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51bc137292125a580800000000000000
+      internalID: -8816604234872927467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_14
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 83
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28f40e2ee60e1b400800000000000000
+      internalID: 338298213886873474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_15
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 83
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb1efad25380de040800000000000000
+      internalID: 4678404612400603583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_16
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 83
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf9a5896e9dd807c0800000000000000
+      internalID: -4104787387903268356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_17
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 83
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e34b0f399691cc210800000000000000
+      internalID: 1354485529175962686
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_18
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 19
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69ffdbd834ea867a0800000000000000
+      internalID: -6383660866633597034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_19
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 19
+        width: 19
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45878702933423170800000000000000
+      internalID: 8156655787758352468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_20
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 19
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ec26937439ca44f0800000000000000
+      internalID: -843640753063842592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_21
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 19
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28e4b705a4fa8de70800000000000000
+      internalID: 9140248177461120642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_22
+      rect:
+        serializedVersion: 2
+        x: 279
+        y: 19
+        width: 19
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ca3b866a8e81f670800000000000000
+      internalID: 8570788290939796169
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl5_Walk_body_23
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 19
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c50c3a90ab623d3f0800000000000000
+      internalID: -877314921939615652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      lvl5_Walk_body_0: 6832065414375954236
+      lvl5_Walk_body_1: -2798620052010867209
+      lvl5_Walk_body_10: -7469854044015193770
+      lvl5_Walk_body_11: 5440579017846165342
+      lvl5_Walk_body_12: -8195682178195627690
+      lvl5_Walk_body_13: -8816604234872927467
+      lvl5_Walk_body_14: 338298213886873474
+      lvl5_Walk_body_15: 4678404612400603583
+      lvl5_Walk_body_16: -4104787387903268356
+      lvl5_Walk_body_17: 1354485529175962686
+      lvl5_Walk_body_18: -6383660866633597034
+      lvl5_Walk_body_19: 8156655787758352468
+      lvl5_Walk_body_2: -7042037476421786474
+      lvl5_Walk_body_20: -843640753063842592
+      lvl5_Walk_body_21: 9140248177461120642
+      lvl5_Walk_body_22: 8570788290939796169
+      lvl5_Walk_body_23: -877314921939615652
+      lvl5_Walk_body_3: -7106640838055186861
+      lvl5_Walk_body_4: -2348878230252198567
+      lvl5_Walk_body_5: 7206920441374383248
+      lvl5_Walk_body_6: -3842714464060143861
+      lvl5_Walk_body_7: -6255256103620426191
+      lvl5_Walk_body_8: 3286055687539882502
+      lvl5_Walk_body_9: -5879724353874101691
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

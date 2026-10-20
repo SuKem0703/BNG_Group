@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -23,10 +24,35 @@ public class MageNormalAttack : NetworkBehaviour
 
     private bool attackPressed = false;
     private Vector2 attackDirection;
-
     private bool hasFiredThisAttack = false;
 
     [SerializeField] private CombatTargetSelector targetSelector;
+
+    private Queue<GameObject> projectilePool = new Queue<GameObject>();
+    public int poolSize = 10;
+
+    private void Start()
+    {
+        if (IsServer)
+        {
+            InitializePool();
+        }
+    }
+
+    private void InitializePool()
+    {
+        GameObject container = new GameObject("ProjectilePool_Container");
+
+        for (int i = 0; i < poolSize; i++)
+        {
+            GameObject proj = Instantiate(projectilePrefab, container.transform);
+            NetworkObject netObj = proj.GetComponent<NetworkObject>();
+            netObj.Spawn();
+
+            proj.SetActive(false);
+            projectilePool.Enqueue(proj);
+        }
+    }
 
     private void Update()
     {
@@ -55,7 +81,6 @@ public class MageNormalAttack : NetworkBehaviour
     public void OnAttack(InputAction.CallbackContext context)
     {
         if (!IsOwner) return;
-
         if (PauseController.IsGamePause || !context.performed) return;
         if (core.playerMovement != null && core.playerMovement.IsDead) return;
 
@@ -77,7 +102,6 @@ public class MageNormalAttack : NetworkBehaviour
     private void PerformAttack()
     {
         core.playerVitals.UseMP(attackManaCost, false);
-
         hasFiredThisAttack = false;
 
         animator.SetBool("isAttacking", true);
@@ -99,8 +123,6 @@ public class MageNormalAttack : NetworkBehaviour
         animator.SetFloat("LookY", attackDirection.y);
         animator.SetFloat("LastInputX", attackDirection.x);
         animator.SetFloat("LastInputY", attackDirection.y);
-
-        animator.SetTrigger("Attack");
 
         if (IsOwner)
         {
@@ -183,21 +205,33 @@ public class MageNormalAttack : NetworkBehaviour
     {
         if (projectilePrefab == null || firePoint == null) return;
 
-        GameObject proj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-        NetworkObject netObj = proj.GetComponent<NetworkObject>();
-        netObj.Spawn();
-
-        ManaProjectile manaProj = proj.GetComponent<ManaProjectile>();
-        if (manaProj != null)
+        GameObject proj = GetProjectileFromPool();
+        if (proj != null)
         {
-            manaProj.Initialize(dir, projectileSpeed, damage, isCrit, rpcParams.Receive.SenderClientId);
+            proj.transform.position = firePoint.position;
+            proj.SetActive(true);
+
+            ManaProjectile manaProj = proj.GetComponent<ManaProjectile>();
+            if (manaProj != null)
+            {
+                manaProj.Initialize(dir, projectileSpeed, damage, isCrit, rpcParams.Receive.SenderClientId);
+            }
         }
+    }
+
+    private GameObject GetProjectileFromPool()
+    {
+        if (projectilePool.Count == 0) return null;
+
+        GameObject proj = projectilePool.Dequeue();
+        projectilePool.Enqueue(proj);
+
+        return proj;
     }
 
     public void EndAttack()
     {
         animator.SetBool("isAttacking", false);
-        animator.ResetTrigger("Attack");
         attackPressed = false;
 
         if (core.playerMovement != null)

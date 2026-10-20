@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2572875542871471645}
   - component: {fileID: 8566204733267661250}
   - component: {fileID: 3569004058528463483}
-  - component: {fileID: 6500731345675503730}
+  - component: {fileID: 1889235551265274182}
   m_Layer: 3
   m_Name: Projectile
   m_TagString: Untagged
@@ -50,7 +50,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
   GlobalObjectIdHash: 1185058671
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 1185058671
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
@@ -76,7 +76,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ManaProjectile
   ShowTopMostFoldoutHeaderGroup: 1
   lifeTime: 3
+  defaultProjectileSpeed: 25
   hitAnimationDuration: 0.4
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 32768
 --- !u!50 &2572875542871471645
 Rigidbody2D:
   serializedVersion: 5
@@ -153,7 +157,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 4655973304768222979, guid: c8a790d8bd77a2243ac33e7e2841b89e, type: 3}
+  m_Sprite: {fileID: 2156553316621690013, guid: b4bc26f30b82f3f47ae029fd7a5145e1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -185,8 +189,8 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!58 &6500731345675503730
-CircleCollider2D:
+--- !u!61 &1889235551265274182
+BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -219,5 +223,15 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.1
+  m_Offset: {x: -0.625, y: -0.2}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 2, y: 2}
+    newSize: {x: 2, y: 2}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.4, y: 0.4}
+  m_EdgeRadius: 0

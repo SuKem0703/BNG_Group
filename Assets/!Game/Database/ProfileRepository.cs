@@ -17,6 +17,7 @@ public class ProfileRepository
             ProfileId = newId,
             PlayerName = playerName,
             LastPlayed = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            LastUsedClassId = (int)PlayerClassType.Knight,
 
             CurrentSceneName = "01_Home_Indoor",
             PlayerPosX = -8.0f,
@@ -35,7 +36,6 @@ public class ProfileRepository
             CurrentMageMP = 50,
             CurrentStamina = 20.0f,
 
-            // Progression defaults
             Level = 1,
             Exp = 0,
             PotentialPoints = 0,
@@ -43,6 +43,10 @@ public class ProfileRepository
             Dex = 0,
             IntStat = 0,
             Con = 0,
+
+            KnightBreakthroughTier = 0,
+            MageBreakthroughTier = 0,
+            ArcherBreakthroughTier = 0,
 
             Coin = 0,
             Gem = 0,
@@ -102,7 +106,6 @@ public class ProfileRepository
     public void UpdateProfile(ProfileEntity profile)
     {
         profile.LastPlayed = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
         db.Update(profile);
     }
 }

@@ -1,0 +1,741 @@
+fileFormatVersion: 2
+guid: 11e09c6e6c32a3045a420402e4ff5226
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8780936732272863438
+    second: lvl6_Walk_body_0
+  - first:
+      213: -415768150532554812
+    second: lvl6_Walk_body_1
+  - first:
+      213: 73897138727898362
+    second: lvl6_Walk_body_2
+  - first:
+      213: 4583509660859742810
+    second: lvl6_Walk_body_3
+  - first:
+      213: -7204314212135140227
+    second: lvl6_Walk_body_4
+  - first:
+      213: -2396704560380680009
+    second: lvl6_Walk_body_5
+  - first:
+      213: -725720157334777054
+    second: lvl6_Walk_body_6
+  - first:
+      213: -9205060493553465835
+    second: lvl6_Walk_body_7
+  - first:
+      213: 7087206898420285078
+    second: lvl6_Walk_body_8
+  - first:
+      213: -3825175978780388786
+    second: lvl6_Walk_body_9
+  - first:
+      213: 4117313460916902468
+    second: lvl6_Walk_body_10
+  - first:
+      213: -2927724318693953016
+    second: lvl6_Walk_body_11
+  - first:
+      213: 4783150191433427271
+    second: lvl6_Walk_body_12
+  - first:
+      213: 7432270313633336197
+    second: lvl6_Walk_body_13
+  - first:
+      213: 6893303484811322023
+    second: lvl6_Walk_body_14
+  - first:
+      213: 7588185489232085284
+    second: lvl6_Walk_body_15
+  - first:
+      213: 3323542556728218000
+    second: lvl6_Walk_body_16
+  - first:
+      213: -8764785170918658895
+    second: lvl6_Walk_body_17
+  - first:
+      213: 106742309466269100
+    second: lvl6_Walk_body_18
+  - first:
+      213: 4506465938092322537
+    second: lvl6_Walk_body_19
+  - first:
+      213: -2386012541612041873
+    second: lvl6_Walk_body_20
+  - first:
+      213: 2173376323375522993
+    second: lvl6_Walk_body_21
+  - first:
+      213: 451906863503191533
+    second: lvl6_Walk_body_22
+  - first:
+      213: 1097972788491671149
+    second: lvl6_Walk_body_23
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: lvl6_Walk_body_0
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 211
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23752bdb098d32680800000000000000
+      internalID: -8780936732272863438
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_1
+      rect:
+        serializedVersion: 2
+        x: 85
+        y: 211
+        width: 21
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cff596e115ea3af0800000000000000
+      internalID: -415768150532554812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_2
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 211
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: afc4bcf5e09860100800000000000000
+      internalID: 73897138727898362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_3
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 211
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5abd1880c5eb9f30800000000000000
+      internalID: 4583509660859742810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_4
+      rect:
+        serializedVersion: 2
+        x: 278
+        y: 211
+        width: 21
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d740367e462250c90800000000000000
+      internalID: -7204314212135140227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_5
+      rect:
+        serializedVersion: 2
+        x: 342
+        y: 211
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b863fe86e13dbed0800000000000000
+      internalID: -2396704560380680009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_6
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 147
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22358b7ac59bde5f0800000000000000
+      internalID: -725720157334777054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_7
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 147
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51683c9604e014080800000000000000
+      internalID: -9205060493553465835
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_8
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 147
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69ef90edf11da5260800000000000000
+      internalID: 7087206898420285078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_9
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 147
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e421075c6be3aeac0800000000000000
+      internalID: -3825175978780388786
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_10
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 147
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44ad2ea37c2a32930800000000000000
+      internalID: 4117313460916902468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_11
+      rect:
+        serializedVersion: 2
+        x: 345
+        y: 147
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80279ff6e32ae57d0800000000000000
+      internalID: -2927724318693953016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_12
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 83
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7492bb3c1c9216240800000000000000
+      internalID: 4783150191433427271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_13
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 83
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58bcbcee87ab42760800000000000000
+      internalID: 7432270313633336197
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_14
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 83
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a224254ffee9af50800000000000000
+      internalID: 6893303484811322023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_15
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 83
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 421c37f9f76ae4960800000000000000
+      internalID: 7588185489232085284
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_16
+      rect:
+        serializedVersion: 2
+        x: 279
+        y: 83
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 091dda1b8589f1e20800000000000000
+      internalID: 3323542556728218000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_17
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 83
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1bc28ca235a3d5680800000000000000
+      internalID: -8764785170918658895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_18
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 19
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca5ed3e90993b7100800000000000000
+      internalID: 106742309466269100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_19
+      rect:
+        serializedVersion: 2
+        x: 85
+        y: 19
+        width: 21
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9eee368f4ee2a8e30800000000000000
+      internalID: 4506465938092322537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_20
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 19
+        width: 21
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f69569b2c3e23eed0800000000000000
+      internalID: -2386012541612041873
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_21
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 19
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b4ea064042692e10800000000000000
+      internalID: 2173376323375522993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_22
+      rect:
+        serializedVersion: 2
+        x: 278
+        y: 19
+        width: 21
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ded2ba6e5ee754600800000000000000
+      internalID: 451906863503191533
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lvl6_Walk_body_23
+      rect:
+        serializedVersion: 2
+        x: 342
+        y: 19
+        width: 21
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d66571f0f68cc3f00800000000000000
+      internalID: 1097972788491671149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      lvl6_Walk_body_0: -8780936732272863438
+      lvl6_Walk_body_1: -415768150532554812
+      lvl6_Walk_body_10: 4117313460916902468
+      lvl6_Walk_body_11: -2927724318693953016
+      lvl6_Walk_body_12: 4783150191433427271
+      lvl6_Walk_body_13: 7432270313633336197
+      lvl6_Walk_body_14: 6893303484811322023
+      lvl6_Walk_body_15: 7588185489232085284
+      lvl6_Walk_body_16: 3323542556728218000
+      lvl6_Walk_body_17: -8764785170918658895
+      lvl6_Walk_body_18: 106742309466269100
+      lvl6_Walk_body_19: 4506465938092322537
+      lvl6_Walk_body_2: 73897138727898362
+      lvl6_Walk_body_20: -2386012541612041873
+      lvl6_Walk_body_21: 2173376323375522993
+      lvl6_Walk_body_22: 451906863503191533
+      lvl6_Walk_body_23: 1097972788491671149
+      lvl6_Walk_body_3: 4583509660859742810
+      lvl6_Walk_body_4: -7204314212135140227
+      lvl6_Walk_body_5: -2396704560380680009
+      lvl6_Walk_body_6: -725720157334777054
+      lvl6_Walk_body_7: -9205060493553465835
+      lvl6_Walk_body_8: 7087206898420285078
+      lvl6_Walk_body_9: -3825175978780388786
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

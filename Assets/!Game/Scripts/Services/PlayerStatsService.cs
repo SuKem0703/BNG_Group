@@ -21,6 +21,9 @@ public class PlayerStatsService : MonoBehaviour
         public int dex;
         public int intStat;
         public int con;
+        public int knightBreakthroughTier;
+        public int mageBreakthroughTier;
+        public int archerBreakthroughTier;
     }
 
     public void SyncProfile(System.Action<bool> onComplete = null)
@@ -47,7 +50,10 @@ public class PlayerStatsService : MonoBehaviour
                     str = profile.Str,
                     dex = profile.Dex,
                     intStat = profile.IntStat,
-                    con = profile.Con
+                    con = profile.Con,
+                    knightBreakthroughTier = profile.KnightBreakthroughTier,
+                    mageBreakthroughTier = profile.MageBreakthroughTier,
+                    archerBreakthroughTier = profile.ArcherBreakthroughTier
                 };
 
                 if (PlayerStats.Instance != null)
@@ -124,7 +130,10 @@ public class PlayerStatsService : MonoBehaviour
                     str = profile.Str,
                     dex = profile.Dex,
                     intStat = profile.IntStat,
-                    con = profile.Con
+                    con = profile.Con,
+                    knightBreakthroughTier = profile.KnightBreakthroughTier,
+                    mageBreakthroughTier = profile.MageBreakthroughTier,
+                    archerBreakthroughTier = profile.ArcherBreakthroughTier
                 };
 
                 if (PlayerStats.Instance != null)
@@ -223,7 +232,10 @@ public class PlayerStatsService : MonoBehaviour
             str = profile.Str,
             dex = profile.Dex,
             intStat = profile.IntStat,
-            con = profile.Con
+            con = profile.Con,
+            knightBreakthroughTier = profile.KnightBreakthroughTier,
+            mageBreakthroughTier = profile.MageBreakthroughTier,
+            archerBreakthroughTier = profile.ArcherBreakthroughTier
         };
 
         if (PlayerStats.Instance != null)
@@ -285,7 +297,10 @@ public class PlayerStatsService : MonoBehaviour
                 str = profile.Str,
                 dex = profile.Dex,
                 intStat = profile.IntStat,
-                con = profile.Con
+                con = profile.Con,
+                knightBreakthroughTier = profile.KnightBreakthroughTier,
+                mageBreakthroughTier = profile.MageBreakthroughTier,
+                archerBreakthroughTier = profile.ArcherBreakthroughTier
             };
 
             if (PlayerStats.Instance != null)

@@ -34,6 +34,10 @@ public class EconomyService : MonoBehaviour
         bool isCoin = (type == "Coin" || type == "Coins");
         string columnName = isCoin ? "Coin" : "Gem";
 
+        bool success = false;
+        int newBalance = 0;
+
+        // Đưa vào Transaction để khóa dòng, tránh xung đột đồng thời
         db.RunInTransaction(() =>
         {
             int currentBalance = db.ExecuteScalar<int>($"SELECT {columnName} FROM Profiles WHERE ProfileId = ?", profileId);
@@ -41,19 +45,22 @@ public class EconomyService : MonoBehaviour
             if (currentBalance >= amount)
             {
                 db.Execute($"UPDATE Profiles SET {columnName} = {columnName} - ? WHERE ProfileId = ?", amount, profileId);
-
-                int newBalance = currentBalance - amount;
-
-                if (isCoin) PlayerWallet.Instance.SyncCoinFromServer(newBalance);
-                else PlayerWallet.Instance.SyncGemFromServer(newBalance);
-
-                onComplete?.Invoke(true);
-            }
-            else
-            {
-                onComplete?.Invoke(false);
+                newBalance = db.ExecuteScalar<int>($"SELECT {columnName} FROM Profiles WHERE ProfileId = ?", profileId);
+                success = true;
             }
         });
+
+        if (success)
+        {
+            if (isCoin && PlayerWallet.Instance != null) PlayerWallet.Instance.SyncCoinFromServer(newBalance);
+            else if (!isCoin && PlayerWallet.Instance != null) PlayerWallet.Instance.SyncGemFromServer(newBalance);
+
+            onComplete?.Invoke(true);
+        }
+        else
+        {
+            onComplete?.Invoke(false);
+        }
     }
 
     public void EarnCurrency(string type, int amount, string reason, Action<bool> onComplete)
@@ -70,12 +77,19 @@ public class EconomyService : MonoBehaviour
         bool isCoin = (type == "Coin" || type == "Coins");
         string columnName = isCoin ? "Coin" : "Gem";
 
-        db.Execute($"UPDATE Profiles SET {columnName} = {columnName} + ? WHERE ProfileId = ?", amount, profileId);
+        int newBalance = 0;
 
-        int newBalance = db.ExecuteScalar<int>($"SELECT {columnName} FROM Profiles WHERE ProfileId = ?", profileId);
+        // Bọc toàn bộ thao tác Đọc - Ghi trong Transaction an toàn
+        db.RunInTransaction(() =>
+        {
+            db.Execute($"UPDATE Profiles SET {columnName} = {columnName} + ? WHERE ProfileId = ?", amount, profileId);
+            newBalance = db.ExecuteScalar<int>($"SELECT {columnName} FROM Profiles WHERE ProfileId = ?", profileId);
+        });
 
-        if (isCoin) PlayerWallet.Instance.SyncCoinFromServer(newBalance);
-        else PlayerWallet.Instance.SyncGemFromServer(newBalance);
+        if (isCoin && PlayerWallet.Instance != null)
+            PlayerWallet.Instance.SyncCoinFromServer(newBalance);
+        else if (!isCoin && PlayerWallet.Instance != null)
+            PlayerWallet.Instance.SyncGemFromServer(newBalance);
 
         onComplete?.Invoke(true);
     }

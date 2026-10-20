@@ -2,14 +2,16 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D), typeof(Animator))]
+[RequireComponent(typeof(Rigidbody2D), typeof(Animator), typeof(BoxCollider2D))]
 public class ManaProjectile : NetworkBehaviour
 {
     [Header("Settings")]
     public float lifeTime = 3f;
-
-    [Tooltip("Thời gian tồn tại thêm để chạy hết Animation nổ (Frame 3 đến cuối)")]
+    public float defaultProjectileSpeed = 15f;
     public float hitAnimationDuration = 0.4f;
+
+    [Header("Collision Settings")]
+    public LayerMask targetLayer;
 
     private int damage;
     private bool isCritical;
@@ -17,6 +19,8 @@ public class ManaProjectile : NetworkBehaviour
 
     private Rigidbody2D rb;
     private Animator animator;
+    private BoxCollider2D boxCollider;
+    private SpriteRenderer spriteRenderer;
 
     private bool hasHit = false;
 
@@ -24,6 +28,13 @@ public class ManaProjectile : NetworkBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        boxCollider = GetComponent<BoxCollider2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (boxCollider != null)
+        {
+            boxCollider.isTrigger = true;
+        }
     }
 
     public void Initialize(Vector2 direction, float speed, int dmg, bool crit, ulong clientId)
@@ -33,30 +44,37 @@ public class ManaProjectile : NetworkBehaviour
         ownerClientId = clientId;
         hasHit = false;
 
+        ToggleVisualAndNetworkClientRpc(true);
+
         if (animator != null)
         {
             animator.SetFloat("LastInputX", direction.x);
             animator.SetFloat("LastInputY", direction.y);
         }
 
-        rb.linearVelocity = direction * speed;
+        float finalSpeed = speed > 0 ? speed : defaultProjectileSpeed;
+        rb.linearVelocity = direction * finalSpeed;
 
-        Invoke(nameof(DespawnProjectile), lifeTime);
+        //float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        //transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+
+        CancelInvoke(nameof(DeactivateProjectile));
+        Invoke(nameof(DeactivateProjectile), lifeTime);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (!IsServer || hasHit) return;
 
-        if (collision.CompareTag("Player") || collision.CompareTag("PlayerController")) return;
+        if ((targetLayer.value & (1 << collision.gameObject.layer)) == 0) return;
 
-        Enemy enemy = collision.GetComponent<Enemy>();
+        hasHit = true;
+        CancelInvoke(nameof(DeactivateProjectile));
+
+        Enemy enemy = collision.GetComponentInParent<Enemy>();
 
         if (enemy != null && !enemy.IsDead && enemy.netHealth.Value > 0)
         {
-            hasHit = true;
-            CancelInvoke(nameof(DespawnProjectile));
-
             Transform attackerTransform = null;
             if (NetworkManager.Singleton.ConnectedClients.TryGetValue(ownerClientId, out var client))
             {
@@ -65,11 +83,8 @@ public class ManaProjectile : NetworkBehaviour
 
             StartCoroutine(HandleHitSequence(enemy, attackerTransform));
         }
-        else if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle") || collision.gameObject.layer == LayerMask.NameToLayer("Ground"))
+        else
         {
-            hasHit = true;
-            CancelInvoke(nameof(DespawnProjectile));
-
             StartCoroutine(HandleHitSequence(null, null));
         }
     }
@@ -77,6 +92,7 @@ public class ManaProjectile : NetworkBehaviour
     private IEnumerator HandleHitSequence(Enemy enemy, Transform attackerTransform)
     {
         rb.linearVelocity = Vector2.zero;
+        if (boxCollider != null) boxCollider.enabled = false;
 
         PlayHitAnimationClientRpc();
 
@@ -87,10 +103,7 @@ public class ManaProjectile : NetworkBehaviour
 
         yield return new WaitForSeconds(hitAnimationDuration);
 
-        if (IsSpawned)
-        {
-            GetComponent<NetworkObject>().Despawn(true);
-        }
+        DeactivateProjectile();
     }
 
     [ClientRpc]
@@ -102,9 +115,32 @@ public class ManaProjectile : NetworkBehaviour
         }
     }
 
-    private void DespawnProjectile()
+    private void DeactivateProjectile()
     {
-        if (!IsSpawned || hasHit) return;
-        GetComponent<NetworkObject>().Despawn(true);
+        if (!IsServer || (hasHit && rb.linearVelocity == Vector2.zero && !gameObject.activeSelf)) return;
+        hasHit = true;
+        CancelInvoke(nameof(DeactivateProjectile));
+
+        rb.linearVelocity = Vector2.zero;
+        if (boxCollider != null) boxCollider.enabled = false;
+
+        ToggleVisualAndNetworkClientRpc(false);
+    }
+
+    [ClientRpc]
+    private void ToggleVisualAndNetworkClientRpc(bool isActive)
+    {
+        if (isActive)
+        {
+            gameObject.SetActive(true);
+            if (boxCollider != null) boxCollider.enabled = true;
+            if (spriteRenderer != null) spriteRenderer.enabled = true;
+        }
+        else
+        {
+            if (spriteRenderer != null) spriteRenderer.enabled = false;
+            if (boxCollider != null) boxCollider.enabled = false;
+            gameObject.SetActive(false);
+        }
     }
 }

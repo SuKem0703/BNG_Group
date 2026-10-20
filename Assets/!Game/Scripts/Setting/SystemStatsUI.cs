@@ -35,11 +35,11 @@ public class SystemStatsUI : MonoBehaviour
         CalculateAndDisplayStats();
     }
 
-    private void UpdateUIDText(string uid)
+    private void UpdateUIDText(string playerName)
     {
         if (uidText != null)
         {
-            uidText.text = $"UID: {uid}";
+            uidText.text = $"{playerName}";
         }
     }
 

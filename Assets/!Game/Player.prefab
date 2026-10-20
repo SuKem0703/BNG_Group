@@ -790,6 +790,7 @@ GameObject:
   - component: {fileID: 5406327389448248723}
   - component: {fileID: 8363902136144710776}
   - component: {fileID: 4866363441426797200}
+  - component: {fileID: 3336672409967240725}
   m_Layer: 3
   m_Name: Knight
   m_TagString: Player
@@ -903,7 +904,7 @@ MonoBehaviour:
   attackRange: 0.6
   enemyLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 32768
   targetSelector: {fileID: 8363902136144710776}
 --- !u!95 &5691647660223253319
 Animator:
@@ -1184,7 +1185,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   enemyLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 32768
   targetYOffset: 1.2
   floatAmplitude: 0.05
   floatSpeed: 5
@@ -1210,6 +1211,23 @@ MonoBehaviour:
   enableIdleBlink: 1
   minBlinkTime: 2
   maxBlinkTime: 4
+--- !u!114 &3336672409967240725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7031346279699142252}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7eea972cb421e24a903ca1ec47d4292, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClassVisualHandler
+  classType: 0
+  animator: {fileID: 5691647660223253319}
+  tierAnimators:
+  - {fileID: 9100000, guid: 7c22602ba06d1344fbeeb3aafa2a9945, type: 2}
+  - {fileID: 22100000, guid: 6782b5059d582474fab2ddff2a3e4d76, type: 2}
 --- !u!1 &7053962648512897917
 GameObject:
   m_ObjectHideFlags: 0
@@ -1299,7 +1317,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 672220998
+  GlobalObjectIdHash: 934382041
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1325,6 +1343,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  netKnightBreakthroughTier:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  netMageBreakthroughTier:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  netArcherBreakthroughTier:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
   netUsername:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
@@ -1678,6 +1711,7 @@ GameObject:
   - component: {fileID: 2756847178287482438}
   - component: {fileID: 7736977994014315738}
   - component: {fileID: 9103708712476269642}
+  - component: {fileID: 2301939962870497103}
   m_Layer: 3
   m_Name: Mage
   m_TagString: Player
@@ -1750,12 +1784,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 5783766721535396729, guid: 2ded6b49d35ee9044b469dd63c901da8, type: 3}
+  m_Sprite: {fileID: -4416463721808272930, guid: 19144f2cd0dfc5442af407b47bde04a5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2.6666667, y: 2.6666667}
+  m_Size: {x: 4, y: 4}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1777,10 +1811,11 @@ MonoBehaviour:
   projectilePrefab: {fileID: 8199765309185903699, guid: 90248e4fad8a3b449ba8c1a49fe33f10, type: 3}
   firePoint: {fileID: 1445368280158805956}
   projectileSpeed: 10
-  attackManaCost: 5
+  attackManaCost: 1
   mageDamageMultiplier: 1.5
   core: {fileID: 4105975544014696189}
   targetSelector: {fileID: 7736977994014315738}
+  poolSize: 10
 --- !u!95 &5592546058136567945
 Animator:
   serializedVersion: 7
@@ -1791,7 +1826,7 @@ Animator:
   m_GameObject: {fileID: 8304542053625197770}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 8071f3e185754f14fbd69a504329ea26, type: 2}
+  m_Controller: {fileID: 22100000, guid: b98dca06a7dad4140aaa095555d649ba, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1940,6 +1975,10 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 9eb5fabb-e453-411f-ae10-0be677f153c6
     m_ActionName: 'UI/MenuUI[/Keyboard/e]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 28edb68b-4049-46dd-be4a-1ea71a0548d7
+    m_ActionName: 'Player/Click Move[/Mouse/rightButton]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -2044,7 +2083,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   enemyLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 32768
   targetYOffset: 1.2
   floatAmplitude: 0.05
   floatSpeed: 5
@@ -2070,6 +2109,23 @@ MonoBehaviour:
   enableIdleBlink: 1
   minBlinkTime: 3
   maxBlinkTime: 5
+--- !u!114 &2301939962870497103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8304542053625197770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7eea972cb421e24a903ca1ec47d4292, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClassVisualHandler
+  classType: 1
+  animator: {fileID: 5592546058136567945}
+  tierAnimators:
+  - {fileID: 9100000, guid: 85fe141e688262a4582e3602490df5fa, type: 2}
+  - {fileID: 22100000, guid: b98dca06a7dad4140aaa095555d649ba, type: 2}
 --- !u!1 &9057428816844036757
 GameObject:
   m_ObjectHideFlags: 0

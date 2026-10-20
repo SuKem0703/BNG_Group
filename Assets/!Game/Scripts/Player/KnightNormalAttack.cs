@@ -249,7 +249,7 @@ public class KnightNormalAttack : NetworkBehaviour
                 continue;
             }
 
-            Enemy enemyChase = enemyCollider.GetComponent<Enemy>();
+            Enemy enemyChase = enemyCollider.GetComponentInParent<Enemy>();
 
             if (enemyChase != null && !enemyChase.IsDead && enemyChase.netHealth.Value > 0)
             {

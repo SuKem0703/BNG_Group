@@ -8,6 +8,8 @@ public class ProfileEntity
     public string PlayerName { get; set; }
     public long LastPlayed { get; set; }
 
+    public int LastUsedClassId { get; set; } = (int)PlayerClassType.Knight;
+
     public string CurrentSceneName { get; set; }
     public float PlayerPosX { get; set; }
     public float PlayerPosY { get; set; }
@@ -25,7 +27,6 @@ public class ProfileEntity
     public int CurrentMageMP { get; set; }
     public float CurrentStamina { get; set; }
 
-    // Player progression fields (for local SQLite storage)
     public int Level { get; set; }
     public int Exp { get; set; }
     public int PotentialPoints { get; set; }
@@ -33,6 +34,10 @@ public class ProfileEntity
     public int Dex { get; set; }
     public int IntStat { get; set; }
     public int Con { get; set; }
+
+    public int KnightBreakthroughTier { get; set; }
+    public int MageBreakthroughTier { get; set; }
+    public int ArcherBreakthroughTier { get; set; }
 
     public int Coin { get; set; }
     public int Gem { get; set; }
