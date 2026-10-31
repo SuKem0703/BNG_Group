@@ -31,6 +31,8 @@ public class GameSettingService : MonoBehaviour
     {
         RefreshReferences();
         ApplyAllSettings();
+
+        ApplyFPS();
     }
 
     public void RefreshReferences()
@@ -159,6 +161,8 @@ public class GameSettingService : MonoBehaviour
 
         SoundEffectManager.SetSFXVolume(currentSettings.sfxVolume);
         SoundEffectManager.SetBGMVolume(currentSettings.bgmVolume);
+
+        ApplyFPS();
     }
 
     private void LoadSettingsFromFile()

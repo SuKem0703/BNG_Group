@@ -95,6 +95,8 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
     [SerializeField] private EnemyHealth healthLogic;
     [SerializeField] private EnemyCombatAI aiLogic;
 
+    public Transform hpBarPoint;
+
     protected virtual void Awake()
     {
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();

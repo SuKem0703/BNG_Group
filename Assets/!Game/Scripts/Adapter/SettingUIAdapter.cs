@@ -16,7 +16,7 @@ public class SettingUIAdapter : MonoBehaviour
     [SerializeField] private Slider fpsSlider;
     [SerializeField] private TextMeshProUGUI fpsLabel;
 
-    private readonly int[] fpsValues = { 24, 30, 60, -1 };
+    private readonly int[] fpsValues = { 30, 60, 120 };
 
     private void Start()
     {

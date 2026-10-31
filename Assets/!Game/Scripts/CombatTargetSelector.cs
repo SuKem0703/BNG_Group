@@ -114,15 +114,20 @@ public class CombatTargetSelector : NetworkBehaviour
 
     private Vector3 GetEnemyCenterPosition(Enemy target)
     {
-        Collider2D[] colliders = target.GetComponentsInChildren<Collider2D>();
-        if (colliders.Length > 0)
-        {
-            Collider2D targetCol = colliders.FirstOrDefault(c => !c.isTrigger);
-            if (targetCol == null) targetCol = colliders[0];
+        Vector3 basePos = target.transform.position;
 
-            return new Vector3(targetCol.bounds.center.x, targetCol.bounds.max.y, target.transform.position.z);
+        if (target.hpBarPoint != null)
+        {
+            basePos = target.hpBarPoint.position;
         }
-        return target.transform.position;
+        else
+        {
+            basePos += new Vector3(0, 1.5f, 0);
+        }
+
+        float dynamicYOffset = targetYOffset + (Mathf.Sin(Time.time * floatSpeed) * floatAmplitude);
+
+        return new Vector3(basePos.x, basePos.y + dynamicYOffset, basePos.z);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)

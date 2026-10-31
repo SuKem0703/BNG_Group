@@ -346,7 +346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2455855599
+  GlobalObjectIdHash: 58605800
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -414,6 +414,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 3704750855595692870}
   healthLogic: {fileID: 7878015985245193972}
   aiLogic: {fileID: 9130439874268511456}
+  hpBarPoint: {fileID: 5985982328215177655}
 --- !u!95 &3051677935332708012
 Animator:
   serializedVersion: 7
