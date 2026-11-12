@@ -39,6 +39,20 @@ public class ManaProjectile : NetworkBehaviour
 
     public void Initialize(Vector2 direction, float speed, int dmg, bool crit, ulong clientId)
     {
+        // Enforce four-way projectile travel even if a caller supplies a diagonal vector.
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            direction = Vector2.down;
+        }
+        else if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+        {
+            direction = direction.x >= 0f ? Vector2.right : Vector2.left;
+        }
+        else
+        {
+            direction = direction.y >= 0f ? Vector2.up : Vector2.down;
+        }
+
         damage = dmg;
         isCritical = crit;
         ownerClientId = clientId;
@@ -46,8 +60,13 @@ public class ManaProjectile : NetworkBehaviour
 
         ToggleVisualAndNetworkClientRpc(true);
 
+        // THÊM ĐOẠN RESET ANIMATOR TẠI ĐÂY
         if (animator != null)
         {
+            animator.ResetTrigger("Hit"); // Xóa sạch trigger Hit cũ nếu còn lưu
+            animator.Rebind();            // Đưa Animator về trạng thái ban đầu của clip bay
+            animator.Update(0f);          // Cập nhật ngay lập tức frame đầu tiên
+
             animator.SetFloat("LastInputX", direction.x);
             animator.SetFloat("LastInputY", direction.y);
         }
@@ -55,11 +74,25 @@ public class ManaProjectile : NetworkBehaviour
         float finalSpeed = speed > 0 ? speed : defaultProjectileSpeed;
         rb.linearVelocity = direction * finalSpeed;
 
-        //float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        //transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
-
         CancelInvoke(nameof(DeactivateProjectile));
         Invoke(nameof(DeactivateProjectile), lifeTime);
+    }
+
+    // Keep pooled NetworkObjects active. Deactivating the GameObject after Spawn
+    // can prevent the object/RPC lifecycle from being observed by remote clients.
+    public void DeactivateForPool()
+    {
+        hasHit = true;
+        CancelInvoke(nameof(DeactivateProjectile));
+        rb.linearVelocity = Vector2.zero;
+
+        if (boxCollider != null) boxCollider.enabled = false;
+        if (spriteRenderer != null) spriteRenderer.enabled = false;
+    }
+
+    public void InitializeAndActivate(Vector2 direction, float speed, int dmg, bool crit, ulong clientId)
+    {
+        Initialize(direction, speed, dmg, crit, clientId);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -140,7 +173,6 @@ public class ManaProjectile : NetworkBehaviour
         {
             if (spriteRenderer != null) spriteRenderer.enabled = false;
             if (boxCollider != null) boxCollider.enabled = false;
-            gameObject.SetActive(false);
         }
     }
 }

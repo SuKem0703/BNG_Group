@@ -107,6 +107,11 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         ApplyTimeScalingStats();
     }
 
+    protected virtual void OnEnable()
+    {
+        ResetEnemyState();
+    }
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();

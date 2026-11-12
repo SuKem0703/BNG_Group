@@ -153,33 +153,42 @@ public class MageNormalAttack : NetworkBehaviour
         animator.SetFloat("LookY", dir.y);
         animator.SetFloat("LastInputX", dir.x);
         animator.SetFloat("LastInputY", dir.y);
-
-        animator.SetTrigger("Attack");
     }
 
     private void UpdateAimDirection()
     {
-        if (Camera.main == null || isAttacking) return;
+        if (isAttacking) return;
 
         Vector3 basePosition = transform.parent != null ? transform.parent.position : transform.position;
 
-        Vector2 fallbackDir = core.playerMovement != null && core.playerMovement.moveInput.magnitude > 0.01f
-            ? core.playerMovement.moveInput.normalized
-            : attackDirection;
+        Vector2 fallbackDir = core != null && core.playerMovement != null &&
+                              core.playerMovement.moveInput.sqrMagnitude > 0.0001f
+            ? core.playerMovement.moveInput
+            : (attackDirection.sqrMagnitude > 0.0001f ? attackDirection : Vector2.down);
 
-        if (targetSelector != null)
-        {
-            attackDirection = targetSelector.GetAimDirection(basePosition, fallbackDir);
-        }
-        else
-        {
-            attackDirection = fallbackDir;
-        }
+        Vector2 requestedDirection = targetSelector != null && Camera.main != null
+            ? targetSelector.GetAimDirection(basePosition, fallbackDir)
+            : fallbackDir;
+
+        attackDirection = SnapToFourDirections(requestedDirection);
+    }
+
+    // Mage's base attack and projectile are restricted to up/down/left/right.
+    // The dominant axis determines the facing direction; diagonal aiming is discarded.
+    private static Vector2 SnapToFourDirections(Vector2 direction)
+    {
+        if (direction.sqrMagnitude < 0.0001f)
+            return Vector2.down;
+
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+            return direction.x >= 0f ? Vector2.right : Vector2.left;
+
+        return direction.y >= 0f ? Vector2.up : Vector2.down;
     }
 
     public void FireProjectileEvent()
     {
-        if (!IsOwner) return;
+        if (!IsSpawned || !IsOwner) return;
 
         if (hasFiredThisAttack) return;
         hasFiredThisAttack = true;
@@ -209,12 +218,11 @@ public class MageNormalAttack : NetworkBehaviour
         if (proj != null)
         {
             proj.transform.position = firePoint.position;
-            proj.SetActive(true);
 
             ManaProjectile manaProj = proj.GetComponent<ManaProjectile>();
             if (manaProj != null)
             {
-                manaProj.Initialize(dir, projectileSpeed, damage, isCrit, rpcParams.Receive.SenderClientId);
+                manaProj.InitializeAndActivate(dir, projectileSpeed, damage, isCrit, rpcParams.Receive.SenderClientId);
             }
         }
     }

@@ -57,14 +57,17 @@ public class EnemyAnimator : MonoBehaviour
 
     public void EndAttack()
     {
-        animator.SetBool("IsAttacking", false);
-        
-        if (enemyCore != null)
+        if (animator != null)
         {
-            enemyCore.isAttacking = false;
-        }
+            animator.SetBool("IsAttacking", false);
 
-        enemyCore.EnemyEndAttack();
+            if (enemyCore != null)
+            {
+                enemyCore.isAttacking = false;
+            }
+
+            enemyCore.EnemyEndAttack();
+        }
     }
 
     public void TriggerHurt()
