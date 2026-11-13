@@ -98,6 +98,20 @@ public class ProfileRepository
         return db.Table<ProfileEntity>().OrderByDescending(p => p.LastPlayed).ToList();
     }
 
+    // Slot test là thứ tự bản ghi trong database, bắt đầu từ 1.
+    // Không dùng LastPlayed vì thứ tự đó thay đổi sau mỗi lần lưu.
+    public ProfileEntity GetProfileByTestSlot(int slot)
+    {
+        if (slot < 1) return null;
+
+        var rows = db.Query<ProfileEntity>(
+            "SELECT * FROM Profiles ORDER BY rowid ASC LIMIT 1 OFFSET ?",
+            slot - 1
+        );
+
+        return rows.Count > 0 ? rows[0] : null;
+    }
+
     public ProfileEntity GetProfile(string profileId)
     {
         return db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);

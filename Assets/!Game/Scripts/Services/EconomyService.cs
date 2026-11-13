@@ -7,104 +7,125 @@ public class EconomyService : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) Destroy(gameObject);
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
     }
 
-    private string CurrentProfileId
+    // Luôn dùng định danh được DatabaseManager chọn cho instance hiện tại.
+    private string CurrentProfileId => DatabaseManager.Instance != null
+        ? DatabaseManager.Instance.GetActiveProfileId() : "";
+
+    private static bool TryGetCurrencyColumn(string type, out string columnName, out bool isCoin)
     {
-        get
+        isCoin = type == "Coin" || type == "Coins";
+        if (isCoin)
         {
-            string id = PlayerPrefs.GetString("CurrentProfileId", "");
-            return string.IsNullOrEmpty(id) ? "OfflineUser" : id;
+            columnName = "Coin";
+            return true;
         }
+
+        if (type == "Gem" || type == "Gems")
+        {
+            columnName = "Gem";
+            return true;
+        }
+
+        columnName = null;
+        return false;
     }
 
     public void SpendCurrency(string type, int amount, string reason, Action<bool> onComplete)
     {
-        if (amount <= 0 || DatabaseManager.Instance == null)
+        string profileId = CurrentProfileId;
+        if (amount <= 0 || DatabaseManager.Instance == null || string.IsNullOrEmpty(profileId)
+            || !TryGetCurrencyColumn(type, out string columnName, out bool isCoin))
         {
             onComplete?.Invoke(false);
             return;
         }
 
         var db = DatabaseManager.Instance.GetConnection();
-        string profileId = CurrentProfileId;
-
-        bool isCoin = (type == "Coin" || type == "Coins");
-        string columnName = isCoin ? "Coin" : "Gem";
-
-        bool success = false;
         int newBalance = 0;
+        bool success = false;
 
-        // Đưa vào Transaction để khóa dòng, tránh xung đột đồng thời
         db.RunInTransaction(() =>
         {
-            int currentBalance = db.ExecuteScalar<int>($"SELECT {columnName} FROM Profiles WHERE ProfileId = ?", profileId);
+            // Chỉ trừ khi profile tồn tại và có đủ số dư.
+            int affected = db.Execute(
+                $"UPDATE Profiles SET {columnName} = {columnName} - ? " +
+                $"WHERE ProfileId = ? AND {columnName} >= ?",
+                amount, profileId, amount);
 
-            if (currentBalance >= amount)
+            if (affected == 1)
             {
-                db.Execute($"UPDATE Profiles SET {columnName} = {columnName} - ? WHERE ProfileId = ?", amount, profileId);
-                newBalance = db.ExecuteScalar<int>($"SELECT {columnName} FROM Profiles WHERE ProfileId = ?", profileId);
+                newBalance = db.ExecuteScalar<int>(
+                    $"SELECT {columnName} FROM Profiles WHERE ProfileId = ?", profileId);
                 success = true;
             }
         });
 
-        if (success)
+        if (success && PlayerWallet.Instance != null)
         {
-            if (isCoin && PlayerWallet.Instance != null) PlayerWallet.Instance.SyncCoinFromServer(newBalance);
-            else if (!isCoin && PlayerWallet.Instance != null) PlayerWallet.Instance.SyncGemFromServer(newBalance);
+            if (isCoin) PlayerWallet.Instance.SyncCoinFromServer(newBalance);
+            else PlayerWallet.Instance.SyncGemFromServer(newBalance);
+        }
 
-            onComplete?.Invoke(true);
-        }
-        else
-        {
-            onComplete?.Invoke(false);
-        }
+        onComplete?.Invoke(success);
     }
 
     public void EarnCurrency(string type, int amount, string reason, Action<bool> onComplete)
     {
-        if (amount <= 0 || DatabaseManager.Instance == null)
+        string profileId = CurrentProfileId;
+        if (amount <= 0 || DatabaseManager.Instance == null || string.IsNullOrEmpty(profileId)
+            || !TryGetCurrencyColumn(type, out string columnName, out bool isCoin))
         {
             onComplete?.Invoke(false);
             return;
         }
 
         var db = DatabaseManager.Instance.GetConnection();
-        string profileId = CurrentProfileId;
-
-        bool isCoin = (type == "Coin" || type == "Coins");
-        string columnName = isCoin ? "Coin" : "Gem";
-
         int newBalance = 0;
+        bool success = false;
 
-        // Bọc toàn bộ thao tác Đọc - Ghi trong Transaction an toàn
         db.RunInTransaction(() =>
         {
-            db.Execute($"UPDATE Profiles SET {columnName} = {columnName} + ? WHERE ProfileId = ?", amount, profileId);
-            newBalance = db.ExecuteScalar<int>($"SELECT {columnName} FROM Profiles WHERE ProfileId = ?", profileId);
+            int affected = db.Execute(
+                $"UPDATE Profiles SET {columnName} = {columnName} + ? WHERE ProfileId = ?",
+                amount, profileId);
+
+            if (affected == 1)
+            {
+                newBalance = db.ExecuteScalar<int>(
+                    $"SELECT {columnName} FROM Profiles WHERE ProfileId = ?", profileId);
+                success = true;
+            }
         });
 
-        if (isCoin && PlayerWallet.Instance != null)
-            PlayerWallet.Instance.SyncCoinFromServer(newBalance);
-        else if (!isCoin && PlayerWallet.Instance != null)
-            PlayerWallet.Instance.SyncGemFromServer(newBalance);
+        if (success && PlayerWallet.Instance != null)
+        {
+            if (isCoin) PlayerWallet.Instance.SyncCoinFromServer(newBalance);
+            else PlayerWallet.Instance.SyncGemFromServer(newBalance);
+        }
 
-        onComplete?.Invoke(true);
+        onComplete?.Invoke(success);
     }
 
     public void RefreshBalance()
     {
         if (DatabaseManager.Instance == null) return;
 
-        var db = DatabaseManager.Instance.GetConnection();
         string profileId = CurrentProfileId;
+        if (string.IsNullOrEmpty(profileId)) return;
 
-        var profile = db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);
+        var db = DatabaseManager.Instance.GetConnection();
+        var profile = db.Table<ProfileEntity>()
+            .FirstOrDefault(p => p.ProfileId == profileId);
+
         if (profile != null && PlayerWallet.Instance != null)
-        {
             PlayerWallet.Instance.SyncFromServer(profile.Coin, profile.Gem);
-        }
     }
 }

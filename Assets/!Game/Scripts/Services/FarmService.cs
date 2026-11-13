@@ -9,6 +9,7 @@ public class FarmService : MonoBehaviour
 
     private ProfileRepository profileRepo;
     private FarmData localFarmData;
+    private string loadedProfileId;
 
     private void Awake()
     {
@@ -21,24 +22,49 @@ public class FarmService : MonoBehaviour
         profileRepo = new ProfileRepository();
     }
 
-    private string CurrentProfileId => PlayerPrefs.GetString("CurrentProfileId", "");
+    private string CurrentProfileId => DatabaseManager.Instance != null
+        ? DatabaseManager.Instance.GetActiveProfileId() : "";
 
-    private void EnsureLocalDataLoaded()
+    private bool EnsureLocalDataLoaded()
     {
-        if (localFarmData != null) return;
-
-        ProfileEntity profile = profileRepo.GetProfile(CurrentProfileId);
-        if (profile != null && !string.IsNullOrEmpty(profile.FarmSaveDataJson))
+        string id = CurrentProfileId;
+        if (string.IsNullOrEmpty(id) || DatabaseManager.Instance == null)
         {
-            localFarmData = JsonUtility.FromJson<FarmData>(profile.FarmSaveDataJson);
+            Debug.LogError("[FarmService] Chưa có profile hợp lệ để đọc dữ liệu nông trại.");
+            return false;
         }
 
+        if (localFarmData != null && loadedProfileId == id)
+            return true;
+
+        // Chuyển nhân vật: không được giữ cache của nhân vật trước.
+        localFarmData = null;
+        pendingHarvests.Clear();
+        isHarvestTimerRunning = false;
+        loadedProfileId = null;
+
+        ProfileEntity profile = profileRepo.GetProfile(id);
+        if (profile == null)
+        {
+            Debug.LogError($"[FarmService] Không tìm thấy ProfileId: {id}");
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(profile.FarmSaveDataJson))
+            localFarmData = JsonUtility.FromJson<FarmData>(profile.FarmSaveDataJson);
+
         if (localFarmData == null) localFarmData = new FarmData();
+        loadedProfileId = id;
+        return true;
     }
 
     private void SaveLocalData()
     {
-        ProfileEntity profile = profileRepo.GetProfile(CurrentProfileId);
+        string id = CurrentProfileId;
+        if (localFarmData == null || string.IsNullOrEmpty(id) || loadedProfileId != id)
+            return;
+
+        ProfileEntity profile = profileRepo.GetProfile(id);
         if (profile != null)
         {
             profile.FarmSaveDataJson = JsonUtility.ToJson(localFarmData);
@@ -48,7 +74,11 @@ public class FarmService : MonoBehaviour
 
     public void SyncFarm(Action<List<ServerFarmPlot>> onComplete)
     {
-        EnsureLocalDataLoaded();
+        if (!EnsureLocalDataLoaded())
+        {
+            onComplete?.Invoke(new List<ServerFarmPlot>());
+            return;
+        }
 
         List<ServerFarmPlot> plots = new List<ServerFarmPlot>();
         foreach (var plotData in localFarmData.plotDataList)
@@ -70,7 +100,7 @@ public class FarmService : MonoBehaviour
 
     public void RequestPlant(string plotId, int seedItemId)
     {
-        EnsureLocalDataLoaded();
+        if (!EnsureLocalDataLoaded()) return;
 
         FarmPlotSaveData existingPlot = localFarmData.plotDataList.FirstOrDefault(p => p.plotID == plotId);
 
@@ -95,7 +125,7 @@ public class FarmService : MonoBehaviour
 
     public void RequestDestroy(string plotId)
     {
-        EnsureLocalDataLoaded();
+        if (!EnsureLocalDataLoaded()) return;
 
         FarmPlotSaveData existingPlot = localFarmData.plotDataList.FirstOrDefault(p => p.plotID == plotId);
         if (existingPlot != null)
@@ -125,7 +155,7 @@ public class FarmService : MonoBehaviour
 
     public void RequestHarvest(string plotId)
     {
-        EnsureLocalDataLoaded();
+        if (!EnsureLocalDataLoaded()) return;
 
         FarmPlotSaveData existingPlot = localFarmData.plotDataList.FirstOrDefault(p => p.plotID == plotId);
         if (existingPlot != null && existingPlot.hasCrop)
@@ -150,7 +180,7 @@ public class FarmService : MonoBehaviour
         isHarvestTimerRunning = false;
         if (pendingHarvests.Count == 0) return;
 
-        EnsureLocalDataLoaded();
+        if (!EnsureLocalDataLoaded()) return;
 
         List<string> batch = new List<string>(pendingHarvests);
         pendingHarvests.Clear();

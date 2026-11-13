@@ -49,7 +49,12 @@ public class MageNormalAttack : NetworkBehaviour
             NetworkObject netObj = proj.GetComponent<NetworkObject>();
             netObj.Spawn();
 
-            proj.SetActive(false);
+            // NetworkObject đã Spawn phải tiếp tục active cho RPC hoạt động.
+            // Chỉ ẩn sprite + collider khi ở trong pool.
+            ManaProjectile manaProj = proj.GetComponent<ManaProjectile>();
+            if (manaProj != null)
+                manaProj.DeactivateForPool();
+
             projectilePool.Enqueue(proj);
         }
     }
@@ -229,12 +234,19 @@ public class MageNormalAttack : NetworkBehaviour
 
     private GameObject GetProjectileFromPool()
     {
-        if (projectilePool.Count == 0) return null;
+        // Không lấy lại projectile đang bay hoặc đang phát animation nổ.
+        int count = projectilePool.Count;
+        for (int i = 0; i < count; i++)
+        {
+            GameObject proj = projectilePool.Dequeue();
+            projectilePool.Enqueue(proj);
 
-        GameObject proj = projectilePool.Dequeue();
-        projectilePool.Enqueue(proj);
+            ManaProjectile projectile = proj.GetComponent<ManaProjectile>();
+            if (projectile != null && projectile.IsAvailableForPool)
+                return proj;
+        }
 
-        return proj;
+        return null; // Pool đầy: không ghi đè lên đạn đang hoạt động.
     }
 
     public void EndAttack()

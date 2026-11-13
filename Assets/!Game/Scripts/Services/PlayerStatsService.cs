@@ -11,6 +11,9 @@ public class PlayerStatsService : MonoBehaviour
         Instance = this;
     }
 
+    private string CurrentProfileId => DatabaseManager.Instance != null
+        ? DatabaseManager.Instance.GetActiveProfileId() : "";
+
     [System.Serializable]
     public class ServerUserStat
     {
@@ -35,8 +38,13 @@ public class PlayerStatsService : MonoBehaviour
     {
         if (DatabaseManager.Instance != null)
         {
-            string profileId = PlayerPrefs.GetString("CurrentProfileId", "");
-            if (string.IsNullOrEmpty(profileId)) profileId = "OfflineUser";
+            string profileId = CurrentProfileId;
+            if (string.IsNullOrEmpty(profileId))
+            {
+                Debug.LogError("[PlayerStatsService] Không có ProfileId hợp lệ.");
+                onComplete?.Invoke(false);
+                yield break;
+            }
 
             var db = DatabaseManager.Instance.GetConnection();
             var profile = db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);
@@ -83,8 +91,12 @@ public class PlayerStatsService : MonoBehaviour
     {
         if (DatabaseManager.Instance != null)
         {
-            string profileId = PlayerPrefs.GetString("CurrentProfileId", "");
-            if (string.IsNullOrEmpty(profileId)) profileId = "OfflineUser";
+            string profileId = CurrentProfileId;
+            if (string.IsNullOrEmpty(profileId))
+            {
+                Debug.LogError("[PlayerStatsService] Không có ProfileId để cộng EXP.");
+                yield break;
+            }
 
             var db = DatabaseManager.Instance.GetConnection();
             var profile = db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);
@@ -173,8 +185,12 @@ public class PlayerStatsService : MonoBehaviour
             yield break;
         }
 
-        string profileId = PlayerPrefs.GetString("CurrentProfileId", "");
-        if (string.IsNullOrEmpty(profileId)) profileId = "OfflineUser";
+        string profileId = CurrentProfileId;
+        if (string.IsNullOrEmpty(profileId))
+        {
+            onComplete?.Invoke(false);
+            yield break;
+        }
 
         var db = DatabaseManager.Instance.GetConnection();
         var profile = db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);
@@ -258,8 +274,12 @@ public class PlayerStatsService : MonoBehaviour
             yield break;
         }
 
-        string profileId = PlayerPrefs.GetString("CurrentProfileId", "");
-        if (string.IsNullOrEmpty(profileId)) profileId = "OfflineUser";
+        string profileId = CurrentProfileId;
+        if (string.IsNullOrEmpty(profileId))
+        {
+            onComplete?.Invoke(false);
+            yield break;
+        }
 
         var db = DatabaseManager.Instance.GetConnection();
         var profile = db.Table<ProfileEntity>().FirstOrDefault(p => p.ProfileId == profileId);

@@ -53,6 +53,17 @@ public class SaveController : MonoBehaviour
 
     private SaveData tempSaveData;
 
+    // Mỗi instance sử dụng ProfileId đã được DatabaseManager phân giải.
+    // Không đọc trực tiếp PlayerPrefs trong luồng load/save để tránh bị đổi
+    // profile giữa chừng khi đang chạy nhiều Virtual Players.
+    private string GetCurrentProfileId()
+    {
+        if (DatabaseManager.Instance != null)
+            return DatabaseManager.Instance.GetActiveProfileId();
+
+        return PlayerPrefs.GetString("CurrentProfileId", "");
+    }
+
     void Awake()
     {
         Instance = this;
@@ -95,7 +106,7 @@ public class SaveController : MonoBehaviour
     {
         if (IsDataLoaded)
         {
-            string currentProfileId = PlayerPrefs.GetString("CurrentProfileId", "");
+            string currentProfileId = GetCurrentProfileId();
             ProfileRepository repo = new ProfileRepository();
             ProfileEntity profile = repo.GetProfile(currentProfileId);
 
@@ -106,6 +117,18 @@ public class SaveController : MonoBehaviour
 
     IEnumerator LoadAndFinalize()
     {
+        // Đợi database khởi tạo và chọn profile trước khi nạp gameplay.
+        while (DatabaseManager.Instance == null)
+            yield return null;
+
+        if (string.IsNullOrEmpty(GetCurrentProfileId()))
+        {
+            Debug.LogError("[SaveController] Không có ProfileId hợp lệ. " +
+                           "Kiểm tra [DevProfile] và dữ liệu Profiles của instance này.");
+            HideMainLoadingScreen();
+            yield break; // Không được nạp nhầm nhân vật ở slot khác.
+        }
+
         while (NetworkManager.Singleton == null || (!NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsConnectedClient))
         {
             yield return null;
@@ -240,7 +263,7 @@ public class SaveController : MonoBehaviour
             yield break;
         }
 
-        string currentProfileId = PlayerPrefs.GetString("CurrentProfileId", "");
+        string currentProfileId = GetCurrentProfileId();
         ProfileRepository repo = new ProfileRepository();
         ProfileEntity profile = repo.GetProfile(currentProfileId);
 
@@ -436,7 +459,7 @@ public class SaveController : MonoBehaviour
     public IEnumerator LoadRoutine(System.Action<bool> onComplete)
     {
         bool sceneLoadWasTriggered = false;
-        string currentProfileId = PlayerPrefs.GetString("CurrentProfileId", "");
+        string currentProfileId = GetCurrentProfileId();
 
         ProfileRepository repo = new ProfileRepository();
         ProfileEntity offlineProfile = repo.GetProfile(currentProfileId);

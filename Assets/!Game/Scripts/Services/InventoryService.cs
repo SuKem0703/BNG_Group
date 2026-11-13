@@ -21,8 +21,9 @@ public class InventoryService : MonoBehaviour
     {
         get
         {
-            string id = PlayerPrefs.GetString("CurrentProfileId", "");
-            return string.IsNullOrEmpty(id) ? "OfflineUser" : id;
+            return DatabaseManager.Instance != null
+                ? DatabaseManager.Instance.GetActiveProfileId()
+                : "";
         }
     }
 
@@ -67,6 +68,12 @@ public class InventoryService : MonoBehaviour
     {
         var db = DatabaseManager.Instance.GetConnection();
         string profile = CurrentProfileId;
+        if (string.IsNullOrEmpty(profile))
+        {
+            Debug.LogError("[InventoryService] Không có ProfileId để đồng bộ inventory.");
+            onComplete?.Invoke(new List<ServerUserItem>());
+            return;
+        }
 
         var items = db.Table<InventoryItemEntity>()
             .Where(x => x.ProfileId == profile)
@@ -106,7 +113,8 @@ public class InventoryService : MonoBehaviour
         var db = DatabaseManager.Instance.GetConnection();
         var item = db.Find<InventoryItemEntity>(itemDbId);
 
-        if (item != null && item.ProfileId == CurrentProfileId)
+        if (item != null && !string.IsNullOrEmpty(CurrentProfileId)
+            && item.ProfileId == CurrentProfileId)
         {
             item.IsEquipped = isEquipped;
             db.Update(item);
@@ -118,7 +126,8 @@ public class InventoryService : MonoBehaviour
         var db = DatabaseManager.Instance.GetConnection();
         var source = db.Find<InventoryItemEntity>(itemDbId);
 
-        if (source != null)
+        if (source != null && !string.IsNullOrEmpty(CurrentProfileId)
+            && source.ProfileId == CurrentProfileId)
         {
             // Nếu item trong DB có ItemId không hợp lệ thì xóa khỏi DB
             if (!IsValidItemId(source.ItemId))
@@ -140,7 +149,8 @@ public class InventoryService : MonoBehaviour
         var db = DatabaseManager.Instance.GetConnection();
         var item = db.Find<InventoryItemEntity>(dbId);
 
-        if (item != null && item.ProfileId == CurrentProfileId)
+        if (item != null && !string.IsNullOrEmpty(CurrentProfileId)
+            && item.ProfileId == CurrentProfileId)
         {
             if (!IsValidItemId(item.ItemId) || newQuantity <= 0)
             {
@@ -167,6 +177,11 @@ public class InventoryService : MonoBehaviour
 
         var db = DatabaseManager.Instance.GetConnection();
         string profile = CurrentProfileId;
+        if (string.IsNullOrEmpty(profile))
+        {
+            Debug.LogError("[InventoryService] Từ chối thêm vật phẩm: chưa chọn profile.");
+            return;
+        }
 
         if (isStackable)
         {
@@ -205,7 +220,8 @@ public class InventoryService : MonoBehaviour
         var db = DatabaseManager.Instance.GetConnection();
         var item = db.Find<InventoryItemEntity>(itemDbId);
 
-        if (item != null && item.ProfileId == CurrentProfileId)
+        if (item != null && !string.IsNullOrEmpty(CurrentProfileId)
+            && item.ProfileId == CurrentProfileId)
         {
             db.Delete(item);
             onComplete?.Invoke(true);
@@ -215,6 +231,12 @@ public class InventoryService : MonoBehaviour
 
     public void RequestBuyItem(int itemId, int quantity, System.Action<bool, List<ServerUserItem>> onComplete)
     {
+        if (string.IsNullOrEmpty(CurrentProfileId))
+        {
+            onComplete?.Invoke(false, null);
+            return;
+        }
+
         if (!IsValidItemId(itemId))
         {
             Debug.LogWarning($"[InventoryService] Hủy mua vật phẩm vì ItemId không hợp lệ (ItemId: {itemId}).");
@@ -322,6 +344,7 @@ public class InventoryService : MonoBehaviour
     {
         var db = DatabaseManager.Instance.GetConnection();
         string profile = CurrentProfileId;
+        if (string.IsNullOrEmpty(profile)) return false;
         bool success = false;
 
         db.RunInTransaction(() =>

@@ -1,6 +1,7 @@
 using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(Animator), typeof(BoxCollider2D))]
 public class ManaProjectile : NetworkBehaviour
@@ -13,6 +14,9 @@ public class ManaProjectile : NetworkBehaviour
     [Header("Collision Settings")]
     public LayerMask targetLayer;
 
+    // Layer Decor dùng cho Tilemap blocker, không cần thêm vào targetLayer.
+    private int decorLayer = -1;
+
     private int damage;
     private bool isCritical;
     private ulong ownerClientId;
@@ -23,6 +27,10 @@ public class ManaProjectile : NetworkBehaviour
     private SpriteRenderer spriteRenderer;
 
     private bool hasHit = false;
+    private bool inUse = false;
+
+    // Pool chỉ được lấy lại projectile đã kết thúc vòng đời.
+    public bool IsAvailableForPool => !inUse;
 
     private void Awake()
     {
@@ -30,6 +38,10 @@ public class ManaProjectile : NetworkBehaviour
         animator = GetComponent<Animator>();
         boxCollider = GetComponent<BoxCollider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        decorLayer = LayerMask.NameToLayer("Decor");
+
+        if (decorLayer < 0)
+            Debug.LogWarning("[ManaProjectile] Chưa có Layer Decor. Đạn vẫn hoạt động với Enemy.", this);
 
         if (boxCollider != null)
         {
@@ -57,6 +69,7 @@ public class ManaProjectile : NetworkBehaviour
         isCritical = crit;
         ownerClientId = clientId;
         hasHit = false;
+        inUse = true;
 
         ToggleVisualAndNetworkClientRpc(true);
 
@@ -82,12 +95,15 @@ public class ManaProjectile : NetworkBehaviour
     // can prevent the object/RPC lifecycle from being observed by remote clients.
     public void DeactivateForPool()
     {
+        if (!IsServer) return;
+
+        inUse = false;
         hasHit = true;
         CancelInvoke(nameof(DeactivateProjectile));
         rb.linearVelocity = Vector2.zero;
 
         if (boxCollider != null) boxCollider.enabled = false;
-        if (spriteRenderer != null) spriteRenderer.enabled = false;
+        ToggleVisualAndNetworkClientRpc(false);
     }
 
     public void InitializeAndActivate(Vector2 direction, float speed, int dmg, bool crit, ulong clientId)
@@ -97,29 +113,56 @@ public class ManaProjectile : NetworkBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!IsServer || hasHit) return;
+        if (!IsServer || !inUse || hasHit || collision == null) return;
 
-        if ((targetLayer.value & (1 << collision.gameObject.layer)) == 0) return;
+        // Decor: chỉ Tilemap blocker (không phải Trigger) mới làm đạn nổ.
+        // Decor Trigger luôn cho phép đạn đi xuyên, kể cả khi có trong targetLayer.
+        if (collision.gameObject.layer == decorLayer)
+        {
+            if (collision.isTrigger || !IsDecorTilemapCollider(collision))
+                return;
 
-        hasHit = true;
-        CancelInvoke(nameof(DeactivateProjectile));
+            BeginImpact(null, null); // Nổ tại tường, KHÔNG gây damage cho Enemy.
+            return;
+        }
+
+        // Giữ nguyên logic va chạm các layer mục tiêu đã cấu hình.
+        if ((targetLayer.value & (1 << collision.gameObject.layer)) == 0)
+            return;
 
         Enemy enemy = collision.GetComponentInParent<Enemy>();
+        Transform attackerTransform = null;
 
         if (enemy != null && !enemy.IsDead && enemy.netHealth.Value > 0)
         {
-            Transform attackerTransform = null;
-            if (NetworkManager.Singleton.ConnectedClients.TryGetValue(ownerClientId, out var client))
+            if (NetworkManager.Singleton != null &&
+                NetworkManager.Singleton.ConnectedClients.TryGetValue(ownerClientId, out var client) &&
+                client.PlayerObject != null)
             {
                 attackerTransform = client.PlayerObject.transform;
             }
 
-            StartCoroutine(HandleHitSequence(enemy, attackerTransform));
+            BeginImpact(enemy, attackerTransform);
         }
         else
         {
-            StartCoroutine(HandleHitSequence(null, null));
+            BeginImpact(null, null);
         }
+    }
+
+    private static bool IsDecorTilemapCollider(Collider2D collider)
+    {
+        // Khi Tilemap dùng Composite, collider vật lý nhận được sẽ là CompositeCollider2D.
+        return collider is TilemapCollider2D ||
+               (collider is CompositeCollider2D &&
+                collider.GetComponent<TilemapCollider2D>() != null);
+    }
+
+    private void BeginImpact(Enemy enemy, Transform attackerTransform)
+    {
+        hasHit = true;
+        CancelInvoke(nameof(DeactivateProjectile));
+        StartCoroutine(HandleHitSequence(enemy, attackerTransform));
     }
 
     private IEnumerator HandleHitSequence(Enemy enemy, Transform attackerTransform)
@@ -150,7 +193,8 @@ public class ManaProjectile : NetworkBehaviour
 
     private void DeactivateProjectile()
     {
-        if (!IsServer || (hasHit && rb.linearVelocity == Vector2.zero && !gameObject.activeSelf)) return;
+        if (!IsServer || !inUse) return;
+        inUse = false;
         hasHit = true;
         CancelInvoke(nameof(DeactivateProjectile));
 
