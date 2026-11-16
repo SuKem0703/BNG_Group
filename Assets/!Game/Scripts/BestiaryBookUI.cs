@@ -16,8 +16,6 @@ public class BestiaryBookUI : MonoBehaviour
     [Header("Bestiary Grid")]
     public Transform gridContent;
     public GameObject bestiarySlotPrefab;
-
-    private bool _hasPopulatedGrid = false;
     private bool _isBookOpen = false;
 
     private void Start()
@@ -77,42 +75,55 @@ public class BestiaryBookUI : MonoBehaviour
         }
     }
 
+
     private void PopulateBestiaryGrid()
     {
-        if (_hasPopulatedGrid) return;
-
-        if (EnemyDictionary.Instance == null || SaveController.Instance == null)
+        if (EnemyDictionary.Instance == null ||
+            SaveController.Instance == null)
         {
-            Debug.LogWarning("Chưa load đủ hệ thống từ điển hoặc save.");
+            Debug.LogWarning(
+                "[Bestiary] Chưa load đủ Dictionary hoặc SaveController."
+            );
             return;
         }
 
+        // Xóa slot cũ mỗi lần mở sách.
         foreach (Transform child in gridContent)
         {
             Destroy(child.gameObject);
         }
 
-        var bestiaryCache = SaveController.Instance.GetBestiaryCache();
+        var bestiaryCache =
+            SaveController.Instance.GetBestiaryCache();
 
-        foreach (EnemyData enemyData in EnemyDictionary.Instance.enemyDatabase)
+        foreach (EnemyData enemyData in
+                 EnemyDictionary.Instance.enemyDatabase)
         {
-            if (enemyData == null) continue;
+            if (enemyData == null)
+                continue;
 
             int status = 0;
-            if (bestiaryCache.TryGetValue(enemyData.enemyName, out var entry))
+
+            if (bestiaryCache.TryGetValue(
+                enemyData.enemyName, out var entry))
             {
                 status = entry.status;
             }
 
-            GameObject slotGO = Instantiate(bestiarySlotPrefab, gridContent);
-            BestiarySlot slotUI = slotGO.GetComponent<BestiarySlot>();
+            GameObject slotGO =
+                Instantiate(bestiarySlotPrefab, gridContent);
+
+            BestiarySlot slotUI =
+                slotGO.GetComponent<BestiarySlot>();
 
             if (slotUI != null)
             {
                 slotUI.Setup(enemyData, status);
             }
-        }
 
-        _hasPopulatedGrid = true;
+            Debug.Log(
+                $"[Bestiary] {enemyData.enemyName}: Status={status}"
+            );
+        }
     }
 }

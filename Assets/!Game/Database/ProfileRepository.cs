@@ -20,13 +20,13 @@ public class ProfileRepository
             LastUsedClassId = (int)PlayerClassType.Knight,
 
             CurrentSceneName = "01_Home_Indoor",
-            PlayerPosX = -8.0f,
-            PlayerPosY = 7.0f,
+            PlayerPosX = -50.0f,
+            PlayerPosY = 19.0f,
             PlayerPosZ = 0.0f,
 
             CheckpointSceneName = "01_Home_Indoor",
-            CheckpointPosX = -8.0f,
-            CheckpointPosY = 7.0f,
+            CheckpointPosX = -50.0f,
+            CheckpointPosY = 19.0f,
             CheckpointPosZ = 0.0f,
 
             BackPackSlotCount = 35,
@@ -56,7 +56,9 @@ public class ProfileRepository
             HandInQuestIDsJson = "[]",
             CollectedBySceneJson = "[]",
 
-            FarmSaveDataJson = "{\"plotDataList\":[]}"
+            FarmSaveDataJson = "{\"plotDataList\":[]}",
+
+            BestiarySaveDataJson = "[]",
         };
 
         db.Insert(newProfile);

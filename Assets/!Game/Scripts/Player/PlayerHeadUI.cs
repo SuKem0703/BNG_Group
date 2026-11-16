@@ -57,8 +57,13 @@ public class PlayerHeadUI : NetworkBehaviour
             transform.rotation = Quaternion.LookRotation(transform.position - mainCamera.position);
         }
 
-        string pName = core.playerStats.netUsername.Value.ToString();
-        if (nameText.text != pName)
+        string pName =
+            core.playerStats.netUsername.Value.ToString();
+
+        if (string.IsNullOrWhiteSpace(pName))
+            pName = "Đang tải...";
+
+        if (nameText != null && nameText.text != pName)
         {
             nameText.text = pName;
         }

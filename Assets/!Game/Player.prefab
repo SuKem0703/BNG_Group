@@ -605,6 +605,37 @@ MonoBehaviour:
   targetYOffset: 0.5
   floatAmplitude: 0.02
   floatSpeed: 5
+--- !u!1 &5448398588651206061
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 553821683748399288}
+  m_Layer: 3
+  m_Name: VFX
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &553821683748399288
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5448398588651206061}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8599477992676078165}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5610671550204279734
 GameObject:
   m_ObjectHideFlags: 0
@@ -887,25 +918,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 5691647660223253319}
+  core: {fileID: 4105975544014696189}
+  targetSelector: {fileID: 8363902136144710776}
   combo: 1
   comboNumber: 0
   comboTiming: 0
   comboTempo: 0
+  minComboInterval: 0.5
   runAttackStaminaCost: 1
   normalAttackStaminaCost: 0
   runAttackMultiplier: 1.2
   causesKnockback: 1
   attackAngle: 180
-  hitShakeIntensity: 1.5
-  hitShakeFrequency: 2
-  hitShakeDuration: 0.15
-  core: {fileID: 4105975544014696189}
   attackPoint: {fileID: 7995109842480313794}
   attackRange: 0.6
   enemyLayer:
     serializedVersion: 2
     m_Bits: 32768
-  targetSelector: {fileID: 8363902136144710776}
+  hitShakeIntensity: 1.5
+  hitShakeFrequency: 2
+  hitShakeDuration: 0.15
+  debugAttackEvents: 0
+  attackStateEnterTimeout: 1
+  maxAttackDuration: 3
 --- !u!95 &5691647660223253319
 Animator:
   serializedVersion: 7
@@ -1228,6 +1263,7 @@ MonoBehaviour:
   tierAnimators:
   - {fileID: 9100000, guid: 7c22602ba06d1344fbeeb3aafa2a9945, type: 2}
   - {fileID: 22100000, guid: 6782b5059d582474fab2ddff2a3e4d76, type: 2}
+  showDebugLogs: 0
 --- !u!1 &7053962648512897917
 GameObject:
   m_ObjectHideFlags: 0
@@ -1276,6 +1312,7 @@ Transform:
   - {fileID: 8621252873141320270}
   - {fileID: 2980521060411777646}
   - {fileID: 278024749236272869}
+  - {fileID: 553821683748399288}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!50 &6571584841508672072
@@ -2126,6 +2163,7 @@ MonoBehaviour:
   tierAnimators:
   - {fileID: 9100000, guid: 85fe141e688262a4582e3602490df5fa, type: 2}
   - {fileID: 22100000, guid: b98dca06a7dad4140aaa095555d649ba, type: 2}
+  showDebugLogs: 0
 --- !u!1 &9057428816844036757
 GameObject:
   m_ObjectHideFlags: 0

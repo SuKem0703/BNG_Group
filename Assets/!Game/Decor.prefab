@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 5278908075888947376}
   - component: {fileID: 7773769029908140882}
   - component: {fileID: 221880995306811380}
-  - component: {fileID: 1685494383012484235}
   m_Layer: 11
   m_Name: Behind
   m_TagString: Untagged
@@ -271,20 +270,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &1685494383012484235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 379406136323603177}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30becdbca389c0c458b2d4b11f071a74, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FadeTrigger
-  target: {fileID: 1537773851201598664}
-  targetLayerName: Player
 --- !u!1 &3995716979439291727
 GameObject:
   m_ObjectHideFlags: 0

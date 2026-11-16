@@ -53,9 +53,6 @@ public class SaveController : MonoBehaviour
 
     private SaveData tempSaveData;
 
-    // Mỗi instance sử dụng ProfileId đã được DatabaseManager phân giải.
-    // Không đọc trực tiếp PlayerPrefs trong luồng load/save để tránh bị đổi
-    // profile giữa chừng khi đang chạy nhiều Virtual Players.
     private string GetCurrentProfileId()
     {
         if (DatabaseManager.Instance != null)
@@ -102,22 +99,43 @@ public class SaveController : MonoBehaviour
         playerCore = null;
     }
 
+
     private void UpdateUIDText()
     {
-        if (IsDataLoaded)
-        {
-            string currentProfileId = GetCurrentProfileId();
-            ProfileRepository repo = new ProfileRepository();
-            ProfileEntity profile = repo.GetProfile(currentProfileId);
+        if (!IsDataLoaded)
+            return;
 
-            string displayName = profile != null ? profile.PlayerName : PlayerPrefs.GetString("Username", "Player");
-            OnUIDReady?.Invoke(displayName);
+        string currentProfileId = GetCurrentProfileId();
+
+        ProfileRepository repo = new ProfileRepository();
+        ProfileEntity profile = repo.GetProfile(currentProfileId);
+
+        string displayName = profile != null
+            ? profile.PlayerName
+            : PlayerPrefs.GetString("Username", "Player");
+
+        OnUIDReady?.Invoke(displayName);
+
+        if (profile == null)
+        {
+            Debug.LogWarning(
+                "[SaveController] Không tìm thấy profile để đồng bộ tên."
+            );
+            return;
+        }
+
+        if (playerCore != null &&
+            playerCore.playerStats != null &&
+            playerCore.playerStats.IsOwner)
+        {
+            playerCore.playerStats.PublishNetworkUsername(
+                profile.PlayerName
+            );
         }
     }
 
     IEnumerator LoadAndFinalize()
     {
-        // Đợi database khởi tạo và chọn profile trước khi nạp gameplay.
         while (DatabaseManager.Instance == null)
             yield return null;
 
@@ -126,7 +144,7 @@ public class SaveController : MonoBehaviour
             Debug.LogError("[SaveController] Không có ProfileId hợp lệ. " +
                            "Kiểm tra [DevProfile] và dữ liệu Profiles của instance này.");
             HideMainLoadingScreen();
-            yield break; // Không được nạp nhầm nhân vật ở slot khác.
+            yield break;
         }
 
         while (NetworkManager.Singleton == null || (!NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsConnectedClient))
@@ -319,7 +337,8 @@ public class SaveController : MonoBehaviour
 
         profile.CollectedBySceneJson = JsonHelper.ToJson(collectedByScene);
 
-        // Refresh coin/gem from DB before writing profile to avoid clobbering concurrent updates
+        profile.BestiarySaveDataJson = JsonHelper.ToJson(_bestiaryCache.Values.ToList());
+
         try
         {
             var latestProfile = repo.GetProfile(currentProfileId);
@@ -495,7 +514,9 @@ public class SaveController : MonoBehaviour
                 chestSaveData = JsonHelper.FromJson<ChestSaveData>(offlineProfile.ChestSaveDataJson),
                 questProgressData = JsonHelper.FromJson<QuestProgress>(offlineProfile.QuestProgressDataJson),
                 handInQuestIDs = JsonHelper.FromJson<string>(offlineProfile.HandInQuestIDsJson),
-                collectedByScene = JsonHelper.FromJson<SaveController.SceneCollected>(offlineProfile.CollectedBySceneJson)
+                collectedByScene = JsonHelper.FromJson<SaveController.SceneCollected>(offlineProfile.CollectedBySceneJson),
+                bestiaryData = JsonHelper.FromJson<BestiaryEntry>(offlineProfile.BestiarySaveDataJson
+),
             };
 
             sceneLoadWasTriggered = ApplySaveData(localData);

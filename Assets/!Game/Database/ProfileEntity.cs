@@ -47,4 +47,5 @@ public class ProfileEntity
     public string HandInQuestIDsJson { get; set; }
     public string CollectedBySceneJson { get; set; }
     public string FarmSaveDataJson { get; set; }
+    public string BestiarySaveDataJson { get; set; } = "[]";
 }

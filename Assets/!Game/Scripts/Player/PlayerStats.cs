@@ -30,7 +30,7 @@ public class PlayerStats : NetworkBehaviour
     public NetworkVariable<int> netArcherBreakthroughTier = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Header("Player Identity")]
-    public NetworkVariable<FixedString32Bytes> netUsername = new NetworkVariable<FixedString32Bytes>("", NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<FixedString64Bytes> netUsername = new NetworkVariable<FixedString64Bytes>(new FixedString64Bytes(""), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     [Header("Combat States")]
     public NetworkVariable<bool> netIsOnBattle = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -114,7 +114,6 @@ public class PlayerStats : NetworkBehaviour
         if (netObj != null && netObj.IsOwner)
         {
             Instance = this;
-            netUsername.Value = PlayerPrefs.GetString("Username", "Unknown Player");
 
             if (InventoryController.Instance != null)
             {
@@ -174,6 +173,36 @@ public class PlayerStats : NetworkBehaviour
     private void OnInventoryUpdated(List<InventorySaveData> inventoryData, int slotCount)
     {
         ApplyEquippedItems();
+    }
+
+
+    public void PublishNetworkUsername(string playerName)
+    {
+        if (!IsSpawned || !IsOwner)
+            return;
+
+        if (string.IsNullOrWhiteSpace(playerName))
+            return;
+
+        playerName = playerName.Trim();
+
+        if (System.Text.Encoding.UTF8.GetByteCount(playerName) > 61)
+        {
+            Debug.LogWarning(
+                "[PlayerStats] Tên nhân vật vượt giới hạn 61 byte."
+            );
+            return;
+        }
+
+        if (netUsername.Value.ToString() == playerName)
+            return;
+
+        netUsername.Value = new FixedString64Bytes(playerName);
+
+        Debug.Log(
+            $"[PlayerStats] Published Name: {playerName}, " +
+            $"OwnerClientId: {OwnerClientId}"
+        );
     }
 
     public void ApplyEquippedItems()

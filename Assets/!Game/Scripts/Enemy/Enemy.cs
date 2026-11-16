@@ -278,15 +278,56 @@ public class Enemy : NetworkBehaviour, ITargetableInfo
         if (aiLogic != null) aiLogic.OnUpdate();
     }
 
+
     public void OnPlayerDetected(Transform detectedPlayer)
     {
+        if (!IsServer || detectedPlayer == null)
+            return;
+
         aiLogic?.OnPlayerDetected(detectedPlayer);
 
-        if (data != null && SaveController.Instance != null)
+        if (data == null)
+            return;
+
+        NetworkObject playerNetObj =
+            detectedPlayer.GetComponentInParent<NetworkObject>();
+
+        if (playerNetObj == null || !playerNetObj.IsSpawned)
+            return;
+
+        ClientRpcParams targetParams = new ClientRpcParams
         {
-            SaveController.Instance.UnlockBestiary(data.enemyName, 1);
-        }
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new ulong[]
+                {
+                playerNetObj.OwnerClientId
+                }
+            }
+        };
+
+        UnlockBestiaryClientRpc(data.enemyName, targetParams);
     }
+
+    [ClientRpc]
+    private void UnlockBestiaryClientRpc(
+        string enemyID,
+        ClientRpcParams rpcParams = default)
+    {
+        StartCoroutine(UnlockBestiaryWhenReady(enemyID));
+    }
+
+    private IEnumerator UnlockBestiaryWhenReady(string enemyID)
+    {
+        while (SaveController.Instance == null ||
+               !SaveController.IsDataLoaded)
+        {
+            yield return null;
+        }
+
+        SaveController.Instance.UnlockBestiary(enemyID, 1);
+    }
+
 
     public void OnPlayerLost(Transform lostPlayer) => aiLogic?.OnPlayerLost(lostPlayer);
 

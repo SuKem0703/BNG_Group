@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,29 +10,27 @@ public class BestiarySlot : MonoBehaviour
 
     private EnemyData _enemyData;
 
-    private readonly Color _lockedColor = new Color(0.157f, 0.157f, 0.157f, 1f);
+    private readonly Color _lockedColor =
+        new Color(0.157f, 0.157f, 0.157f, 1f);
 
     public void Setup(EnemyData data, int status)
     {
         _enemyData = data;
 
-        if (monsterIcon == null) return;
+        if (monsterIcon == null || slotButton == null)
+            return;
 
         monsterIcon.sprite = data.enemyIcon;
 
-        bool isDefeated = status >= 2;
+        // Status 1: Đã gặp
+        // Status 2: Đã tiêu diệt
+        bool isDiscovered = status >= 1;
 
-        if (isDefeated)
-        {
-            monsterIcon.color = Color.white;
-            slotButton.interactable = true;
-        }
-        else
-        {
-            monsterIcon.color = _lockedColor;
+        monsterIcon.color = isDiscovered
+            ? Color.white
+            : _lockedColor;
 
-            slotButton.interactable = (status == 1);
-        }
+        slotButton.interactable = isDiscovered;
 
         slotButton.onClick.RemoveAllListeners();
         slotButton.onClick.AddListener(OnSlotClicked);
@@ -39,7 +38,11 @@ public class BestiarySlot : MonoBehaviour
 
     private void OnSlotClicked()
     {
-        if (_enemyData == null) return;
-        Debug.Log($"Đang xem chi tiết quái vật: {_enemyData.enemyName}");
+        if (_enemyData == null)
+            return;
+
+        Debug.Log(
+            $"Đang xem chi tiết quái vật: {_enemyData.enemyName}"
+        );
     }
 }
