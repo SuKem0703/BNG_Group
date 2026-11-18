@@ -124,7 +124,9 @@ public class PlayerMovement : NetworkBehaviour
 
                 if (!isDashing)
                 {
-                    bool canMove = !isAttacking || canMoveWhileAttacking;
+                    bool casting = core.playerVFX != null && core.playerVFX.IsCasting;
+                    bool canMove = (!isAttacking || canMoveWhileAttacking) && !casting;
+
                     float currentSpeed = isRunning ? (moveSpeed * runSpeedMultiplier) : moveSpeed;
                     rb.linearVelocity = canMove ? moveInput * currentSpeed : Vector2.zero;
                 }
@@ -143,7 +145,7 @@ public class PlayerMovement : NetworkBehaviour
 
         bool isGameEnded = core.playerStats != null && core.playerVitals.isGameOver;
 
-        if (isDead || isGameEnded)
+        if (isDead || isGameEnded || core.playerVFX.IsCasting)
         {
             rb.linearVelocity = Vector2.zero;
             return;

@@ -23,10 +23,21 @@ public class SkillTreeAdapter : MonoBehaviour
 
     private SkillData targetSkill;
 
-    void Awake()
+    private void Awake()
     {
-        if (Instance != null && Instance != this) return;
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void Start()
@@ -83,17 +94,37 @@ public class SkillTreeAdapter : MonoBehaviour
 
     public void RefreshAllNodes()
     {
-        if (skillPointsText != null)
+        SkillTreeService service = SkillTreeService.Instance;
+
+        if (service == null)
         {
-            skillPointsText.text = $"Còn lại: {SkillTreeService.Instance.GetAvailableSkillPoints()}";
+            Debug.LogWarning(
+                "[SkillTreeAdapter] SkillTreeService chưa khởi tạo!"
+            );
+            return;
         }
 
-        foreach (var node in skillNodes)
+        if (skillPointsText != null)
         {
-            if (node.skillData == null) continue;
-            int currentRank = SkillTreeService.Instance.GetSkillRank(node.skillData.skillID);
-            bool canUnlock = SkillTreeService.Instance.CanUnlockOrUpgrade(node.skillData);
-            node.UpdateUI(currentRank, canUnlock);
+            skillPointsText.text =
+                $"Còn lại: {service.GetAvailableSkillPoints()}";
+        }
+
+        if (skillNodes != null)
+        {
+            foreach (var node in skillNodes)
+            {
+                if (node == null || node.skillData == null)
+                    continue;
+
+                int currentRank =
+                    service.GetSkillRank(node.skillData.skillID);
+
+                bool canUnlock =
+                    service.CanUnlockOrUpgrade(node.skillData);
+
+                node.UpdateUI(currentRank, canUnlock);
+            }
         }
 
         RefreshButtonStates();

@@ -59,6 +59,8 @@ public class ProfileRepository
             FarmSaveDataJson = "{\"plotDataList\":[]}",
 
             BestiarySaveDataJson = "[]",
+
+            SkillTreeDataJson = ""
         };
 
         db.Insert(newProfile);

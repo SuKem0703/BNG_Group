@@ -18,10 +18,15 @@ MonoBehaviour:
   description: 
   skillIcon: {fileID: 21300000, guid: a4d74429a058dff4f862a7f1b256861d, type: 3}
   skillType: 0
-  maxRank: 20
   lvlReq: 105
+  playerAscensionRankReqToUnlock: 8
   skillReqToUnlock: {fileID: 0}
   skillRankReqToUnlock: 10
-  playerAscensionRankReqToUnlock: 8
+  maxRank: 20
   baseValue: 0.05
   maxRankValue: 1
+  effectID: 
+  baseManaCost: 20
+  manaCostIncreasePerRank: 2
+  baseCooldown: 10
+  minCooldown: 5

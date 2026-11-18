@@ -288,7 +288,7 @@ public class KnightNormalAttack : NetworkBehaviour
 
     private void TryAttack()
     {
-        if (attackActive || isAttacking || IsAttackPlayingOrEntering())
+        if (attackActive || isAttacking || IsAttackPlayingOrEntering() || core.playerVFX.IsCasting)
             return;
 
         if (comboTempo < minComboInterval)

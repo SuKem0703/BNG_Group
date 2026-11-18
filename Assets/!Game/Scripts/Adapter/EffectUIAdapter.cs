@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 
 public class EffectUIAdapter : MonoBehaviour
 {
@@ -10,51 +9,83 @@ public class EffectUIAdapter : MonoBehaviour
     [Header("Effect Prefabs")]
     public List<Effect> effectPrefabs;
 
-    private GameObject localPlayer;
+    private readonly Dictionary<string, Effect> icons = new();
+    private bool subscribed;
+
+    private void OnEnable()
+    {
+        PlayerCore.OnPlayerSpawned += OnPlayerSpawned;
+        Subscribe();
+        RefreshActiveEffects();
+    }
 
     private void Start()
     {
-        localPlayer = GameObject.FindGameObjectWithTag("PlayerController");
-
-        if (EffectService.Instance != null)
-        {
-            EffectService.Instance.OnEffectAdded += DrawEffectUI;
-        }
+        Subscribe();
+        RefreshActiveEffects();
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
-        if (EffectService.Instance != null)
+        PlayerCore.OnPlayerSpawned -= OnPlayerSpawned;
+        if (subscribed && EffectService.Instance != null)
         {
             EffectService.Instance.OnEffectAdded -= DrawEffectUI;
+            EffectService.Instance.OnEffectRemoved -= RemoveEffectUI;
         }
+        subscribed = false;
     }
 
-    private void DrawEffectUI(GameObject target, EffectService.EffectData effectData)
+    private void Subscribe()
     {
-        if (effectGrid == null) return;
+        if (subscribed || EffectService.Instance == null) return;
+        EffectService.Instance.OnEffectAdded += DrawEffectUI;
+        EffectService.Instance.OnEffectRemoved += RemoveEffectUI;
+        subscribed = true;
+    }
 
-        if (target != localPlayer) return;
+    private void OnPlayerSpawned(PlayerCore _) => RefreshActiveEffects();
 
-        GameObject prefab = GetPrefab(effectData.effectID);
+    private void RefreshActiveEffects()
+    {
+        if (PlayerCore.Instance == null || EffectService.Instance == null) return;
+        foreach (var data in EffectService.Instance.GetEffects(PlayerCore.Instance.gameObject))
+            DrawEffectUI(PlayerCore.Instance.gameObject, data);
+    }
+
+    private static bool IsLocalPlayer(GameObject target)
+    {
+        return target != null && PlayerCore.Instance != null &&
+               target == PlayerCore.Instance.gameObject;
+    }
+
+    private void DrawEffectUI(GameObject target, EffectService.EffectData data)
+    {
+        if (effectGrid == null || !IsLocalPlayer(target)) return;
+
+        if (icons.TryGetValue(data.effectID, out Effect oldIcon))
+        {
+            if (oldIcon != null) Destroy(oldIcon.gameObject);
+            icons.Remove(data.effectID);
+        }
+
+        Effect prefab = effectPrefabs.Find(p => p != null && p.effectID == data.effectID);
         if (prefab == null)
         {
-            Debug.LogWarning($"Không có prefab cho effectID: {effectData.effectID}");
+            Debug.LogWarning($"[EffectUIAdapter] Missing icon prefab: {data.effectID}");
             return;
         }
 
-        GameObject newEff = Instantiate(prefab, effectGrid);
-        Effect effUI = newEff.GetComponent<Effect>();
-
-        if (effUI != null)
-        {
-            effUI.Initialize(target, effectData.duration, effectData.value);
-        }
+        Effect icon = Instantiate(prefab, effectGrid);
+        icon.Initialize(target, data);
+        icons[data.effectID] = icon;
     }
 
-    private GameObject GetPrefab(string id)
+    private void RemoveEffectUI(GameObject target, string effectID)
     {
-        Effect prefab = effectPrefabs.FirstOrDefault(p => p.effectID == id);
-        return (prefab != null) ? prefab.gameObject : null;
+        if (!IsLocalPlayer(target)) return;
+        if (!icons.TryGetValue(effectID, out Effect icon)) return;
+        if (icon != null) Destroy(icon.gameObject);
+        icons.Remove(effectID);
     }
 }

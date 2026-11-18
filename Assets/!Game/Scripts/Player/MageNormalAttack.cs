@@ -94,7 +94,7 @@ public class MageNormalAttack : NetworkBehaviour
 
     private void TryAttack()
     {
-        if (isAttacking) return;
+        if (isAttacking || core.playerVFX.IsCasting) return;
         if (core.playerMovement != null && core.playerMovement.IsDead) return;
         if (!core.playerStats.CanAttack || !GameStateManager.CanProcessInput()) return;
 

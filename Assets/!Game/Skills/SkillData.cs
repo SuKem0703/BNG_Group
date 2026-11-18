@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public enum SkillType
@@ -14,15 +15,20 @@ public enum SkillTree
     Utility
 }
 
-[CreateAssetMenu(fileName = "new modifier skill", menuName = "Skill Tree/Ranked Modifier Skill")]
+[CreateAssetMenu(
+    fileName = "new modifier skill",
+    menuName = "Skill Tree/Ranked Modifier Skill"
+)]
 public class SkillData : ScriptableObject
 {
     [Header("General Information")]
     public SkillTree skillTree;
     public string skillID;
     public string skillName;
+
     [TextArea(2, 4)]
     public string description;
+
     public Sprite skillIcon;
     public SkillType skillType;
 
@@ -37,6 +43,10 @@ public class SkillData : ScriptableObject
     public float baseValue = 0.05f;
     public float maxRankValue = 1.0f;
 
+    [Header("Runtime Effect")]
+    [Tooltip("Ví dụ: HEAL_REGEN")]
+    public string effectID;
+
     [Header("Resources & Cooldown")]
     public float baseManaCost = 20f;
     public float manaCostIncreasePerRank = 2f;
@@ -45,8 +55,11 @@ public class SkillData : ScriptableObject
 
     public float GetSkillValue(int currentRank)
     {
-        if (currentRank <= 0) return 0f;
-        if (currentRank >= maxRank) return maxRankValue;
+        if (currentRank <= 0)
+            return 0f;
+
+        if (currentRank >= maxRank)
+            return maxRankValue;
 
         float t = (float)(currentRank - 1) / (maxRank - 1);
         return Mathf.Lerp(baseValue, maxRankValue, t);
@@ -54,15 +67,20 @@ public class SkillData : ScriptableObject
 
     public float GetManaCost(int currentRank)
     {
-        return baseManaCost + ((currentRank - 1) * manaCostIncreasePerRank);
+        return baseManaCost +
+               ((currentRank - 1) * manaCostIncreasePerRank);
     }
 
     public float GetCooldown(int currentRank)
     {
-        if (currentRank <= 0) return baseCooldown;
-        if (currentRank >= maxRank) return minCooldown;
+        if (currentRank <= 0)
+            return baseCooldown;
+
+        if (currentRank >= maxRank)
+            return minCooldown;
 
         float t = (float)(currentRank - 1) / (maxRank - 1);
+
         return Mathf.Lerp(baseCooldown, minCooldown, t);
     }
 }

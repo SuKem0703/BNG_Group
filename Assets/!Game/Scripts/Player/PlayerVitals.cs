@@ -156,6 +156,34 @@ public class PlayerVitals : NetworkBehaviour
         mpRegenTimer = -mpRegenDelay; // Reset cooldown regen
     }
 
+
+    public int GetMP(bool isKnight)
+    {
+        return isKnight ? knightMP : mageMP;
+    }
+
+    public bool TryUseSkillMP(int amount, bool isKnight)
+    {
+        if (!IsOwner ||
+            isProcessingDeath ||
+            isGameOver ||
+            netIsDead.Value)
+        {
+            return false;
+        }
+
+        amount = Mathf.Max(0, amount);
+
+        if (GetMP(isKnight) < amount)
+            return false;
+
+        if (amount > 0)
+            UseMP(amount, isKnight);
+
+        return true;
+    }
+
+
     public void UseStamina(float amount)
     {
         if (amount <= 0) return;
@@ -211,6 +239,8 @@ public class PlayerVitals : NetworkBehaviour
         Debug.Log($"{who} has fallen!");
 
         OnDeath?.Invoke();
+        if (core.playerVFX != null)
+            core.playerVFX.CancelCasting();
         SetDeathStateServerRpc(true);
 
         if (playerCollider != null) playerCollider.enabled = false;

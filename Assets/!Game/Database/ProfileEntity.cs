@@ -48,4 +48,6 @@ public class ProfileEntity
     public string CollectedBySceneJson { get; set; }
     public string FarmSaveDataJson { get; set; }
     public string BestiarySaveDataJson { get; set; } = "[]";
+
+    public string SkillTreeDataJson { get; set; } = "";
 }

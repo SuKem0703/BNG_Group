@@ -614,6 +614,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 553821683748399288}
+  - component: {fileID: 7926552598545410266}
   m_Layer: 3
   m_Name: VFX
   m_TagString: Untagged
@@ -636,6 +637,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8599477992676078165}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7926552598545410266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5448398588651206061}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c35a16f6141b4c459105deeeb4004c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  core: {fileID: 4105975544014696189}
+  knightAnimator: {fileID: 5691647660223253319}
+  mageAnimator: {fileID: 5592546058136567945}
+  isCasting: 0
+  healingBuffAnchor: {fileID: 553821683748399288}
+  healingBuffVFXPrefab: {fileID: 3057400957946558601, guid: b6ebf608277317b4a88a23d9697d6712, type: 3}
 --- !u!1 &5610671550204279734
 GameObject:
   m_ObjectHideFlags: 0
@@ -1238,8 +1257,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   animator: {fileID: 5691647660223253319}
-  playerVitals: {fileID: 4707892669319800991}
-  playerMovement: {fileID: 5419666127035113273}
+  playerCore: {fileID: 4105975544014696189}
   enableIdleLook: 1
   minIdleTime: 5
   maxIdleTime: 10
@@ -1354,7 +1372,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 934382041
+  GlobalObjectIdHash: 672220998
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1419,20 +1437,54 @@ MonoBehaviour:
           byte0013: 0
           byte0014: 0
           byte0015: 0
-        byte0016: 0
-        byte0017: 0
-        byte0018: 0
-        byte0019: 0
-        byte0020: 0
-        byte0021: 0
-        byte0022: 0
-        byte0023: 0
-        byte0024: 0
-        byte0025: 0
-        byte0026: 0
-        byte0027: 0
-        byte0028: 0
-        byte0029: 0
+        offset0016:
+          byte0000: 0
+          byte0001: 0
+          byte0002: 0
+          byte0003: 0
+          byte0004: 0
+          byte0005: 0
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        offset0032:
+          byte0000: 0
+          byte0001: 0
+          byte0002: 0
+          byte0003: 0
+          byte0004: 0
+          byte0005: 0
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        byte0048: 0
+        byte0049: 0
+        byte0050: 0
+        byte0051: 0
+        byte0052: 0
+        byte0053: 0
+        byte0054: 0
+        byte0055: 0
+        byte0056: 0
+        byte0057: 0
+        byte0058: 0
+        byte0059: 0
+        byte0060: 0
+        byte0061: 0
   netIsOnBattle:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
@@ -1729,6 +1781,8 @@ MonoBehaviour:
   playerVitals: {fileID: 4707892669319800991}
   playerMovement: {fileID: 5419666127035113273}
   classController: {fileID: 2281157301833218261}
+  playerVFX: {fileID: 7926552598545410266}
+  healingBuffDuration: 10
 --- !u!1 &8304542053625197770
 GameObject:
   m_ObjectHideFlags: 0
@@ -2138,8 +2192,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimatorHandler
   animator: {fileID: 5592546058136567945}
-  playerVitals: {fileID: 4707892669319800991}
-  playerMovement: {fileID: 5419666127035113273}
+  playerCore: {fileID: 4105975544014696189}
   enableIdleLook: 1
   minIdleTime: 5
   maxIdleTime: 10

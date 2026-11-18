@@ -146,7 +146,7 @@ public class ClassController : NetworkBehaviour
 
     private void TrySwapClass()
     {
-        if (!canSwap) return;
+        if (!canSwap || core.playerVFX.IsCasting) return;
 
         if (core.playerStats != null && (core.playerVitals.isProcessingDeath || core.playerVitals.isGameOver)) return;
 

@@ -353,7 +353,17 @@ public class SaveController : MonoBehaviour
             Debug.LogWarning($"[SaveController] Failed to refresh latest coin/gem before save: {ex.Message}");
         }
 
+        if (SkillTreeService.Instance != null)
+        {
+            SkillSaveData skillData =
+                SkillTreeService.Instance.GetSkillSaveData();
+
+            profile.SkillTreeDataJson =
+                JsonUtility.ToJson(skillData);
+        }
+
         repo.UpdateProfile(profile);
+
         bool saveSuccess = true;
 
         if (reason != SaveReason.SceneTransition)
@@ -515,8 +525,10 @@ public class SaveController : MonoBehaviour
                 questProgressData = JsonHelper.FromJson<QuestProgress>(offlineProfile.QuestProgressDataJson),
                 handInQuestIDs = JsonHelper.FromJson<string>(offlineProfile.HandInQuestIDsJson),
                 collectedByScene = JsonHelper.FromJson<SaveController.SceneCollected>(offlineProfile.CollectedBySceneJson),
-                bestiaryData = JsonHelper.FromJson<BestiaryEntry>(offlineProfile.BestiarySaveDataJson
-),
+                bestiaryData = JsonHelper.FromJson<BestiaryEntry>(offlineProfile.BestiarySaveDataJson),
+                skillTreeData = string.IsNullOrEmpty(offlineProfile.SkillTreeDataJson)
+                    ? null
+                    : JsonUtility.FromJson<SkillSaveData>(offlineProfile.SkillTreeDataJson),
             };
 
             sceneLoadWasTriggered = ApplySaveData(localData);

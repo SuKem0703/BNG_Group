@@ -5,8 +5,7 @@ public class PlayerAnimatorHandler : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Animator animator;
-    [SerializeField] private PlayerVitals playerVitals;
-    [SerializeField] private PlayerMovement playerMovement;
+    [SerializeField] private PlayerCore playerCore;
 
     [Header("Idle Look Settings")]
     [SerializeField] private bool enableIdleLook = true;
@@ -25,8 +24,6 @@ public class PlayerAnimatorHandler : MonoBehaviour
     private void Awake()
     {
         animator = animator ?? GetComponent<Animator>();
-        playerVitals = playerVitals ?? GetComponentInParent<PlayerVitals>();
-        playerMovement = playerMovement ?? GetComponentInParent<PlayerMovement>();
 
         if (animator != null)
         {
@@ -46,11 +43,9 @@ public class PlayerAnimatorHandler : MonoBehaviour
 
     private void Start()
     {
-        if (playerVitals == null) return;
+        playerCore.playerVitals.netIsDead.OnValueChanged += OnDeathStateChanged;
 
-        playerVitals.netIsDead.OnValueChanged += OnDeathStateChanged;
-
-        if (playerVitals.netIsDead.Value && !DeathService.IsRespawningFlag)
+        if (playerCore.playerVitals.netIsDead.Value && !DeathService.IsRespawningFlag)
         {
             ApplyDeathVisuals();
         }
@@ -61,13 +56,13 @@ public class PlayerAnimatorHandler : MonoBehaviour
 
     private void Update()
     {
-        if (playerMovement == null || playerVitals == null || animator == null) return;
+        if (playerCore.playerMovement == null || playerCore.playerVitals == null || animator == null) return;
 
-        Vector2 currentMove = playerMovement.IsOwner ? playerMovement.moveInput : playerMovement.netMoveInput.Value;
-        bool currentRun = playerMovement.IsOwner ? playerMovement.isRunning : playerMovement.netIsRunning.Value;
-        Vector2 currentLast = playerMovement.netLastInput.Value;
+        Vector2 currentMove = playerCore.playerMovement.IsOwner ? playerCore.playerMovement.moveInput : playerCore.playerMovement.netMoveInput.Value;
+        bool currentRun = playerCore.playerMovement.IsOwner ? playerCore.playerMovement.isRunning : playerCore.playerMovement.netIsRunning.Value;
+        Vector2 currentLast = playerCore.playerMovement.netLastInput.Value;
 
-        bool canMove = !playerMovement.isAttacking || playerMovement.canMoveWhileAttacking;
+        bool canMove = !playerCore.playerMovement.isAttacking || playerCore.playerMovement.canMoveWhileAttacking;
 
         bool isMoving = currentMove.magnitude > 0.1f && canMove;
 
@@ -83,7 +78,7 @@ public class PlayerAnimatorHandler : MonoBehaviour
         animator.SetFloat("LastInputX", currentLast.x);
         animator.SetFloat("LastInputY", currentLast.y);
 
-        bool isTrulyIdle = !isMoving && !playerMovement.isAttacking && !playerVitals.netIsDead.Value;
+        bool isTrulyIdle = !isMoving && !playerCore.playerMovement.isAttacking && !playerCore.playerVitals.netIsDead.Value;
 
         if (isTrulyIdle)
         {
@@ -126,10 +121,7 @@ public class PlayerAnimatorHandler : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (playerVitals != null)
-        {
-            playerVitals.netIsDead.OnValueChanged -= OnDeathStateChanged;
-        }
+        playerCore.playerVitals.netIsDead.OnValueChanged -= OnDeathStateChanged;
     }
 
     private void OnDeathStateChanged(bool previousValue, bool newValue)
@@ -153,9 +145,14 @@ public class PlayerAnimatorHandler : MonoBehaviour
 
     public void OnDeathAnimationFinished()
     {
-        if (playerVitals != null && playerVitals.IsOwner && !DeathService.IsRespawningFlag)
+        if (playerCore.playerVitals != null && playerCore.playerVitals.IsOwner && !DeathService.IsRespawningFlag)
         {
-            playerVitals.OnCharacterDeathAnimationFinished();
+            playerCore.playerVitals.OnCharacterDeathAnimationFinished();
         }
+    }
+
+    public void EndCasting()
+    {
+        playerCore.playerVFX?.EndCasting();
     }
 }
