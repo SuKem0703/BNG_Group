@@ -38,6 +38,8 @@ public class PlayerVitals : NetworkBehaviour
     public bool isProcessingDeath { get; private set; } = false;
     public bool isGameOver { get; private set; } = false;
 
+    public event Action OnDodged;
+
     [SerializeField] private PlayerCore core;
     [SerializeField] private Collider2D playerCollider;
 
@@ -71,44 +73,85 @@ public class PlayerVitals : NetworkBehaviour
         mageMP = Mathf.Min(mageMP, core.playerStats.finalMageMaxMP);
     }
 
-    public int TakeDamage(int rawDamage)
+
+    public int TakeDamage(int rawDamage, bool canDodge = true)
     {
-        if (isInvincible || isProcessingDeath || isGameOver) return 0;
+        if (rawDamage <= 0 ||
+            isInvincible ||
+            isProcessingDeath ||
+            isGameOver)
+            return 0;
 
         if (IsServer && !IsOwner)
         {
-            TakeDamageClientRpc(rawDamage);
+            TakeDamageClientRpc(rawDamage, canDodge);
             return rawDamage;
         }
 
-        return ProcessDamageLocally(rawDamage);
+        return ProcessDamageLocally(rawDamage, canDodge);
     }
 
     [ClientRpc]
-    private void TakeDamageClientRpc(int rawDamage)
+    private void TakeDamageClientRpc(
+        int rawDamage,
+        bool canDodge)
     {
-        if (IsOwner) ProcessDamageLocally(rawDamage);
+        if (IsOwner)
+            ProcessDamageLocally(rawDamage, canDodge);
     }
 
-    private int ProcessDamageLocally(int rawDamage)
+    private int ProcessDamageLocally(
+        int rawDamage,
+        bool canDodge)
     {
-        if (isInvincible || isProcessingDeath || isGameOver) return 0;
+        if (rawDamage <= 0 ||
+            isInvincible ||
+            isProcessingDeath ||
+            isGameOver)
+            return 0;
+
+        if (canDodge && core.playerStats != null)
+        {
+            float dodgeRate =
+                core.playerStats.finalDodgeRate;
+
+            if (UnityEngine.Random.Range(0f, 100f) < dodgeRate)
+            {
+                OnDodged?.Invoke();
+                return 0;
+            }
+        }
 
         float def = core.playerStats.finalDefense;
         float dmgRed = core.playerStats.damageReduction;
 
         float mitigation = def / (def + 100f);
-        float reductionFactor = (1f - mitigation) * (1f - dmgRed);
-        int finalDamage = Mathf.Max(Mathf.CeilToInt(rawDamage * reductionFactor), 1);
+
+        float reductionFactor =
+            (1f - mitigation) * (1f - dmgRed);
+
+        int finalDamage = Mathf.Max(
+            Mathf.CeilToInt(rawDamage * reductionFactor),
+            1
+        );
 
         bool isKnight = core.classController.IsKnightActive;
-        int currentHP = isKnight ? netKnightHealth.Value : netMageHealth.Value;
+
+        int currentHP = isKnight
+            ? netKnightHealth.Value
+            : netMageHealth.Value;
+
         currentHP -= finalDamage;
 
-        OnDamaged?.Invoke(finalDamage, DamageSourceType.Enemy);
+        OnDamaged?.Invoke(
+            finalDamage,
+            DamageSourceType.Enemy
+        );
 
-        if (isKnight) netKnightHealth.Value = currentHP;
-        else netMageHealth.Value = currentHP;
+        if (isKnight)
+            netKnightHealth.Value = currentHP;
+        else
+            netMageHealth.Value = currentHP;
 
         if (currentHP <= 0)
         {

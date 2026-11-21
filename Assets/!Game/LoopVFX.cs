@@ -1,8 +1,6 @@
 using UnityEngine;
 
-// Attach this to the healing VFX prefab (a child under the player VFX anchor).
-// Its Animator contains a 2D Simple Directional blend tree with 4 loop clips.
-public class HealingBuffVFX : MonoBehaviour
+public class LoopVFX : MonoBehaviour
 {
     [SerializeField] private Animator animator;
     private PlayerCore target;
@@ -13,6 +11,7 @@ public class HealingBuffVFX : MonoBehaviour
     private void Awake()
     {
         if (animator == null) animator = GetComponent<Animator>();
+        if (animator == null) animator = GetComponentInChildren<Animator>(true);
     }
 
     public void Initialize(PlayerCore player, float duration)

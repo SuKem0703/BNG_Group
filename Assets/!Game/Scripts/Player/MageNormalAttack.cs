@@ -206,7 +206,7 @@ public class MageNormalAttack : NetworkBehaviour
         if (UnityEngine.Random.Range(0f, 100f) < core.playerStats.finalCritRate)
         {
             isCritical = true;
-            rawDamage *= 2;
+            rawDamage *= core.playerStats.finalCritDamageMultiplier;
         }
 
         int finalDamage = Mathf.RoundToInt(rawDamage);

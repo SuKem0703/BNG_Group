@@ -48,7 +48,9 @@ public class StatusUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI magicDMGText;
     [SerializeField] private TextMeshProUGUI defenseText;
     [SerializeField] private TextMeshProUGUI critChanceText;
+    [SerializeField] private TextMeshProUGUI critDMGText;
     [SerializeField] private TextMeshProUGUI moveSpeedText;
+    [SerializeField] private TextMeshProUGUI dodgeChanceText;
 
     [Header("Currency")]
     [SerializeField] private TextMeshProUGUI coinText;
@@ -114,7 +116,9 @@ public class StatusUI : MonoBehaviour
         magicDMGText ??= transform.FindDeepChild("MagicDMGText")?.GetComponent<TextMeshProUGUI>();
         defenseText ??= transform.FindDeepChild("DefenseText")?.GetComponent<TextMeshProUGUI>();
         critChanceText ??= transform.FindDeepChild("CritChanceText")?.GetComponent<TextMeshProUGUI>();
+        critDMGText ??= transform.FindDeepChild("CritDamageText")?.GetComponent<TextMeshProUGUI>();
         moveSpeedText ??= transform.FindDeepChild("MoveSpeedText")?.GetComponent<TextMeshProUGUI>();
+        dodgeChanceText ??= transform.FindDeepChild("DodgeChanceText")?.GetComponent<TextMeshProUGUI>();
 
         coinText ??= transform.FindDeepChild("CoinText")?.GetComponent<TextMeshProUGUI>();
         gemText ??= transform.FindDeepChild("GemText")?.GetComponent<TextMeshProUGUI>();
@@ -268,7 +272,9 @@ public class StatusUI : MonoBehaviour
         if (magicDMGText) magicDMGText.text = playerStats.finalMagicAttack.ToString();
         if (defenseText) defenseText.text = playerStats.finalDefense.ToString();
         if (critChanceText) critChanceText.text = playerStats.finalCritRate.ToString("F2") + "%";
+        if (critDMGText) critDMGText.text = (playerStats.finalCritDamageMultiplier * 100f).ToString("F2") + "%";
         if (moveSpeedText) moveSpeedText.text = playerStats.finalMoveSpeed.ToString("F2");
+        if (dodgeChanceText) dodgeChanceText.text = playerStats.finalDodgeRate.ToString("F2") + "%";
     }
 
     private void ForceResetCache()

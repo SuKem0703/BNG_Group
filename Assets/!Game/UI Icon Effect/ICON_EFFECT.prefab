@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3385189636425511309}
   - component: {fileID: 4709939110589223778}
   m_Layer: 5
-  m_Name: HEAL_REGEN
+  m_Name: ICON_EFFECT
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -37,7 +37,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 50, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &740695090567593191
 CanvasRenderer:
@@ -67,7 +67,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 1200888459, guid: b2f74c3a7a1237441b9d9cee0299df98, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 32f7e04bb26df62438d9a74071793537, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -91,7 +91,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Effect
   iconImage: {fileID: 3385189636425511309}
   overlayImage: {fileID: 361503353612149656}
-  effectID: HEAL_REGEN
+  effectID: ICON_EFFECT
   duration: 0
   value: 0
 --- !u!1 &5333119251287473895
@@ -159,7 +159,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 1200888459, guid: b2f74c3a7a1237441b9d9cee0299df98, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 32f7e04bb26df62438d9a74071793537, type: 3}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1

@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-// Presentation only. Gameplay is handled by EffectService.
 public class Effect : MonoBehaviour
 {
     [Header("UI")]

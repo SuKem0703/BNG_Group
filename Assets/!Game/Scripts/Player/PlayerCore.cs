@@ -17,36 +17,49 @@ public class PlayerCore : NetworkBehaviour
     public ClassController classController;
     public PlayerVFXController playerVFX;
 
-    [Header("Healing Buff")]
-    [SerializeField, Min(0.1f)]
-    private float healingBuffDuration = 10f;
+    [Header("Internal Controllers")]
+    [SerializeField] private PlayerBuffController buffController;
+
+    private void Awake()
+    {
+        if (buffController == null)
+            buffController = GetComponent<PlayerBuffController>();
+    }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
-        if (IsOwner)
+        if (buffController == null)
         {
-            Instance = this;
-
-            if (SaveController.Instance != null)
-            {
-                SaveController.Instance.RegisterLocalPlayer(this);
-            }
-            else
-            {
-                Debug.LogWarning(
-                    "[PlayerCore] SaveController chưa khởi tạo!"
-                );
-            }
-
-            if (playerStats != null)
-            {
-                playerStats.ApplyEquippedItems();
-            }
-
-            OnPlayerSpawned?.Invoke(this);
+            Debug.LogError(
+                "[PlayerCore] Missing PlayerBuffController!",
+                this
+            );
         }
+
+        if (!IsOwner)
+            return;
+
+        Instance = this;
+
+        if (SaveController.Instance != null)
+        {
+            SaveController.Instance.RegisterLocalPlayer(this);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[PlayerCore] SaveController chưa khởi tạo!"
+            );
+        }
+
+        if (playerStats != null)
+        {
+            playerStats.ApplyEquippedItems();
+        }
+
+        OnPlayerSpawned?.Invoke(this);
     }
 
     public override void OnNetworkDespawn()
@@ -67,7 +80,10 @@ public class PlayerCore : NetworkBehaviour
         base.OnNetworkDespawn();
     }
 
-    // Đồng bộ hoạt ảnh Casting.
+    // ==========================================
+    // CASTING NETWORK GATEWAY
+    // ==========================================
+
     [ServerRpc]
     public void SyncCastingServerRpc(bool casting)
     {
@@ -77,10 +93,7 @@ public class PlayerCore : NetworkBehaviour
     [ClientRpc]
     private void SyncCastingClientRpc(bool casting)
     {
-        if (IsOwner)
-            return;
-
-        if (playerVFX == null)
+        if (IsOwner || playerVFX == null)
             return;
 
         if (casting)
@@ -89,86 +102,27 @@ public class PlayerCore : NetworkBehaviour
             playerVFX.StopCastingVisual();
     }
 
-    // Owner yêu cầu server kích hoạt buff.
-    [ServerRpc]
-    public void RequestHealingBuffServerRpc(
-        string skillID,
-        int rank)
+    // ==========================================
+    // BUFF GATEWAY
+    // ==========================================
+
+    public void RequestBuff(string skillID, int rank)
     {
-        SkillData skill = SkillDictionary.Instance != null
-            ? SkillDictionary.Instance.GetSkill(skillID)
-            : null;
-
-        if (skill == null ||
-            skill.skillType != SkillType.Active ||
-            skill.effectID != EffectService.HealRegenID ||
-            rank < 1 ||
-            rank > skill.maxRank ||
-            playerVitals == null ||
-            playerVitals.netIsDead.Value)
+        if (buffController == null)
         {
-            return;
-        }
-
-        float healFractionPerTick =
-            Mathf.Clamp01(skill.GetSkillValue(rank));
-
-        if (healFractionPerTick <= 0f)
-            return;
-
-        // Các Player đã spawn trong cùng scene.
-        foreach (NetworkClient client in
-                 NetworkManager.ConnectedClientsList)
-        {
-            if (client.PlayerObject == null)
-                continue;
-
-            PlayerCore target =
-                client.PlayerObject
-                    .GetComponentInChildren<PlayerCore>(true);
-
-            if (target == null ||
-                !target.IsSpawned ||
-                target.gameObject.scene != gameObject.scene ||
-                target.playerVitals == null ||
-                target.playerVitals.netIsDead.Value)
-            {
-                continue;
-            }
-
-            target.ApplyHealingBuffClientRpc(
-                healingBuffDuration,
-                healFractionPerTick
-            );
-        }
-    }
-
-    // Chạy trên mỗi client cho Player nhận buff.
-    [ClientRpc]
-    private void ApplyHealingBuffClientRpc(
-        float duration,
-        float healFractionPerTick)
-    {
-        if (EffectService.Instance == null)
-        {
-            Debug.LogError(
-                "[HealingBuff] EffectService chưa tồn tại!"
+            Debug.LogWarning(
+                "[PlayerCore] BuffController chưa được gán!",
+                this
             );
             return;
         }
 
-        EffectService.Instance.AddEffect(
-            gameObject,
-            EffectService.HealRegenID,
-            duration,
-            healFractionPerTick
-        );
-
-        if (playerVFX != null)
-        {
-            playerVFX.ShowHealingBuffVFX(duration);
-        }
+        buffController.RequestBuff(skillID, rank);
     }
+
+    // ==========================================
+    // TRANSFORM GATEWAY
+    // ==========================================
 
     public Vector3 GetPosition()
     {

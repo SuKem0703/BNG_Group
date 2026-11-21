@@ -41,6 +41,13 @@ public class PlayerStats : NetworkBehaviour
     private int effectINT;
     private int effectCON;
 
+    // Stats buff from effects
+    private float effectDodgeRate;
+    private float effectCritRate;
+    private float effectCritDamageBonus;
+    private float effectMoveSpeedRatio;
+
+    // Stats from equipment
     private int bonusSTR, bonusDEX, bonusCON, bonusINT;
     public int bonusPhysicalAttack, bonusMagicAttack, bonusDefense;
     private int bonusKnightMaxHP, bonusMageMaxHP;
@@ -74,10 +81,12 @@ public class PlayerStats : NetworkBehaviour
     public int baseMaxMP => 50 + finalINT * 5;
     public float baseStamina => 20;
     public float baseCritRate => Mathf.Min(finalSTR * 0.01f, 100f);
+    public float baseCritDamage => Mathf.Max(0f, finalSTR * 0.005f);
     public int baseHPRegen => 1 + finalCON / 5;
     public int baseMPRegen => 1 + finalINT / 5;
     public float baseStaminaRegen => 1f * (1f + finalDEX * 0.02f);
     public float baseMoveSpeed => 4f + finalDEX * 0.01f;
+    public float baseDodgeRate => Mathf.Max(0, finalDEX) * 0.03f;
 
     public int finalSTR => STR + bonusSTR + effectSTR;
     public int finalDEX => DEX + bonusDEX + effectDEX;
@@ -85,13 +94,15 @@ public class PlayerStats : NetworkBehaviour
     public int finalINT => INT + bonusINT + effectINT;
     public int finalPhysicalAttack => Mathf.FloorToInt(basePhysicalAttack + bonusPhysicalAttack);
     public int finalMagicAttack => Mathf.FloorToInt(baseMagicAttack + bonusMagicAttack);
-    public float finalCritRate => Mathf.Min(baseCritRate + bonusCritRate, 100f);
+    public float finalCritRate => Mathf.Clamp( baseCritRate + bonusCritRate + effectCritRate, 0f, 100f);
+    public float finalCritDamageBonus => Mathf.Max( 0f, 0.50f + baseCritDamage + effectCritDamageBonus);
+    public float finalCritDamageMultiplier => 1f + finalCritDamageBonus;
+    public float finalDodgeRate => Mathf.Clamp( baseDodgeRate + effectDodgeRate, 0f, 40f);
     public float finalStamina => baseStamina + bonusStamina;
     public int finalHPRegen => baseHPRegen + bonusHPRegen;
     public int finalMPRegen => baseMPRegen + bonusMPRegen;
     public float finalStaminaRegen => baseStaminaRegen + bonusStaminaRegen;
-    public float finalMoveSpeed => baseMoveSpeed + bonusMoveSpeed;
-
+    public float finalMoveSpeed => Mathf.Max(0f, (baseMoveSpeed + bonusMoveSpeed) * (1f + effectMoveSpeedRatio));
     public int finalKnightMaxHP => Mathf.FloorToInt(baseMaxHP + bonusKnightMaxHP);
     public int finalMageMaxHP => Mathf.FloorToInt(baseMaxHP + bonusMageMaxHP);
     public int finalKnightMaxMP => Mathf.FloorToInt(baseMaxMP + bonusKnightMaxMP);
@@ -281,6 +292,32 @@ public class PlayerStats : NetworkBehaviour
             case "INT": effectINT += amount; break;
             case "CON": effectCON += amount; break;
         }
+        OnStatsUpdated?.Invoke();
+    }
+
+    public void ModifyEffectDodgeRate(float amount)
+    {
+        effectDodgeRate += amount;
+        OnStatsUpdated?.Invoke();
+    }
+
+    public void ModifyEffectCritical(
+        float critRatePoints,
+        float critDamageFraction)
+    {
+        effectCritRate += critRatePoints;
+        effectCritDamageBonus += critDamageFraction;
+
+        OnStatsUpdated?.Invoke();
+    }
+
+    public void ModifyEffectMobility(
+        float moveSpeedFraction,
+        float dodgeRatePoints)
+    {
+        effectMoveSpeedRatio += moveSpeedFraction;
+        effectDodgeRate += dodgeRatePoints;
+
         OnStatsUpdated?.Invoke();
     }
 

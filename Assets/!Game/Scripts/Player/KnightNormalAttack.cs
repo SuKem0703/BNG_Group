@@ -613,7 +613,9 @@ public class KnightNormalAttack : NetworkBehaviour
                 core.playerStats.finalCritRate;
 
             if (isCritical)
-                rawDamage *= 2f;
+            {
+                rawDamage *= core.playerStats.finalCritDamageMultiplier;
+            }
 
             int finalDamage =
                 Mathf.RoundToInt(rawDamage);

@@ -12,21 +12,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 507fb18a1a3490147ab94b513116ffd5, type: 3}
   m_Name: Magic_Lv01
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillTree: 1
+  skillTree: 0
   skillID: Magic_Lv01
   skillName: Magic_Lv01
   description: Magic_Lv01
   skillIcon: {fileID: 21300000, guid: d94d53ea1f88a274c9e02e21dcf5f5db, type: 3}
   skillType: 1
+  skillElement: 4
+  isSharedSkill: 0
   lvlReq: 1
   playerAscensionRankReqToUnlock: 1
   skillReqToUnlock: {fileID: 0}
   skillRankReqToUnlock: 10
   maxRank: 20
-  baseValue: 0.05
-  maxRankValue: 1
-  effectID: 
+  baseValue: 0.1
+  maxRankValue: 0.25
+  effectID: BUFF_FEATHER
   baseManaCost: 20
   manaCostIncreasePerRank: 2
   baseCooldown: 10
   minCooldown: 5
+  baseSecondaryValue: 0.05
+  maxRankSecondaryValue: 0.15
+  baseEffectDuration: 12
+  maxRankEffectDuration: 12

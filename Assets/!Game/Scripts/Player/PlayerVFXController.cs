@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -210,9 +211,12 @@ public class PlayerVFXController : MonoBehaviour
             return false;
         }
 
-        // Hiện chỉ có HEAL_REGEN được tích hợp gameplay.
-        // Không cho dùng skill chưa hỗ trợ để tránh mất MP oan.
-        if (skill.effectID != EffectService.HealRegenID)
+        bool isSupported =
+    skill.effectID == EffectService.HealRegenID ||
+    skill.effectID == EffectService.CloverBuffID ||
+    skill.effectID == EffectService.FeatherBuffID;
+
+        if (!isSupported)
         {
             Debug.LogWarning(
                 $"[Skill] Chưa hỗ trợ effectID: {skill.effectID}"
@@ -234,6 +238,9 @@ public class PlayerVFXController : MonoBehaviour
         {
             return false;
         }
+
+        if (!skill.CanBeUsedBy(playerClass))
+            return false;
 
         // Kiểm tra cooldown trước khi cast.
         if (IsSkillOnCooldown(skill.skillID, playerClass))
@@ -332,16 +339,28 @@ public class PlayerVFXController : MonoBehaviour
             ? SkillDictionary.Instance.GetSkill(completedSkillID)
             : null;
 
-        if (skill == null ||
-            skill.skillType != SkillType.Active ||
-            skill.effectID != EffectService.HealRegenID)
+        if (skill == null || skill.skillType != SkillType.Active)
         {
             return;
         }
 
-        if (SkillTreeService.Instance == null ||
-            SkillTreeService.Instance.GetSkillRank(completedSkillID)
-                < completedRank)
+        bool isSupported =
+    skill.effectID == EffectService.HealRegenID ||
+    skill.effectID == EffectService.CloverBuffID ||
+    skill.effectID == EffectService.FeatherBuffID;
+
+        if (!isSupported)
+            return;
+
+        if (!skill.CanBeUsedBy(completedClass))
+            return;
+
+        if (skill.effectID == EffectService.CloverBuffID && completedClass != PlayerClassType.Knight)
+        {
+            return;
+        }
+
+        if (SkillTreeService.Instance == null || SkillTreeService.Instance.GetSkillRank(completedSkillID) < completedRank)
         {
             return;
         }
@@ -357,32 +376,19 @@ public class PlayerVFXController : MonoBehaviour
             Mathf.Max(0f, skill.GetManaCost(completedRank))
         );
 
-        // CHỈ TẠI ĐÂY MỚI TRỪ MP.
-        // Nếu MP bị tiêu hao trong lúc cast và không còn đủ,
-        // kỹ năng sẽ không được thi triển.
         if (!core.playerVitals.TryUseSkillMP(manaCost, isKnight))
         {
             GameNotify.Show("Không đủ MP để hoàn thành kỹ năng!");
             return;
         }
 
-        // Bắt đầu cooldown sau khi trừ MP thành công.
         StartSkillCooldown(
             completedSkillID,
             completedClass,
             skill.GetCooldown(completedRank)
         );
 
-        // Thực thi hiệu ứng.
-        switch (skill.effectID)
-        {
-            case EffectService.HealRegenID:
-                core.RequestHealingBuffServerRpc(
-                    completedSkillID,
-                    completedRank
-                );
-                break;
-        }
+        core.RequestBuff(completedSkillID, completedRank);
 
         Debug.Log(
             $"[Skill] {completedSkillID} | " +
@@ -457,8 +463,8 @@ public class PlayerVFXController : MonoBehaviour
         activeHealingBuffVFX.transform.localRotation =
             Quaternion.identity;
 
-        HealingBuffVFX effect =
-            activeHealingBuffVFX.GetComponent<HealingBuffVFX>();
+        LoopVFX effect =
+            activeHealingBuffVFX.GetComponent<LoopVFX>();
 
         if (effect != null)
         {
@@ -490,4 +496,69 @@ public class PlayerVFXController : MonoBehaviour
             $"{animator?.GetBool(IsCastingHash)}"
         );
     }
+
+
+    [Serializable]
+    public class BuffActivationVFXEntry
+    {
+        public string effectID;
+        public GameObject prefab;
+    }
+
+    [Header("Buff Activation VFX")]
+    [SerializeField] private Transform buffActivationAnchor;
+
+    [SerializeField]
+    private List<BuffActivationVFXEntry> buffActivationVFX =
+        new List<BuffActivationVFXEntry>();
+
+    public void PlayBuffActivationVFX(string effectID)
+    {
+        if (string.IsNullOrEmpty(effectID))
+            return;
+
+        BuffActivationVFXEntry entry =
+            buffActivationVFX.Find(
+                x => x != null && x.effectID == effectID
+            );
+
+        if (entry == null || entry.prefab == null)
+        {
+            Debug.LogWarning(
+                $"[PlayerVFX] Chưa đăng ký VFX: {effectID}"
+            );
+            return;
+        }
+
+        Transform parent =
+            buffActivationAnchor != null
+                ? buffActivationAnchor
+                : transform;
+
+        GameObject instance = Instantiate(
+            entry.prefab,
+            parent
+        );
+
+        instance.transform.localPosition = Vector3.zero;
+        instance.transform.localRotation = Quaternion.identity;
+
+        OneShotVFX vfx =
+            instance.GetComponent<OneShotVFX>();
+
+        if (vfx != null)
+        {
+            vfx.Initialize();
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[PlayerVFX] Prefab {entry.prefab.name} " +
+                "thiếu OneShotVFX!"
+            );
+
+            Destroy(instance, 1f);
+        }
+    }
+
 }

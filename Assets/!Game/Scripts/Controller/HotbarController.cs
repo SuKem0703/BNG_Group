@@ -168,7 +168,7 @@ public class HotbarController : MonoBehaviour
         }
     }
 
-    // SỬA: Truyền SkillData vào hệ thống Casting.
+
     private void UseSlot(int index)
     {
         if (index < 0 ||
@@ -200,22 +200,47 @@ public class HotbarController : MonoBehaviour
 
             if (skillData == null ||
                 player == null ||
+                player.classController == null ||
                 player.playerVFX == null)
             {
+                return;
+            }
+
+            PlayerClassType currentClass =
+                player.classController.GetCurrentClassType();
+
+            if (!skillData.CanBeUsedBy(currentClass))
+            {
+                if (skillData.skillElement ==
+                    SkillElement.Unassigned)
+                {
+                    GameNotify.Show(
+                        "Kỹ năng chưa được thiết lập hệ!"
+                    );
+                }
+                else
+                {
+                    GameNotify.Show(
+                        $"Không thể sử dụng {skillData.GetElementName()} " +
+                        $"bằng class {currentClass}!"
+                    );
+                }
+
                 return;
             }
 
             if (player.playerVFX.TryStartCasting(skillData))
             {
                 Debug.Log(
-                    $"[Skill] Casting: {skillData.skillID}"
+                    $"[Skill] Casting: {skillData.skillID} | " +
+                    $"Element: {skillData.GetElementName()} | " +
+                    $"Class: {currentClass}"
                 );
             }
 
             return;
         }
 
-        // Logic sử dụng vật phẩm giữ nguyên.
         Item item = slot.currentItem.GetComponent<Item>();
 
         if (item == null)
@@ -242,6 +267,7 @@ public class HotbarController : MonoBehaviour
             toolItem.UseItem();
         }
     }
+
 
     public void AssignSkillToSlot(
         int index,

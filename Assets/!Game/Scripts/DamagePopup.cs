@@ -83,6 +83,32 @@ public class DamagePopup : MonoBehaviour
         textColor = newColor;
     }
 
+    public void SetupDodge()
+    {
+        Init();
+
+        if (textMesh == null)
+            return;
+
+        disappearTimer = lifetime;
+
+        transform.localScale = originalScale;
+        textMesh.fontStyle = FontStyles.Normal;
+        textMesh.SetText("Né tránh");
+
+        Color dodgeColor;
+
+        ColorUtility.TryParseHtmlString(
+            "#7DEBFF",
+            out dodgeColor
+        );
+
+        dodgeColor.a = 1f;
+
+        textColor = dodgeColor;
+        textMesh.color = textColor;
+    }
+
     private void Update()
     {
         if (textMesh == null) return;

@@ -154,12 +154,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_0
       rect:
         serializedVersion: 2
-        x: 54
-        y: 71
-        width: 7
-        height: 7
+        x: 0
+        y: 48
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -176,12 +176,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_1
       rect:
         serializedVersion: 2
-        x: 130
-        y: 68
-        width: 14
-        height: 13
+        x: 80
+        y: 48
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -198,12 +198,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_2
       rect:
         serializedVersion: 2
-        x: 205
-        y: 65
-        width: 22
-        height: 19
+        x: 160
+        y: 48
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -220,12 +220,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_3
       rect:
         serializedVersion: 2
-        x: 280
-        y: 71
-        width: 19
-        height: 7
+        x: 240
+        y: 48
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -242,12 +242,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_4
       rect:
         serializedVersion: 2
-        x: 290
-        y: 76
-        width: 10
-        height: 10
+        x: 320
+        y: 48
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -264,12 +264,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_5
       rect:
         serializedVersion: 2
-        x: 299
-        y: 76
-        width: 6
-        height: 6
+        x: 0
+        y: 0
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -286,12 +286,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_6
       rect:
         serializedVersion: 2
-        x: 299
-        y: 67
-        width: 10
-        height: 10
+        x: 80
+        y: 0
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -308,12 +308,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_7
       rect:
         serializedVersion: 2
-        x: 352
-        y: 62
-        width: 38
-        height: 25
+        x: 160
+        y: 0
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -330,12 +330,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_8
       rect:
         serializedVersion: 2
-        x: 290
-        y: 63
-        width: 10
-        height: 10
+        x: 240
+        y: 0
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -352,12 +352,12 @@ TextureImporter:
       name: Ice_arrow_cast_left-right_9
       rect:
         serializedVersion: 2
-        x: 20
-        y: 23
-        width: 7
-        height: 7
+        x: 320
+        y: 0
+        width: 80
+        height: 48
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -370,187 +370,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: Ice_arrow_cast_left-right_10
-      rect:
-        serializedVersion: 2
-        x: 97
-        y: 20
-        width: 14
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 91ee2a44cd6e6e230800000000000000
-      internalID: 3667872780258569753
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ice_arrow_cast_left-right_11
-      rect:
-        serializedVersion: 2
-        x: 174
-        y: 17
-        width: 22
-        height: 19
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 59936123139aeeb70800000000000000
-      internalID: 8930261139881081237
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ice_arrow_cast_left-right_12
-      rect:
-        serializedVersion: 2
-        x: 252
-        y: 15
-        width: 14
-        height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: dfc00565f569eb680800000000000000
-      internalID: -8737380890838037251
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ice_arrow_cast_left-right_13
-      rect:
-        serializedVersion: 2
-        x: 256
-        y: 28
-        width: 10
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3188e1dee5d8aa110800000000000000
-      internalID: 1272985283530229779
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ice_arrow_cast_left-right_14
-      rect:
-        serializedVersion: 2
-        x: 262
-        y: 23
-        width: 19
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 9cb5fb4c96a7585a0800000000000000
-      internalID: -6519670290857894967
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ice_arrow_cast_left-right_15
-      rect:
-        serializedVersion: 2
-        x: 265
-        y: 28
-        width: 6
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b1dc30f68f0061e00800000000000000
-      internalID: 1014999833033035035
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ice_arrow_cast_left-right_16
-      rect:
-        serializedVersion: 2
-        x: 331
-        y: 14
-        width: 38
-        height: 25
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 4b09ff0fb5ba83460800000000000000
-      internalID: 7221710413862244532
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ice_arrow_cast_left-right_17
-      rect:
-        serializedVersion: 2
-        x: 265
-        y: 19
-        width: 6
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 5d2b28bdbfdf0d1b0800000000000000
-      internalID: -5633723875679096107
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 6dad28b497bcc034797271a8c0efd3a1
     internalID: 0
     vertices: []
     indices: 
@@ -558,18 +382,12 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":5.0,"y":2.0},"gridSpriteSize":{"x":80.0,"y":48.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Ice_arrow_cast_left-right_0: -2877963178043954353
       Ice_arrow_cast_left-right_1: -4923180882308910863
-      Ice_arrow_cast_left-right_10: 3667872780258569753
-      Ice_arrow_cast_left-right_11: 8930261139881081237
-      Ice_arrow_cast_left-right_12: -8737380890838037251
-      Ice_arrow_cast_left-right_13: 1272985283530229779
-      Ice_arrow_cast_left-right_14: -6519670290857894967
-      Ice_arrow_cast_left-right_15: 1014999833033035035
-      Ice_arrow_cast_left-right_16: 7221710413862244532
-      Ice_arrow_cast_left-right_17: -5633723875679096107
       Ice_arrow_cast_left-right_2: 6876514569901558146
       Ice_arrow_cast_left-right_3: 1950322696740730700
       Ice_arrow_cast_left-right_4: -4717960091899692832

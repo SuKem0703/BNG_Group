@@ -17,15 +17,22 @@ MonoBehaviour:
   skillName: Phys_Lv15
   description: Phys_Lv15
   skillIcon: {fileID: 21300000, guid: 8916029ca23c47e4092495a3b7ab2572, type: 3}
-  skillType: 0
-  lvlReq: 15
+  skillType: 1
+  skillElement: 3
+  isSharedSkill: 0
+  lvlReq: 10
   playerAscensionRankReqToUnlock: 2
   skillReqToUnlock: {fileID: 11400000, guid: b72e4f91af112754c87abc0ebbf52e2f, type: 2}
   skillRankReqToUnlock: 10
   maxRank: 20
   baseValue: 0.05
-  maxRankValue: 1
+  maxRankValue: 0.2
+  effectID: BUFF_CLOVER
   baseManaCost: 20
   manaCostIncreasePerRank: 2
   baseCooldown: 10
   minCooldown: 5
+  baseSecondaryValue: 0.1
+  maxRankSecondaryValue: 0.3
+  baseEffectDuration: 12
+  maxRankEffectDuration: 12

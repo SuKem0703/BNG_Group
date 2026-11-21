@@ -112,12 +112,12 @@ TextureImporter:
       name: Explosion_cast_left-right_0
       rect:
         serializedVersion: 2
-        x: 65
-        y: 87
-        width: 11
-        height: 6
+        x: 0
+        y: 64
+        width: 80
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -134,12 +134,12 @@ TextureImporter:
       name: Explosion_cast_left-right_1
       rect:
         serializedVersion: 2
-        x: 113
-        y: 85
-        width: 32
-        height: 11
+        x: 80
+        y: 64
+        width: 80
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -156,12 +156,12 @@ TextureImporter:
       name: Explosion_cast_left-right_2
       rect:
         serializedVersion: 2
-        x: 4
-        y: 23
-        width: 11
-        height: 6
+        x: 0
+        y: 0
+        width: 80
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -178,19 +178,19 @@ TextureImporter:
       name: Explosion_cast_left-right_3
       rect:
         serializedVersion: 2
-        x: 95
-        y: 21
-        width: 32
-        height: 11
+        x: 80
+        y: 0
+        width: 80
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 599943720816668f0800000000000000
+      spriteID: 7ea9a114daaebad48a4c1e017986ac6d
       internalID: -547643101637469803
       vertices: []
       indices: 
@@ -200,7 +200,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e4de1e2a1b01da4ba44e9420959d0c5
     internalID: 0
     vertices: []
     indices: 
@@ -208,7 +208,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":2.0,"y":2.0},"gridSpriteSize":{"x":80.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Explosion_cast_left-right_0: -6756936750623740126
       Explosion_cast_left-right_1: 1211212749774249413

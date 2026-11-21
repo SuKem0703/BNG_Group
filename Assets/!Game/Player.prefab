@@ -62,6 +62,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1445368280158805956}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2488394585588510853
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4458420004877539431}
+  m_Layer: 3
+  m_Name: Buff VFX Transform
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4458420004877539431
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2488394585588510853}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.75, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 553821683748399288}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2995459927483620862
 GameObject:
   m_ObjectHideFlags: 0
@@ -634,7 +665,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 4458420004877539431}
   m_Father: {fileID: 8599477992676078165}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7926552598545410266
@@ -655,6 +687,12 @@ MonoBehaviour:
   isCasting: 0
   healingBuffAnchor: {fileID: 553821683748399288}
   healingBuffVFXPrefab: {fileID: 3057400957946558601, guid: b6ebf608277317b4a88a23d9697d6712, type: 3}
+  buffActivationAnchor: {fileID: 4458420004877539431}
+  buffActivationVFX:
+  - effectID: BUFF_FEATHER
+    prefab: {fileID: 3057400957946558601, guid: d161419dabe031e4e87f459627a2d4d4, type: 3}
+  - effectID: BUFF_CLOVER
+    prefab: {fileID: 4159043844292293224, guid: 018da8a1360bcbf44a6e6669cb90d0a1, type: 3}
 --- !u!1 &5610671550204279734
 GameObject:
   m_ObjectHideFlags: 0
@@ -1301,6 +1339,7 @@ GameObject:
   - component: {fileID: 3909449334393896824}
   - component: {fileID: 4586953363769722179}
   - component: {fileID: 2714117746525753295}
+  - component: {fileID: 5323456099824822256}
   - component: {fileID: -3181974643858917946}
   - component: {fileID: 180357288839205530}
   - component: {fileID: 4105975544014696189}
@@ -1735,6 +1774,22 @@ MonoBehaviour:
   ghostLerpSpeed: 3
   ghostDelay: 0.5
   minimapSpriteRenderer: {fileID: 6620393319781054300}
+--- !u!114 &5323456099824822256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7053962648512897917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b8956bd23260014a97b92f90d6a417b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  ShowTopMostFoldoutHeaderGroup: 1
+  core: {fileID: 4105975544014696189}
+  healingBuffDuration: 10
+  cloverBuffDuration: 12
 --- !u!114 &-3181974643858917946
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1782,7 +1837,7 @@ MonoBehaviour:
   playerMovement: {fileID: 5419666127035113273}
   classController: {fileID: 2281157301833218261}
   playerVFX: {fileID: 7926552598545410266}
-  healingBuffDuration: 10
+  buffController: {fileID: 5323456099824822256}
 --- !u!1 &8304542053625197770
 GameObject:
   m_ObjectHideFlags: 0

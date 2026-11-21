@@ -2,10 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Runtime: effect gameplay/timing belongs here, NOT in Effect (UI).
 public class EffectService : MonoBehaviour
 {
+    public const string HealInstantID = "HEAL_INSTANT";
+    public const string ManaInstantID = "MANA_INSTANT";
+    public const string BuffSTRID = "BUFF_STR";
+    public const string BuffDEXID = "BUFF_DEX";
+    public const string DebuffDEXID = "DEBUFF_DEX";
     public const string HealRegenID = "HEAL_REGEN";
+    public const string BurnFireID = "BURN_FIRE";
+    public const string CloverBuffID = "BUFF_CLOVER";
+    public const string FeatherBuffID = "BUFF_FEATHER";
     public static EffectService Instance { get; private set; }
 
     public class EffectData
@@ -13,15 +20,22 @@ public class EffectService : MonoBehaviour
         public string effectID;
         public float duration;
         public float value;
+        public float secondaryValue;
         public float remainingTime;
+
         internal float tickElapsed;
 
-        public EffectData(string id, float dur, float val)
+        public EffectData(
+            string id,
+            float dur,
+            float val,
+            float secondaryVal = 0f)
         {
             effectID = id;
             duration = dur;
             remainingTime = dur;
             value = val;
+            secondaryValue = secondaryVal;
         }
     }
 
@@ -54,18 +68,30 @@ public class EffectService : MonoBehaviour
         return Array.Empty<EffectData>();
     }
 
-    public void AddEffect(GameObject target, string effectID, float duration, float value)
-    {
-        if (target == null || string.IsNullOrWhiteSpace(effectID)) return;
 
-        // Recasting the same buff refreshes it rather than stacking it infinitely.
+    public void AddEffect(
+        GameObject target,
+        string effectID,
+        float duration,
+        float value,
+        float secondaryValue = 0f)
+    {
+        if (target == null || string.IsNullOrWhiteSpace(effectID))
+            return;
+
         RemoveEffect(target, effectID);
 
-        var data = new EffectData(effectID, Mathf.Max(0f, duration), value);
+        var data = new EffectData(
+            effectID,
+            Mathf.Max(0f, duration),
+            value,
+            secondaryValue
+        );
+
         ApplyOnStart(target, data);
 
-        // Instant effects do not need duration icons.
-        if (data.duration <= 0f) return;
+        if (data.duration <= 0f)
+            return;
 
         if (!activeEffects.TryGetValue(target, out var effects))
         {
@@ -129,44 +155,84 @@ public class EffectService : MonoBehaviour
         }
     }
 
-    // HP/MP are currently owner-written NetworkVariables in PlayerVitals.
     private static bool CanApplyGameplay(GameObject target)
     {
         PlayerCore core = target.GetComponent<PlayerCore>();
         return core == null || (core.IsSpawned && core.IsOwner);
     }
 
-    private static void ApplyOnStart(GameObject target, EffectData data)
+    private static void ApplyOnStart(
+        GameObject target,
+        EffectData data)
     {
-        if (!CanApplyGameplay(target)) return;
+        if (!CanApplyGameplay(target))
+            return;
 
         PlayerCore core = target.GetComponent<PlayerCore>();
-        PlayerVitals vitals = core != null ? core.playerVitals : target.GetComponent<PlayerVitals>();
-        PlayerStats stats = core != null ? core.playerStats : target.GetComponent<PlayerStats>();
+
+        PlayerVitals vitals = core != null
+            ? core.playerVitals
+            : target.GetComponent<PlayerVitals>();
+
+        PlayerStats stats = core != null
+            ? core.playerStats
+            : target.GetComponent<PlayerStats>();
+
         int amount = Mathf.RoundToInt(data.value);
 
         switch (data.effectID)
         {
-            case "HEAL_INSTANT":
-                if (vitals != null) vitals.HealActiveCharacter(amount);
+            case HealInstantID:
+                if (vitals != null)
+                    vitals.HealActiveCharacter(amount);
+
                 SoundEffectManager.Play("Use Pot");
                 break;
-            case "MANA_INSTANT":
-                if (vitals != null) vitals.RecoverMPActiveCharacter(amount);
+
+            case ManaInstantID:
+                if (vitals != null)
+                    vitals.RecoverMPActiveCharacter(amount);
                 break;
-            case "BUFF_STR":
-                if (stats != null) stats.ModifyEffectStat("STR", amount);
+
+            case BuffSTRID:
+                if (stats != null)
+                    stats.ModifyEffectStat("STR", amount);
                 break;
-            case "BUFF_DEX":
-                if (stats != null) stats.ModifyEffectStat("DEX", amount);
+
+            case BuffDEXID:
+                if (stats != null)
+                    stats.ModifyEffectStat("DEX", amount);
                 break;
-            case "DEBUFF_DEX":
-                if (stats != null) stats.ModifyEffectStat("DEX", -amount);
+
+            case DebuffDEXID:
+                if (stats != null)
+                    stats.ModifyEffectStat("DEX", -amount);
                 break;
-            case "BURN_FIRE":
-                if (vitals != null) vitals.TakeDamage(amount);
+
+            case BurnFireID:
+                if (vitals != null)
+                    vitals.TakeDamage(amount, canDodge: false);
                 break;
-                // SWAP_CD and HEAL_REGEN have no immediate gameplay effect.
+
+            case CloverBuffID:
+                if (stats != null)
+                {
+                    stats.ModifyEffectCritical(
+                        data.value * 100f,
+                        data.secondaryValue
+                    );
+                }
+                break;
+
+            case FeatherBuffID:
+                if (stats != null)
+                {
+                    stats.ModifyEffectMobility(
+                        data.value,
+                        data.secondaryValue * 100f
+                    );
+                }
+                break;
         }
     }
 
@@ -191,13 +257,15 @@ public class EffectService : MonoBehaviour
                     int currentHP = isKnight ? vitals.netKnightHealth.Value : vitals.netMageHealth.Value;
                     if (maxHP <= 0 || currentHP <= 0 || currentHP >= maxHP) return;
 
-                    // data.value is a fraction: 0.01 = 1% maximum HP per tick.
                     int heal = Mathf.Max(1, Mathf.CeilToInt(maxHP * Mathf.Clamp01(data.value)));
                     vitals.HealActiveCharacter(heal);
                     break;
                 }
             case "BURN_FIRE":
-                vitals.TakeDamage(Mathf.RoundToInt(data.value));
+                vitals.TakeDamage(
+                    Mathf.RoundToInt(data.value),
+                    canDodge: false
+                );
                 break;
         }
     }
@@ -215,6 +283,19 @@ public class EffectService : MonoBehaviour
             case "BUFF_STR": stats.ModifyEffectStat("STR", -amount); break;
             case "BUFF_DEX": stats.ModifyEffectStat("DEX", -amount); break;
             case "DEBUFF_DEX": stats.ModifyEffectStat("DEX", amount); break;
+            case CloverBuffID:
+                stats.ModifyEffectCritical(
+                    -data.value * 100f,
+                    -data.secondaryValue
+                );
+                break;
+
+            case FeatherBuffID:
+                stats.ModifyEffectMobility(
+                    -data.value,
+                    -data.secondaryValue * 100f
+                );
+                break;
         }
     }
 }
